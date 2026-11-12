@@ -1146,13 +1146,12 @@ function abaVisao(c){
       <div style="flex:1;min-width:0"><div class="k-rot">Progresso<br>do cronograma</div><div class="barra" style="margin-top:8px"><i style="width:${prog}%"></i></div></div></div></div>
    <div class="grade g2" style="margin-top:16px;align-items:start">
     <div class="card"><div class="card-cab"><h3 class="h-ic"><i data-lucide="clipboard-list"></i>Dados da campanha</h3>${ehEquipe()?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Ver detalhes →</a>`:''}</div><div class="card-p"><dl class="def">
-      <dt>Descrição</dt><dd>${h(c.descricao)||'—'}</dd>
+      <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
       <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
       <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd><dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
       <div class="sep-h"></div><dl class="def">
-      <dt>Budget por país</dt><dd>${c.paises.some(p=>p.budget!=null) ? `<div class="bud">${c.paises.map(p=>`<span>${PAISES[p.cod].f} ${PAISES[p.cod].n}</span><span class="num">${p.budget!=null?moeda(p.budget,c.moeda):'<span class="muted">—</span>'}</span>`).join('')}<b>Total</b><b class="num">${moeda(totalBud,c.moeda)}</b></div>` : `${c.orcamento?moeda(c.orcamento,c.moeda)+' (total) · ':''}<a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por país</a>`}</dd>
-      ${c.canaisCfg && (c.canais||[]).length ? `<dt>Budget por canal</dt><dd><div class="bud">${c.canais.map(k=>`<span>${h(k)}</span><span class="num">${moeda(+(c.canaisCfg[k]||{}).orcamento||0,c.moeda)} <span class="small muted">· ${((c.canaisCfg[k]||{}).paises||[]).map(p=>PAISES[p.cod].f).join(' ')}</span></span>`).join('')}</div></dd>` : ''}
-      <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
+      <dt>Budget por país</dt><dd>${c.paises.some(p=>p.budget!=null || p.budgetPorMoeda) ? `<div class="bud">${c.paises.map(p=>`<span>${PAISES[p.cod].f} ${PAISES[p.cod].n}</span><span class="num">${p.budgetPorMoeda ? moedaMulti(p.budgetPorMoeda) : p.budget!=null?moeda(p.budget,c.moeda):'<span class="muted">—</span>'}</span>`).join('')}<b>Total</b><b class="num">${c.orcamentoPorMoeda ? moedaMulti(c.orcamentoPorMoeda) : moeda(totalBud,c.moeda)}</b></div>` : `${c.orcamento?moeda(c.orcamento,c.moeda)+' (total) · ':''}<a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por país</a>`}</dd>
+      ${c.canaisCfg && (c.canais||[]).length ? `<dt>Budget por canal</dt><dd><div class="bud">${c.canais.map(k=>`<span>${h(k)}</span><span class="num">${moeda(+(c.canaisCfg[k]||{}).orcamento||0,(c.canaisCfg[k]||{}).moeda||c.moeda)} <span class="small muted">· ${((c.canaisCfg[k]||{}).paises||[]).map(p=>PAISES[p.cod].f).join(' ')}</span></span>`).join('')}</div></dd>` : ''}
       <dt>Relatório</dt><dd>${c.urlRelatorio?chipLink(c.urlRelatorio, 'Relatório'):'—'}</dd>
       <dt>Status geral</dt><dd></dd></dl>
       <div class="st-geral"><i style="background:${corSt}"></i><select data-chg="statusCamp" data-id="${c.id}" ${ehEquipe()?'':'disabled'}>${opts(ST_CAMP,c.status)}</select></div></div></div>
@@ -1364,7 +1363,21 @@ function abaAcoes(c){
 /* ---------- Budgets e KPIs ---------- */
 const KPI_OBJETIVO = {'Geração de leads':[['Leads','nº'],['CPL','R$'],['Taxa de conversão','%'],['Conversões','nº']], 'Awareness':[['Impressões','nº'],['Alcance','nº'],['CPM','R$'],['Frequência','x'],['Visualizações de vídeo','nº']]};
 /* números do budget a partir dos dados da campanha (aprovado por país) e das linhas por canal */
-function resumoBudget(c){
+const moedaMulti = (obj, fallback) => { const e = Object.entries(obj||{}).filter(([,v])=>v!=null); return e.length ? e.map(([m,v])=>moeda(v,m)).join(' + ') : (fallback||'—'); };
+const moedasCamp = c => { const ms = c.canaisCfg && (c.canais||[]).length ? [...new Set(c.canais.map(k=>(c.canaisCfg[k]||{}).moeda||c.moeda||'BRL'))] : [c.moeda||'BRL']; return ms.length ? ms : ['BRL']; };
+const moedaLinha = (c, b) => b.moeda || (c.canaisCfg && c.canaisCfg[b.canal] && c.canaisCfg[b.canal].moeda) || c.moeda || 'BRL';
+function resumoBudget(c, moe){
+  moe = moe || moedasCamp(c)[0];
+  const ls0 = c.budgets.filter(b=>moedaLinha(c,b)===moe);
+  if (c.canaisCfg && (c.canais||[]).length) {
+    const cods = []; const aprovP = {};
+    for (const k of c.canais) { const cf = c.canaisCfg[k]||{}; if ((cf.moeda||c.moeda||'BRL')!==moe) continue; for (const p of (cf.paises||[])) { if (!cods.includes(p.cod)) cods.push(p.cod); aprovP[p.cod] = (aprovP[p.cod]||0) + (+p.budget||0); } }
+    const paises = cods.map(cod=>{ const ls = ls0.filter(b=>b.pais===cod), aprov = Math.round((aprovP[cod]||0)*100)/100, dist = ls.reduce((s,b)=>s+(+b.previsto||0),0), uso = ls.reduce((s,b)=>s+(+b.utilizado||0),0);
+      return {cod, temAprov:true, aprov, dist, uso, livre:aprov-dist, saldo:aprov-uso}; });
+    const soma = k => paises.reduce((s,x)=>s+x[k],0);
+    return {paises, aprov:soma('aprov'), dist:soma('dist'), uso:soma('uso'), orfas:ls0.filter(b=>!cods.includes(b.pais)), linhas:ls0, moeda:moe}; }
+  return Object.assign(resumoBudgetAntigo(c), {linhas:c.budgets, moeda:c.moeda}); }
+function resumoBudgetAntigo(c){
   const paises = c.paises.map(p=>{ const ls = c.budgets.filter(b=>b.pais===p.cod);
     const aprov = +p.budget||0, dist = ls.reduce((s,b)=>s+(+b.previsto||0),0), uso = ls.reduce((s,b)=>s+(+b.utilizado||0),0);
     return {cod:p.cod, temAprov:p.budget!=null, aprov, dist, uso, livre:aprov-dist, saldo:aprov-uso}; });
@@ -1372,13 +1385,13 @@ function resumoBudget(c){
   const orfas = c.budgets.filter(b=>!c.paises.some(p=>p.cod===b.pais));
   return {paises, aprov:soma('aprov'), dist:soma('dist'), uso:soma('uso'), orfas}; }
 function abaBudget(c){
-  const m = c.moeda, R = resumoBudget(c), ed = ehEquipe();
-  const porCanal = Object.entries(c.budgets.reduce((o,b)=>(o[b.canal]=(o[b.canal]||0)+(+b.previsto||0),o),{})).map(([rot,v])=>({rot,v}));
+  UI.fbm = UI.fbm || {}; const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], R = resumoBudget(c, m), ed = ehEquipe();
+  const porCanal = Object.entries(R.linhas.reduce((o,b)=>(o[b.canal]=(o[b.canal]||0)+(+b.previsto||0),o),{})).map(([rot,v])=>({rot,v}));
   const kp = k => k.real==null||k.real==='' ? null : (/^CP|CPL|CPC|CPM|CPV/.test(k.nome) ? k.meta/k.real : k.real/k.meta);
   const semAprov = R.paises.filter(x=>!x.temAprov), estouro = R.paises.filter(x=>x.temAprov && x.dist > x.aprov), gastoMais = R.paises.filter(x=>x.temAprov && x.uso > x.aprov);
   const pct = (a,b) => b ? Math.round(a/b*100) : 0;
   const sugest = (c.objetivos||[]).flatMap(o=>KPI_OBJETIVO[o]||[]).filter(([n])=>!c.kpis.some(k=>k.nome===n));
-  return `<div class="grade g4">
+  return `${moedas.length>1 ? `<div class="seg" style="margin-bottom:14px">${moedas.map(x=>`<button class="${x===m?'ativo':''}" data-act="ui" data-k="fbm.v" data-v="${x}">${x}</button>`).join('')}</div><span class="small muted" style="margin-left:10px">Os canais desta campanha usam moedas diferentes. Os números abaixo são dos canais em ${m}.</span>` : ''}<div class="grade g4">
    <div class="card kpi2"><div class="k-ic"><i data-lucide="badge-dollar-sign"></i></div><div><div class="k-rot">Budget aprovado</div><div class="k-val num" style="font-size:1.3rem">${moeda(R.aprov,m)}</div><div class="k-sub">soma dos países em Dados da campanha</div></div></div>
    <div class="card kpi2"><div class="k-ic"><i data-lucide="split"></i></div><div><div class="k-rot">Distribuído nos canais</div><div class="k-val num" style="font-size:1.3rem">${moeda(R.dist,m)}</div><div class="k-sub">${R.aprov?`${pct(R.dist,R.aprov)}% do aprovado · falta ${moeda(Math.max(0,R.aprov-R.dist),m)}`:'—'}</div></div></div>
    <div class="card kpi2"><div class="k-ic"><i data-lucide="receipt"></i></div><div><div class="k-rot">Utilizado</div><div class="k-val num" style="font-size:1.3rem">${moeda(R.uso,m)}</div><div class="k-sub">saldo ${moeda(R.aprov-R.uso,m)}</div></div></div>
@@ -1397,7 +1410,7 @@ function abaBudget(c){
    <div class="card card-p"><h3>Aprovado × distribuído por país</h3>${R.paises.map(x=>`<div class="hbar"><span>${PAISES[x.cod].f} ${PAISES[x.cod].n}</span><div class="barra" style="position:relative"><i style="width:${x.aprov?Math.min(100,pct(x.dist,x.aprov)):0}%;${x.dist>x.aprov?'background:#d0443a':''}"></i></div><span class="num dir small">${pct(x.dist,x.aprov)}%</span></div>`).join('')}<div class="small muted" style="margin-top:8px">Quanto do budget aprovado de cada país já foi distribuído nos canais.</div></div></div>
   <div class="card" style="margin-top:16px"><div class="card-cab"><h3>Distribuição por canal</h3>${ed?`<button class="btn btn-p btn-s" data-act="formBudget" data-id="${c.id}"><i data-lucide="plus"></i>Adicionar linha</button>`:''}</div>
    <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th>Canal</th><th>Período</th><th class="dir">Previsto</th><th class="dir">Utilizado</th><th class="dir">Saldo</th><th>Alterações</th><th></th></tr></thead><tbody>
-   ${[...c.budgets].sort((a,b)=>(a.pais||'').localeCompare(b.pais||'') || b.previsto-a.previsto).map(b=>`<tr><td>${pais(b.pais)}</td><td>${h(b.canal)}</td><td>${h(b.periodo)}</td><td class="dir num">${moeda(b.previsto,m)}</td><td class="dir num">${moeda(b.utilizado,m)}</td><td class="dir num">${moeda(b.previsto-b.utilizado,m)}</td><td class="small muted">${b.hist.length?h(b.hist[0].q+' — '+b.hist[0].o):'—'}</td><td>${ed?`<button class="icone-btn" data-act="formBudget" data-id="${c.id}" data-b="${b.id}"><i data-lucide="pencil"></i></button>`:''}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Nenhuma linha ainda. Use “+ Canal” no país para distribuir o budget aprovado.</td></tr>'}</tbody></table></div></div>
+   ${[...R.linhas].sort((a,b)=>(a.pais||'').localeCompare(b.pais||'') || b.previsto-a.previsto).map(b=>`<tr><td>${pais(b.pais)}</td><td>${h(b.canal)}</td><td>${h(b.periodo)}</td><td class="dir num">${moeda(b.previsto,m)}</td><td class="dir num">${moeda(b.utilizado,m)}</td><td class="dir num">${moeda(b.previsto-b.utilizado,m)}</td><td class="small muted">${b.hist.length?h(b.hist[0].q+' — '+b.hist[0].o):'—'}</td><td>${ed?`<button class="icone-btn" data-act="formBudget" data-id="${c.id}" data-b="${b.id}"><i data-lucide="pencil"></i></button>`:''}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Nenhuma linha ainda. Use “+ Canal” no país para distribuir o budget aprovado.</td></tr>'}</tbody></table></div></div>
   <div class="card" style="margin-top:16px"><div class="card-cab"><h3>KPIs — planejado × realizado</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${(c.objetivos||[]).map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join('')}${ed?`<button class="btn btn-p btn-s" data-act="formKpi" data-id="${c.id}"><i data-lucide="plus"></i>Adicionar KPI</button>`:''}</div></div>
    ${ed && sugest.length ? `<div class="sug-kpi"><span class="small muted">Sugeridos pelo objetivo:</span>${sugest.map(([n,u])=>`<button class="btn btn-s" data-act="formKpi" data-id="${c.id}" data-nome="${h(n)}" data-un="${h(u==='R$'?c.moeda:u)}"><i data-lucide="plus"></i>${h(n)}</button>`).join('')}</div>` : ''}
    ${!(c.objetivos||[]).length ? `<div class="small muted" style="padding:10px 18px 0">Defina o objetivo em Dados da campanha para ver KPIs sugeridos.</div>` : ''}
@@ -1595,7 +1608,8 @@ function formCampanha(c){
   return `<form id="form-camp"><div class="form-g">
     <label class="campo">Cliente *<select name="clienteId" required>${opts(S.clientes.filter(x=>!x.arquivado).map(x=>[x.id,x.nome]),d.clienteId,'Selecione')}</select></label>
     <label class="campo">Nome da campanha *<input name="nome" required value="${h(d.nome||'')}"></label>
-    <label class="campo tudo">Descrição<textarea name="descricao" rows="2">${h(d.descricao||'')}</textarea></label>
+    <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
+    <label class="campo">Nome da apresentação<input name="nomePlanejamento" value="${h(d.nomePlanejamento||'')}" placeholder="Ex.: PTx Trimble EMEA | Planning and Concept"></label>
     <div class="campo tudo">Objetivo da campanha *<div class="chips">${OBJETIVOS.map(k=>`<label class="chip ${(d.objetivos||[]).includes(k)?'on':''}"><input type="checkbox" name="objetivo" value="${k}" ${(d.objetivos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <label class="campo">Data prevista de lançamento *<input type="date" name="lancamento" required value="${d.lancamento||''}" data-chg="lancForm"></label>
     <label class="campo">Fim da veiculação *<input type="date" name="fimVeiculacao" required value="${d.fimVeiculacao||''}"></label>
@@ -1603,8 +1617,6 @@ function formCampanha(c){
     <div class="campo tudo">Entregáveis<div class="chips">${TIPOS_ENTREGAVEL.map(k=>`<label class="chip ${(d.entregaveisTipos||[]).includes(k)?'on':''}"><input type="checkbox" name="entregavelTipo" value="${k}" ${(d.entregaveisTipos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <div class="campo tudo">Canais<div class="chips">${[...CANAIS, ...(d.canais||[]).filter(k=>!CANAIS.includes(k))].map(k=>`<label class="chip ${(d.canais||[]).includes(k)?'on':''}"><input type="checkbox" name="canal" data-chg="canalCamp" value="${k}" ${(d.canais||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     ${secoesCanais(d)}
-    <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
-    <label class="campo">Nome da apresentação<input name="nomePlanejamento" value="${h(d.nomePlanejamento||'')}" placeholder="Ex.: PTx Trimble EMEA | Planning and Concept"></label>
     <label class="campo">URL do relatório<input type="url" name="urlRelatorio" value="${h(d.urlRelatorio||'')}"></label>
   </div></form>`;
 }
@@ -1612,7 +1624,7 @@ function lerFormCampanha(){
   const fm = $('#form-camp'), v = ler(fm);
   const canais = [...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value);
   const d = Object.assign({}, rascunho, {clienteId:v.clienteId, nome:(v.nome||'').trim(), descricao:v.descricao, objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),
-    lancamento:v.lancamento, fimVeiculacao:v.fimVeiculacao, moeda:v.moeda || rascunho.moeda || 'BRL', canais, entregaveisTipos:[...fm.querySelectorAll('input[name=entregavelTipo]:checked')].map(x=>x.value),
+    lancamento:v.lancamento, fimVeiculacao:v.fimVeiculacao, moeda:rascunho.moeda || 'BRL', canais, entregaveisTipos:[...fm.querySelectorAll('input[name=entregavelTipo]:checked')].map(x=>x.value),
     urlPlanejamento:v.urlPlanejamento, nomePlanejamento:(v.nomePlanejamento||'').trim(), urlRelatorio:v.urlRelatorio});
   d.canaisCfg = lerCanaisCfg(fm, canais);
   consolidarCanais(d);
@@ -1645,6 +1657,7 @@ function sincronizarBudgetCanais(c){
     let b = c.budgets.find(x=>x.pais===p.cod && x.canal===k && !usadas.includes(x.id));
     if (!b) { b = {id:novoId('b'), canal:k, pais:p.cod, periodo:'', utilizado:0, previsto:prev, auto:true, hist:[{q:fd(HOJE), o:'Criada pela ficha da campanha'}]}; c.budgets.push(b); }
     else if (b.previsto!==prev) { b.hist.unshift({q:fd(HOJE), o:`previsto ${b.previsto}→${prev}: ficha da campanha`}); b.previsto = prev; }
+    b.moeda = (c.canaisCfg[k]||{}).moeda || c.moeda;
     usadas.push(b.id); }
   // linhas de canal/país que saíram da ficha e ainda sem gasto deixam de existir
   c.budgets = c.budgets.filter(b => usadas.includes(b.id) || +b.utilizado>0 || !(b.auto || !c.canais.includes(b.canal) || !((c.canaisCfg[b.canal]||{}).paises||[]).some(p=>p.cod===b.pais))); }
@@ -1653,13 +1666,12 @@ const cfgVazio = () => ({paises:[], orcamento:0, divisao:'igual'});
 function secoesCanais(d){
   const canais = d.canais||[];
   if (!canais.length) return `<div class="tudo small muted">Marque um canal acima para informar os países e o budget dele.</div>`;
-  return `<div class="tudo"><label class="campo" style="max-width:200px">Moeda do budget<select name="moeda" onchange="atualizarDivisao()">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select></label></div>` +
-   canais.map((k,ci)=>{ const cf = (d.canaisCfg||{})[k] || cfgVazio(), aberto = UI.paisesForm===k;
+  return canais.map((k,ci)=>{ const cf = (d.canaisCfg||{})[k] || cfgVazio(), aberto = UI.paisesForm===k;
     return `<div class="tudo sec-canal" data-canal="${h(k)}"><div class="sec-tit">Campanha ${h(k)}</div>
       <div class="pb-topo">
         <div class="campo"><span class="pb-rot">Países participantes</span><div class="msel ${aberto?'aberto':''}" style="display:block"><button type="button" class="msel-btn ${cf.paises.length?'ativo':''}" data-act="abrirPaisesForm" data-c="${h(k)}" style="width:100%">${cf.paises.length ? cf.paises.map(p=>PAISES[p.cod].f).join(' ')+' · '+cf.paises.length+' país'+(cf.paises.length>1?'es':'') : 'Selecionar países'}<i data-lucide="chevron-down"></i></button>
           ${aberto ? `<div class="msel-pop" style="min-width:260px">${Object.entries(REGIOES).map(([rk,rn])=>{ const ps = Object.entries(PAISES).filter(([,x])=>x.r===rk); return ps.length?`<div class="small muted" style="padding:6px 8px 2px;font-weight:600">${h(rn)}</div>${ps.map(([pk,x])=>`<label class="msel-op"><input type="checkbox" data-chg="paisCanal" data-c="${h(k)}" value="${pk}" ${cf.paises.some(p=>p.cod===pk)?'checked':''}>${x.f} ${x.n}</label>`).join('')}`:''; }).join('')}</div>` : ''}</div></div>
-        <div class="campo"><span class="pb-rot">Budget total de ${h(k)} *</span><div class="pb-bud"><input type="number" class="c-orc" min="0" step="100" placeholder="Budget total" value="${cf.orcamento||''}" style="width:150px" oninput="atualizarDivisao()">
+        <div class="campo"><span class="pb-rot">Budget total de ${h(k)} *</span><div class="pb-bud"><select class="c-moe" style="width:84px" onchange="atualizarDivisao()">${opts(['BRL','USD','EUR'],cf.moeda||d.moeda||'BRL')}</select><input type="number" class="c-orc" min="0" step="100" placeholder="Budget total" value="${cf.orcamento||''}" style="width:150px" oninput="atualizarDivisao()">
           <div class="seg"><button type="button" class="${cf.divisao!=='pct'?'ativo':''}" data-act="modoDivisao" data-c="${h(k)}" data-v="igual">Dividir igualmente</button><button type="button" class="${cf.divisao==='pct'?'ativo':''}" data-act="modoDivisao" data-c="${h(k)}" data-v="pct">Personalizar divisão</button></div></div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px"><div class="small c-info"></div>${cf.divisao==='pct' && ['BR','AR','PY','CL'].every(x=>cf.paises.some(p=>p.cod===x)) ? `<button type="button" class="btn btn-s btn-g" data-act="presetLatam" data-c="${h(k)}">Usar padrão LATAM (BR 60 · AR 20 · PY 10 · CL 10)</button>` : ''}</div></div>
       </div>
@@ -1674,7 +1686,8 @@ function lerCanaisCfg(fm, canais){
   for (const k of canais) {
     const ant = JSON.parse(JSON.stringify((rascunho.canaisCfg||{})[k] || cfgVazio()));
     const sec = [...fm.querySelectorAll('.sec-canal')].find(x=>x.dataset.canal===k);
-    if (sec) { const o = sec.querySelector('.c-orc'); if (o) ant.orcamento = Math.max(0, +o.value||0);
+    if (!ant.moeda) ant.moeda = rascunho.moeda || 'BRL';
+    if (sec) { const o = sec.querySelector('.c-orc'); if (o) ant.orcamento = Math.max(0, +o.value||0); const mo = sec.querySelector('.c-moe'); if (mo) ant.moeda = mo.value;
       if (ant.divisao==='pct') ant.paises.forEach(p=>{ const i = sec.querySelector(`.c-pct[data-p="${p.cod}"]`); if (i) p.pct = i.value==='' ? null : +i.value; }); }
     dividirBudget(ant.paises, ant.orcamento, ant.divisao);
     cfg[k] = ant; }
@@ -1682,10 +1695,13 @@ function lerCanaisCfg(fm, canais){
 /* países da campanha = todos os países de todos os canais; budget do país = soma dos canais */
 function consolidarCanais(d){
   const ordem = []; for (const k of d.canais) for (const p of (d.canaisCfg[k]||cfgVazio()).paises) if (!ordem.includes(p.cod)) ordem.push(p.cod);
-  d.paises = ordem.map(cod=>{ const ant = (rascunho.paises||[]).find(p=>p.cod===cod) || {};
-    const bud = d.canais.reduce((s,k)=>{ const p = ((d.canaisCfg[k]||{}).paises||[]).find(x=>x.cod===cod); return s + (+(p&&p.budget)||0); }, 0);
-    return Object.assign({}, ant, {cod, idioma:ant.idioma||PAISES[cod].i, lancamento:d.lancamento, budget:Math.round(bud*100)/100}); });
-  d.orcamento = d.canais.reduce((s,k)=>s+(+(d.canaisCfg[k]||{}).orcamento||0),0);
+  const moedas = [...new Set(d.canais.map(k=>(d.canaisCfg[k]||{}).moeda||'BRL'))];
+  d.moedas = moedas; d.moeda = moedas[0] || d.moeda || 'BRL';
+  d.paises = ordem.map(cod=>{ const ant = (rascunho.paises||[]).find(p=>p.cod===cod) || {}, porM = {};
+    for (const k of d.canais) { const cf = d.canaisCfg[k]||{}, p = (cf.paises||[]).find(x=>x.cod===cod); if (p) porM[cf.moeda||'BRL'] = Math.round(((porM[cf.moeda||'BRL']||0) + (+p.budget||0))*100)/100; }
+    return Object.assign({}, ant, {cod, idioma:ant.idioma||PAISES[cod].i, lancamento:d.lancamento, budgetPorMoeda:porM, budget: moedas.length===1 ? (porM[d.moeda]||0) : null}); });
+  d.orcamentoPorMoeda = {}; for (const k of d.canais) { const cf = d.canaisCfg[k]||{}; d.orcamentoPorMoeda[cf.moeda||'BRL'] = (d.orcamentoPorMoeda[cf.moeda||'BRL']||0) + (+cf.orcamento||0); }
+  d.orcamento = moedas.length===1 ? (d.orcamentoPorMoeda[d.moeda]||0) : 0;
   d.regioes = [...new Set(d.paises.map(p=>PAISES[p.cod].r))];
   return d; }
 function dividirBudget(paises, total, divisao){
@@ -1693,8 +1709,8 @@ function dividirBudget(paises, total, divisao){
   if (divisao==='pct') { paises.forEach(p=>{ p.budget = p.pct==null ? null : Math.round(total*p.pct)/100; });
     const sp = paises.reduce((s,p)=>s+(+p.pct||0),0); if (Math.abs(sp-100)<=0.01 && paises.every(p=>p.budget!=null)) { const outros = paises.slice(1).reduce((s,p)=>s+p.budget,0); paises[0].budget = Math.round((total-outros)*100)/100; } }
   else { const base = Math.floor(total*100/paises.length)/100; paises.forEach(p=>p.budget = base); paises[0].budget = Math.round((total - base*(paises.length-1))*100)/100; } }
-function atualizarDivisao(){ const fm = $('#form-camp'); if (!fm || !rascunho) return; const moe = (fm.querySelector('[name=moeda]')||{}).value || 'BRL';
-  for (const sec of fm.querySelectorAll('.sec-canal')) { const k = sec.dataset.canal, cf = JSON.parse(JSON.stringify((rascunho.canaisCfg||{})[k] || cfgVazio()));
+function atualizarDivisao(){ const fm = $('#form-camp'); if (!fm || !rascunho) return;
+  for (const sec of fm.querySelectorAll('.sec-canal')) { const moe = (sec.querySelector('.c-moe')||{}).value || 'BRL', k = sec.dataset.canal, cf = JSON.parse(JSON.stringify((rascunho.canaisCfg||{})[k] || cfgVazio()));
     const total = Math.max(0, +(sec.querySelector('.c-orc')||{}).value||0);
     if (cf.divisao==='pct') cf.paises.forEach(p=>{ const i = sec.querySelector(`.c-pct[data-p="${p.cod}"]`); if (i) p.pct = i.value==='' ? null : +i.value; });
     dividirBudget(cf.paises, total, cf.divisao);
@@ -1702,7 +1718,7 @@ function atualizarDivisao(){ const fm = $('#form-camp'); if (!fm || !rascunho) r
     const info = sec.querySelector('.c-info'); if (!info) continue;
     if (cf.divisao==='pct') { const sp = cf.paises.reduce((s,p)=>s+(+p.pct||0),0); info.innerHTML = cf.paises.length ? `Soma das porcentagens: <b style="color:${Math.abs(sp-100)<=0.01?'#1f6b3a':'#b3392f'}">${+sp.toFixed(2)}%</b>${Math.abs(sp-100)>0.01?' — precisa dar 100%':''}` : ''; }
     else info.innerHTML = cf.paises.length ? `<span class="muted">${cf.paises.length} país(es) · ${moeda(total/cf.paises.length||0, moe)} para cada</span>` : ''; }
-  const tot = $('#total-camp'); if (tot) { const sum = [...fm.querySelectorAll('.c-orc')].reduce((s,i)=>s+(+i.value||0),0); tot.textContent = moeda(sum, moe); } }
+ }
 function reabrirFormCamp(d){ rascunho = d; $('.modal-corpo').innerHTML = formCampanha(rascunho); icones(); atualizarDivisao(); }
 function abrirFormCampanha(c, clienteId){
   UI.paisesForm = null;
@@ -1968,10 +1984,10 @@ const ACT = {
       if (es!==t.ES || ef!==t.EF) { proporMovimento(c, t, es, ef, !DEP_ATIVAS); render(); return; } }
     render(); },
   /* budget/kpi */
-  formBudget: el => { const c = camp(el.dataset.id), b = c.budgets.find(x=>x.id===el.dataset.b) || {pais:el.dataset.p||''}, R = resumoBudget(c);
-    const disp = R.paises.map(x=>`<tr><td>${pais(x.cod)}</td><td class="dir num">${x.temAprov?moeda(x.aprov,c.moeda):'—'}</td><td class="dir num">${moeda(x.dist,c.moeda)}</td><td class="dir num" style="${x.livre<0?'color:#b3392f':''}">${x.temAprov?moeda(x.livre,c.moeda):'—'}</td></tr>`).join('');
+  formBudget: el => { const c = camp(el.dataset.id), b = c.budgets.find(x=>x.id===el.dataset.b) || {pais:el.dataset.p||''}, mo = b.id ? moedaLinha(c,b) : ((UI.fbm||{}).v && moedasCamp(c).includes(UI.fbm.v) ? UI.fbm.v : moedasCamp(c)[0]), R = resumoBudget(c, mo);
+    const disp = R.paises.map(x=>`<tr><td>${pais(x.cod)}</td><td class="dir num">${x.temAprov?moeda(x.aprov,mo):'—'}</td><td class="dir num">${moeda(x.dist,mo)}</td><td class="dir num" style="${x.livre<0?'color:#b3392f':''}">${x.temAprov?moeda(x.livre,mo):'—'}</td></tr>`).join('');
     abrirModal(b.id?'Editar budget':'Nova linha de budget', `<form id="f-bud" class="form-g"><label class="campo">Canal / plataforma<select name="canal">${opts(c.canais,b.canal)}</select></label><label class="campo">País / mercado<select name="pais">${opts(c.paises.map(p=>[p.cod,PAISES[p.cod].n]),b.pais)}</select></label>
-      <label class="campo">Previsto (${c.moeda})<input type="number" name="previsto" min="0" value="${b.previsto??''}"></label><label class="campo">Utilizado (${c.moeda})<input type="number" name="utilizado" min="0" value="${b.utilizado??0}"></label><label class="campo">Período<input name="periodo" value="${h(b.periodo||'')}"></label>
+      <label class="campo">Previsto (${mo})<input type="number" name="previsto" min="0" value="${b.previsto??''}"></label><label class="campo">Utilizado (${mo})<input type="number" name="utilizado" min="0" value="${b.utilizado??0}"></label><label class="campo">Período<input name="periodo" value="${h(b.periodo||'')}"></label>
       <label class="campo">Justificativa da alteração ${b.id?'*':''}<input name="just" placeholder="Obrigatória ao mudar valores"></label></form>
       <div class="tabela-wrap" style="margin-top:12px;border:1px solid var(--borda);border-radius:8px"><table class="tab"><thead><tr><th>País</th><th class="dir">Aprovado</th><th class="dir">Já distribuído</th><th class="dir">Disponível</th></tr></thead><tbody>${disp}</tbody></table></div>${b.id&&b.hist.length?`<div class="hist">${b.hist.map(x=>`<div>${x.q} — ${h(x.o)}</div>`).join('')}</div>`:''}`,
       `<button class="btn" data-act="fechar">Cancelar</button>${b.id?`<button class="btn btn-perigo" data-act="delBudget" data-id="${c.id}" data-b="${b.id}">Excluir</button>`:''}<button class="btn btn-p" data-act="salvarBudget" data-id="${c.id}" data-b="${b.id||''}">Salvar</button>`); },
@@ -1979,8 +1995,8 @@ const ACT = {
     v.previsto = +v.previsto||0; v.utilizado = +v.utilizado||0;
     if (b && (b.previsto!==v.previsto || b.utilizado!==v.utilizado)) { if (!v.just.trim()) return toast('Escreva a justificativa da alteração.'); b.hist.unshift({q:fd(HOJE),o:`previsto ${b.previsto}→${v.previsto}, utilizado ${b.utilizado}→${v.utilizado}: ${v.just}`}); }
     if (!b) { b = {id:novoId('b'),hist:[{q:fd(HOJE),o:'Criada'+(v.just?': '+v.just:'')}]}; c.budgets.push(b); }
-    delete v.just; Object.assign(b, v); registrar(`Budget salvo em “${c.nome}”: ${b.canal} ${b.pais}`); fecharModal(); render();
-    const x = resumoBudget(c).paises.find(y=>y.cod===b.pais); if (x && x.temAprov && x.dist > x.aprov) toast(`Atenção: ${PAISES[x.cod].n} passou do budget aprovado (${moeda(x.dist,c.moeda)} de ${moeda(x.aprov,c.moeda)}).`); },
+    delete v.just; Object.assign(b, v); b.moeda = (c.canaisCfg && c.canaisCfg[b.canal] && c.canaisCfg[b.canal].moeda) || b.moeda || c.moeda; registrar(`Budget salvo em “${c.nome}”: ${b.canal} ${b.pais}`); fecharModal(); render();
+    const x = resumoBudget(c, moedaLinha(c,b)).paises.find(y=>y.cod===b.pais); if (x && x.temAprov && x.dist > x.aprov) toast(`Atenção: ${PAISES[x.cod].n} passou do budget aprovado (${moeda(x.dist,moedaLinha(c,b))} de ${moeda(x.aprov,moedaLinha(c,b))}).`); },
   delBudget: el => { const c = camp(el.dataset.id); c.budgets = c.budgets.filter(x=>x.id!==el.dataset.b); registrar('Linha de budget excluída em '+c.nome); fecharModal(); render(); },
   formKpi: el => { const c = camp(el.dataset.id), k = c.kpis.find(x=>x.id===el.dataset.k) || {nome:el.dataset.nome||'', unidade:el.dataset.un||'nº'};
     const sug = ['Impressões','Alcance','Frequência','Cliques','CPC','CTR','CPM','Visualizações de vídeo','CPV','Leads','CPL','Conversões','Taxa de conversão'];
