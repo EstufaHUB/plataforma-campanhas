@@ -87,6 +87,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .msel-pop{position:absolute;top:calc(100% + 4px);left:0;z-index:60;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:6px;min-width:220px;max-height:320px;overflow:auto}
 .msel-op{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:.86rem;cursor:pointer;white-space:nowrap}.msel-op:hover{background:var(--pet-50)}
 .msel-limpar{width:100%;margin-top:4px;border:0;border-top:1px solid var(--borda);background:none;padding:7px;font:inherit;font-size:.82rem;color:var(--pet-700);cursor:pointer}
+.chip-link{display:inline-flex;align-items:center;gap:8px;max-width:340px;padding:5px 12px 5px 8px;border-radius:8px;background:#f1f3f4;border:1px solid #e3e6e8;color:var(--tx);text-decoration:none;font-size:.86rem}.chip-link:hover{background:#e8eaed}.chip-link svg{flex-shrink:0}.chip-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .apres{position:relative;width:100%;aspect-ratio:16/9;background:#f1f3f4;border-top:1px solid var(--borda)}.apres iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .legenda-farol{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--tx2);padding:10px 18px}.legenda-farol span{display:inline-flex;align-items:center;gap:6px}.legenda-farol i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .tab tr.mudou td{background:#fff8e6}.tab tr.atrasada td:first-child{box-shadow:inset 3px 0 0 #d0443a}
@@ -1072,9 +1073,17 @@ function urlIncorporar(u){ if (!u) return null; let m;
   if ((m = u.match(/drive\.google\.com\/file\/d\/([\w-]+)/))) return 'https://drive.google.com/file/d/'+m[1]+'/preview';
   if ((m = u.match(/canva\.com\/design\/([\w-]+)\/([\w-]+)/))) return 'https://www.canva.com/design/'+m[1]+'/'+m[2]+'/view?embed';
   return null; }
+/* link no formato "chip" do Google: ícone do tipo de arquivo + nome */
+function chipLink(url, nome){
+  const tipo = /presentation/.test(url) ? ['#f4b400','slides'] : /spreadsheets/.test(url) ? ['#0f9d58','sheets'] : /document/.test(url) ? ['#4285f4','docs'] : /canva\.com/.test(url) ? ['#00c4cc','canva'] : ['#5f6368','arquivo'];
+  const ic = tipo[1]==='slides' ? `<svg viewBox="0 0 20 20" width="18" height="18"><rect x="2" y="1" width="16" height="18" rx="2.5" fill="${tipo[0]}"/><rect x="5" y="6.5" width="10" height="7" rx="1" fill="none" stroke="#fff" stroke-width="1.6"/></svg>`
+    : tipo[1]==='docs' ? `<svg viewBox="0 0 20 20" width="18" height="18"><rect x="3" y="1" width="14" height="18" rx="2.5" fill="${tipo[0]}"/><path d="M6 7h8M6 10h8M6 13h5" stroke="#fff" stroke-width="1.5"/></svg>`
+    : tipo[1]==='sheets' ? `<svg viewBox="0 0 20 20" width="18" height="18"><rect x="3" y="1" width="14" height="18" rx="2.5" fill="${tipo[0]}"/><path d="M6 6h8v8H6zM6 10h8M10 6v8" fill="none" stroke="#fff" stroke-width="1.4"/></svg>`
+    : `<svg viewBox="0 0 20 20" width="18" height="18"><rect x="2" y="2" width="16" height="16" rx="4" fill="${tipo[0]}"/><path d="M7 10h6M10 7v6" stroke="#fff" stroke-width="1.6"/></svg>`;
+  return `<a class="chip-link" href="${h(url)}" target="_blank" rel="noopener" title="${h(nome)}">${ic}<span>${h(nome)}</span></a>`; }
 function cardApresentacao(c){ if (!c.urlPlanejamento) return '';
   const emb = urlIncorporar(c.urlPlanejamento);
-  return `<div class="card" style="margin-top:16px"><div class="card-cab"><h3>Planejamento estratégico</h3><a class="btn btn-s" href="${h(c.urlPlanejamento)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Abrir em nova aba</a></div>
+  return `<div class="card" style="margin-top:16px"><div class="card-cab"><h3>Planejamento estratégico</h3>${chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento')}</div>
     ${emb ? `<div class="apres"><iframe src="${h(emb)}" allowfullscreen loading="lazy" title="Apresentação do planejamento"></iframe></div><div class="small muted" style="padding:8px 18px 14px">Se a apresentação não aparecer, ela precisa estar compartilhada com quem tem o link (ou com a sua conta Google).</div>`
           : `<div class="card-p small muted">Este tipo de link não pode ser mostrado aqui. Use “Abrir em nova aba”.</div>`}</div>`; }
 function abaVisao(c){
@@ -1090,7 +1099,7 @@ function abaVisao(c){
       <dt>Descrição</dt><dd>${h(c.descricao)||'—'}</dd><dt>Objetivo da campanha</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-pet">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
       <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd>
       <dt>Budget por país</dt><dd>${c.paises.some(p=>p.budget!=null) ? `<div style="display:grid;grid-template-columns:auto auto;gap:2px 14px;justify-content:start">${c.paises.map(p=>`<span>${pais(p.cod)}</span><span class="num">${p.budget!=null?moeda(p.budget,c.moeda):'<span class="muted">não informado</span>'}</span>`).join('')}<b>Total</b><b class="num">${moeda(c.paises.reduce((s,p)=>s+(+p.budget||0),0),c.moeda)}</b></div>` : `${c.orcamento?moeda(c.orcamento,c.moeda)+' (total, sem divisão por país) · ':''}<a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por país</a>`}</dd>
-      <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?`<a href="${h(c.urlPlanejamento)}" target="_blank" rel="noopener">Abrir apresentação ↗</a>`:'—'}</dd>
+      <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
       <dt>Relatório</dt><dd>${c.urlRelatorio?`<a href="${h(c.urlRelatorio)}" target="_blank" rel="noopener">Abrir relatório ↗</a>`:'—'}</dd>
       </dl>
       <div style="margin-top:14px"><label class="campo" style="max-width:240px">Status geral<select data-chg="statusCamp" data-id="${c.id}">${opts(ST_CAMP,c.status)}</select></label></div></div>
@@ -1521,7 +1530,8 @@ function formCampanha(c){
     <label class="campo">Idioma-base da campanha<select name="idiomaBase">${opts(Object.entries(IDIOMAS),d.idiomaBase || (regs[0]?S.baseRegiao[regs[0]]:'EN'))}</select></label>
     <label class="campo">Moeda do budget<select name="moeda">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select></label>
     <div class="campo tudo">Canais<div class="chips">${CANAIS.map(k=>`<label class="chip ${(d.canais||[]).includes(k)?'on':''}"><input type="checkbox" name="canal" value="${k}" ${(d.canais||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
-    <label class="campo">URL do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}"></label>
+    <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
+    <label class="campo">Nome da apresentação<input name="nomePlanejamento" value="${h(d.nomePlanejamento||'')}" placeholder="Ex.: PTx Trimble EMEA | Planning and Concept"></label>
     <label class="campo">URL do relatório<input type="url" name="urlRelatorio" value="${h(d.urlRelatorio||'')}"></label>
   </div></form>`;
 }
@@ -1531,7 +1541,7 @@ function lerFormCampanha(){
   const paises = Object.keys(PAISES).filter(k=>regs.includes(PAISES[k].r) && fm.elements['pais_'+k] && fm.elements['pais_'+k].checked)
     .map(k=>{ const ant = (rascunho.paises||[]).find(p=>p.cod===k)||{}; return Object.assign({}, ant, {cod:k, idioma:v['idioma_'+k], lancamento:v.lancamento, budget: v['budget_'+k]==='' || v['budget_'+k]==null ? null : Math.max(0, +v['budget_'+k])}); });
   return Object.assign({}, rascunho, {clienteId:v.clienteId,nome:v.nome.trim(),descricao:v.descricao,objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),lancamento:v.lancamento,fimVeiculacao:v.fimVeiculacao,idiomaBase:v.idiomaBase,
-    moeda:v.moeda,orcamento:paises.reduce((s,p)=>s+(+p.budget||0),0),canais:[...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value),urlPlanejamento:v.urlPlanejamento,urlRelatorio:v.urlRelatorio,paises});
+    moeda:v.moeda,orcamento:paises.reduce((s,p)=>s+(+p.budget||0),0),canais:[...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value),urlPlanejamento:v.urlPlanejamento,nomePlanejamento:(v.nomePlanejamento||'').trim(),urlRelatorio:v.urlRelatorio,paises});
 }
 function validarCampanha(d){
   const err = [];
