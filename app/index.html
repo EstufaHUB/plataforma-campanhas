@@ -1235,14 +1235,14 @@ function listaAcoes(c, L, ed){
   const selStatus = (attrs, t, cls, misto, val) => `<select class="farol ${cls}" ${attrs} ${ed?'':'disabled'}>${misto?'<option value="" selected>Vários</option>':''}${opts(ST_ACAO, misto?'__':val)}</select>`;
   const linha = (t, sub) => { const st = statusExib(t);
     return `<tr class="${sub?'a-pais':''} ${st==='Atrasada'?'atrasada':''}"><td style="white-space:nowrap">${selStatus(`data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}"`, t, farolDe(t), false, t.status)}${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td><td>${sub?pais(t.pais):`<a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">${h(t.nome)}</a>`}${sub?` <a href="javascript:void 0" class="small" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">abrir</a>`:''}${(t.coment||[]).length?` <span class="small muted">· ${t.coment.length} coment.</span>`:''}${t.manual?' <span class="small muted" title="Datas ajustadas à mão">· ajustada</span>':''}</td>
-      <td>${selResp(`data-chg="pessoaTarefa" data-id="${c.id}" data-t="${t.id}"`, t.pessoa)}</td><td class="small muted">${h(t.area)}</td><td>${t.pais?(sub?'':pais(t.pais)):'<span class="muted small">Global</span>'}</td>
+      <td>${selResp(`data-chg="pessoaTarefa" data-id="${c.id}" data-t="${t.id}"`, t.pessoa)}</td>
       <td class="num">${fd(t.ES)}</td><td class="num">${fd(t.EF)}</td><td>${h(t.prioridade||'Média')}</td>
       <td style="white-space:nowrap">${ed?`<button class="icone-btn" title="Editar" data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><i data-lucide="pencil"></i></button>${t.marco?'':`<button class="icone-btn" title="Excluir" data-act="excluirEtapa" data-id="${c.id}" data-t="${t.id}"><i data-lucide="trash-2"></i></button>`}`:''}</td></tr>`; };
   let corpo = '';
   for (const fase of ORDEM_FASES) {
     const daFase = L.filter(t=>t.fase===fase); if (!daFase.length) continue;
     const conc = daFase.filter(t=>t.status==='Concluída').length;
-    corpo += `<tr class="a-fase"><td colspan="9"><button class="icone-btn" data-act="aFase" data-f="${fase}"><i data-lucide="${ff[fase]?'chevron-right':'chevron-down'}"></i></button>${FASES[fase]} <span class="small muted" style="font-weight:500;margin-left:8px">${conc}/${daFase.length} concluída(s)</span></td></tr>`;
+    corpo += `<tr class="a-fase"><td colspan="7"><button class="icone-btn" data-act="aFase" data-f="${fase}"><i data-lucide="${ff[fase]?'chevron-right':'chevron-down'}"></i></button>${FASES[fase]} <span class="small muted" style="font-weight:500;margin-left:8px">${conc}/${daFase.length} concluída(s)</span></td></tr>`;
     if (ff[fase]) continue;
     const vistos = new Set();
     for (const tpl of c.modelo.filter(m=>m.fase===fase)) {
@@ -1251,15 +1251,15 @@ function listaAcoes(c, L, ed){
       const ES = ins.reduce((m,t)=>t.ES<m?t.ES:m, ins[0].ES), EF = ins.reduce((m,t)=>t.EF>m?t.EF:m, ins[0].EF);
       const pessoas = [...new Set(ins.map(t=>t.pessoa||''))], sts = [...new Set(ins.map(t=>t.status))], atrasada = ins.some(t=>statusExib(t)==='Atrasada');
       corpo += `<tr class="a-grupo ${atrasada?'atrasada':''}"><td style="white-space:nowrap">${selStatus(`data-chg="statusGrupo" data-id="${c.id}" data-t="${tpl.id}"`, null, farolGrupo(ins), sts.length>1, sts[0])}${atrasada?' <span class="tag t-verm">Atrasada</span>':''}</td><td><button class="icone-btn" data-act="aAbrir" data-t="${tpl.id}" title="Ver por país"><i data-lucide="${ab[tpl.id]?'chevron-down':'chevron-right'}"></i></button><a href="javascript:void 0" data-act="aAbrir" data-t="${tpl.id}">${h(ins[0].nome)}</a> <span class="tag t-pet">${ins.length} país${ins.length>1?'es':''}</span></td>
-        <td>${selResp(`data-chg="pessoaGrupo" data-id="${c.id}" data-t="${tpl.id}"`, pessoas[0], pessoas.length>1)}</td><td class="small muted">${h(tpl.area)}</td><td class="small">${ins.map(t=>PAISES[t.pais].f).join(' ')}</td>
+        <td>${selResp(`data-chg="pessoaGrupo" data-id="${c.id}" data-t="${tpl.id}"`, pessoas[0], pessoas.length>1)}</td>
         <td class="num">${fd(ES)}</td><td class="num">${fd(EF)}</td><td></td>
         <td></td></tr>`;
       if (ab[tpl.id]) ins.forEach(t=>corpo += linha(t,true));
     }
     daFase.filter(t=>!vistos.has(t.id)).forEach(t=>corpo += linha(t,false));
   }
-  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Área</th><th>País</th><th>Início</th><th>Prazo</th><th>Prioridade</th><th></th></tr></thead><tbody>
-    ${corpo || '<tr><td colspan="9" class="vazio">Nenhuma ação com esses filtros.</td></tr>'}</tbody></table></div>
+  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th>Prioridade</th><th></th></tr></thead><tbody>
+    ${corpo || '<tr><td colspan="7" class="vazio">Nenhuma ação com esses filtros.</td></tr>'}</tbody></table></div>
     <div class="legenda-farol"><span><i style="background:#2e9d55"></i>Concluída</span><span><i style="background:#2f80b8"></i>Em andamento</span><span><i style="background:#e0a100"></i>Aguardando / em revisão</span><span><i style="background:#d0443a"></i>Atrasada ou bloqueada</span><span><i style="background:#9aa9ae"></i>Não iniciada / cancelada</span></div>`;
 }
 /* seleção múltipla: botão que abre uma lista de caixas de marcar */
