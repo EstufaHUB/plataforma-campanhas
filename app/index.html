@@ -88,6 +88,32 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .msel-op{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:.86rem;cursor:pointer;white-space:nowrap}.msel-op:hover{background:var(--pet-50)}
 .msel-limpar{width:100%;margin-top:4px;border:0;border-top:1px solid var(--borda);background:none;padding:7px;font:inherit;font-size:.82rem;color:var(--pet-700);cursor:pointer}
 .chip-link{display:inline-flex;align-items:center;gap:8px;max-width:340px;padding:5px 12px 5px 8px;border-radius:8px;background:#f1f3f4;border:1px solid #e3e6e8;color:var(--tx);text-decoration:none;font-size:.86rem}.chip-link:hover{background:#e8eaed}.chip-link svg{flex-shrink:0}.chip-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;margin-bottom:14px;flex-wrap:wrap}
+.cc-esq{display:flex;gap:16px;align-items:center;min-width:0}
+.cc-logo{width:64px;height:64px;border-radius:12px;background:var(--pet-950);color:#fff;display:grid;place-items:center;font-weight:700;font-size:1.25rem;flex-shrink:0;letter-spacing:-.3px}
+.cc-cli{font-size:.86rem;color:var(--tx2)}.cc h1{margin:2px 0 6px;font-size:1.5rem}
+.cc-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.82rem;color:var(--tx2)}
+.cc-pill{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--tx)}.cc-pill i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.cc-sep{width:1px;height:16px;background:var(--borda)}.cc-ini{display:inline-flex;align-items:center;gap:5px}.cc-ini svg{width:15px;height:15px}.cc-band{letter-spacing:2px}
+.cc-dir{display:flex;gap:8px;align-items:center}.menu-wrap{position:relative}.menu-wrap .btn svg{width:15px;height:15px}
+.menu-pop{position:absolute;right:0;top:calc(100% + 4px);z-index:60;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:6px;min-width:220px}
+.menu-pop button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:8px 10px;border-radius:6px;font:inherit;font-size:.86rem;color:var(--tx);cursor:pointer;text-align:left}.menu-pop button:hover{background:var(--pet-50)}.menu-pop svg{width:16px;height:16px}
+.kpi2{display:flex;gap:14px;align-items:flex-start;padding:18px}.k-ic{width:36px;height:36px;border-radius:9px;background:var(--pet-50);color:var(--pet-700);display:grid;place-items:center;flex-shrink:0}.k-ic svg{width:19px;height:19px}
+.k-rot{font-size:.84rem;color:var(--tx2)}.k-val{font-size:1.45rem;font-weight:700;color:var(--pet-950);margin-top:6px;line-height:1.1}.k-dia{font-size:.9rem;color:var(--tx);margin-top:2px}.k-sub{font-size:.74rem;color:var(--tx2);margin-top:8px}
+.k-prog{align-items:center}
+.h-ic{display:flex;align-items:center;gap:8px}.h-ic svg{width:19px;height:19px;color:var(--pet-600)}
+.sep-h{height:1px;background:var(--borda);margin:14px 0}
+.tag.t-verde-c{background:#e3f4e8;color:#1f6b3a}
+.bud{display:grid;grid-template-columns:auto auto;gap:4px 22px;justify-content:start}
+.st-geral{display:flex;align-items:center;gap:0;position:relative;max-width:240px;margin-top:6px}.st-geral i{position:absolute;left:12px;width:9px;height:9px;border-radius:50%}.st-geral select{width:100%;padding:9px 10px 9px 28px;border-radius:8px}
+.linha-tempo{list-style:none;margin:0;padding:6px 0}.linha-tempo li{position:relative;display:flex;gap:12px;align-items:flex-start;padding:12px 18px 12px 44px;border-bottom:1px solid var(--borda)}.linha-tempo li:last-child{border-bottom:0}
+.linha-tempo li::before{content:"";position:absolute;left:25px;top:0;bottom:0;width:2px;background:#e3e6e8}.linha-tempo li:first-child::before{top:20px}.linha-tempo li:last-child::before{bottom:calc(100% - 20px)}
+.lt-ponto{position:absolute;left:19px;top:15px;width:14px;height:14px;border-radius:50%;background:#cfd6d9;border:3px solid var(--sup)}.linha-tempo li.atual .lt-ponto{background:var(--pet-600);box-shadow:0 0 0 3px #d4eef0}
+.lt-nome{color:var(--tx);text-decoration:none;font-size:.88rem}.linha-tempo li.atual .lt-nome{color:var(--pet-700);font-weight:500}.lt-nome:hover{text-decoration:underline}.lt-data{white-space:nowrap;color:var(--pet-800)}
+.paises-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:16px 18px}
+.pais-card{border:1px solid var(--borda);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--tx)}.pais-card:hover{border-color:var(--pet-600)}
+.pc-nome{font-weight:600;font-size:1rem}.pc-data{margin-top:8px;font-size:.86rem;color:var(--tx2);display:flex;align-items:center;gap:10px}
+@media (max-width:640px){.cc{padding:14px}.cc-logo{width:48px;height:48px;font-size:1rem}.cc h1{font-size:1.25rem}}
 .apres{position:relative;width:100%;aspect-ratio:16/9;background:#f1f3f4;border-top:1px solid var(--borda)}.apres iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .legenda-farol{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--tx2);padding:10px 18px}.legenda-farol span{display:inline-flex;align-items:center;gap:6px}.legenda-farol i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .tab tr.mudou td{background:#fff8e6}.tab tr.atrasada td:first-child{box-shadow:inset 3px 0 0 #d0443a}
@@ -1050,8 +1076,10 @@ function pgCampanha(r){
   migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,'#/clientes/'+c.clienteId],[c.nome]]);
   const abas = [['visao','info','Visão geral'],['cronograma','gantt-chart','Cronograma'],['acoes','list-checks','Gestão de ações'],['budget','wallet','Budgets e KPIs'],['entregaveis','package','Entregáveis'],['mercados','globe-2','Mercados e países']];
   const corpo = {visao:abaVisao,cronograma:abaCronograma,acoes:abaAcoes,budget:abaBudget,entregaveis:abaEntregaveis,mercados:abaMercados}[aba](c);
-  return `<div class="cab"><div><div class="small muted">${h(cliente(c.clienteId).nome)}</div><h1>${h(c.nome)}</h1><p style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${tag(c.status)} ${saudeHtml(c)} <span class="small">Lançamento <b>${fds(c.lancamento)}</b></span> <span class="small">${c.paises.map(p=>PAISES[p.cod].f).join(' ')}</span>${c.arquivada?' <span class="tag">Arquivada</span>':''}</p></div>
-   <div class="filtros nao-imprimir"><button class="btn" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button><button class="btn" data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button class="btn btn-g" data-act="arquivarCamp" data-id="${c.id}" title="${c.arquivada?'Desarquivar':'Arquivar'}"><i data-lucide="archive"></i></button></div></div>
+  const cli = cliente(c.clienteId), ini = inicioPlan(c), corSt = {'Planejamento':'#7b5ea7','Em produção':'#2e9d55','Em aprovação':'#e0a100','Em veiculação':'#2f80b8','Concluída':'#9aa9ae'}[c.status]||'#9aa9ae';
+  return `<div class="cc card"><div class="cc-esq"><div class="cc-logo">${h((cli.nome||'?').split(' ')[0].slice(0,3))}</div><div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>
+     <div class="cc-meta"><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span>${saudeHtml(c)}<span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-days"></i>Início: ${fds(ini)}</span><span class="cc-sep"></span><span class="cc-band">${c.paises.map(p=>PAISES[p.cod].f).join(' ')}</span>${c.arquivada?' <span class="tag">Arquivada</span>':''}</div></div></div>
+   <div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop"><button data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'} campanha</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div></div>
    <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`;
 }
 function alertasCampanha(c){
@@ -1088,26 +1116,35 @@ function cardApresentacao(c){ if (!c.urlPlanejamento) return '';
           : `<div class="card-p small muted">Este tipo de link não pode ser mostrado aqui. Use “Abrir em nova aba”.</div>`}</div>`; }
 function abaVisao(c){
   const ini = inicioPlan(c), ts = c.crono.tarefas, prog = progresso(c);
-  const crit = ts.filter(t=>t.critico && t.status!=='Concluída').slice(0,5);
+  const prox = ts.filter(t=>t.status!=='Concluída' && t.status!=='Cancelada').sort((a,b)=>a.ES<b.ES?-1:a.ES>b.ES?1:0).slice(0,5);
+  const dataKpi = (ic, rot, d, sub) => `<div class="card kpi2"><div class="k-ic"><i data-lucide="${ic}"></i></div><div><div class="k-rot">${rot}</div><div class="k-val">${fd(d)}</div><div class="k-dia">(${d?DSEM[dow(d)].slice(0,3):''})</div>${sub?`<div class="k-sub">${sub}</div>`:''}</div></div>`;
+  const R = 34, C = 2*Math.PI*R;
+  const corSt = {'Planejamento':'#7b5ea7','Em produção':'#2e9d55','Em aprovação':'#e0a100','Em veiculação':'#2f80b8','Concluída':'#9aa9ae'}[c.status]||'#9aa9ae';
+  const totalBud = c.paises.reduce((s,p)=>s+(+p.budget||0),0);
   return alertasCampanha(c) + `<div class="grade g4">
-    <div class="card kpi"><div class="r">Início do planejamento</div><div class="v" style="font-size:1.15rem">${fds(ini)}</div><div class="r">recebimento do briefing</div></div>
-    <div class="card kpi"><div class="r">Lançamento</div><div class="v" style="font-size:1.15rem">${fds(c.lancamento)}</div><div class="r">mesma data em todos os países</div></div>
-    <div class="card kpi"><div class="r">Fim da veiculação</div><div class="v" style="font-size:1.15rem">${fds(c.fimVeiculacao)}</div></div>
-    <div class="card kpi"><div class="r">Progresso do cronograma</div><div class="v">${prog}%</div><div class="barra" style="margin-top:6px"><i style="width:${prog}%"></i></div></div></div>
-   <div class="grade g2" style="margin-top:16px">
-    <div class="card card-p"><h3 style="margin-bottom:12px">Dados da campanha</h3><dl class="def">
-      <dt>Descrição</dt><dd>${h(c.descricao)||'—'}</dd><dt>Objetivo da campanha</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-pet">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
-      <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd>
-      <dt>Budget por país</dt><dd>${c.paises.some(p=>p.budget!=null) ? `<div style="display:grid;grid-template-columns:auto auto;gap:2px 14px;justify-content:start">${c.paises.map(p=>`<span>${pais(p.cod)}</span><span class="num">${p.budget!=null?moeda(p.budget,c.moeda):'<span class="muted">não informado</span>'}</span>`).join('')}<b>Total</b><b class="num">${moeda(c.paises.reduce((s,p)=>s+(+p.budget||0),0),c.moeda)}</b></div>` : `${c.orcamento?moeda(c.orcamento,c.moeda)+' (total, sem divisão por país) · ':''}<a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por país</a>`}</dd>
+    ${dataKpi('calendar-days','Início do planejamento', ini, 'Recebimento do briefing')}
+    ${dataKpi('rocket','Lançamento', c.lancamento, 'Mesma data em todos os países')}
+    ${dataKpi('trending-up','Fim da veiculação', c.fimVeiculacao, '')}
+    <div class="card kpi2 k-prog"><svg viewBox="0 0 84 84" width="84" height="84"><circle cx="42" cy="42" r="${R}" fill="none" stroke="#e3eef0" stroke-width="9"/><circle cx="42" cy="42" r="${R}" fill="none" stroke="var(--pet-600)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 42 42)"/><text x="42" y="47" text-anchor="middle" font-size="17" font-weight="700" fill="var(--pet-950)">${prog}%</text></svg>
+      <div style="flex:1;min-width:0"><div class="k-rot">Progresso<br>do cronograma</div><div class="barra" style="margin-top:8px"><i style="width:${prog}%"></i></div></div></div></div>
+   <div class="grade g2" style="margin-top:16px;align-items:start">
+    <div class="card"><div class="card-cab"><h3 class="h-ic"><i data-lucide="clipboard-list"></i>Dados da campanha</h3>${ehEquipe()?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Ver detalhes →</a>`:''}</div><div class="card-p"><dl class="def">
+      <dt>Descrição</dt><dd>${h(c.descricao)||'—'}</dd>
+      <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
+      <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd></dl>
+      <div class="sep-h"></div><dl class="def">
+      <dt>Budget por país</dt><dd>${c.paises.some(p=>p.budget!=null) ? `<div class="bud">${c.paises.map(p=>`<span>${PAISES[p.cod].f} ${PAISES[p.cod].n}</span><span class="num">${p.budget!=null?moeda(p.budget,c.moeda):'<span class="muted">—</span>'}</span>`).join('')}<b>Total</b><b class="num">${moeda(totalBud,c.moeda)}</b></div>` : `${c.orcamento?moeda(c.orcamento,c.moeda)+' (total) · ':''}<a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por país</a>`}</dd>
       <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
-      <dt>Relatório</dt><dd>${c.urlRelatorio?`<a href="${h(c.urlRelatorio)}" target="_blank" rel="noopener">Abrir relatório ↗</a>`:'—'}</dd>
-      </dl>
-      <div style="margin-top:14px"><label class="campo" style="max-width:240px">Status geral<select data-chg="statusCamp" data-id="${c.id}">${opts(ST_CAMP,c.status)}</select></label></div></div>
-    <div><div class="card"><div class="card-cab"><h3>Próximas etapas do caminho crítico</h3><a href="#/campanha/${c.id}/cronograma" class="small">Ver cronograma</a></div>
-      <ul class="lista-simples">${crit.map(t=>`<li><span class="ponto p-verm"></span><div style="flex:1;min-width:0"><div>${h(t.nome)}${t.pais?' · '+t.pais:''}</div><div class="small muted">${h(respDaArea(c,t.area,t.pais))}</div></div><span class="small num">${fdc(t.ES)} → ${fdc(t.EF)}</span></li>`).join('')||'<li class="muted">Nenhuma etapa crítica em aberto.</li>'}</ul></div>
-     <div class="card"><div class="card-cab"><h3>Países</h3><a href="#/campanha/${c.id}/mercados" class="small">Ver cards</a></div>
-      <ul class="lista-simples">${c.paises.map(p=>{ const r = riscosPais(c).find(x=>x.cod===p.cod); return `<li>${pais(p.cod)}<span class="small muted">${IDIOMAS[p.idioma]}</span><span style="margin-left:auto" class="small">${fds(p.lancamento)}</span>${r?'<span class="ponto p-verm" title="Risco"></span>':'<span class="ponto p-verde"></span>'}</li>`; }).join('')}</ul></div></div>
-   </div>${cardApresentacao(c)}`;
+      <dt>Relatório</dt><dd>${c.urlRelatorio?chipLink(c.urlRelatorio, 'Relatório'):'—'}</dd>
+      <dt>Status geral</dt><dd></dd></dl>
+      <div class="st-geral"><i style="background:${corSt}"></i><select data-chg="statusCamp" data-id="${c.id}" ${ehEquipe()?'':'disabled'}>${opts(ST_CAMP,c.status)}</select></div></div></div>
+    <div class="card"><div class="card-cab"><h3 class="h-ic"><i data-lucide="list-checks"></i>Próximas etapas</h3><a href="#/campanha/${c.id}/cronograma" class="small">Ver cronograma →</a></div>
+      <ul class="linha-tempo">${prox.map((t,i)=>{ const st = statusExib(t); return `<li class="${i===0?'atual':''}"><span class="lt-ponto"></span><div style="flex:1;min-width:0"><a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}" class="lt-nome">${h(t.nome)}${t.pais?' · '+t.pais:''}</a>
+        <div class="small muted">${h(t.pessoa||t.area)}</div>${st==='Atrasada'?'<span class="tag t-verm" style="margin-top:4px">Atrasada</span>':t.status!=='Não iniciada'?`<span class="farol ${farolDe(t)}" style="display:inline-block;margin-top:4px;padding:1px 8px 1px 20px;background-position:7px center">${h(t.status)}</span>`:''}</div><span class="small num lt-data">${fdc(t.ES)} → ${fdc(t.EF)}</span></li>`; }).join('')||'<li class="muted" style="padding:14px 18px">Nenhuma etapa em aberto.</li>'}</ul></div>
+   </div>
+   <div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="globe-2"></i>Países</h3><a href="#/campanha/${c.id}/mercados" class="small">Ver cards →</a></div>
+     <div class="paises-grade">${c.paises.map(p=>{ const r = riscosPais(c).find(x=>x.cod===p.cod); return `<a class="pais-card" href="#/campanha/${c.id}/mercados" title="${r?h(r.motivo):'Sem riscos'}"><div class="pc-nome">${PAISES[p.cod].f} ${PAISES[p.cod].n}</div><div class="pc-data">${fds(p.lancamento)} <span class="ponto ${r?'p-verm':'p-verde'}"></span></div></a>`; }).join('')}</div></div>
+   ${cardApresentacao(c)}`;
 }
 
 /* ---------- Cronograma ---------- */
@@ -1157,7 +1194,7 @@ function reordenarModelo(c, tid, alvo, depois, fase){
   M.splice(pos, 0, m);
   for (const t of c.crono.tarefas) if (t.tid===tid) t.fase = m.fase;
   return true; }
-document.addEventListener('click', e => { if (UI.mselAberto && !e.target.closest('.msel')) { UI.mselAberto = null; render(); } });
+document.addEventListener('click', e => { if (UI.mselAberto && !e.target.closest('.msel')) { UI.mselAberto = null; render(); } if (UI.menuCamp && !e.target.closest('.menu-wrap')) { UI.menuCamp = false; render(); } });
 let linhaDrag = null;
 document.addEventListener('dragstart', e => { const g = e.target.closest && e.target.closest('[data-linha-drag]'); if (!g) return;
   linhaDrag = g.dataset.linhaDrag; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', linhaDrag); } catch(_){}
@@ -1575,6 +1612,7 @@ function resumoCalc(r, lanc){
 }
 
 const ACT = {
+  menuCamp: () => { UI.menuCamp = !UI.menuCamp; render(); },
   menu: () => { if (innerWidth <= 860) return document.body.classList.toggle('menu-aberto');
     const o = document.body.classList.toggle('menu-oculto'); try { localStorage.setItem('menu-oculto', o?'1':''); } catch(e){} setTimeout(render, 220); },
   sair: async () => { await sincronizar(); await sb.auth.signOut(); },
@@ -1616,7 +1654,7 @@ const ACT = {
     const mudouDatas = d.lancamento!==c.lancamento || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
     if (mudouDatas) { rascunho = d; return ACT.compararRecalc(null, d, 'Edição da campanha (datas, países ou idiomas)'); }
     Object.assign(c, d); registrar('Campanha editada: '+c.nome); fecharModal(); render(); toast('Campanha salva.'); },
-  alterarLanc: el => { const c = camp(el.dataset.id);
+  alterarLanc: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
     abrirModal('Alterar data de lançamento', `<form id="f-lanc" class="form-g"><label class="campo">Nova data de lançamento (todos os países)<input type="date" name="lanc" value="${c.lancamento}"></label><div></div><label class="campo tudo">Motivo da alteração<input name="motivo" placeholder="Ex.: cliente adiou o lançamento"></label></form>
       <div class="small muted" style="margin-top:10px">Etapas concluídas e em andamento são mantidas. As demais são recalculadas de trás para frente a partir do lançamento; as que já deveriam ter começado ficam como atrasadas.</div><div id="aviso-lanc" style="margin-top:10px"></div>`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="simLanc" data-id="${c.id}">Comparar datas</button>`); },
@@ -1763,7 +1801,7 @@ const ACT = {
     toast('Ajuste aplicado. O lançamento continua em '+fd(c.lancamento)+'.'); },
   verVersao: el => { const c = camp(el.dataset.id), v = c.cronoHist.find(x=>x.versao==el.dataset.v);
     abrirModal('Versão '+v.versao+' do cronograma', `<p class="muted" style="margin-top:0">${fd(v.data)} · ${h(v.motivo)} · lançamento ${fd(v.lancamento)}</p>${tabelaPrevia(v.tarefas)}`, `<button class="btn" data-act="fechar">Fechar</button>${ehEquipe()?`<button class="btn btn-p" data-act="restaurarVersao" data-id="${c.id}" data-v="${v.versao}"><i data-lucide="history"></i>Voltar às datas desta versão</button>`:''}`, true); },
-  arquivarCamp: el => { const c = camp(el.dataset.id); c.arquivada = !c.arquivada; registrar((c.arquivada?'Campanha arquivada: ':'Campanha desarquivada: ')+c.nome); render(); toast(c.arquivada?'Campanha arquivada.':'Campanha desarquivada.'); },
+  arquivarCamp: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.arquivada = !c.arquivada; registrar((c.arquivada?'Campanha arquivada: ':'Campanha desarquivada: ')+c.nome); render(); toast(c.arquivada?'Campanha arquivada.':'Campanha desarquivada.'); },
   filtrarPais: el => { UI.fcr = Object.assign(UI.fcr||{visao:'lista',area:'',fase:'',status:''}, {pais:el.dataset.p}); location.hash = '#/campanha/'+el.dataset.id+'/cronograma'; },
   exportCsv: el => { const c = camp(el.dataset.id);
     const L = [['Etapa','País','Área','Responsável','Início','Conclusão','Duração (dias úteis)','Folga','Caminho crítico','Status','Dependências']].concat(c.crono.tarefas.map(t=>[t.nome,t.pais||'Global',t.area,respDaArea(c,t.area,t.pais),fd(t.ES),fd(t.EF),t.dur,t.folga,t.critico?'Sim':'Não',statusExib(t),t.deps.map(d=>d.id+' '+d.tipo).join(' | ')]));
