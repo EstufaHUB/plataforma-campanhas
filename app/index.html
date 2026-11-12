@@ -73,6 +73,9 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .tab tr.a-grupo td:first-child,.tab tr.a-fase td:first-child{white-space:nowrap}
 .sel-resp{padding:3px 6px;font-size:.8rem;min-width:118px}
 .menu-barra{position:fixed;z-index:120;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:10px;min-width:230px;max-width:320px}
+.chave-dep{gap:8px}.chave{width:28px;height:16px;border-radius:999px;background:#c9d1d4;position:relative;display:inline-block;transition:background .15s}
+.chave i{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.chave-dep.on .chave{background:var(--pet-600)}.chave-dep.on .chave i{left:14px}
 .mb-sep{height:1px;background:var(--borda);margin:6px 0}
 .mb-tit{font-weight:600;font-size:.88rem;line-height:1.3}
 .mb-op{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:7px 8px;border-radius:6px;font:inherit;font-size:.85rem;color:var(--tx);cursor:pointer;text-align:left}
@@ -475,13 +478,13 @@ function snapshotCrono(c){ c.cronoHist.unshift({versao:c.crono.versao, data:c.cr
 function moverConectado(camp, tid, ES, EF){
   const cx = ctx(), ts = camp.crono.tarefas, por = Object.fromEntries(ts.map(t=>[t.id,t])), t = por[tid], movidas = new Set(), travadas = [];
   t.ES = ES; t.EF = EF; t.dur = uteisEntre(ES, EF, t.cal, cx) + 1; t.manual = true;
-  const puxar = x => { for (const d of x.deps) { const p = por[d.id]; if (!p || p.status==='Concluída') continue;
+  const puxar = x => { for (const d of x.deps) { const p = por[d.id]; if (!p || p.status!=='Não iniciada') continue;
       if (d.tipo==='FS') { const lim = antU(x.ES, p.cal, cx); if (p.EF > lim) { p.EF = lim; p.ES = iniDe(lim, p.dur, p.cal, cx); p.manual = true; movidas.add(p.id); puxar(p); } }
       else if (p.ES > x.ES) { p.ES = paraTras(x.ES, p.cal, cx); p.EF = fimDe(p.ES, p.dur, p.cal, cx); p.manual = true; movidas.add(p.id); puxar(p); } } };
   puxar(t);
   const succ = {}; ts.forEach(x=>x.deps.forEach(d=>(succ[d.id] = succ[d.id]||[]).push(x.id)));
   const desc = new Set(), fila = [tid, ...movidas]; while (fila.length) for (const sid of succ[fila.shift()]||[]) if (!desc.has(sid)) { desc.add(sid); fila.push(sid); }
-  for (const s of ts) { if (s===t || !desc.has(s.id) || s.status==='Concluída' || s.marco) continue;
+  for (const s of ts) { if (s===t || !desc.has(s.id) || s.status!=='Não iniciada' || s.marco) continue;
     let es = null; for (const d of s.deps) { const p = por[d.id]; if (!p) continue; const v = d.tipo==='FS' ? proxU(p.EF, s.cal, cx) : paraFrente(p.ES, s.cal, cx); if (!es || v>es) es = v; }
     if (!es) continue;
     if (es > s.LS) { es = s.LS; travadas.push(s); }   // não passa do limite: o lançamento fica fixo
@@ -904,7 +907,8 @@ function render(){
   capturarDesfazer(r);
 }
 /* desfazer (Ctrl+Z) e refazer (Ctrl+Shift+Z ou Ctrl+Y): guarda o estado da campanha aberta a cada mudança */
-const DESF = {};   // por campanha: {pilha:[], refazer:[], atual:json}
+const DESF = {};
+let DEP_ATIVAS = true; try { DEP_ATIVAS = localStorage.getItem('dep-off')!=='1'; } catch(e){}   // por campanha: {pilha:[], refazer:[], atual:json}
 function capturarDesfazer(r){ if (r[0]!=='campanha' || !ehEquipe()) return; const c = camp(r[1]); if (!c) return;
   const j = JSON.stringify(c), d = DESF[c.id] || (DESF[c.id] = {pilha:[], refazer:[], atual:j});
   if (d.atual !== j) { d.pilha.push(d.atual); if (d.pilha.length > 60) d.pilha.shift(); d.refazer = []; d.atual = j; }
@@ -1064,7 +1068,7 @@ function abaCronograma(c){
   const hist = c.cronoHist.length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Histórico de versões do cronograma (${c.cronoHist.length})</summary><ul class="lista-simples">${c.cronoHist.map(v=>`<li><b>Versão ${v.versao}</b><span class="small muted">${fd(v.data)} · ${h(v.motivo)} · lançamento ${fd(v.lancamento)}</span><button class="btn btn-s" style="margin-left:auto" data-act="verVersao" data-id="${c.id}" data-v="${v.versao}">Ver</button></li>`).join('')}</ul></details>` : '';
   return alertasCampanha(c) + `<div class="card"><div class="card-cab nao-imprimir"><div class="seg"><button class="${f.visao==='gantt'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="gantt"><i data-lucide="gantt-chart"></i>Gantt</button><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="lista"><i data-lucide="list"></i>Lista</button></div>
     <div class="filtros"><select data-chg="fcr.area">${opts(AREAS,f.area,'Todos os responsáveis')}</select><select data-chg="fcr.pais">${opts([['global','Só etapas globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fcr.fase">${opts(Object.entries(FASES).map(([k,v])=>[k,v.split(' — ')[1]]),f.fase,'Todas as fases')}</select><select data-chg="fcr.status">${opts(['Não iniciada','Em andamento','Concluída','Atrasada'],f.status,'Todos os status')}</select>
-    ${ehEquipe()?`<button class="btn btn-s" data-act="desfazer" title="Desfazer (Ctrl+Z)" disabled><i data-lucide="undo-2"></i>Desfazer</button><button class="btn btn-s" data-act="refazer" title="Refazer (Ctrl+Shift+Z)" disabled><i data-lucide="redo-2"></i></button><button class="btn btn-p btn-s" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}<button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
+    ${ehEquipe()?`<button class="btn btn-s chave-dep ${DEP_ATIVAS?'on':''}" data-act="alternarDep" title="${DEP_ATIVAS?'Ligadas: ao mover uma barra, as etapas ligadas que ainda não começaram vão junto':'Desligadas: cada barra se move sozinha'}"><span class="chave"><i></i></span>Dependências ${DEP_ATIVAS?'ativadas':'desativadas'}</button><button class="btn btn-s" data-act="desfazer" title="Desfazer (Ctrl+Z)" disabled><i data-lucide="undo-2"></i>Desfazer</button><button class="btn btn-s" data-act="refazer" title="Refazer (Ctrl+Shift+Z)" disabled><i data-lucide="redo-2"></i></button><button class="btn btn-p btn-s" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}<button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
     <div class="small muted" style="padding:10px 18px 0">Versão ${c.crono.versao} do cronograma · calculada em ${fd(c.crono.calculadoEm)} · ${h(c.crono.motivo)} · ${c.crono.tarefas.length} etapas (${c.crono.tarefas.filter(t=>!t.pais).length} globais e ${c.crono.tarefas.filter(t=>t.pais).length} por país)</div>
     ${f.visao==='gantt' ? gantt(c, ts) : listaCrono(c, ts)}</div>${(c.excluidas||[]).length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Etapas excluídas desta campanha (${c.excluidas.length})</summary><ul class="lista-simples">${c.excluidas.map(k=>`<li>${h(rotuloEtapa(c,k))}${ehEquipe()?`<button class="btn btn-s" style="margin-left:auto" data-act="restaurarEtapa" data-id="${c.id}" data-k="${h(k)}"><i data-lucide="undo-2"></i>Restaurar</button>`:''}</li>`).join('')}</ul></details>` : ''}${hist}`;
 }
@@ -1114,7 +1118,7 @@ function gantt(c, ts){
   const barra = (t, pais) => { const st = statusExib(t); let s = '';
     if (UI.fcr.folga && t.folga>0 && t.status!=='Concluída') s += `<div class="g-folga" style="left:${x(t.EF)+W}px;width:${x(t.LF)-x(t.EF)}px" title="Folga: ${t.folga} dia(s) útil(eis) — pode terminar até ${fd(t.LF)}"></div>`;
     const mov = t.status!=='Concluída' && ehEquipe();
-    s += `<div class="g-barra ${pais?'pais':''} ${t.critico?'crit':''} ${t.status==='Concluída'?'ok':''} ${t.manual?'manual':''}" data-t="${t.id}" data-c="${c.id}" ${mov?'':'data-fixa="1"'} style="left:${x(t.ES)}px;width:${x(t.EF)-x(t.ES)+W}px;${st==='Atrasada'?'outline:2px solid #d0443a;outline-offset:1px':''}" title="${h(t.nome)}${t.pais?' — '+t.pais:''}\n${fds(t.ES)} → ${fds(t.EF)} · ${t.dur} d.u. · folga ${t.folga}\n${st}${t.manual?' · ajustada manualmente':''}${'\nClique para concluir ou abrir'}${mov?' · arraste para mover (as etapas ligadas acompanham; segure Shift para mover só esta) · puxe a ponta direita para mudar a duração':''}">${mov?'<span class="g-alca"></span>':''}</div>`;
+    s += `<div class="g-barra ${pais?'pais':''} ${t.critico?'crit':''} ${t.status==='Concluída'?'ok':''} ${t.manual?'manual':''}" data-t="${t.id}" data-c="${c.id}" ${mov?'':'data-fixa="1"'} style="left:${x(t.ES)}px;width:${x(t.EF)-x(t.ES)+W}px;${st==='Atrasada'?'outline:2px solid #d0443a;outline-offset:1px':''}" title="${h(t.nome)}${t.pais?' — '+t.pais:''}\n${fds(t.ES)} → ${fds(t.EF)} · ${t.dur} d.u. · folga ${t.folga}\n${st}${t.manual?' · ajustada manualmente':''}${'\nClique para concluir ou abrir'}${mov?' · arraste para mover (com dependências ativadas, as etapas ligadas não iniciadas acompanham; Shift inverte) · puxe a ponta direita para mudar a duração':''}">${mov?'<span class="g-alca"></span>':''}</div>`;
     if (t.marco) s += `<div class="g-marco" style="left:${x(t.EF)+W+3}px" title="Lançamento ${t.pais||''}: ${fd(t.EF)}"></div>`;
     return s; };
   let corpo = '';
@@ -1136,7 +1140,7 @@ function gantt(c, ts){
   const altura = linhas.length*H;
   return `<div class="gantt" data-w="${W}"><div class="g-int" style="width:calc(var(--gn) + ${larg}px)">
     <div class="g-lin g-cab"><div class="g-nome"><span class="tx">Etapa</span><span class="g-resp">Responsável</span></div><div class="g-area" style="width:${larg}px">${cab}</div></div>
-    <div style="position:relative"><div style="position:absolute;left:var(--gn);top:0;bottom:0;width:${larg}px;pointer-events:none">${fundo}${hojeX}<svg class="g-svg" width="${larg}" height="${altura}" style="z-index:1"><defs><marker id="seta" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#9fb0b5"/></marker></defs>${svg}</svg></div>${corpo}</div></div></div>
+    <div style="position:relative"><div style="position:absolute;left:var(--gn);top:0;bottom:0;width:${larg}px;pointer-events:none">${fundo}${hojeX}<svg class="g-svg" style="${DEP_ATIVAS?'':'opacity:.25'}" width="${larg}" height="${altura}" style="z-index:1"><defs><marker id="seta" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#9fb0b5"/></marker></defs>${svg}</svg></div>${corpo}</div></div></div>
     <div class="legenda"><span><i style="background:var(--pet-600)"></i>Etapa global</span><span><i style="background:repeating-linear-gradient(135deg,#5aa2b0,#5aa2b0 4px,#6fb2bf 4px,#6fb2bf 8px)"></i>Etapa por país</span><span><i style="background:#c9473d"></i>Caminho crítico (folga 0)</span><span><i style="background:#8fb99a"></i>Concluída</span><span><i style="background:var(--pet-600);box-shadow:inset 0 0 0 2px #0b2a31"></i>Ajustada manualmente</span><a href="javascript:void 0" data-act="ui" data-k="fcr.folga" data-v="${UI.fcr.folga?'':'1'}" title="Linha cinza depois da barra: até quando a etapa pode terminar sem atrasar o lançamento" style="display:inline-flex;align-items:center;gap:6px;color:inherit"><i style="height:2px;background:#9aa9ae"></i>${UI.fcr.folga?'Ocultar folga':'Mostrar folga'}</a><span><i style="background:var(--pet-950);width:10px;height:10px;transform:rotate(45deg)"></i>Lançamento</span><span><i style="background:#f1f3f4;border:1px solid #ddd"></i>Fim de semana</span><span><i style="background:repeating-linear-gradient(45deg,#fde9e7,#fde9e7 3px,#fff 3px,#fff 6px);border:1px solid #f3c9c4"></i>Feriado da agência</span><span><i style="background:#e0a33a;width:3px"></i>Hoje</span></div>`;
 }
 
@@ -1612,6 +1616,8 @@ const ACT = {
     ACT.compararRecalc(null, d, 'Item incluído: '+nome); },
   aAbrir: el => { UI.aAberto = UI.aAberto||{}; UI.aAberto[el.dataset.t] = !UI.aAberto[el.dataset.t]; render(); },
   aFase: el => { UI.aFase = UI.aFase||{}; UI.aFase[el.dataset.f] = !UI.aFase[el.dataset.f]; render(); },
+  alternarDep: () => { DEP_ATIVAS = !DEP_ATIVAS; try { localStorage.setItem('dep-off', DEP_ATIVAS?'':'1'); } catch(e){} render();
+    toast(DEP_ATIVAS ? 'Dependências ativadas: as etapas não iniciadas ligadas se movem juntas.' : 'Dependências desativadas: cada barra se move sozinha.'); },
   desfazer: () => desfazer(false),
   refazer: () => desfazer(true),
   restaurarVersao: el => { const c = camp(el.dataset.id), v = c.cronoHist.find(x=>x.versao==el.dataset.v); if (!v) return;
@@ -1673,7 +1679,7 @@ const ACT = {
     // datas mudaram: mesmo ajuste do Gantt (pergunta se sobrepõe ou empurra)
     if (v.ini && v.fim && (v.ini!==t.ES || v.fim!==t.EF)) { const cx = ctx(); let es = paraFrente(v.ini, t.cal, cx), ef = paraTras(v.fim, t.cal, cx); if (ef < es) ef = es;
       if (t.marco && ef > t.LF) ef = t.LF; if (es > ef) es = ef;
-      if (es!==t.ES || ef!==t.EF) { proporMovimento(c, t, es, ef); render(); return; } }
+      if (es!==t.ES || ef!==t.EF) { proporMovimento(c, t, es, ef, !DEP_ATIVAS); render(); return; } }
     render(); },
   /* budget/kpi */
   formBudget: el => { const c = camp(el.dataset.id), b = c.budgets.find(x=>x.id===el.dataset.b) || {};
@@ -1898,12 +1904,12 @@ function fimArraste(e, cancelar){ if (!gDrag) return; const g = gDrag; gDrag = n
   if (!cancelar && !g.dd) return menuBarra(g.c, g.t, e.clientX, e.clientY);   // clique sem arrastar: menu da etapa
   const n = novasDatasArraste(g.t, g.modo, g.dd);
   if (cancelar || !g.dd || (n.ES===g.t.ES && n.EF===g.t.EF)) return render();
-  proporMovimento(g.c, g.t, n.ES, n.EF, g.solto); render(); }
+  proporMovimento(g.c, g.t, n.ES, n.EF, g.solto ? DEP_ATIVAS : !DEP_ATIVAS); render(); }
 function proporMovimento(c, t, ES, EF, soltar){ const g = {c, t};
   const n = {ES, EF}, conf = conflitosMov(g.c, g.t, n.ES, n.EF);
   UI.pendMov = {cid:g.c.id, tid:g.t.id, ES:n.ES, EF:n.EF, sobrepoe:conf.length>0};
   if (!soltar) return ACT.movAplicar('conectado');
-  if (!conf.length) return ACT.movAplicar(false);
+  return ACT.movAplicar(false);
   // simula o "empurrar" para mostrar o efeito antes de escolher
   const sim = JSON.parse(JSON.stringify(g.c)), mv = moverTarefa(sim, g.t.id, n.ES, n.EF, true);
   const lancSim = sim.crono.inviaveis, nome = t => h(t.nome)+(t.pais?' ('+t.pais+')':'');
