@@ -110,6 +110,11 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .g-nome .tx{overflow:hidden;text-overflow:ellipsis}
 .g-lin.fase .g-nome{font-weight:700;background:#f4f7f8;color:var(--pet-900)}.g-lin.fase{background:#f4f7f8}
 .g-lin.pais .g-nome{padding-left:34px;color:var(--tx2)}
+.g-acoes{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:none;gap:0;background:var(--sup);border:1px solid var(--borda);border-radius:6px;box-shadow:0 1px 3px rgba(11,42,49,.12)}
+.g-acoes .icone-btn{width:26px;height:24px}.g-acoes svg{width:14px;height:14px}
+.g-lin:hover .g-acoes,.g-acoes:focus-within{display:inline-flex}@media (hover:none){.g-acoes{display:inline-flex}}
+.tab .g-acoes{position:static;transform:none;display:inline-flex;border:0;box-shadow:none;background:none}
+.g-nome .ponto,.g-nome .tag{flex-shrink:0}
 .g-area{position:relative;flex-shrink:0}
 .g-cab{position:sticky;top:0;z-index:5;background:var(--sup);height:44px;border-bottom:1px solid var(--borda)}
 .g-cab .g-nome{z-index:6;font-weight:600;color:var(--tx2)}
@@ -304,10 +309,10 @@ const hojeUtil = (cal='AG') => paraFrente(HOJE,cal,ctx());
 function nomeTarefa(t, base){ return t.nome.replace('{base}', (IDIOMAS[base]||base).toLowerCase()); }
 
 function montarGrafo(camp, modelo){
-  const base = camp.idiomaBase, porTpl = Object.fromEntries(modelo.map(t=>[t.id,t])), nos = {};
+  const base = camp.idiomaBase, porTpl = Object.fromEntries(modelo.map(t=>[t.id,t])), nos = {}, excl = new Set(camp.excluidas||[]);
   for (const t of modelo) {
-    if (t.escopo==='global') nos[t.id] = {id:t.id,t,pais:null};
-    else for (const p of camp.paises) nos[t.id+'@'+p.cod] = {id:t.id+'@'+p.cod,t,pais:p.cod,skip: !!t.trad && p.idioma===base};
+    if (t.escopo==='global') nos[t.id] = {id:t.id,t,pais:null,skip: excl.has(t.id)};
+    else for (const p of camp.paises) nos[t.id+'@'+p.cod] = {id:t.id+'@'+p.cod,t,pais:p.cod,skip: (!!t.trad && p.idioma===base) || excl.has(t.id) || excl.has(t.id+'@'+p.cod)};
   }
   for (const n of Object.values(nos)) {
     n.deps0 = [];
@@ -384,7 +389,7 @@ function calcularCronograma(camp, op = {}){
     n.folga = uteisEntre(n.ES, n.LS, n.cal, c);
   }
   const tarefas = ordem.map(n => ({
-    id:n.id, tid:n.t.id, fase:n.t.fase, nome:nomeTarefa(n.t, camp.idiomaBase), area:n.t.area, pais:n.pais, dur:n.dur, cal:n.cal,
+    id:n.id, tid:n.t.id, fase:n.t.fase, nome:(camp.renomeadas||{})[n.id] || nomeTarefa(n.t, camp.idiomaBase), area:n.t.area, pais:n.pais, dur:n.dur, cal:n.cal,
     deps:n.deps, escopo:n.t.escopo, marco:!!n.t.fimNoLanc, ES:n.ES, EF:n.EF, LS:n.LS, LF:n.LF, folga:n.folga, critico:n.folga<=0, status:'Não iniciada'
   }));
   const fim = tarefas.filter(t=>t.marco);
@@ -427,6 +432,21 @@ function moverTarefa(camp, tid, ES, EF, empurrar){
   recalcFolgas(camp);
   movidas.travadas = travadas; return movidas;
 }
+/* exclui etapas do cronograma da campanha: quem dependia delas passa a depender das anteriores; as outras datas não mudam */
+function excluirEtapas(camp, ids, chaves){
+  const ts = camp.crono.tarefas, rem = new Set(ids), por = Object.fromEntries(ts.map(t=>[t.id,t]));
+  const herdar = (d, vis) => { if (!rem.has(d.id)) return [d]; if (vis.has(d.id)) return []; vis.add(d.id);
+    return por[d.id].deps.flatMap(e => herdar({id:e.id, tipo: d.tipo==='SS' ? 'SS' : e.tipo}, vis)); };
+  for (const t of ts) { if (rem.has(t.id)) continue; const m = {};
+    for (const d of t.deps) for (const r of herdar(d, new Set())) if (!m[r.id] || r.tipo==='FS') m[r.id] = r.tipo;
+    t.deps = Object.entries(m).map(([id,tipo])=>({id,tipo})); }
+  camp.crono.tarefas = ts.filter(t=>!rem.has(t.id));
+  camp.excluidas = [...new Set([...(camp.excluidas||[]), ...chaves])];
+  recalcFolgas(camp);
+}
+function rotuloEtapa(camp, chave){ const [tid, pp] = chave.split('@'), tpl = camp.modelo.find(m=>m.id===tid);
+  const nome = (camp.renomeadas||{})[chave] || (tpl ? nomeTarefa(tpl, camp.idiomaBase) : tid); return nome + (pp ? ' ('+pp+')' : ''); }
+function snapshotCrono(c){ c.cronoHist.unshift({versao:c.crono.versao, data:c.crono.calculadoEm, motivo:c.crono.motivo, lancamento:c.crono.lancamento, tarefas:JSON.parse(JSON.stringify(c.crono.tarefas))}); }
 function novasDatasArraste(t, modo, dd){
   const cx = ctx();
   const lim = t.marco ? t.LF : null;   // a etapa de lançamento não passa da data de lançamento
@@ -637,6 +657,7 @@ function telaLogin(modo='entrar', msg=''){
 function telaPendente(){
   $('#login-raiz').innerHTML = `<div class="tela-login"><div class="caixa"><h1>Acesso aguardando liberação</h1><p class="muted">Sua conta <b>${h(SESSAO.user.email)}</b> foi criada. Um administrador precisa liberar o seu acesso em Configurações → Usuários e perfis.</p><div style="display:flex;gap:8px"><button class="btn" data-act="recarregar">Já fui liberado</button><button class="btn" data-act="sair">Sair</button></div></div></div>`;
 }
+document.addEventListener('submit', e => { if (e.target.closest('#f-login')) return; const m = e.target.closest('.modal'); if (!m) return; e.preventDefault(); const b = m.querySelector('.modal-rod .btn-p'); if (b) b.click(); });
 document.addEventListener('submit', async e => { const f = e.target.closest('#f-login'); if (!f) return; e.preventDefault();
   const v = ler(f), modo = f.dataset.modo, volta = location.origin + location.pathname, btn = f.querySelector('button'); btn.disabled = true;
   try {
@@ -688,7 +709,7 @@ function migrarLancamento(){ CTX = null; let mudou = false;
   }
   if ((S.migr||0) < 2) { S.migr = 2; mudou = true; }
   if (mudou) salvar(); }
-function registrar(o){ const quem = PERFIL ? (PERFIL.nome || PERFIL.email) : ''; S.log.unshift({q:new Date().toLocaleString('pt-BR'),quem,o}); if (S.log.length>300) S.log.length=300; if (ehEquipe()) sb.from('log').insert({quem, texto:o, usuario:SESSAO.user.id}).then(r=>{ if (r.error) console.error(r.error); }); salvar(); }
+function registrar(o){ const quem = PERFIL ? (PERFIL.nome || PERFIL.email) : ''; S.log.unshift({q:new Date().toLocaleString('pt-BR'),quem,o}); if (S.log.length>300) S.log.length=300; if (sb && ehEquipe()) sb.from('log').insert({quem, texto:o, usuario:SESSAO.user.id}).then(r=>{ if (r.error) console.error(r.error); }); salvar(); }
 
 /* =====================================================================
    5. AJUDANTES
@@ -959,15 +980,17 @@ function abaCronograma(c){
     <div class="filtros"><select data-chg="fcr.area">${opts(AREAS,f.area,'Todos os responsáveis')}</select><select data-chg="fcr.pais">${opts([['global','Só etapas globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fcr.fase">${opts(Object.entries(FASES).map(([k,v])=>[k,v.split(' — ')[1]]),f.fase,'Todas as fases')}</select><select data-chg="fcr.status">${opts(['Não iniciada','Em andamento','Concluída','Atrasada'],f.status,'Todos os status')}</select>
     <button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
     <div class="small muted" style="padding:10px 18px 0">Versão ${c.crono.versao} do cronograma · calculada em ${fd(c.crono.calculadoEm)} · ${h(c.crono.motivo)} · ${c.crono.tarefas.length} etapas (${c.crono.tarefas.filter(t=>!t.pais).length} globais e ${c.crono.tarefas.filter(t=>t.pais).length} por país)</div>
-    ${f.visao==='gantt' ? gantt(c, ts) : listaCrono(c, ts)}</div>${hist}`;
+    ${f.visao==='gantt' ? gantt(c, ts) : listaCrono(c, ts)}</div>${(c.excluidas||[]).length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Etapas excluídas desta campanha (${c.excluidas.length})</summary><ul class="lista-simples">${c.excluidas.map(k=>`<li>${h(rotuloEtapa(c,k))}${ehEquipe()?`<button class="btn btn-s" style="margin-left:auto" data-act="restaurarEtapa" data-id="${c.id}" data-k="${h(k)}"><i data-lucide="undo-2"></i>Restaurar</button>`:''}</li>`).join('')}</ul></details>` : ''}${hist}`;
 }
 function listaCrono(c, ts){
   const nomeDe = id => { const t = c.crono.tarefas.find(x=>x.id===id); return t ? t.nome.slice(0,28)+(t.pais?' ('+t.pais+')':'') : id; };
-  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Etapa</th><th>País</th><th>Responsável</th><th>Início</th><th>Conclusão</th><th class="dir">Duração</th><th class="dir">Folga</th><th>Status</th><th>Depende de</th></tr></thead><tbody>
+  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Etapa</th><th>País</th><th>Responsável</th><th>Início</th><th>Conclusão</th><th class="dir">Duração</th><th class="dir">Folga</th><th>Status</th><th>Depende de</th><th></th></tr></thead><tbody>
   ${ts.map(t=>{ const st = statusExib(t); return `<tr class="${st==='Atrasada'?'atrasada':''}"><td>${t.critico?'<span class="ponto p-verm" title="Caminho crítico"></span> ':''}${h(t.nome)}</td><td>${t.pais?pais(t.pais):'<span class="muted small">Global</span>'}</td><td><div>${h(respDaArea(c,t.area,t.pais))}</div><div class="small muted">${h(t.area)}${t.cal!=='AG'?' · calendário '+t.cal:''}</div></td><td class="num">${fds(t.ES)}</td><td class="num">${fds(t.EF)}</td><td class="dir num">${t.dur} d.u.</td><td class="dir num">${t.folga<0?`<span class="tag t-verm">${t.folga}</span>`:t.folga}</td>
    <td><select data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}" style="padding:3px 6px;font-size:.8rem" class="${corStatus(st)}">${opts(['Não iniciada','Em andamento','Concluída'],t.status)}</select>${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td>
-   <td class="small muted">${t.deps.map(d=>`${h(nomeDe(d.id))} <b>${d.tipo==='FS'?'fim→início':'início junto'}</b>`).join('<br>')||'—'}</td></tr>`; }).join('') || '<tr><td colspan="9" class="vazio">Nenhuma etapa com esses filtros.</td></tr>'}</tbody></table></div>`;
+   <td class="small muted">${t.deps.map(d=>`${h(nomeDe(d.id))} <b>${d.tipo==='FS'?'fim→início':'início junto'}</b>`).join('<br>')||'—'}</td><td style="white-space:nowrap">${acoesEtapa(c, t.id, false)}</td></tr>`; }).join('') || '<tr><td colspan="10" class="vazio">Nenhuma etapa com esses filtros.</td></tr>'}</tbody></table></div>`;
 }
+function acoesEtapa(c, id, grupo){ if (!ehEquipe()) return '';
+  return `<span class="g-acoes nao-imprimir"><button class="icone-btn" data-act="editarEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Editar nome"><i data-lucide="pencil"></i></button><button class="icone-btn" data-act="excluirEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Excluir etapa"><i data-lucide="trash-2"></i></button></span>`; }
 function gantt(c, ts){
   const aberto = UI.gAberto || (UI.gAberto = {}), fFech = UI.gFase || (UI.gFase = {});
   if (!ts.length) return '<div class="vazio">Nenhuma etapa com esses filtros.</div>';
@@ -1006,8 +1029,8 @@ function gantt(c, ts){
   let corpo = '';
   linhas.forEach(l=>{
     if (l.tipo==='fase') corpo += `<div class="g-lin fase"><div class="g-nome"><button class="icone-btn" data-act="gFase" data-f="${l.fase}"><i data-lucide="${fFech[l.fase]?'chevron-right':'chevron-down'}"></i></button><span class="tx">${FASES[l.fase]}</span></div><div class="g-area" style="width:${larg}px"></div></div>`;
-    else if (l.tipo==='grupo') corpo += `<div class="g-lin"><div class="g-nome"><button class="icone-btn" data-act="gAbrir" data-t="${l.tid}" title="Ver por país"><i data-lucide="${aberto[l.tid]?'chevron-down':'chevron-right'}"></i></button><span class="tx" title="${h(l.nome)}">${h(l.nome)}</span><span class="tag t-pet" style="margin-left:auto">${l.ins.length} país${l.ins.length>1?'es':''}</span></div><div class="g-area" style="width:${larg}px">${aberto[l.tid]?`<div class="g-barra grp pais ${l.crit?'crit':''}" style="left:${x(l.ES)}px;width:${x(l.EF)-x(l.ES)+W}px"></div>`:l.ins.map(t=>barra(t,true)).join('')}</div></div>`;
-    else corpo += `<div class="g-lin ${l.pais?'pais':''}"><div class="g-nome"><span class="tx" title="${h(l.t.nome)}">${l.pais?pais(l.t.pais):h(l.t.nome)}</span>${l.t.critico&&!l.pais?'<span class="ponto p-verm" style="margin-left:auto" title="Caminho crítico"></span>':''}</div><div class="g-area" style="width:${larg}px">${barra(l.t,l.pais)}</div></div>`;
+    else if (l.tipo==='grupo') corpo += `<div class="g-lin"><div class="g-nome"><button class="icone-btn" data-act="gAbrir" data-t="${l.tid}" title="Ver por país"><i data-lucide="${aberto[l.tid]?'chevron-down':'chevron-right'}"></i></button><span class="tx" title="${h(l.nome)}">${h(l.nome)}</span>${acoesEtapa(c, l.tid, true)}<span class="tag t-pet" style="margin-left:auto">${l.ins.length} país${l.ins.length>1?'es':''}</span></div><div class="g-area" style="width:${larg}px">${aberto[l.tid]?`<div class="g-barra grp pais ${l.crit?'crit':''}" style="left:${x(l.ES)}px;width:${x(l.EF)-x(l.ES)+W}px"></div>`:l.ins.map(t=>barra(t,true)).join('')}</div></div>`;
+    else corpo += `<div class="g-lin ${l.pais?'pais':''}"><div class="g-nome"><span class="tx" title="${h(l.t.nome)}">${l.pais?pais(l.t.pais):h(l.t.nome)}</span>${acoesEtapa(c, l.t.id, false)}${l.t.critico&&!l.pais?'<span class="ponto p-verm" style="margin-left:auto" title="Caminho crítico"></span>':''}</div><div class="g-area" style="width:${larg}px">${barra(l.t,l.pais)}</div></div>`;
   });
   // setas de dependência (desenhadas depois de montar)
   const arestas = new Set(); let svg = '';
@@ -1365,7 +1388,7 @@ const ACT = {
     ACT.compararRecalc(null, d, v.motivo || 'Data de lançamento alterada para '+fd(d.lancamento)); },
   recalcHoje: el => { const c = camp(el.dataset.id); ACT.compararRecalc(null, JSON.parse(JSON.stringify(c)), 'Recalculado a partir de hoje'); },
   compararRecalc: (el, d, motivo) => { const c = camp(d.id);
-    const base = Object.assign({}, c, {paises:d.paises.map(p=>Object.assign({},p)), lancamento:d.lancamento, idiomaBase:d.idiomaBase});
+    const base = Object.assign({}, c, {paises:d.paises.map(p=>Object.assign({},p)), lancamento:d.lancamento, idiomaBase:d.idiomaBase, excluidas:d.excluidas||c.excluidas||[], renomeadas:d.renomeadas||c.renomeadas||{}});
     let r; try { r = calcularCronograma(base, {fixos:fixosDe(c.crono.tarefas), naoAntesDe:hojeUtil()}); } catch(e) { return toast(e.message); }
     const ant = Object.fromEntries(c.crono.tarefas.map(t=>[t.id,t]));
     const mud = r.tarefas.filter(t=>!ant[t.id] || ant[t.id].ES!==t.ES || ant[t.id].EF!==t.EF).length;
@@ -1380,6 +1403,36 @@ const ACT = {
     for (const p of c.paises) if (!p.respLocal) p.respLocal = VALID_PAIS[p.cod]||'';
     delete c._c; delete c._r;
     aplicarCronograma(c, r, motivo); registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: ${motivo}`); fecharModal(); render(); toast('Nova versão do cronograma aplicada.'); },
+  excluirEtapa: el => { const c = camp(el.dataset.id), id = el.dataset.t, grupo = !!el.dataset.grupo;
+    const alvo = grupo ? c.crono.tarefas.filter(t=>t.tid===id) : c.crono.tarefas.filter(t=>t.id===id);
+    if (!alvo.length) return; if (alvo.some(t=>t.marco)) return toast('A etapa de lançamento não pode ser excluída.');
+    const t0 = alvo[0], nome = h(t0.nome) + (grupo ? ` — todos os ${alvo.length} países` : t0.pais ? ' ('+t0.pais+')' : '');
+    UI.pendExcl = {cid:c.id, ids:alvo.map(t=>t.id), chaves:[grupo || !t0.pais ? t0.tid : t0.id], nome:t0.nome+(grupo?' (todos os países)':t0.pais?' ('+t0.pais+')':'')};
+    abrirModal('Excluir etapa', `<p style="margin-top:0">Excluir <b>${nome}</b> do cronograma desta campanha?</p><ul class="small muted" style="padding-left:18px;margin:0"><li>As etapas que dependiam dela passam a depender das etapas anteriores.</li><li>As datas das outras etapas não mudam.</li><li>A versão atual fica no histórico, e a etapa pode ser restaurada depois.</li><li>O modelo padrão e as outras campanhas não são alterados.</li></ul>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-perigo" data-act="excluirEtapaOk"><i data-lucide="trash-2"></i>Excluir</button>`); },
+  excluirEtapaOk: () => { const m = UI.pendExcl; if (!m) return; const c = camp(m.cid);
+    snapshotCrono(c); excluirEtapas(c, m.ids, m.chaves);
+    Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo:'Etapa excluída: '+m.nome});
+    registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: etapa excluída (${m.nome})`); UI.pendExcl = null; fecharModal(); render(); toast('Etapa excluída.'); },
+  restaurarEtapa: el => { const c = camp(el.dataset.id), k = el.dataset.k, d = JSON.parse(JSON.stringify(c));
+    d.excluidas = (d.excluidas||[]).filter(x=>x!==k); ACT.compararRecalc(null, d, 'Etapa restaurada: '+rotuloEtapa(c,k)); },
+  editarEtapa: el => { const c = camp(el.dataset.id), id = el.dataset.t, grupo = !!el.dataset.grupo;
+    const t0 = c.crono.tarefas.find(t=> grupo ? t.tid===id : t.id===id); if (!t0) return;
+    const porPais = !grupo && !!t0.pais;
+    abrirModal('Editar etapa', `<form id="f-etapa" class="form-g"><label class="campo tudo">Nome da etapa${porPais?` — só para ${h(pais(t0.pais))}`:''}<input name="nome" required maxlength="160" value="${h(t0.nome)}"></label></form>
+      <p class="small muted" style="margin-bottom:0">${porPais?'Muda o nome só neste país. Para mudar em todos os países, use o lápis da linha da etapa (com o número de países).':'Muda o nome desta etapa nesta campanha'+(t0.pais?', em todos os países':'')+'. O modelo padrão e as outras campanhas não são alterados.'}</p>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''}>Salvar</button>`);
+    setTimeout(()=>{ const i = $('#f-etapa input'); if (i) { i.focus(); i.select(); } }, 30); },
+  salvarEtapa: el => { const c = camp(el.dataset.id), id = el.dataset.t, grupo = !!el.dataset.grupo, nome = (ler($('#f-etapa')).nome||'').trim();
+    if (!nome) return toast('Informe o nome da etapa.');
+    const alvo = c.crono.tarefas.filter(t=> grupo ? t.tid===id : t.id===id); if (!alvo.length) return;
+    const t0 = alvo[0], porPais = !grupo && !!t0.pais, antigo = t0.nome;
+    c.renomeadas = c.renomeadas || {};
+    if (porPais) c.renomeadas[t0.id] = nome;
+    else { c.renomeadas[t0.tid] = nome; const tpl = c.modelo.find(m=>m.id===t0.tid); if (tpl) tpl.nome = nome;
+      for (const k of Object.keys(c.renomeadas)) if (k.startsWith(t0.tid+'@')) delete c.renomeadas[k]; }
+    for (const t of c.crono.tarefas) if (porPais ? t.id===t0.id : t.tid===t0.tid) t.nome = nome;
+    registrar(`Etapa renomeada em “${c.nome}”: “${antigo}” → “${nome}”${porPais?' ('+t0.pais+')':''}`); fecharModal(); render(); toast('Nome da etapa salvo.'); },
   movSobrepor: () => ACT.movAplicar(false),
   movEmpurrar: () => ACT.movAplicar(true),
   movAplicar: empurrar => { const m = UI.pendMov; if (!m) return; const c = camp(m.cid), t = c.crono.tarefas.find(x=>x.id===m.tid);
