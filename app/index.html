@@ -119,6 +119,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .pb-bloco{margin-top:4px}.pb-topo{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,2fr);gap:16px 24px;align-items:start;margin-bottom:12px}.pb-rot{display:block;margin-bottom:6px}.sec-canal{border:1px solid var(--borda);border-radius:12px;padding:16px;background:#fafbfb}.sec-tit{font-weight:700;color:var(--pet-900);margin-bottom:12px;font-size:.98rem}.pb-bloco{display:flex;flex-direction:column}.pb-bloco>.pb-topo{order:0}.pb-bloco>.tabela-wrap{order:1}.pb-bloco>.pb-canais{order:2;margin-top:16px}.pb-can-cab{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.pb-bud{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}.pb-bud .seg{flex-shrink:0}.pb-bud select,.pb-bud input{flex-shrink:0}.pb-bud input{min-width:140px}.pb-bud select{min-width:84px}.pb-bud .seg button{white-space:nowrap}
 @media (max-width:760px){.pb-bud{flex-wrap:wrap}}
 @media (max-width:760px){.pb-topo{grid-template-columns:1fr}}
+.inp-uso{width:130px;text-align:right;padding:5px 8px;border:1px solid var(--borda-f);border-radius:6px;font:inherit;font-size:.86rem}
 .sug-kpi{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:10px 18px 0}
 .apres{position:relative;width:100%;aspect-ratio:16/9;background:#f1f3f4;border-top:1px solid var(--borda)}.apres iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .legenda-farol{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--tx2);padding:10px 18px}.legenda-farol span{display:inline-flex;align-items:center;gap:6px}.legenda-farol i{width:9px;height:9px;border-radius:50%;display:inline-block}
@@ -1384,7 +1385,53 @@ function resumoBudgetAntigo(c){
   const soma = k => paises.reduce((s,x)=>s+x[k],0);
   const orfas = c.budgets.filter(b=>!c.paises.some(p=>p.cod===b.pais));
   return {paises, aprov:soma('aprov'), dist:soma('dist'), uso:soma('uso'), orfas}; }
+function secaoKpis(c){
+  const ed = ehEquipe();
+  const kp = k => k.real==null||k.real==='' ? null : (/^CP|CPL|CPC|CPM|CPV/.test(k.nome) ? k.meta/k.real : k.real/k.meta);
+  const sugest = (c.objetivos||[]).flatMap(o=>KPI_OBJETIVO[o]||[]).filter(([n])=>!c.kpis.some(k=>k.nome===n));
+  return `  <div class="card" style="margin-top:16px"><div class="card-cab"><h3>KPIs — planejado × realizado</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${(c.objetivos||[]).map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join('')}${ed?`<button class="btn btn-p btn-s" data-act="formKpi" data-id="${c.id}"><i data-lucide="plus"></i>Adicionar KPI</button>`:''}</div></div>
+   ${ed && sugest.length ? `<div class="sug-kpi"><span class="small muted">Sugeridos pelo objetivo:</span>${sugest.map(([n,u])=>`<button class="btn btn-s" data-act="formKpi" data-id="${c.id}" data-nome="${h(n)}" data-un="${h(u==='R$'?c.moeda:u)}"><i data-lucide="plus"></i>${h(n)}</button>`).join('')}</div>` : ''}
+   ${!(c.objetivos||[]).length ? `<div class="small muted" style="padding:10px 18px 0">Defina o objetivo em Dados da campanha para ver KPIs sugeridos.</div>` : ''}
+   <div class="tabela-wrap"><table class="tab"><thead><tr><th>Indicador</th><th>Canal</th><th>País</th><th>Período</th><th class="dir">Meta</th><th class="dir">Realizado</th><th style="min-width:150px">Atingimento</th><th></th></tr></thead><tbody>
+   ${[...c.kpis].sort((a,b)=>(a.canal||'').localeCompare(b.canal||'')).map((k,i,arr)=>{ const p = kp(k); return `${i===0||arr[i-1].canal!==k.canal?`<tr class="a-fase"><td colspan="8">${h(k.canal||'Sem canal')}</td></tr>`:''}<tr><td><b>${h(k.nome)}</b> <span class="small muted">${h(k.unidade)}</span></td><td>${h(k.canal)}</td><td>${k.pais?pais(k.pais):'Todos'}</td><td>${h(k.periodo)}</td><td class="dir num">${numero(k.meta)}</td><td class="dir num">${numero(k.real)}</td><td>${p==null?'<span class="small muted">sem resultado ainda</span>':`<div style="display:flex;gap:8px;align-items:center"><div class="barra" style="flex:1"><i style="width:${Math.min(100,p*100)}%;background:${p>=1?'#3a9a46':p>=.8?'#e0a33a':'#d0443a'}"></i></div><span class="small num">${Math.round(p*100)}%</span></div>`}</td><td><button class="icone-btn" data-act="formKpi" data-id="${c.id}" data-k="${k.id}"><i data-lucide="pencil"></i></button></td></tr>`; }).join('') || '<tr><td colspan="8" class="vazio">Nenhum KPI cadastrado.</td></tr>'}</tbody></table></div>
+   <div class="small muted" style="padding:10px 18px">Para indicadores de custo (CPC, CPL, CPM, CPV) o atingimento considera que menor é melhor.</div></div>`;
+}
 function abaBudget(c){
+  if (!c.canaisCfg || !(c.canais||[]).length) return abaBudgetAntiga(c);
+  UI.fbm = UI.fbm || {}; UI.bAberto = UI.bAberto || {};
+  const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], ed = ehEquipe();
+  const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+  const barra = (uso, tot) => `<div style="display:flex;gap:8px;align-items:center"><div class="barra" style="flex:1;min-width:70px"><i style="width:${Math.min(100,pct(uso,tot))}%;${uso>tot?'background:#d0443a':''}"></i></div><span class="small num" style="min-width:34px">${pct(uso,tot)}%</span></div>`;
+  const canais = c.canais.filter(k=>((c.canaisCfg[k]||{}).moeda||c.moeda||'BRL')===m);
+  const lin = (k, cod) => c.budgets.filter(b=>b.canal===k && b.pais===cod);
+  const dados = canais.map(k=>{ const cf = c.canaisCfg[k]||{}, ps = (cf.paises||[]).map(p=>{ const ls = lin(k,p.cod), uso = ls.reduce((s,b)=>s+(+b.utilizado||0),0); return {cod:p.cod, aprov:+p.budget||0, uso, linha:ls[0]}; });
+    return {k, aprov:+cf.orcamento||0, uso:ps.reduce((s,x)=>s+x.uso,0), ps}; });
+  const aprov = dados.reduce((s,d)=>s+d.aprov,0), uso = dados.reduce((s,d)=>s+d.uso,0);
+  const estouro = []; dados.forEach(d=>{ if (d.uso>d.aprov) estouro.push(`<b>${h(d.k)}</b>`); d.ps.forEach(x=>{ if (x.uso>x.aprov) estouro.push(`${h(d.k)} · ${PAISES[x.cod].n}`); }); });
+  // por país (todos os canais desta moeda)
+  const porPais = {}; dados.forEach(d=>d.ps.forEach(x=>{ const o = porPais[x.cod] || (porPais[x.cod] = {aprov:0, uso:0, canais:[]}); o.aprov += x.aprov; o.uso += x.uso; o.canais.push(d.k); }));
+  return `${moedas.length>1 ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><div class="seg">${moedas.map(x=>`<button class="${x===m?'ativo':''}" data-act="ui" data-k="fbm.v" data-v="${x}">${x}</button>`).join('')}</div><span class="small muted">Canais em moedas diferentes: os números abaixo são dos canais em ${m}.</span></div>` : ''}
+  <div class="grade g4">
+   <div class="card kpi2"><div class="k-ic"><i data-lucide="badge-dollar-sign"></i></div><div><div class="k-rot">Budget aprovado</div><div class="k-val num" style="font-size:1.3rem">${moeda(aprov,m)}</div><div class="k-sub">${canais.length} canal(is) · definido em Dados da campanha</div></div></div>
+   <div class="card kpi2"><div class="k-ic"><i data-lucide="receipt"></i></div><div><div class="k-rot">Utilizado</div><div class="k-val num" style="font-size:1.3rem">${moeda(uso,m)}</div><div class="k-sub">lançado por canal e país</div></div></div>
+   <div class="card kpi2"><div class="k-ic"><i data-lucide="piggy-bank"></i></div><div><div class="k-rot">Saldo</div><div class="k-val num" style="font-size:1.3rem;${aprov-uso<0?'color:#b3392f':''}">${moeda(aprov-uso,m)}</div><div class="k-sub">aprovado − utilizado</div></div></div>
+   <div class="card kpi2 k-prog"><div style="flex:1"><div class="k-rot">Consumido</div><div class="k-val">${pct(uso,aprov)}%</div><div class="barra" style="margin-top:8px"><i style="width:${Math.min(100,pct(uso,aprov))}%;${uso>aprov?'background:#d0443a':''}"></i></div></div></div></div>
+  ${estouro.length ? `<div class="alerta verm" style="margin-top:12px"><i data-lucide="alert-octagon"></i><div>O utilizado passou do aprovado em: ${estouro.join(', ')}.</div></div>` : ''}
+  <div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="megaphone"></i>Budget por canal</h3>${ed?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Alterar budget aprovado →</a>`:''}</div>
+   <div class="tabela-wrap"><table class="tab tab-bud"><thead><tr><th>Canal / país</th><th class="dir">Aprovado</th><th class="dir">Utilizado</th><th class="dir">Saldo</th><th style="min-width:170px">Consumido</th></tr></thead><tbody>
+   ${dados.map(d=>`<tr class="a-grupo ${d.uso>d.aprov?'atrasada':''}"><td><button class="icone-btn" data-act="bAbrir" data-k="${h(d.k)}" title="Ver países"><i data-lucide="${UI.bAberto[d.k]?'chevron-down':'chevron-right'}"></i></button><a href="javascript:void 0" data-act="bAbrir" data-k="${h(d.k)}"><b>${h(d.k)}</b></a> <span class="small">${d.ps.map(x=>PAISES[x.cod].f).join(' ')}</span></td>
+       <td class="dir num"><b>${moeda(d.aprov,m)}</b></td><td class="dir num">${moeda(d.uso,m)}</td><td class="dir num" style="${d.aprov-d.uso<0?'color:#b3392f;font-weight:600':''}">${moeda(d.aprov-d.uso,m)}</td><td>${barra(d.uso,d.aprov)}</td></tr>
+     ${UI.bAberto[d.k] ? d.ps.map(x=>`<tr class="a-pais"><td>${pais(x.cod)}</td><td class="dir num">${moeda(x.aprov,m)}</td>
+       <td class="dir">${ed && x.linha ? `<input type="number" min="0" step="any" class="inp-uso" value="${+x.uso||0}" data-chg="usoLinha" data-id="${c.id}" data-b="${x.linha.id}" title="Lançar o valor utilizado">` : `<span class="num">${moeda(x.uso,m)}</span>`}</td>
+       <td class="dir num" style="${x.aprov-x.uso<0?'color:#b3392f;font-weight:600':''}">${moeda(x.aprov-x.uso,m)}</td><td>${barra(x.uso,x.aprov)}</td></tr>`).join('') : ''}`).join('')}
+   <tr style="font-weight:700"><td>Total</td><td class="dir num">${moeda(aprov,m)}</td><td class="dir num">${moeda(uso,m)}</td><td class="dir num">${moeda(aprov-uso,m)}</td><td>${barra(uso,aprov)}</td></tr></tbody></table></div>
+   <div class="small muted" style="padding:10px 18px">Abra um canal para lançar o valor utilizado em cada país. Cada alteração fica registrada no histórico.</div></div>
+  <div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="globe-2"></i>Resumo por país</h3><span class="small muted">soma dos canais em ${m}</span></div>
+   <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th>Canais</th><th class="dir">Aprovado</th><th class="dir">Utilizado</th><th class="dir">Saldo</th><th style="min-width:170px">Consumido</th></tr></thead><tbody>
+   ${Object.entries(porPais).map(([cod,o])=>`<tr><td>${pais(cod)}</td><td class="small muted">${o.canais.map(h).join(', ')}</td><td class="dir num">${moeda(o.aprov,m)}</td><td class="dir num">${moeda(o.uso,m)}</td><td class="dir num" style="${o.aprov-o.uso<0?'color:#b3392f;font-weight:600':''}">${moeda(o.aprov-o.uso,m)}</td><td>${barra(o.uso,o.aprov)}</td></tr>`).join('')}</tbody></table></div></div>
+  ${secaoKpis(c)}`;
+}
+function abaBudgetAntiga(c){
   UI.fbm = UI.fbm || {}; const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], R = resumoBudget(c, m), ed = ehEquipe();
   const porCanal = Object.entries(R.linhas.reduce((o,b)=>(o[b.canal]=(o[b.canal]||0)+(+b.previsto||0),o),{})).map(([rot,v])=>({rot,v}));
   const kp = k => k.real==null||k.real==='' ? null : (/^CP|CPL|CPC|CPM|CPV/.test(k.nome) ? k.meta/k.real : k.real/k.meta);
@@ -1411,12 +1458,7 @@ function abaBudget(c){
   <div class="card" style="margin-top:16px"><div class="card-cab"><h3>Distribuição por canal</h3>${ed?`<button class="btn btn-p btn-s" data-act="formBudget" data-id="${c.id}"><i data-lucide="plus"></i>Adicionar linha</button>`:''}</div>
    <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th>Canal</th><th>Período</th><th class="dir">Previsto</th><th class="dir">Utilizado</th><th class="dir">Saldo</th><th>Alterações</th><th></th></tr></thead><tbody>
    ${[...R.linhas].sort((a,b)=>(a.pais||'').localeCompare(b.pais||'') || b.previsto-a.previsto).map(b=>`<tr><td>${pais(b.pais)}</td><td>${h(b.canal)}</td><td>${h(b.periodo)}</td><td class="dir num">${moeda(b.previsto,m)}</td><td class="dir num">${moeda(b.utilizado,m)}</td><td class="dir num">${moeda(b.previsto-b.utilizado,m)}</td><td class="small muted">${b.hist.length?h(b.hist[0].q+' — '+b.hist[0].o):'—'}</td><td>${ed?`<button class="icone-btn" data-act="formBudget" data-id="${c.id}" data-b="${b.id}"><i data-lucide="pencil"></i></button>`:''}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Nenhuma linha ainda. Use “+ Canal” no país para distribuir o budget aprovado.</td></tr>'}</tbody></table></div></div>
-  <div class="card" style="margin-top:16px"><div class="card-cab"><h3>KPIs — planejado × realizado</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${(c.objetivos||[]).map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join('')}${ed?`<button class="btn btn-p btn-s" data-act="formKpi" data-id="${c.id}"><i data-lucide="plus"></i>Adicionar KPI</button>`:''}</div></div>
-   ${ed && sugest.length ? `<div class="sug-kpi"><span class="small muted">Sugeridos pelo objetivo:</span>${sugest.map(([n,u])=>`<button class="btn btn-s" data-act="formKpi" data-id="${c.id}" data-nome="${h(n)}" data-un="${h(u==='R$'?c.moeda:u)}"><i data-lucide="plus"></i>${h(n)}</button>`).join('')}</div>` : ''}
-   ${!(c.objetivos||[]).length ? `<div class="small muted" style="padding:10px 18px 0">Defina o objetivo em Dados da campanha para ver KPIs sugeridos.</div>` : ''}
-   <div class="tabela-wrap"><table class="tab"><thead><tr><th>Indicador</th><th>Canal</th><th>País</th><th>Período</th><th class="dir">Meta</th><th class="dir">Realizado</th><th style="min-width:150px">Atingimento</th><th></th></tr></thead><tbody>
-   ${c.kpis.map(k=>{ const p = kp(k); return `<tr><td><b>${h(k.nome)}</b> <span class="small muted">${h(k.unidade)}</span></td><td>${h(k.canal)}</td><td>${k.pais?pais(k.pais):'Todos'}</td><td>${h(k.periodo)}</td><td class="dir num">${numero(k.meta)}</td><td class="dir num">${numero(k.real)}</td><td>${p==null?'<span class="small muted">sem resultado ainda</span>':`<div style="display:flex;gap:8px;align-items:center"><div class="barra" style="flex:1"><i style="width:${Math.min(100,p*100)}%;background:${p>=1?'#3a9a46':p>=.8?'#e0a33a':'#d0443a'}"></i></div><span class="small num">${Math.round(p*100)}%</span></div>`}</td><td><button class="icone-btn" data-act="formKpi" data-id="${c.id}" data-k="${k.id}"><i data-lucide="pencil"></i></button></td></tr>`; }).join('') || '<tr><td colspan="8" class="vazio">Nenhum KPI cadastrado.</td></tr>'}</tbody></table></div>
-   <div class="small muted" style="padding:10px 18px">Para indicadores de custo (CPC, CPL, CPM, CPV) o atingimento considera que menor é melhor.</div></div>`;
+  ${secaoKpis(c)}`;
 }
 
 /* ---------- Entregáveis ---------- */
@@ -1901,6 +1943,7 @@ const ACT = {
   mselAbrir: el => { UI.mselAberto = UI.mselAberto===el.dataset.k ? null : el.dataset.k; render(); },
   mselLimpar: el => { const [o,p] = el.dataset.k.split('.'); UI[o][p] = []; render(); },
   limparFiltrosAcoes: () => { Object.assign(UI.fac, {status:[], pessoa:[], area:[], pais:[]}); UI.mselAberto = null; render(); },
+  bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
   aAbrir: el => { UI.aAberto = UI.aAberto||{}; UI.aAberto[el.dataset.t] = !UI.aAberto[el.dataset.t]; render(); },
   aFase: el => { UI.aFase = UI.aFase||{}; UI.aFase[el.dataset.f] = !UI.aFase[el.dataset.f]; render(); },
   alternarDep: () => { DEP_ATIVAS = !DEP_ATIVAS; try { localStorage.setItem('dep-off', DEP_ATIVAS?'':'1'); } catch(e){} render();
@@ -2142,6 +2185,9 @@ document.addEventListener('click', e => { const el = e.target.closest('[data-act
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (!el) return; const k = el.dataset.chg, v = el.type==='checkbox' ? el.checked : el.value;
   if (k==='papelPerfil' || k==='clientePerfil') { const campo = k==='papelPerfil' ? {papel:v} : {cliente_id:v||null};
     sb.from('perfis').update(campo).eq('id', el.dataset.p).select().then(r=>{ if (r.error || !r.data.length) return toast('Não foi possível alterar o acesso.'); Object.assign(PERFIS.find(p=>p.id===el.dataset.p), r.data[0]); registrar(`Acesso de ${r.data[0].email}: ${PAPEIS[r.data[0].papel]}`); render(); }); return; }
+  if (k==='usoLinha') { const c = camp(el.dataset.id), b = c.budgets.find(x=>x.id===el.dataset.b); if (!b) return; const nv = Math.max(0, +el.value||0);
+    if (nv!==(+b.utilizado||0)) { b.hist = b.hist||[]; b.hist.unshift({q:fd(HOJE), o:`utilizado ${+b.utilizado||0}→${nv}`}); b.utilizado = nv; registrar(`Utilizado em “${c.nome}”: ${b.canal} · ${PAISES[b.pais]?PAISES[b.pais].n:b.pais} = ${moeda(nv, moedaLinha(c,b))}`); }
+    return render(); }
   if (k==='canalCamp') return reabrirFormCamp(lerFormCampanha());
   if (k==='paisCanal') { const d = lerFormCampanha(), cf = d.canaisCfg[el.dataset.c], cod = el.value; if (!cf) return;
     cf.paises = el.checked ? [...cf.paises, {cod, pct:null}] : cf.paises.filter(p=>p.cod!==cod);
