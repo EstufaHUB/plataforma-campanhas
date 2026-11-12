@@ -87,6 +87,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .msel-pop{position:absolute;top:calc(100% + 4px);left:0;z-index:60;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:6px;min-width:220px;max-height:320px;overflow:auto}
 .msel-op{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:.86rem;cursor:pointer;white-space:nowrap}.msel-op:hover{background:var(--pet-50)}
 .msel-limpar{width:100%;margin-top:4px;border:0;border-top:1px solid var(--borda);background:none;padding:7px;font:inherit;font-size:.82rem;color:var(--pet-700);cursor:pointer}
+.apres{position:relative;width:100%;aspect-ratio:16/9;background:#f1f3f4;border-top:1px solid var(--borda)}.apres iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .legenda-farol{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--tx2);padding:10px 18px}.legenda-farol span{display:inline-flex;align-items:center;gap:6px}.legenda-farol i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .tab tr.mudou td{background:#fff8e6}.tab tr.atrasada td:first-child{box-shadow:inset 3px 0 0 #d0443a}
 .tab .dir{text-align:right}
@@ -1064,6 +1065,18 @@ function alertasCampanha(c){
   riscosPais(c).forEach(r=>{ if (!inv.some(i=>i.pais===r.cod) && !/atrasad/.test(r.motivo)) s += `<div class="alerta amar"><i data-lucide="flag"></i><div><b>${pais(r.cod)}:</b> ${h(r.motivo)}</div></div>`; });
   return s;
 }
+/* link do Google Slides/Docs/Drive → endereço de visualização incorporável */
+function urlIncorporar(u){ if (!u) return null; let m;
+  if ((m = u.match(/docs\.google\.com\/presentation\/d\/([\w-]+)/))) return 'https://docs.google.com/presentation/d/'+m[1]+'/embed?start=false&loop=false';
+  if ((m = u.match(/docs\.google\.com\/(document|spreadsheets)\/d\/([\w-]+)/))) return 'https://docs.google.com/'+m[1]+'/d/'+m[2]+'/preview';
+  if ((m = u.match(/drive\.google\.com\/file\/d\/([\w-]+)/))) return 'https://drive.google.com/file/d/'+m[1]+'/preview';
+  if ((m = u.match(/canva\.com\/design\/([\w-]+)\/([\w-]+)/))) return 'https://www.canva.com/design/'+m[1]+'/'+m[2]+'/view?embed';
+  return null; }
+function cardApresentacao(c){ if (!c.urlPlanejamento) return '';
+  const emb = urlIncorporar(c.urlPlanejamento);
+  return `<div class="card" style="margin-top:16px"><div class="card-cab"><h3>Planejamento estratégico</h3><a class="btn btn-s" href="${h(c.urlPlanejamento)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Abrir em nova aba</a></div>
+    ${emb ? `<div class="apres"><iframe src="${h(emb)}" allowfullscreen loading="lazy" title="Apresentação do planejamento"></iframe></div><div class="small muted" style="padding:8px 18px 14px">Se a apresentação não aparecer, ela precisa estar compartilhada com quem tem o link (ou com a sua conta Google).</div>`
+          : `<div class="card-p small muted">Este tipo de link não pode ser mostrado aqui. Use “Abrir em nova aba”.</div>`}</div>`; }
 function abaVisao(c){
   const ini = inicioPlan(c), ts = c.crono.tarefas, prog = progresso(c);
   const crit = ts.filter(t=>t.critico && t.status!=='Concluída').slice(0,5);
@@ -1075,18 +1088,17 @@ function abaVisao(c){
    <div class="grade g2" style="margin-top:16px">
     <div class="card card-p"><h3 style="margin-bottom:12px">Dados da campanha</h3><dl class="def">
       <dt>Descrição</dt><dd>${h(c.descricao)||'—'}</dd><dt>Objetivo da campanha</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-pet">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
-      <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Idioma-base</dt><dd>${IDIOMAS[c.idiomaBase]}</dd>
-      <dt>Idiomas</dt><dd>${[...new Set(c.paises.map(p=>IDIOMAS[p.idioma]))].join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')}</dd>
+      <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd>
       <dt>Budget por país</dt><dd>${c.paises.some(p=>p.budget!=null) ? `<div style="display:grid;grid-template-columns:auto auto;gap:2px 14px;justify-content:start">${c.paises.map(p=>`<span>${pais(p.cod)}</span><span class="num">${p.budget!=null?moeda(p.budget,c.moeda):'<span class="muted">não informado</span>'}</span>`).join('')}<b>Total</b><b class="num">${moeda(c.paises.reduce((s,p)=>s+(+p.budget||0),0),c.moeda)}</b></div>` : `${c.orcamento?moeda(c.orcamento,c.moeda)+' (total, sem divisão por país) · ':''}<a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por país</a>`}</dd>
-      <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?`<a href="${h(c.urlPlanejamento)}" target="_blank" rel="noopener">${h(c.urlPlanejamento)}</a>`:'—'}</dd>
-      <dt>Relatório</dt><dd>${c.urlRelatorio?`<a href="${h(c.urlRelatorio)}" target="_blank" rel="noopener">${h(c.urlRelatorio)}</a>`:'—'}</dd>
-      <dt>Modelo de cronograma</dt><dd>versão ${c.modeloVersao} (cópia guardada na campanha)</dd></dl>
+      <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?`<a href="${h(c.urlPlanejamento)}" target="_blank" rel="noopener">Abrir apresentação ↗</a>`:'—'}</dd>
+      <dt>Relatório</dt><dd>${c.urlRelatorio?`<a href="${h(c.urlRelatorio)}" target="_blank" rel="noopener">Abrir relatório ↗</a>`:'—'}</dd>
+      </dl>
       <div style="margin-top:14px"><label class="campo" style="max-width:240px">Status geral<select data-chg="statusCamp" data-id="${c.id}">${opts(ST_CAMP,c.status)}</select></label></div></div>
     <div><div class="card"><div class="card-cab"><h3>Próximas etapas do caminho crítico</h3><a href="#/campanha/${c.id}/cronograma" class="small">Ver cronograma</a></div>
       <ul class="lista-simples">${crit.map(t=>`<li><span class="ponto p-verm"></span><div style="flex:1;min-width:0"><div>${h(t.nome)}${t.pais?' · '+t.pais:''}</div><div class="small muted">${h(respDaArea(c,t.area,t.pais))}</div></div><span class="small num">${fdc(t.ES)} → ${fdc(t.EF)}</span></li>`).join('')||'<li class="muted">Nenhuma etapa crítica em aberto.</li>'}</ul></div>
      <div class="card"><div class="card-cab"><h3>Países</h3><a href="#/campanha/${c.id}/mercados" class="small">Ver cards</a></div>
       <ul class="lista-simples">${c.paises.map(p=>{ const r = riscosPais(c).find(x=>x.cod===p.cod); return `<li>${pais(p.cod)}<span class="small muted">${IDIOMAS[p.idioma]}</span><span style="margin-left:auto" class="small">${fds(p.lancamento)}</span>${r?'<span class="ponto p-verm" title="Risco"></span>':'<span class="ponto p-verde"></span>'}</li>`; }).join('')}</ul></div></div>
-   </div>`;
+   </div>${cardApresentacao(c)}`;
 }
 
 /* ---------- Cronograma ---------- */
