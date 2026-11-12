@@ -275,7 +275,7 @@ const IDIOMAS = {EN:'Inglês',PT:'Português',ES:'Espanhol',DE:'Alemão',FR:'Fra
 const REGIOES = {EMEA:'Europa (EMEA)',LATAM:'América Latina (LATAM)',NA:'América do Norte (NA)',APAC:'Ásia-Pacífico (APAC)',OUT:'Outros'};
 const PAISES = {
   DE:{n:'Alemanha',r:'EMEA',i:'DE',f:'🇩🇪'},FR:{n:'França',r:'EMEA',i:'FR',f:'🇫🇷'},IT:{n:'Itália',r:'EMEA',i:'IT',f:'🇮🇹'},UK:{n:'Reino Unido',r:'EMEA',i:'EN',f:'🇬🇧'},ES:{n:'Espanha',r:'EMEA',i:'ES',f:'🇪🇸'},NL:{n:'Holanda',r:'EMEA',i:'NL',f:'🇳🇱'},
-  BR:{n:'Brasil',r:'LATAM',i:'PT',f:'🇧🇷'},AR:{n:'Argentina',r:'LATAM',i:'ES',f:'🇦🇷'},CL:{n:'Chile',r:'LATAM',i:'ES',f:'🇨🇱'},CO:{n:'Colômbia',r:'LATAM',i:'ES',f:'🇨🇴'},MX:{n:'México',r:'LATAM',i:'ES',f:'🇲🇽'},
+  BR:{n:'Brasil',r:'LATAM',i:'PT',f:'🇧🇷'},AR:{n:'Argentina',r:'LATAM',i:'ES',f:'🇦🇷'},CL:{n:'Chile',r:'LATAM',i:'ES',f:'🇨🇱'},CO:{n:'Colômbia',r:'LATAM',i:'ES',f:'🇨🇴'},MX:{n:'México',r:'LATAM',i:'ES',f:'🇲🇽'},PY:{n:'Paraguai',r:'LATAM',i:'ES',f:'🇵🇾'},UY:{n:'Uruguai',r:'LATAM',i:'ES',f:'🇺🇾'},
   US:{n:'Estados Unidos',r:'NA',i:'EN',f:'🇺🇸'},CA:{n:'Canadá',r:'NA',i:'EN',f:'🇨🇦'},
   AU:{n:'Austrália',r:'APAC',i:'EN',f:'🇦🇺'},NZ:{n:'Nova Zelândia',r:'APAC',i:'EN',f:'🇳🇿'},JP:{n:'Japão',r:'APAC',i:'JA',f:'🇯🇵'}
 };
@@ -1595,11 +1595,18 @@ function formCampanha(c){
     <label class="campo">Data prevista de lançamento *<input type="date" name="lancamento" required value="${d.lancamento||''}" data-chg="lancForm"></label>
     <label class="campo">Fim da veiculação *<input type="date" name="fimVeiculacao" required value="${d.fimVeiculacao||''}"></label>
     <div class="tudo" id="aviso-lanc"></div>
-    <div class="campo tudo">Regiões<div class="chips">${Object.entries(REGIOES).map(([k,n])=>`<span class="chip ${regs.includes(k)?'on':''}" data-act="chipRegiao" data-r="${k}">${n}</span>`).join('')}</div></div>
     <div class="campo tudo">Países participantes (todos lançam na data da campanha)
-      ${paisesDisp.length?`<div class="tabela-wrap" style="border:1px solid var(--borda);border-radius:8px"><table class="tab"><thead><tr><th></th><th>País</th><th>Idioma local</th><th>Budget *</th></tr></thead><tbody>${paisesDisp.map(([k,p])=>{ const sel = (d.paises||[]).find(x=>x.cod===k); return `<tr><td><input type="checkbox" name="pais_${k}" ${sel?'checked':''}></td><td>${p.f} ${p.n}</td><td><select name="idioma_${k}">${opts(Object.entries(IDIOMAS),sel?sel.idioma:p.i)}</select></td><td><input type="number" name="budget_${k}" min="0" step="100" placeholder="0,00" value="${sel&&sel.budget!=null?sel.budget:''}" style="width:130px"></td></tr>`; }).join('')}</tbody></table></div>`:'<div class="small muted">Escolha uma região acima para listar os países.</div>'}</div>
+      ${(d.paises||[]).length ? `<div class="tabela-wrap" style="border:1px solid var(--borda);border-radius:8px"><table class="tab"><thead><tr><th>País</th><th>Idioma local</th>${d.divisao==='pct'?'<th class="dir">% do budget</th>':''}<th class="dir">Budget</th><th></th></tr></thead><tbody>
+        ${d.paises.map(p=>`<tr><td>${PAISES[p.cod].f} ${PAISES[p.cod].n}</td><td><select name="idioma_${p.cod}">${opts(Object.entries(IDIOMAS),p.idioma||PAISES[p.cod].i)}</select></td>
+          ${d.divisao==='pct'?`<td class="dir"><input type="number" name="pct_${p.cod}" min="0" max="100" step="any" value="${p.pct!=null?p.pct:''}" style="width:80px;text-align:right" oninput="atualizarDivisao()"> %</td>`:''}
+          <td class="dir num"><span id="bud_${p.cod}">—</span></td><td><button type="button" class="icone-btn" data-act="remPaisCamp" data-p="${p.cod}" title="Remover país"><i data-lucide="x"></i></button></td></tr>`).join('')}</tbody></table></div>` : '<div class="small muted">Nenhum país adicionado ainda.</div>'}
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><select id="add-pais" style="min-width:220px"><option value="">Escolha um país…</option>${Object.entries(REGIOES).map(([rk,rn])=>{ const ps = Object.entries(PAISES).filter(([k,x])=>x.r===rk && !(d.paises||[]).some(p=>p.cod===k)); return ps.length?`<optgroup label="${h(rn)}">${ps.map(([k,x])=>`<option value="${k}">${x.f} ${x.n}</option>`).join('')}</optgroup>`:''; }).join('')}</select><button type="button" class="btn btn-s" data-act="addPaisCamp"><i data-lucide="plus"></i>Adicionar país</button></div></div>
+    <div class="campo tudo">Budget da campanha *
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select name="moeda" style="width:90px" onchange="atualizarDivisao()">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select><input type="number" name="orcamento" min="0" step="100" placeholder="Budget total" value="${d.orcamento||''}" style="width:180px" oninput="atualizarDivisao()">
+        <div class="seg"><button type="button" class="${d.divisao!=='pct'?'ativo':''}" data-act="modoDivisao" data-v="igual">Dividir igualmente</button><button type="button" class="${d.divisao==='pct'?'ativo':''}" data-act="modoDivisao" data-v="pct">Personalizar divisão</button></div>
+        ${d.divisao==='pct' && ['BR','AR','PY','CL'].every(k=>(d.paises||[]).some(p=>p.cod===k)) ? '<button type="button" class="btn btn-s btn-g" data-act="presetLatam">Usar padrão LATAM (BR 60 · AR 20 · PY 10 · CL 10)</button>' : ''}</div>
+      <div class="small" id="div-info" style="margin-top:6px"></div></div>
     <label class="campo">Idioma-base da campanha<select name="idiomaBase">${opts(Object.entries(IDIOMAS),d.idiomaBase || (regs[0]?S.baseRegiao[regs[0]]:'EN'))}</select></label>
-    <label class="campo">Moeda do budget<select name="moeda">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select></label>
     <div class="campo tudo">Canais<div class="chips">${[...CANAIS, ...(d.canais||[]).filter(k=>!CANAIS.includes(k))].map(k=>`<label class="chip ${(d.canais||[]).includes(k)?'on':''}"><input type="checkbox" name="canal" value="${k}" ${(d.canais||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <div class="campo tudo">Entregáveis<div class="chips">${TIPOS_ENTREGAVEL.map(k=>`<label class="chip ${(d.entregaveisTipos||[]).includes(k)?'on':''}"><input type="checkbox" name="entregavelTipo" value="${k}" ${(d.entregaveisTipos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
@@ -1610,27 +1617,52 @@ function formCampanha(c){
 function lerFormCampanha(){
   const fm = $('#form-camp'), v = ler(fm);
   const regs = rascunho.regioes;
-  const paises = Object.keys(PAISES).filter(k=>regs.includes(PAISES[k].r) && fm.elements['pais_'+k] && fm.elements['pais_'+k].checked)
-    .map(k=>{ const ant = (rascunho.paises||[]).find(p=>p.cod===k)||{}; return Object.assign({}, ant, {cod:k, idioma:v['idioma_'+k], lancamento:v.lancamento, budget: v['budget_'+k]==='' || v['budget_'+k]==null ? null : Math.max(0, +v['budget_'+k])}); });
+  const divisao = rascunho.divisao==='pct' ? 'pct' : 'igual', total = Math.max(0, +v.orcamento||0);
+  const paises = (rascunho.paises||[]).map(ant=>{ const k = ant.cod, pct = divisao==='pct' ? (v['pct_'+k]===''||v['pct_'+k]==null ? null : +v['pct_'+k]) : null;
+    return Object.assign({}, ant, {idioma:v['idioma_'+k]||ant.idioma||PAISES[k].i, lancamento:v.lancamento, pct}); });
+  dividirBudget(paises, total, divisao);
   return Object.assign({}, rascunho, {clienteId:v.clienteId,nome:v.nome.trim(),descricao:v.descricao,objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),lancamento:v.lancamento,fimVeiculacao:v.fimVeiculacao,idiomaBase:v.idiomaBase,
-    moeda:v.moeda,orcamento:paises.reduce((s,p)=>s+(+p.budget||0),0),canais:[...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value),entregaveisTipos:[...fm.querySelectorAll('input[name=entregavelTipo]:checked')].map(x=>x.value),urlPlanejamento:v.urlPlanejamento,nomePlanejamento:(v.nomePlanejamento||'').trim(),urlRelatorio:v.urlRelatorio,paises});
+    moeda:v.moeda,orcamento:total,divisao,regioes:[...new Set(paises.map(p=>PAISES[p.cod].r))],canais:[...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value),entregaveisTipos:[...fm.querySelectorAll('input[name=entregavelTipo]:checked')].map(x=>x.value),urlPlanejamento:v.urlPlanejamento,nomePlanejamento:(v.nomePlanejamento||'').trim(),urlRelatorio:v.urlRelatorio,paises});
 }
 function validarCampanha(d){
   const err = [];
   if (!d.clienteId) err.push('Escolha o cliente.'); if (!d.nome) err.push('Informe o nome da campanha.');
   if (!d.lancamento) err.push('Informe a data de lançamento.'); if (!d.fimVeiculacao) err.push('Informe o fim da veiculação.');
   if (d.lancamento && d.fimVeiculacao && d.fimVeiculacao < d.lancamento) err.push('O fim da veiculação não pode ser antes do lançamento.');
-  if (!d.paises.length) err.push('Escolha pelo menos um país.');
+  if (!d.paises.length) err.push('Adicione pelo menos um país.');
+  if (!(d.orcamento>0)) err.push('Informe o budget total da campanha.');
+  if (d.divisao==='pct') { const sp = d.paises.reduce((s,p)=>s+(+p.pct||0),0); if (Math.abs(sp-100) > 0.01) err.push(`A divisão personalizada soma ${+sp.toFixed(2)}%. Ajuste para 100%.`); }
   if (!(d.objetivos||[]).length) err.push('Escolha o objetivo da campanha (geração de leads e/ou awareness).');
-  const semBudget = d.paises.filter(p=>p.budget==null); if (semBudget.length) err.push('Informe o budget de: '+semBudget.map(p=>PAISES[p.cod].n).join(', ')+'.');
+
   const dts = [d.lancamento, ...d.paises.map(p=>p.lancamento)].filter(Boolean);
   for (const x of new Set(dts)) { const m = ctx().motivo(x,'AG'); if (m) err.push(`A data ${fd(x)} cai em ${m}. Escolha uma data útil (o sistema não muda a data sozinho).`); }
   if (d.paises.length && d.paises.every(p=>p.lancamento!==d.lancamento)) err.push('A data de lançamento da campanha deve ser a de pelo menos um país (normalmente a primeira).');
   return err;
 }
+/* divide o budget total entre os países (igual ou por %); arredonda em centavos e ajusta a sobra no primeiro país */
+function dividirBudget(paises, total, divisao){
+  if (!paises.length) return;
+  if (divisao==='pct') { paises.forEach(p=>{ p.budget = p.pct==null ? null : Math.round(total*p.pct)/100; });
+    const sp = paises.reduce((s,p)=>s+(+p.pct||0),0); if (Math.abs(sp-100)<=0.01 && paises.every(p=>p.budget!=null)) { const outros = paises.slice(1).reduce((s,p)=>s+p.budget,0); paises[0].budget = Math.round((total-outros)*100)/100; } }
+  else { const base = Math.floor(total*100/paises.length)/100; paises.forEach(p=>p.budget = base); paises[0].budget = Math.round((total - base*(paises.length-1))*100)/100; } }
+function atualizarDivisao(){ const fm = $('#form-camp'); if (!fm || !rascunho) return; const v = ler(fm), total = Math.max(0, +v.orcamento||0), div = rascunho.divisao==='pct'?'pct':'igual';
+  const ps = (rascunho.paises||[]).map(p=>({cod:p.cod, pct: div==='pct' ? (v['pct_'+p.cod]===''?null:+v['pct_'+p.cod]) : null}));
+  dividirBudget(ps, total, div);
+  ps.forEach(p=>{ const el = document.getElementById('bud_'+p.cod); if (el) el.textContent = p.budget==null ? '—' : moeda(p.budget, v.moeda); });
+  const info = $('#div-info'); if (!info) return;
+  if (div==='pct') { const sp = ps.reduce((s,p)=>s+(+p.pct||0),0); info.innerHTML = `Soma das porcentagens: <b style="color:${Math.abs(sp-100)<=0.01?'#1f6b3a':'#b3392f'}">${+sp.toFixed(2)}%</b>${Math.abs(sp-100)>0.01?' — precisa dar 100%':''}`; }
+  else info.innerHTML = ps.length ? `<span class="muted">${ps.length} país(es) · ${moeda(total/ps.length||0, v.moeda)} para cada</span>` : ''; }
+function reabrirFormCamp(d){ rascunho = d; $('.modal-corpo').innerHTML = formCampanha(rascunho); icones(); atualizarDivisao(); }
 function abrirFormCampanha(c, clienteId){
-  rascunho = c ? JSON.parse(JSON.stringify(c)) : {clienteId:clienteId||'',regioes:[],paises:[],canais:[],respAtendimento:'',respPlanejamento:''};
+  rascunho = c ? JSON.parse(JSON.stringify(c)) : {clienteId:clienteId||'',regioes:[],paises:[],canais:[],divisao:'igual'};
+  // campanhas que já tinham budget por país: vira divisão personalizada em %
+  if (!rascunho.divisao && rascunho.paises.length) { const tot = rascunho.paises.reduce((s,p)=>s+(+p.budget||0),0);
+    const iguais = rascunho.paises.every(p=>p.budget!=null && Math.abs(p.budget - rascunho.paises[0].budget) < 0.01);
+    rascunho.orcamento = tot || rascunho.orcamento || 0; rascunho.divisao = iguais || !tot ? 'igual' : 'pct';
+    if (rascunho.divisao==='pct') { rascunho.paises.forEach(p=>p.pct = Math.round((+p.budget||0)/tot*1e8)/1e6);
+      const resto = rascunho.paises.slice(1).reduce((s,p)=>s+p.pct,0); rascunho.paises[0].pct = Math.round((100-resto)*1e6)/1e6; } }
   const editar = !!(c && c.id);
+  setTimeout(atualizarDivisao, 0);
   abrirModal(editar?'Editar campanha':'Nova campanha', formCampanha(rascunho), `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="${editar?'salvarEdicaoCamp':'previaCamp'}">${editar?'Salvar':'Calcular prévia do cronograma'}<i data-lucide="arrow-right"></i></button>`, true);
 }
 function tabelaPrevia(tarefas, antigas){
@@ -1670,6 +1702,15 @@ const ACT = {
   /* campanha */
   novaCampanha: el => abrirFormCampanha(null, el.dataset.cliente),
   editarCampanha: el => abrirFormCampanha(camp(el.dataset.id)),
+  addPaisCamp: () => { const cod = $('#add-pais').value; if (!cod) return toast('Escolha um país na lista.'); const d = lerFormCampanha();
+    d.paises = [...d.paises, {cod, idioma:PAISES[cod].i, lancamento:d.lancamento, pct:null}];
+    if (!d.id && d.paises.length===1) d.idiomaBase = S.baseRegiao[PAISES[cod].r] || d.idiomaBase;
+    d.regioes = [...new Set(d.paises.map(p=>PAISES[p.cod].r))]; reabrirFormCamp(d); },
+  remPaisCamp: el => { const d = lerFormCampanha(); d.paises = d.paises.filter(p=>p.cod!==el.dataset.p); d.regioes = [...new Set(d.paises.map(p=>PAISES[p.cod].r))]; reabrirFormCamp(d); },
+  modoDivisao: el => { const d = lerFormCampanha(); d.divisao = el.dataset.v;
+    if (d.divisao==='pct' && d.paises.every(p=>p.pct==null)) { const n = d.paises.length; d.paises.forEach((p,i)=>p.pct = i===0 ? Math.round((100 - Math.floor(100/n*100)/100*(n-1))*100)/100 : Math.floor(100/n*100)/100); }
+    reabrirFormCamp(d); },
+  presetLatam: () => { const d = lerFormCampanha(); const P = {BR:60, AR:20, PY:10, CL:10}; d.paises.forEach(p=>p.pct = P[p.cod] ?? 0); reabrirFormCamp(d); },
   chipRegiao: el => { const d = lerFormCampanha(); const r = el.dataset.r; d.regioes = d.regioes.includes(r) ? d.regioes.filter(x=>x!==r) : [...d.regioes, r];
     if (d.regioes.length===1 && !rascunho.id) d.idiomaBase = S.baseRegiao[d.regioes[0]];
     rascunho = d; $('.modal-corpo').innerHTML = formCampanha(rascunho); icones(); },
