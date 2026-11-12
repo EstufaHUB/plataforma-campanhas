@@ -131,6 +131,9 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .g-nome .tx{overflow:hidden;text-overflow:ellipsis}
 .g-lin.fase .g-nome{font-weight:700;background:#f4f7f8;color:var(--pet-900)}.g-lin.fase{background:#f4f7f8}
 .g-lin.pais .g-nome{padding-left:34px;color:var(--tx2)}
+.g-grip{display:inline-grid;place-items:center;width:16px;margin:0 2px 0 -6px;color:#9aa9ae;cursor:grab;opacity:0;flex-shrink:0}.g-grip svg{width:14px;height:14px}
+.g-lin:hover .g-grip{opacity:1}@media (hover:none){.g-grip{opacity:1}}
+.g-lin.drop-antes{box-shadow:inset 0 2px 0 var(--pet-600)}.g-lin.drop-depois{box-shadow:inset 0 -2px 0 var(--pet-600)}.g-lin.arrastando-linha{opacity:.45}
 .g-acoes{position:absolute;right:124px;top:50%;transform:translateY(-50%);display:none;gap:0;background:var(--sup);border:1px solid var(--borda);border-radius:6px;box-shadow:0 1px 3px rgba(11,42,49,.12)}
 .g-acoes .icone-btn{width:26px;height:24px}.g-acoes svg{width:14px;height:14px}
 .g-lin:hover .g-acoes,.g-acoes:focus-within{display:inline-flex}@media (hover:none){.g-acoes{display:inline-flex}}
@@ -1113,12 +1116,36 @@ function moverGrupo(c, tid, dd, solto){
   Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo});
   registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: ${motivo}`); render();
   toast(trav ? trav+' etapa(s) chegaram ao limite antes do lançamento e ficaram sobrepostas.' : 'Todos os países movidos. O lançamento continua em '+fd(c.lancamento)+'.'); }
+/* muda a posição de uma etapa na lista (só a ordem de exibição; as datas não mudam) */
+function reordenarModelo(c, tid, alvo, depois, fase){
+  const M = c.modelo, i = M.findIndex(m=>m.id===tid); if (i<0 || tid===alvo) return false; const [m] = M.splice(i,1);
+  let pos;
+  if (alvo) { const j = M.findIndex(x=>x.id===alvo); if (j<0) { M.splice(i,0,m); return false; } m.fase = M[j].fase; pos = j + (depois?1:0); }
+  else { m.fase = +fase; const j = M.findIndex(x=>x.fase===m.fase);
+    pos = j>=0 ? j : (()=>{ let k = -1; M.forEach((x,ix)=>{ if (ORDEM_FASES.indexOf(x.fase) < ORDEM_FASES.indexOf(m.fase)) k = ix; }); return k+1; })(); }
+  M.splice(pos, 0, m);
+  for (const t of c.crono.tarefas) if (t.tid===tid) t.fase = m.fase;
+  return true; }
+let linhaDrag = null;
+document.addEventListener('dragstart', e => { const g = e.target.closest && e.target.closest('[data-linha-drag]'); if (!g) return;
+  linhaDrag = g.dataset.linhaDrag; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', linhaDrag); } catch(_){}
+  const l = g.closest('.g-lin'); if (l) l.classList.add('arrastando-linha'); });
+const limparDropLinha = () => document.querySelectorAll('.drop-antes,.drop-depois,.arrastando-linha').forEach(x=>x.classList.remove('drop-antes','drop-depois','arrastando-linha'));
+document.addEventListener('dragover', e => { if (!linhaDrag) return; const l = e.target.closest && e.target.closest('.g-lin[data-linha],.g-lin[data-fase-cab]'); if (!l) return;
+  e.preventDefault(); document.querySelectorAll('.drop-antes,.drop-depois').forEach(x=>x.classList.remove('drop-antes','drop-depois'));
+  const r = l.getBoundingClientRect(); l.classList.add(l.dataset.faseCab || e.clientY < r.top + r.height/2 ? (l.dataset.faseCab?'drop-depois':'drop-antes') : 'drop-depois'); });
+document.addEventListener('drop', e => { if (!linhaDrag) return; const l = e.target.closest && e.target.closest('.g-lin[data-linha],.g-lin[data-fase-cab]'); const tid = linhaDrag; linhaDrag = null; limparDropLinha(); if (!l) return; e.preventDefault();
+  const c = camp(rota()[1]); if (!c) return; const r = l.getBoundingClientRect();
+  const ok = l.dataset.faseCab ? reordenarModelo(c, tid, null, false, l.dataset.faseCab) : reordenarModelo(c, tid, l.dataset.linha, e.clientY >= r.top + r.height/2);
+  if (ok) { registrar(`Ordem das etapas alterada em “${c.nome}”`); render(); } });
+document.addEventListener('dragend', () => { if (linhaDrag) { linhaDrag = null; limparDropLinha(); } });
 function respGantt(c, ins, grupo, id){
   const ps = [...new Set(ins.map(t=>t.pessoa||''))], misto = ps.length>1, val = misto ? '' : ps[0];
   if (!ehEquipe()) return `<span class="g-resp" title="Responsável">${h(misto?'Vários':val||'—')}</span>`;
   return `<span class="g-resp"><select data-chg="${grupo?'pessoaGrupo':'pessoaTarefa'}" data-id="${c.id}" data-t="${id}" title="Responsável${grupo?' (todos os países)':''}">${misto?'<option value="" selected>Vários</option>':''}${opts(optsResp(val), misto?'__':val||'', '—')}</select></span>`; }
 function acoesEtapa(c, id, grupo){ if (!ehEquipe()) return '';
-  return `<span class="g-acoes nao-imprimir"><button class="icone-btn" data-act="editarEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Editar nome"><i data-lucide="pencil"></i></button><button class="icone-btn" data-act="excluirEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Excluir etapa"><i data-lucide="trash-2"></i></button></span>`; }
+  const linha = !String(id).includes('@');
+  return `<span class="g-acoes nao-imprimir">${linha?`<button class="icone-btn" data-act="moverLinha" data-id="${c.id}" data-t="${id}" data-d="-1" title="Subir"><i data-lucide="arrow-up"></i></button><button class="icone-btn" data-act="moverLinha" data-id="${c.id}" data-t="${id}" data-d="1" title="Descer"><i data-lucide="arrow-down"></i></button>`:''}<button class="icone-btn" data-act="editarEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Editar nome"><i data-lucide="pencil"></i></button><button class="icone-btn" data-act="excluirEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Excluir etapa"><i data-lucide="trash-2"></i></button></span>`; }
 function gantt(c, ts){
   const aberto = UI.gAberto || (UI.gAberto = {}), fFech = UI.gFase || (UI.gFase = {});
   if (!ts.length) return '<div class="vazio">Nenhuma etapa com esses filtros.</div>';
@@ -1157,9 +1184,9 @@ function gantt(c, ts){
     return s; };
   let corpo = '';
   linhas.forEach(l=>{
-    if (l.tipo==='fase') corpo += `<div class="g-lin fase"><div class="g-nome"><button class="icone-btn" data-act="gFase" data-f="${l.fase}"><i data-lucide="${fFech[l.fase]?'chevron-right':'chevron-down'}"></i></button><span class="tx">${FASES[l.fase]}</span></div><div class="g-area" style="width:${larg}px"></div></div>`;
-    else if (l.tipo==='grupo') corpo += `<div class="g-lin"><div class="g-nome"><button class="icone-btn" data-act="gAbrir" data-t="${l.tid}" title="Ver por país"><i data-lucide="${aberto[l.tid]?'chevron-down':'chevron-right'}"></i></button><span class="tx" title="${h(l.nome)}">${h(l.nome)}</span>${acoesEtapa(c, l.tid, true)}<span class="tag t-pet">${l.ins.length} país${l.ins.length>1?'es':''}</span>${respGantt(c, l.ins, true, l.tid)}</div><div class="g-area" style="width:${larg}px">${barraGrupo(c, l, aberto[l.tid], x, W)}</div></div>`;
-    else corpo += `<div class="g-lin ${l.pais?'pais':''}"><div class="g-nome"><span class="tx" title="${h(l.t.nome)}">${l.pais?pais(l.t.pais):h(l.t.nome)}</span>${acoesEtapa(c, l.t.id, false)}${l.t.critico&&!l.pais?'<span class="ponto p-verm" style="margin-left:6px" title="Caminho crítico"></span>':''}${respGantt(c, [l.t], false, l.t.id)}</div><div class="g-area" style="width:${larg}px">${barra(l.t,l.pais)}</div></div>`;
+    if (l.tipo==='fase') corpo += `<div class="g-lin fase" data-fase-cab="${l.fase}"><div class="g-nome"><button class="icone-btn" data-act="gFase" data-f="${l.fase}"><i data-lucide="${fFech[l.fase]?'chevron-right':'chevron-down'}"></i></button><span class="tx">${FASES[l.fase]}</span></div><div class="g-area" style="width:${larg}px"></div></div>`;
+    else if (l.tipo==='grupo') corpo += `<div class="g-lin" data-linha="${l.tid}"><div class="g-nome">${ehEquipe()?`<span class="g-grip" draggable="true" data-linha-drag="${l.tid}" title="Arraste para mudar a ordem"><i data-lucide="grip-vertical"></i></span>`:''}<button class="icone-btn" data-act="gAbrir" data-t="${l.tid}" title="Ver por país"><i data-lucide="${aberto[l.tid]?'chevron-down':'chevron-right'}"></i></button><span class="tx" title="${h(l.nome)}">${h(l.nome)}</span>${acoesEtapa(c, l.tid, true)}<span class="tag t-pet">${l.ins.length} país${l.ins.length>1?'es':''}</span>${respGantt(c, l.ins, true, l.tid)}</div><div class="g-area" style="width:${larg}px">${barraGrupo(c, l, aberto[l.tid], x, W)}</div></div>`;
+    else corpo += `<div class="g-lin ${l.pais?'pais':''}" ${l.pais?'':`data-linha="${l.t.tid}"`}><div class="g-nome">${l.pais||!ehEquipe()?'':`<span class="g-grip" draggable="true" data-linha-drag="${l.t.tid}" title="Arraste para mudar a ordem"><i data-lucide="grip-vertical"></i></span>`}<span class="tx" title="${h(l.t.nome)}">${l.pais?pais(l.t.pais):h(l.t.nome)}</span>${acoesEtapa(c, l.t.id, false)}${l.t.critico&&!l.pais?'<span class="ponto p-verm" style="margin-left:6px" title="Caminho crítico"></span>':''}${respGantt(c, [l.t], false, l.t.id)}</div><div class="g-area" style="width:${larg}px">${barra(l.t,l.pais)}</div></div>`;
   });
   // setas de dependência (desenhadas depois de montar)
   const arestas = new Set(); let svg = '';
@@ -1667,6 +1694,14 @@ const ACT = {
     for (const m of c.modelo) if (m.item && !ids.has(m.id)) { const k = novo.map(x=>ORDEM_FASES.indexOf(x.fase)).lastIndexOf(ORDEM_FASES.indexOf(m.fase)); novo.splice(k<0?novo.length:k+1, 0, JSON.parse(JSON.stringify(m))); }
     d.modelo = novo; d.modeloVersao = S.modelo.versao;
     ACT.compararRecalc(null, d, 'Atualizado para o modelo padrão versão '+S.modelo.versao); },
+  moverLinha: el => { const c = camp(el.dataset.id), tid = el.dataset.t, d = +el.dataset.d;
+    const vis = c.modelo.filter(m=>c.crono.tarefas.some(t=>t.tid===m.id)), i = vis.findIndex(m=>m.id===tid), j = i + d;
+    if (i<0) return; if (j<0 || j>=vis.length) return toast(d<0?'Já é a primeira.':'Já é a última.');
+    const viz = vis[j];
+    // atravessa para a etapa vizinha quando chega no limite da seção
+    if (viz.fase !== vis[i].fase) reordenarModelo(c, tid, d<0 ? null : viz.id, d>0, viz.fase);
+    else reordenarModelo(c, tid, viz.id, d>0);
+    registrar(`Ordem das etapas alterada em “${c.nome}”`); render(); },
   statusBarra: el => { const c = camp(el.dataset.id), v = el.dataset.v; fecharMenuBarra();
     if (el.dataset.g) { const ins = c.crono.tarefas.filter(x=>x.tid===el.dataset.g); let n = 0;
       for (const x of ins) if (x.status!==v) { (x.hist = x.hist||[]).push({q:HOJE,o:`Status: ${x.status} → ${v}`}); x.status = v; n++; }
