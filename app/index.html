@@ -1095,6 +1095,24 @@ function listaCrono(c, ts){
    <td><select data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}" style="padding:3px 6px;font-size:.8rem" class="${corStatus(st)}">${opts(ST_ACAO,t.status)}</select>${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td>
    <td class="small muted">${t.deps.map(d=>`${h(nomeDe(d.id))} <b>${d.tipo==='FS'?'fim→início':'início junto'}</b>`).join('<br>')||'—'}</td><td style="white-space:nowrap">${acoesEtapa(c, t.id, false)}</td></tr>`; }).join('') || '<tr><td colspan="10" class="vazio">Nenhuma etapa com esses filtros.</td></tr>'}</tbody></table></div>`;
 }
+function barraGrupo(c, l, aberto, x, W){
+  const ins = l.ins, conc = ins.filter(t=>t.status==='Concluída').length, todas = conc===ins.length;
+  const atr = ins.some(t=>statusExib(t)==='Atrasada'), and = !todas && ins.some(t=>t.status==='Em andamento');
+  const fixa = todas || !ehEquipe();
+  return `<div class="g-barra pais ${aberto?'grp':''} ${l.crit?'crit':''} ${todas?'ok':''} ${and?'and':''}" data-grupo="${l.tid}" data-c="${c.id}" ${fixa?'data-fixa="1"':''} style="left:${x(l.ES)}px;width:${x(l.EF)-x(l.ES)+W}px;${atr&&!aberto?'outline:2px solid #d0443a;outline-offset:1px':''}"
+    title="${h(l.nome)} — ${ins.length} países (${ins.map(t=>t.pais).join(', ')})\\n${fds(l.ES)} → ${fds(l.EF)} · ${conc} de ${ins.length} concluídos\\nClique para concluir todos · ${fixa?'':'arraste para mover todos os países juntos'}"></div>`; }
+/* move todos os países de uma etapa pelo mesmo número de dias */
+function moverGrupo(c, tid, dd, solto){
+  const ids = c.crono.tarefas.filter(t=>t.tid===tid && t.status!=='Concluída').map(t=>t.id); if (!ids.length) return render();
+  snapshotCrono(c); let lig = 0, trav = 0;
+  for (const id of ids) { const t = c.crono.tarefas.find(x=>x.id===id), n = novasDatasArraste(t, 'mover', dd);
+    if (n.ES===t.ES && n.EF===t.EF) continue;
+    const mv = solto ? moverTarefa(c, id, n.ES, n.EF, false) : moverConectado(c, id, n.ES, n.EF); lig += mv.length; trav += (mv.travadas||[]).length; }
+  const nome = c.crono.tarefas.find(t=>t.tid===tid).nome;
+  const motivo = `Ajuste manual: “${nome}” (todos os ${ids.length} países) ${dd>0?'+':''}${dd} dia(s)${lig?` · ${lig} etapa(s) ligada(s) acompanharam`:''}`;
+  Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo});
+  registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: ${motivo}`); render();
+  toast(trav ? trav+' etapa(s) chegaram ao limite antes do lançamento e ficaram sobrepostas.' : 'Todos os países movidos. O lançamento continua em '+fd(c.lancamento)+'.'); }
 function respGantt(c, ins, grupo, id){
   const ps = [...new Set(ins.map(t=>t.pessoa||''))], misto = ps.length>1, val = misto ? '' : ps[0];
   if (!ehEquipe()) return `<span class="g-resp" title="Responsável">${h(misto?'Vários':val||'—')}</span>`;
@@ -1140,7 +1158,7 @@ function gantt(c, ts){
   let corpo = '';
   linhas.forEach(l=>{
     if (l.tipo==='fase') corpo += `<div class="g-lin fase"><div class="g-nome"><button class="icone-btn" data-act="gFase" data-f="${l.fase}"><i data-lucide="${fFech[l.fase]?'chevron-right':'chevron-down'}"></i></button><span class="tx">${FASES[l.fase]}</span></div><div class="g-area" style="width:${larg}px"></div></div>`;
-    else if (l.tipo==='grupo') corpo += `<div class="g-lin"><div class="g-nome"><button class="icone-btn" data-act="gAbrir" data-t="${l.tid}" title="Ver por país"><i data-lucide="${aberto[l.tid]?'chevron-down':'chevron-right'}"></i></button><span class="tx" title="${h(l.nome)}">${h(l.nome)}</span>${acoesEtapa(c, l.tid, true)}<span class="tag t-pet">${l.ins.length} país${l.ins.length>1?'es':''}</span>${respGantt(c, l.ins, true, l.tid)}</div><div class="g-area" style="width:${larg}px">${aberto[l.tid]?`<div class="g-barra grp pais ${l.crit?'crit':''} ${l.ins.every(t=>t.status==='Concluída')?'ok':''}" data-grupo="${l.tid}" data-c="${c.id}" style="left:${x(l.ES)}px;width:${x(l.EF)-x(l.ES)+W}px;cursor:pointer" title="${h(l.nome)} — ${l.ins.filter(t=>t.status==='Concluída').length} de ${l.ins.length} países concluídos\nClique para concluir todos os países"></div>`:l.ins.map(t=>barra(t,true)).join('')}</div></div>`;
+    else if (l.tipo==='grupo') corpo += `<div class="g-lin"><div class="g-nome"><button class="icone-btn" data-act="gAbrir" data-t="${l.tid}" title="Ver por país"><i data-lucide="${aberto[l.tid]?'chevron-down':'chevron-right'}"></i></button><span class="tx" title="${h(l.nome)}">${h(l.nome)}</span>${acoesEtapa(c, l.tid, true)}<span class="tag t-pet">${l.ins.length} país${l.ins.length>1?'es':''}</span>${respGantt(c, l.ins, true, l.tid)}</div><div class="g-area" style="width:${larg}px">${barraGrupo(c, l, aberto[l.tid], x, W)}</div></div>`;
     else corpo += `<div class="g-lin ${l.pais?'pais':''}"><div class="g-nome"><span class="tx" title="${h(l.t.nome)}">${l.pais?pais(l.t.pais):h(l.t.nome)}</span>${acoesEtapa(c, l.t.id, false)}${l.t.critico&&!l.pais?'<span class="ponto p-verm" style="margin-left:6px" title="Caminho crítico"></span>':''}${respGantt(c, [l.t], false, l.t.id)}</div><div class="g-area" style="width:${larg}px">${barra(l.t,l.pais)}</div></div>`;
   });
   // setas de dependência (desenhadas depois de montar)
@@ -1886,8 +1904,12 @@ document.addEventListener('drop', e => { const z = e.target.closest('[data-drop]
   arrastando = null; render(); });
 /* arrastar barras do Gantt (mover ou mudar a duração) */
 let gDrag = null;
-document.addEventListener('pointerdown', e => { const b = e.target.closest('.g-barra[data-t]'); if (!b || e.button!==0) return;
-  const c = camp(b.dataset.c), t = c && c.crono.tarefas.find(x=>x.id===b.dataset.t); if (!t) return;
+document.addEventListener('pointerdown', e => { const b = e.target.closest('.g-barra[data-t],.g-barra[data-grupo]'); if (!b || e.button!==0) return;
+  const c = camp(b.dataset.c); if (!c) return;
+  if (b.dataset.grupo) { const ins = c.crono.tarefas.filter(x=>x.tid===b.dataset.grupo); if (!ins.length) return;
+    fecharMenuBarra(); gDrag = {b, c, grupo:b.dataset.grupo, ins, t:ins.reduce((m,x)=>x.ES<m.ES?x:m, ins[0]), fixa:!!b.dataset.fixa, solto:e.shiftKey, modo:'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
+    try { b.setPointerCapture(e.pointerId); } catch(_){} b.classList.add('arrastando'); e.preventDefault(); return; }
+  const t = c.crono.tarefas.find(x=>x.id===b.dataset.t); if (!t) return;
   fecharMenuBarra(); gDrag = {b, c, t, fixa: !!b.dataset.fixa, solto: e.shiftKey, modo: e.target.classList.contains('g-alca') ? 'fim' : 'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
   try { b.setPointerCapture(e.pointerId); } catch(_){} b.classList.add('arrastando'); e.preventDefault(); });
 document.addEventListener('pointermove', e => { if (!gDrag || gDrag.fixa) return; const g = gDrag, W = +(g.b.closest('.gantt')||{dataset:{}}).dataset.w || 22;
@@ -1895,6 +1917,8 @@ document.addEventListener('pointermove', e => { if (!gDrag || gDrag.fixa) return
   if (dd===g.dd) return; g.dd = dd;
   if (g.modo==='mover') g.b.style.left = (g.left + dd*W)+'px'; else g.b.style.width = (g.width + dd*W)+'px';
   const n = novasDatasArraste(g.t, g.modo, dd);
+  if (g.grupo) { let dica = g.b.querySelector('.g-dica'); if (!dica) { dica = document.createElement('span'); dica.className = 'g-dica'; g.b.appendChild(dica); }
+    dica.textContent = dd ? `${g.ins.length} países · ${dd>0?'+':''}${dd} dia(s) · começa ${fdc(n.ES)}` : ''; dica.style.display = dd ? '' : 'none'; return; }
   let dica = g.b.querySelector('.g-dica'); if (!dica) { dica = document.createElement('span'); dica.className = 'g-dica'; g.b.appendChild(dica); }
   dica.textContent = dd ? `${fdc(n.ES)} → ${fdc(n.EF)} · ${uteisEntre(n.ES,n.EF,g.t.cal,ctx())+1} d.u.` : ''; dica.style.display = dd ? '' : 'none'; });
 function fecharMenuBarra(){ const m = document.getElementById('menu-barra'); if (m) m.remove(); }
@@ -1918,12 +1942,13 @@ function menuGrupo(c, tid, x, y){ fecharMenuBarra();
   const d = document.createElement('div'); d.id = 'menu-barra'; d.className = 'menu-barra';
   d.innerHTML = `<div class="mb-tit">${h(ins[0].nome)}</div><div class="small muted" style="margin:2px 0 8px">${conc} de ${ins.length} países concluídos · <span class="farol ${farolGrupo(ins)}" style="padding:1px 7px 1px 18px;background-position:6px center">${conc===ins.length?'Concluída':'Em aberto'}</span></div>
     ${ed ? (conc<ins.length ? b('Concluída','check-check','Concluir todos os países','mb-ok') : b('Em andamento','rotate-ccw','Reabrir todos os países')) + (conc<ins.length ? b('Em andamento','play','Todos em andamento') : '') : ''}
-    <div class="small muted" style="padding:6px 8px 0">Para concluir só um país, clique na barra do país.</div>`;
+    <div class="small muted" style="padding:6px 8px 0">Para mexer em um país só, abra a etapa pela setinha e use a barra do país.</div>`;
   document.body.appendChild(d);
   const r = d.getBoundingClientRect(); d.style.left = Math.max(8, Math.min(x+8, innerWidth - r.width - 8))+'px'; d.style.top = Math.max(8, Math.min(y+10, innerHeight - r.height - 8))+'px';
   icones(); }
-document.addEventListener('click', e => { const g = e.target.closest('.g-barra[data-grupo]'); if (!g) return; const c = camp(g.dataset.c); if (c) menuGrupo(c, g.dataset.grupo, e.clientX, e.clientY); });
+
 function fimArraste(e, cancelar){ if (!gDrag) return; const g = gDrag; gDrag = null; g.b.classList.remove('arrastando');
+  if (g.grupo) { if (!cancelar && !g.dd) return menuGrupo(g.c, g.grupo, e.clientX, e.clientY); if (cancelar || !g.dd) return render(); return moverGrupo(g.c, g.grupo, g.dd, g.solto ? DEP_ATIVAS : !DEP_ATIVAS); }
   if (!cancelar && !g.dd) return menuBarra(g.c, g.t, e.clientX, e.clientY);   // clique sem arrastar: menu da etapa
   const n = novasDatasArraste(g.t, g.modo, g.dd);
   if (cancelar || !g.dd || (n.ES===g.t.ES && n.EF===g.t.EF)) return render();
