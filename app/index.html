@@ -116,6 +116,8 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .pais-card{border:1px solid var(--borda);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--tx)}.pais-card:hover{border-color:var(--pet-600)}
 .pc-nome{font-weight:600;font-size:1rem}.pc-data{margin-top:8px;font-size:.86rem;color:var(--tx2);display:flex;align-items:center;gap:10px}
 @media (max-width:640px){.cc{padding:14px}.cc-logo{width:48px;height:48px;font-size:1rem}.cc h1{font-size:1.25rem}}
+.pb-bloco{margin-top:4px}.pb-topo{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;align-items:start;margin-bottom:12px}.pb-rot{display:block;margin-bottom:6px}
+@media (max-width:760px){.pb-topo{grid-template-columns:1fr}}
 .sug-kpi{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:10px 18px 0}
 .apres{position:relative;width:100%;aspect-ratio:16/9;background:#f1f3f4;border-top:1px solid var(--borda)}.apres iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .legenda-farol{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--tx2);padding:10px 18px}.legenda-farol span{display:inline-flex;align-items:center;gap:6px}.legenda-farol i{width:9px;height:9px;border-radius:50%;display:inline-block}
@@ -1595,17 +1597,18 @@ function formCampanha(c){
     <label class="campo">Data prevista de lançamento *<input type="date" name="lancamento" required value="${d.lancamento||''}" data-chg="lancForm"></label>
     <label class="campo">Fim da veiculação *<input type="date" name="fimVeiculacao" required value="${d.fimVeiculacao||''}"></label>
     <div class="tudo" id="aviso-lanc"></div>
-    <div class="campo tudo">Países participantes (todos lançam na data da campanha)
+    <div class="tudo pb-bloco">
+      <div class="pb-topo">
+        <div class="campo"><span class="pb-rot">Países participantes (todos lançam na data da campanha)</span><div style="display:flex;gap:8px;flex-wrap:wrap"><select id="add-pais" style="min-width:220px"><option value="">Escolha um país…</option>${Object.entries(REGIOES).map(([rk,rn])=>{ const ps = Object.entries(PAISES).filter(([k,x])=>x.r===rk && !(d.paises||[]).some(p=>p.cod===k)); return ps.length?`<optgroup label="${h(rn)}">${ps.map(([k,x])=>`<option value="${k}">${x.f} ${x.n}</option>`).join('')}</optgroup>`:''; }).join('')}</select><button type="button" class="btn btn-s" data-act="addPaisCamp"><i data-lucide="plus"></i>Adicionar país</button></div></div>
+        <div class="campo"><span class="pb-rot">Budget da campanha *</span><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select name="moeda" style="width:90px" onchange="atualizarDivisao()">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select><input type="number" name="orcamento" min="0" step="100" placeholder="Budget total" value="${d.orcamento||''}" style="width:180px" oninput="atualizarDivisao()">
+        <div class="seg"><button type="button" class="${d.divisao!=='pct'?'ativo':''}" data-act="modoDivisao" data-v="igual">Dividir igualmente</button><button type="button" class="${d.divisao==='pct'?'ativo':''}" data-act="modoDivisao" data-v="pct">Personalizar divisão</button></div>
+        ${d.divisao==='pct' && ['BR','AR','PY','CL'].every(k=>(d.paises||[]).some(p=>p.cod===k)) ? '<button type="button" class="btn btn-s btn-g" data-act="presetLatam">Usar padrão LATAM (BR 60 · AR 20 · PY 10 · CL 10)</button>' : ''}</div><div class="small" id="div-info" style="margin-top:6px"></div></div>
+      </div>
       ${(d.paises||[]).length ? `<div class="tabela-wrap" style="border:1px solid var(--borda);border-radius:8px"><table class="tab"><thead><tr><th>País</th>${d.divisao==='pct'?'<th class="dir">% do budget</th>':''}<th class="dir">Budget</th><th></th></tr></thead><tbody>
         ${d.paises.map(p=>`<tr><td>${PAISES[p.cod].f} ${PAISES[p.cod].n}</td>
           ${d.divisao==='pct'?`<td class="dir"><input type="number" name="pct_${p.cod}" min="0" max="100" step="any" value="${p.pct!=null?p.pct:''}" style="width:80px;text-align:right" oninput="atualizarDivisao()"> %</td>`:''}
           <td class="dir num"><span id="bud_${p.cod}">—</span></td><td><button type="button" class="icone-btn" data-act="remPaisCamp" data-p="${p.cod}" title="Remover país"><i data-lucide="x"></i></button></td></tr>`).join('')}</tbody></table></div>` : '<div class="small muted">Nenhum país adicionado ainda.</div>'}
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><select id="add-pais" style="min-width:220px"><option value="">Escolha um país…</option>${Object.entries(REGIOES).map(([rk,rn])=>{ const ps = Object.entries(PAISES).filter(([k,x])=>x.r===rk && !(d.paises||[]).some(p=>p.cod===k)); return ps.length?`<optgroup label="${h(rn)}">${ps.map(([k,x])=>`<option value="${k}">${x.f} ${x.n}</option>`).join('')}</optgroup>`:''; }).join('')}</select><button type="button" class="btn btn-s" data-act="addPaisCamp"><i data-lucide="plus"></i>Adicionar país</button></div></div>
-    <div class="campo tudo">Budget da campanha *
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select name="moeda" style="width:90px" onchange="atualizarDivisao()">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select><input type="number" name="orcamento" min="0" step="100" placeholder="Budget total" value="${d.orcamento||''}" style="width:180px" oninput="atualizarDivisao()">
-        <div class="seg"><button type="button" class="${d.divisao!=='pct'?'ativo':''}" data-act="modoDivisao" data-v="igual">Dividir igualmente</button><button type="button" class="${d.divisao==='pct'?'ativo':''}" data-act="modoDivisao" data-v="pct">Personalizar divisão</button></div>
-        ${d.divisao==='pct' && ['BR','AR','PY','CL'].every(k=>(d.paises||[]).some(p=>p.cod===k)) ? '<button type="button" class="btn btn-s btn-g" data-act="presetLatam">Usar padrão LATAM (BR 60 · AR 20 · PY 10 · CL 10)</button>' : ''}</div>
-      <div class="small" id="div-info" style="margin-top:6px"></div></div>
+    </div>
     <div class="campo tudo">Canais<div class="chips">${[...CANAIS, ...(d.canais||[]).filter(k=>!CANAIS.includes(k))].map(k=>`<label class="chip ${(d.canais||[]).includes(k)?'on':''}"><input type="checkbox" name="canal" value="${k}" ${(d.canais||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <div class="campo tudo">Entregáveis<div class="chips">${TIPOS_ENTREGAVEL.map(k=>`<label class="chip ${(d.entregaveisTipos||[]).includes(k)?'on':''}"><input type="checkbox" name="entregavelTipo" value="${k}" ${(d.entregaveisTipos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
