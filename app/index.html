@@ -158,7 +158,9 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .g-barra.and,.g-barra.crit.and{background:#2f80b8}.g-barra.pais.and,.g-barra.pais.crit.and{background:repeating-linear-gradient(135deg,#2f80b8,#2f80b8 5px,#4a93c6 5px,#4a93c6 10px)}.g-barra.grp{top:10px;height:10px;opacity:.85}
 .g-barra[data-t]{cursor:grab;touch-action:none}.g-barra[data-fixa]{cursor:pointer}.g-barra.arrastando{cursor:grabbing;z-index:6;box-shadow:0 2px 8px rgba(11,42,49,.35);opacity:.9}
 .g-barra.manual{box-shadow:inset 0 0 0 2px #0b2a31}
-.g-alca{position:absolute;right:-2px;top:-2px;bottom:-2px;width:9px;cursor:ew-resize;border-radius:0 4px 4px 0}.g-barra[data-t]:hover .g-alca{background:rgba(11,42,49,.25)}
+.g-alca{position:absolute;right:-3px;top:-3px;bottom:-3px;width:10px;cursor:ew-resize;border-radius:0 5px 5px 0;z-index:3}
+.g-alca-ini{left:-3px;right:auto;border-radius:5px 0 0 5px}
+.g-barra:hover .g-alca{background:rgba(11,42,49,.35)}.g-barra:hover .g-alca::after{content:"";position:absolute;left:4px;top:4px;bottom:4px;width:2px;border-radius:1px;background:#fff}
 .g-dica{position:absolute;top:-26px;left:0;white-space:nowrap;background:#0b2a31;color:#fff;font-size:.72rem;padding:3px 7px;border-radius:5px;pointer-events:none}
 .g-folga{position:absolute;top:14px;height:2px;background:#9aa9ae;z-index:1}
 .g-marco{position:absolute;top:8px;width:13px;height:13px;transform:rotate(45deg);background:var(--pet-950);z-index:3}
@@ -507,6 +509,7 @@ function novasDatasArraste(t, modo, dd){
   const cx = ctx();
   const lim = t.marco ? t.LF : null;   // a etapa de lançamento não passa da data de lançamento
   if (modo==='mover') { let es = paraFrente(addDias(t.ES, dd), t.cal, cx), ef = fimDe(es, t.dur, t.cal, cx); if (lim && ef > lim) { ef = lim; es = iniDe(lim, t.dur, t.cal, cx); } return {ES:es, EF:ef}; }
+  if (modo==='ini') { let es = paraFrente(addDias(t.ES, dd), t.cal, cx); if (es > t.EF) es = paraTras(t.EF, t.cal, cx); return {ES:es, EF:t.EF}; }
   let ef = paraTras(addDias(t.EF, dd), t.cal, cx); if (ef < t.ES) ef = paraFrente(t.ES, t.cal, cx); if (lim && ef > lim) ef = lim;
   return {ES:t.ES, EF:ef};
 }
@@ -1104,16 +1107,16 @@ function barraGrupo(c, l, aberto, x, W){
   const atr = ins.some(t=>statusExib(t)==='Atrasada'), and = !todas && ins.some(t=>t.status==='Em andamento');
   const fixa = todas || !ehEquipe();
   return `<div class="g-barra pais ${aberto?'grp':''} ${l.crit?'crit':''} ${todas?'ok':''} ${and?'and':''}" data-grupo="${l.tid}" data-c="${c.id}" ${fixa?'data-fixa="1"':''} style="left:${x(l.ES)}px;width:${x(l.EF)-x(l.ES)+W}px;${atr&&!aberto?'outline:2px solid #d0443a;outline-offset:1px':''}"
-    title="${h(l.nome)} — ${ins.length} países (${ins.map(t=>t.pais).join(', ')})\\n${fds(l.ES)} → ${fds(l.EF)} · ${conc} de ${ins.length} concluídos\\nClique para concluir todos · ${fixa?'':'arraste para mover todos os países juntos'}"></div>`; }
+    title="${h(l.nome)} — ${ins.length} países (${ins.map(t=>t.pais).join(', ')})\\n${fds(l.ES)} → ${fds(l.EF)} · ${conc} de ${ins.length} concluídos\\nClique para concluir todos · ${fixa?'':'arraste para mover todos os países juntos; puxe as pontas para mudar início ou fim'}">${fixa?'':'<span class="g-alca g-alca-ini" title="Puxe para mudar o início"></span><span class="g-alca" title="Puxe para mudar o fim"></span>'}</div>`; }
 /* move todos os países de uma etapa pelo mesmo número de dias */
-function moverGrupo(c, tid, dd, solto){
+function moverGrupo(c, tid, dd, solto, modo='mover'){
   const ids = c.crono.tarefas.filter(t=>t.tid===tid && t.status!=='Concluída').map(t=>t.id); if (!ids.length) return render();
   snapshotCrono(c); let lig = 0, trav = 0;
-  for (const id of ids) { const t = c.crono.tarefas.find(x=>x.id===id), n = novasDatasArraste(t, 'mover', dd);
+  for (const id of ids) { const t = c.crono.tarefas.find(x=>x.id===id), n = novasDatasArraste(t, modo, dd);
     if (n.ES===t.ES && n.EF===t.EF) continue;
     const mv = solto ? moverTarefa(c, id, n.ES, n.EF, false) : moverConectado(c, id, n.ES, n.EF); lig += mv.length; trav += (mv.travadas||[]).length; }
   const nome = c.crono.tarefas.find(t=>t.tid===tid).nome;
-  const motivo = `Ajuste manual: “${nome}” (todos os ${ids.length} países) ${dd>0?'+':''}${dd} dia(s)${lig?` · ${lig} etapa(s) ligada(s) acompanharam`:''}`;
+  const motivo = `Ajuste manual: “${nome}” (todos os ${ids.length} países) ${modo==='ini'?'início ':modo==='fim'?'fim ':''}${dd>0?'+':''}${dd} dia(s)${lig?` · ${lig} etapa(s) ligada(s) acompanharam`:''}`;
   Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo});
   registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: ${motivo}`); render();
   toast(trav ? trav+' etapa(s) chegaram ao limite antes do lançamento e ficaram sobrepostas.' : 'Todos os países movidos. O lançamento continua em '+fd(c.lancamento)+'.'); }
@@ -1180,7 +1183,7 @@ function gantt(c, ts){
   const barra = (t, pais) => { const st = statusExib(t); let s = '';
     if (UI.fcr.folga && t.folga>0 && t.status!=='Concluída') s += `<div class="g-folga" style="left:${x(t.EF)+W}px;width:${x(t.LF)-x(t.EF)}px" title="Folga: ${t.folga} dia(s) útil(eis) — pode terminar até ${fd(t.LF)}"></div>`;
     const mov = t.status!=='Concluída' && ehEquipe();
-    s += `<div class="g-barra ${pais?'pais':''} ${t.critico?'crit':''} ${t.status==='Concluída'?'ok':''} ${t.status==='Em andamento'?'and':''} ${t.manual?'manual':''}" data-t="${t.id}" data-c="${c.id}" ${mov?'':'data-fixa="1"'} style="left:${x(t.ES)}px;width:${x(t.EF)-x(t.ES)+W}px;${st==='Atrasada'?'outline:2px solid #d0443a;outline-offset:1px':''}" title="${h(t.nome)}${t.pais?' — '+t.pais:''}\n${fds(t.ES)} → ${fds(t.EF)} · ${t.dur} d.u. · folga ${t.folga}\n${st}${t.manual?' · ajustada manualmente':''}${'\nClique para concluir ou abrir'}${mov?' · arraste para mover (com dependências ativadas, as etapas ligadas não iniciadas acompanham; Shift inverte) · puxe a ponta direita para mudar a duração':''}">${mov?'<span class="g-alca"></span>':''}</div>`;
+    s += `<div class="g-barra ${pais?'pais':''} ${t.critico?'crit':''} ${t.status==='Concluída'?'ok':''} ${t.status==='Em andamento'?'and':''} ${t.manual?'manual':''}" data-t="${t.id}" data-c="${c.id}" ${mov?'':'data-fixa="1"'} style="left:${x(t.ES)}px;width:${x(t.EF)-x(t.ES)+W}px;${st==='Atrasada'?'outline:2px solid #d0443a;outline-offset:1px':''}" title="${h(t.nome)}${t.pais?' — '+t.pais:''}\n${fds(t.ES)} → ${fds(t.EF)} · ${t.dur} d.u. · folga ${t.folga}\n${st}${t.manual?' · ajustada manualmente':''}${'\nClique para concluir ou abrir'}${mov?' · arraste para mover (com dependências ativadas, as etapas ligadas não iniciadas acompanham; Shift inverte) · puxe a ponta direita para mudar a duração':''}">${mov?'<span class="g-alca g-alca-ini" title="Puxe para mudar o início"></span><span class="g-alca" title="Puxe para mudar o fim"></span>':''}</div>`;
     if (t.marco) s += `<div class="g-marco" style="left:${x(t.EF)+W+3}px" title="Lançamento ${t.pais||''}: ${fd(t.EF)}"></div>`;
     return s; };
   let corpo = '';
@@ -1943,18 +1946,18 @@ let gDrag = null;
 document.addEventListener('pointerdown', e => { const b = e.target.closest('.g-barra[data-t],.g-barra[data-grupo]'); if (!b || e.button!==0) return;
   const c = camp(b.dataset.c); if (!c) return;
   if (b.dataset.grupo) { const ins = c.crono.tarefas.filter(x=>x.tid===b.dataset.grupo); if (!ins.length) return;
-    fecharMenuBarra(); gDrag = {b, c, grupo:b.dataset.grupo, ins, t:ins.reduce((m,x)=>x.ES<m.ES?x:m, ins[0]), fixa:!!b.dataset.fixa, solto:e.shiftKey, modo:'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
+    fecharMenuBarra(); gDrag = {b, c, grupo:b.dataset.grupo, ins, t:ins.reduce((m,x)=>x.ES<m.ES?x:m, ins[0]), fixa:!!b.dataset.fixa, solto:e.shiftKey, modo: e.target.classList.contains('g-alca-ini') ? 'ini' : e.target.classList.contains('g-alca') ? 'fim' : 'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
     try { b.setPointerCapture(e.pointerId); } catch(_){} b.classList.add('arrastando'); e.preventDefault(); return; }
   const t = c.crono.tarefas.find(x=>x.id===b.dataset.t); if (!t) return;
-  fecharMenuBarra(); gDrag = {b, c, t, fixa: !!b.dataset.fixa, solto: e.shiftKey, modo: e.target.classList.contains('g-alca') ? 'fim' : 'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
+  fecharMenuBarra(); gDrag = {b, c, t, fixa: !!b.dataset.fixa, solto: e.shiftKey, modo: e.target.classList.contains('g-alca-ini') ? 'ini' : e.target.classList.contains('g-alca') ? 'fim' : 'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
   try { b.setPointerCapture(e.pointerId); } catch(_){} b.classList.add('arrastando'); e.preventDefault(); });
 document.addEventListener('pointermove', e => { if (!gDrag || gDrag.fixa) return; const g = gDrag, W = +(g.b.closest('.gantt')||{dataset:{}}).dataset.w || 22;
-  let dd = Math.round((e.clientX - g.x0)/W); if (g.modo==='fim') dd = Math.max(dd, -Math.round(g.width/W)+1);
+  let dd = Math.round((e.clientX - g.x0)/W); if (g.modo==='fim') dd = Math.max(dd, -Math.round(g.width/W)+1); if (g.modo==='ini') dd = Math.min(dd, Math.round(g.width/W)-1);
   if (dd===g.dd) return; g.dd = dd;
-  if (g.modo==='mover') g.b.style.left = (g.left + dd*W)+'px'; else g.b.style.width = (g.width + dd*W)+'px';
+  if (g.modo==='mover') g.b.style.left = (g.left + dd*W)+'px'; else if (g.modo==='ini') { g.b.style.left = (g.left + dd*W)+'px'; g.b.style.width = (g.width - dd*W)+'px'; } else g.b.style.width = (g.width + dd*W)+'px';
   const n = novasDatasArraste(g.t, g.modo, dd);
   if (g.grupo) { let dica = g.b.querySelector('.g-dica'); if (!dica) { dica = document.createElement('span'); dica.className = 'g-dica'; g.b.appendChild(dica); }
-    dica.textContent = dd ? `${g.ins.length} países · ${dd>0?'+':''}${dd} dia(s) · começa ${fdc(n.ES)}` : ''; dica.style.display = dd ? '' : 'none'; return; }
+    dica.textContent = dd ? `${g.ins.length} países · ${g.modo==='mover'?'mover':g.modo==='ini'?'início':'fim'} ${dd>0?'+':''}${dd} dia(s)` : ''; dica.style.display = dd ? '' : 'none'; return; }
   let dica = g.b.querySelector('.g-dica'); if (!dica) { dica = document.createElement('span'); dica.className = 'g-dica'; g.b.appendChild(dica); }
   dica.textContent = dd ? `${fdc(n.ES)} → ${fdc(n.EF)} · ${uteisEntre(n.ES,n.EF,g.t.cal,ctx())+1} d.u.` : ''; dica.style.display = dd ? '' : 'none'; });
 function fecharMenuBarra(){ const m = document.getElementById('menu-barra'); if (m) m.remove(); }
@@ -1984,7 +1987,7 @@ function menuGrupo(c, tid, x, y){ fecharMenuBarra();
   icones(); }
 
 function fimArraste(e, cancelar){ if (!gDrag) return; const g = gDrag; gDrag = null; g.b.classList.remove('arrastando');
-  if (g.grupo) { if (!cancelar && !g.dd) return menuGrupo(g.c, g.grupo, e.clientX, e.clientY); if (cancelar || !g.dd) return render(); return moverGrupo(g.c, g.grupo, g.dd, g.solto ? DEP_ATIVAS : !DEP_ATIVAS); }
+  if (g.grupo) { if (!cancelar && !g.dd) return menuGrupo(g.c, g.grupo, e.clientX, e.clientY); if (cancelar || !g.dd) return render(); return moverGrupo(g.c, g.grupo, g.dd, g.solto ? DEP_ATIVAS : !DEP_ATIVAS, g.modo); }
   if (!cancelar && !g.dd) return menuBarra(g.c, g.t, e.clientX, e.clientY);   // clique sem arrastar: menu da etapa
   const n = novasDatasArraste(g.t, g.modo, g.dd);
   if (cancelar || !g.dd || (n.ES===g.t.ES && n.EF===g.t.EF)) return render();
