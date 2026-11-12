@@ -279,7 +279,9 @@ const PAISES = {
   US:{n:'Estados Unidos',r:'NA',i:'EN',f:'🇺🇸'},CA:{n:'Canadá',r:'NA',i:'EN',f:'🇨🇦'},
   AU:{n:'Austrália',r:'APAC',i:'EN',f:'🇦🇺'},NZ:{n:'Nova Zelândia',r:'APAC',i:'EN',f:'🇳🇿'},JP:{n:'Japão',r:'APAC',i:'JA',f:'🇯🇵'}
 };
-const CANAIS = ['Meta Ads','YouTube Ads','Google Display','Email Marketing','Conteúdo orgânico / Social Media','Outros'];
+const CANAIS = ['Meta Ads','YouTube Ads','Google Display','Google Search','TikTok'];
+const TIPOS_ENTREGAVEL = ['KV','Landing page','Assets ADS','Assets orgânicos','Fluxo de email','Email marketing','Material rico','Materiais para dealers'];
+const temOrganico = c => (c.entregaveisTipos||[]).includes('Assets orgânicos') || (c.canais||[]).includes('Conteúdo orgânico / Social Media');
 const AREAS = ['Atendimento','Planejamento','Conteúdo','Design','Digital','Validadores locais','Cliente','Design + Conteúdo','Fornecedor'];
 const ST_CAMP = ['Planejamento','Em produção','Em aprovação','Em veiculação','Concluída'];
 const OBJETIVOS = ['Geração de leads','Awareness'];
@@ -1136,7 +1138,7 @@ function abaVisao(c){
     <div class="card"><div class="card-cab"><h3 class="h-ic"><i data-lucide="clipboard-list"></i>Dados da campanha</h3>${ehEquipe()?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Ver detalhes →</a>`:''}</div><div class="card-p"><dl class="def">
       <dt>Descrição</dt><dd>${h(c.descricao)||'—'}</dd>
       <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
-      <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd></dl>
+      <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd><dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
       <div class="sep-h"></div><dl class="def">
       <dt>Budget por país</dt><dd>${c.paises.some(p=>p.budget!=null) ? `<div class="bud">${c.paises.map(p=>`<span>${PAISES[p.cod].f} ${PAISES[p.cod].n}</span><span class="num">${p.budget!=null?moeda(p.budget,c.moeda):'<span class="muted">—</span>'}</span>`).join('')}<b>Total</b><b class="num">${moeda(totalBud,c.moeda)}</b></div>` : `${c.orcamento?moeda(c.orcamento,c.moeda)+' (total) · ':''}<a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por país</a>`}</dd>
       <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
@@ -1396,7 +1398,7 @@ function abaBudget(c){
 /* ---------- Entregáveis ---------- */
 function abaEntregaveis(c){
   const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:''});
-  const temOrg = c.canais.includes('Conteúdo orgânico / Social Media');
+  const temOrg = temOrganico(c);
   const sub = `<div class="seg" style="margin-bottom:14px"><button class="${f.sub==='pecas'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="pecas"><i data-lucide="package"></i>Peças</button><button class="${f.sub==='conteudos'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="conteudos"><i data-lucide="languages"></i>Conteúdos por país</button>${temOrg?`<button class="${f.sub==='editorial'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="editorial"><i data-lucide="calendar-days"></i>Calendário editorial</button>`:''}</div>`;
   if (f.sub==='conteudos') return sub + conteudosPorPais(c);
   if (f.sub==='editorial' && temOrg) return sub + calendarioEditorial([c], c.id);
@@ -1492,7 +1494,7 @@ function pgAnual(){
    ===================================================================== */
 function pgEditorial(){
   migalha([['Calendário editorial']]);
-  const cs = ativas().filter(c=>c.canais.includes('Conteúdo orgânico / Social Media'));
+  const cs = ativas().filter(temOrganico);
   return `<div class="cab"><div><h1>Calendário editorial</h1><p>Todas as publicações de conteúdo orgânico / social media, de todas as campanhas.</p></div></div>` + calendarioEditorial(cs, null);
 }
 function calendarioEditorial(cs, campId){
@@ -1592,7 +1594,8 @@ function formCampanha(c){
       ${paisesDisp.length?`<div class="tabela-wrap" style="border:1px solid var(--borda);border-radius:8px"><table class="tab"><thead><tr><th></th><th>País</th><th>Idioma local</th><th>Budget *</th></tr></thead><tbody>${paisesDisp.map(([k,p])=>{ const sel = (d.paises||[]).find(x=>x.cod===k); return `<tr><td><input type="checkbox" name="pais_${k}" ${sel?'checked':''}></td><td>${p.f} ${p.n}</td><td><select name="idioma_${k}">${opts(Object.entries(IDIOMAS),sel?sel.idioma:p.i)}</select></td><td><input type="number" name="budget_${k}" min="0" step="100" placeholder="0,00" value="${sel&&sel.budget!=null?sel.budget:''}" style="width:130px"></td></tr>`; }).join('')}</tbody></table></div>`:'<div class="small muted">Escolha uma região acima para listar os países.</div>'}</div>
     <label class="campo">Idioma-base da campanha<select name="idiomaBase">${opts(Object.entries(IDIOMAS),d.idiomaBase || (regs[0]?S.baseRegiao[regs[0]]:'EN'))}</select></label>
     <label class="campo">Moeda do budget<select name="moeda">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select></label>
-    <div class="campo tudo">Canais<div class="chips">${CANAIS.map(k=>`<label class="chip ${(d.canais||[]).includes(k)?'on':''}"><input type="checkbox" name="canal" value="${k}" ${(d.canais||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
+    <div class="campo tudo">Canais<div class="chips">${[...CANAIS, ...(d.canais||[]).filter(k=>!CANAIS.includes(k))].map(k=>`<label class="chip ${(d.canais||[]).includes(k)?'on':''}"><input type="checkbox" name="canal" value="${k}" ${(d.canais||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
+    <div class="campo tudo">Entregáveis<div class="chips">${TIPOS_ENTREGAVEL.map(k=>`<label class="chip ${(d.entregaveisTipos||[]).includes(k)?'on':''}"><input type="checkbox" name="entregavelTipo" value="${k}" ${(d.entregaveisTipos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
     <label class="campo">Nome da apresentação<input name="nomePlanejamento" value="${h(d.nomePlanejamento||'')}" placeholder="Ex.: PTx Trimble EMEA | Planning and Concept"></label>
     <label class="campo">URL do relatório<input type="url" name="urlRelatorio" value="${h(d.urlRelatorio||'')}"></label>
@@ -1604,7 +1607,7 @@ function lerFormCampanha(){
   const paises = Object.keys(PAISES).filter(k=>regs.includes(PAISES[k].r) && fm.elements['pais_'+k] && fm.elements['pais_'+k].checked)
     .map(k=>{ const ant = (rascunho.paises||[]).find(p=>p.cod===k)||{}; return Object.assign({}, ant, {cod:k, idioma:v['idioma_'+k], lancamento:v.lancamento, budget: v['budget_'+k]==='' || v['budget_'+k]==null ? null : Math.max(0, +v['budget_'+k])}); });
   return Object.assign({}, rascunho, {clienteId:v.clienteId,nome:v.nome.trim(),descricao:v.descricao,objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),lancamento:v.lancamento,fimVeiculacao:v.fimVeiculacao,idiomaBase:v.idiomaBase,
-    moeda:v.moeda,orcamento:paises.reduce((s,p)=>s+(+p.budget||0),0),canais:[...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value),urlPlanejamento:v.urlPlanejamento,nomePlanejamento:(v.nomePlanejamento||'').trim(),urlRelatorio:v.urlRelatorio,paises});
+    moeda:v.moeda,orcamento:paises.reduce((s,p)=>s+(+p.budget||0),0),canais:[...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value),entregaveisTipos:[...fm.querySelectorAll('input[name=entregavelTipo]:checked')].map(x=>x.value),urlPlanejamento:v.urlPlanejamento,nomePlanejamento:(v.nomePlanejamento||'').trim(),urlRelatorio:v.urlRelatorio,paises});
 }
 function validarCampanha(d){
   const err = [];
@@ -1957,7 +1960,7 @@ const ACT = {
   edNav: el => { const f = UI.fed, d = +el.dataset.d;
     if (f.visao==='mes') { let [y,m] = f.mes.split('-').map(Number); m += d; if (m<1){m=12;y--;} if (m>12){m=1;y++;} f.mes = y+'-'+String(m).padStart(2,'0'); f.semana = null; }
     else { f.semana = addDias(f.semana || f.mes+'-01', 7*d); f.mes = f.semana.slice(0,7); } render(); },
-  formPost: (el,e) => { const cs = ativas().filter(c=>c.canais.includes('Conteúdo orgânico / Social Media')); let c = camp(el.dataset.id) || cs[0]; const p = c ? (c.posts.find(x=>x.id===el.dataset.p)||{}) : {};
+  formPost: (el,e) => { const cs = ativas().filter(temOrganico); let c = camp(el.dataset.id) || cs[0]; const p = c ? (c.posts.find(x=>x.id===el.dataset.p)||{}) : {};
     if (!c) return toast('Nenhuma campanha com conteúdo orgânico.');
     abrirModal(p.id?'Publicação':'Nova publicação', `<form id="f-post" class="form-g">${el.dataset.id?`<input type="hidden" name="campId" value="${c.id}">`:`<label class="campo tudo">Campanha<select name="campId">${opts(cs.map(x=>[x.id,x.nome]),c.id)}</select></label>`}
       <label class="campo">Data prevista<input type="date" name="data" value="${p.data||''}"></label><label class="campo">Rede social<select name="rede">${opts(['Instagram','Facebook','TikTok','LinkedIn','YouTube','X'],p.rede)}</select></label>
