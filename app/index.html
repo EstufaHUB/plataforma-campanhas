@@ -1121,8 +1121,7 @@ function abaVisao(c){
   const R = 34, C = 2*Math.PI*R;
   const corSt = {'Planejamento':'#7b5ea7','Em produção':'#2e9d55','Em aprovação':'#e0a100','Em veiculação':'#2f80b8','Concluída':'#9aa9ae'}[c.status]||'#9aa9ae';
   const totalBud = c.paises.reduce((s,p)=>s+(+p.budget||0),0);
-  return alertasCampanha(c) + `<div class="grade g4">
-    ${dataKpi('calendar-days','Início do planejamento', ini, 'Recebimento do briefing')}
+  return alertasCampanha(c) + `<div class="grade g3">
     ${dataKpi('rocket','Lançamento', c.lancamento, 'Mesma data em todos os países')}
     ${dataKpi('trending-up','Fim da veiculação', c.fimVeiculacao, '')}
     <div class="card kpi2 k-prog"><svg viewBox="0 0 84 84" width="84" height="84"><circle cx="42" cy="42" r="${R}" fill="none" stroke="#e3eef0" stroke-width="9"/><circle cx="42" cy="42" r="${R}" fill="none" stroke="var(--pet-600)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C*prog/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 42 42)"/><text x="42" y="47" text-anchor="middle" font-size="17" font-weight="700" fill="var(--pet-950)">${prog}%</text></svg>
@@ -1142,9 +1141,7 @@ function abaVisao(c){
       <ul class="linha-tempo">${prox.map((t,i)=>{ const st = statusExib(t); return `<li class="${i===0?'atual':''}"><span class="lt-ponto"></span><div style="flex:1;min-width:0"><a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}" class="lt-nome">${h(t.nome)}${t.pais?' · '+t.pais:''}</a>
         <div class="small muted">${h(t.pessoa||t.area)}</div>${st==='Atrasada'?'<span class="tag t-verm" style="margin-top:4px">Atrasada</span>':t.status!=='Não iniciada'?`<span class="farol ${farolDe(t)}" style="display:inline-block;margin-top:4px;padding:1px 8px 1px 20px;background-position:7px center">${h(t.status)}</span>`:''}</div><span class="small num lt-data">${fdc(t.ES)} → ${fdc(t.EF)}</span></li>`; }).join('')||'<li class="muted" style="padding:14px 18px">Nenhuma etapa em aberto.</li>'}</ul></div>
    </div>
-   <div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="globe-2"></i>Países</h3><a href="#/campanha/${c.id}/mercados" class="small">Ver cards →</a></div>
-     <div class="paises-grade">${c.paises.map(p=>{ const r = riscosPais(c).find(x=>x.cod===p.cod); return `<a class="pais-card" href="#/campanha/${c.id}/mercados" title="${r?h(r.motivo):'Sem riscos'}"><div class="pc-nome">${PAISES[p.cod].f} ${PAISES[p.cod].n}</div><div class="pc-data">${fds(p.lancamento)} <span class="ponto ${r?'p-verm':'p-verde'}"></span></div></a>`; }).join('')}</div></div>
-   ${cardApresentacao(c)}`;
+   `;
 }
 
 /* ---------- Cronograma ---------- */
