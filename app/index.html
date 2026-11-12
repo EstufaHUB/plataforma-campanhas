@@ -829,6 +829,12 @@ function migrarLancamento(){ CTX = null; let mudou = false;
   if (S.modelo && S.modelo.origem!==VERSAO_MODELO_PLANILHA && ehEquipe()) {
     S.modeloHist.unshift({versao:S.modelo.versao, data:S.modelo.data, tarefas:S.modelo.tarefas});
     S.modelo = {versao:S.modelo.versao+1, data:HOJE, origem:VERSAO_MODELO_PLANILHA, tarefas:JSON.parse(JSON.stringify(MODELO_PADRAO))}; mudou = true; }
+  // canais que saíram da lista viram entregáveis (o calendário editorial continua para quem tinha orgânico)
+  const CANAL_P_ENTREG = {'Email Marketing':'Email marketing','Conteúdo orgânico / Social Media':'Assets orgânicos'};
+  for (const c of S.campanhas) if ((c.canais||[]).some(k=>k in CANAL_P_ENTREG)) {
+    const novos = c.canais.filter(k=>k in CANAL_P_ENTREG).map(k=>CANAL_P_ENTREG[k]);
+    c.entregaveisTipos = [...new Set([...(c.entregaveisTipos||[]), ...novos])];
+    c.canais = c.canais.filter(k=>!(k in CANAL_P_ENTREG)); mudou = true; }
   for (const c of S.campanhas) if (!c.etapasNovas && c.modelo) {
     const mapa = m => FASE_POR_ID[m.id] || FASE_ANTIGA[m.fase] || m.fase;
     for (const m of c.modelo) m.fase = mapa(m);
