@@ -1148,8 +1148,7 @@ function respGantt(c, ins, grupo, id){
   if (!ehEquipe()) return `<span class="g-resp" title="Responsável">${h(misto?'Vários':val||'—')}</span>`;
   return `<span class="g-resp"><select data-chg="${grupo?'pessoaGrupo':'pessoaTarefa'}" data-id="${c.id}" data-t="${id}" title="Responsável${grupo?' (todos os países)':''}">${misto?'<option value="" selected>Vários</option>':''}${opts(optsResp(val), misto?'__':val||'', '—')}</select></span>`; }
 function acoesEtapa(c, id, grupo){ if (!ehEquipe()) return '';
-  const linha = !String(id).includes('@');
-  return `<span class="g-acoes nao-imprimir">${linha?`<button class="icone-btn" data-act="moverLinha" data-id="${c.id}" data-t="${id}" data-d="-1" title="Subir"><i data-lucide="arrow-up"></i></button><button class="icone-btn" data-act="moverLinha" data-id="${c.id}" data-t="${id}" data-d="1" title="Descer"><i data-lucide="arrow-down"></i></button>`:''}<button class="icone-btn" data-act="editarEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Editar nome"><i data-lucide="pencil"></i></button><button class="icone-btn" data-act="excluirEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Excluir etapa"><i data-lucide="trash-2"></i></button></span>`; }
+  return `<span class="g-acoes nao-imprimir"><button class="icone-btn" data-act="editarEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Editar nome"><i data-lucide="pencil"></i></button><button class="icone-btn" data-act="excluirEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Excluir etapa"><i data-lucide="trash-2"></i></button></span>`; }
 function gantt(c, ts){
   const aberto = UI.gAberto || (UI.gAberto = {}), fFech = UI.gFase || (UI.gFase = {});
   if (!ts.length) return '<div class="vazio">Nenhuma etapa com esses filtros.</div>';
