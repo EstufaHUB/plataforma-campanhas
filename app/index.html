@@ -119,6 +119,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .pb-bloco{margin-top:4px}.pb-topo{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,2fr);gap:16px 24px;align-items:start;margin-bottom:12px}.pb-rot{display:block;margin-bottom:6px}.sec-canal{border:1px solid var(--borda);border-radius:12px;padding:16px;background:#fafbfb}.sec-tit{font-weight:700;color:var(--pet-900);margin-bottom:12px;font-size:.98rem}.pb-bloco{display:flex;flex-direction:column}.pb-bloco>.pb-topo{order:0}.pb-bloco>.tabela-wrap{order:1}.pb-bloco>.pb-canais{order:2;margin-top:16px}.pb-can-cab{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.pb-bud{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}.pb-bud .seg{flex-shrink:0}.pb-bud select,.pb-bud input{flex-shrink:0}.pb-bud input{min-width:140px}.pb-bud select{min-width:84px}.pb-bud .seg button{white-space:nowrap}
 @media (max-width:760px){.pb-bud{flex-wrap:wrap}}
 @media (max-width:760px){.pb-topo{grid-template-columns:1fr}}
+.obj-canal{display:grid;grid-template-columns:auto 1fr;gap:16px 32px;padding:14px 18px;border-bottom:1px solid var(--borda)}@media (max-width:760px){.obj-canal{grid-template-columns:1fr}}
 .canal-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .canal-card{display:block;padding:18px;text-decoration:none;color:var(--tx);border:1px solid var(--borda);transition:border-color .12s,box-shadow .12s}.canal-card:hover{border-color:var(--pet-600)}
 .canal-card.sel{border-color:var(--pet-600);box-shadow:0 0 0 2px #d4eef0}
@@ -1403,37 +1404,39 @@ function secaoKpis(c){
 /* colunas de KPI por objetivo: um volume (digitado) e um custo calculado a partir do budget */
 const KPI_COLUNAS = {'Geração de leads':{vol:'Leads', custo:'CPL', fator:1}, 'Awareness':{vol:'Impressões', custo:'CPM', fator:1000}};
 const moeda2 = (v,m='BRL') => v==null||!isFinite(v) ? '—' : Number(v).toLocaleString('pt-BR',{style:'currency',currency:m,minimumFractionDigits:2,maximumFractionDigits:2});
+const OBJ_CANAL = ['Leads','Awareness'];
+const OBJ_MIDIA = ['Conversão','Alcance','Engajamento','Visita','Tráfego'];
+/* objetivo do canal (o escolhido no canal ou, se não houver, o da campanha) */
+const objCanal = (c, cf) => cf.objetivo || ((c.objetivos||[])[0]==='Awareness' ? 'Awareness' : (c.objetivos||[]).length ? 'Leads' : null);
+const custoLinha = b => !b || !b.kpis ? null : (b.kpis.custo ?? b.kpis.CPL ?? b.kpis.CPM ?? null);
 function abaBudget(c){
   if (!c.canaisCfg || !(c.canais||[]).length) return abaBudgetAntiga(c);
-  const ed = ehEquipe(), cols = (c.objetivos||[]).map(o=>KPI_COLUNAS[o]).filter(Boolean);
+  const ed = ehEquipe();
   const linha = (k, cod) => c.budgets.find(b=>b.canal===k && b.pais===cod);
-  const custo = (bud, vol, f) => vol>0 ? bud/vol*f : null;
-  const volDe = (bud, cu, f) => cu>0 ? Math.round(bud/cu*f) : null;
-  // números de cada canal (cada um na sua moeda)
-  const dados = c.canais.map(k=>{ const cf = c.canaisCfg[k]||{}, m = cf.moeda||c.moeda||'BRL';
-    const ps = (cf.paises||[]).map(p=>{ const b = linha(k,p.cod), bud = +p.budget||0, cus = Object.fromEntries(cols.map(cl=>[cl.custo, b && b.kpis ? b.kpis[cl.custo] : null]));
-      return {cod:p.cod, b, bud, cus, vols:Object.fromEntries(cols.map(cl=>[cl.vol, volDe(bud, +cus[cl.custo]||0, cl.fator)]))}; });
-    const tot = {budget:ps.reduce((s,x)=>s+x.bud,0)}; cols.forEach(cl=>{ tot[cl.vol] = ps.reduce((s,x)=>s+(+x.vols[cl.vol]||0),0); tot['b_'+cl.vol] = ps.reduce((s,x)=>s+(x.vols[cl.vol]>0?x.bud:0),0); });
-    const definida = cols.length>0 && ps.length>0 && ps.every(x=>cols.every(cl=>+x.cus[cl.custo]>0));
-    return {k, m, cf, ps, tot, definida, orc:+cf.orcamento||tot.budget}; });
+  const dados = c.canais.map(k=>{ const cf = c.canaisCfg[k]||{}, m = cf.moeda||c.moeda||'BRL', obj = objCanal(c, cf), midia = cf.objMidia||null, fator = midia==='Alcance' ? 1000 : 1;
+    const ps = (cf.paises||[]).map(p=>{ const b = linha(k,p.cod), bud = +p.budget||0, cu = custoLinha(b); return {cod:p.cod, b, bud, cu, res: cu>0 ? Math.round(bud/cu*fator) : null}; });
+    const tot = {budget:ps.reduce((s,x)=>s+x.bud,0), res:ps.reduce((s,x)=>s+(+x.res||0),0), bRes:ps.reduce((s,x)=>s+(x.res>0?x.bud:0),0)};
+    const definida = !!obj && !!midia && ps.length>0 && ps.every(x=>+x.cu>0);
+    return {k, m, cf, ps, tot, obj, midia, fator, definida, orc:+cf.orcamento||tot.budget}; });
   UI.bCanal = dados.some(d=>d.k===UI.bCanal) ? UI.bCanal : null;
   const sel = dados.find(d=>d.k===UI.bCanal);
+  const custoMedio = d => d.tot.res>0 ? d.tot.bRes/d.tot.res*d.fator : null;
+  const rotCusto = d => d.fator===1000 ? 'Custo por mil' : 'Custo por resultado';
   const cards = `<div class="canal-grade">${dados.map(d=>`<a href="javascript:void 0" class="card canal-card ${d.k===UI.bCanal?'sel':''}" data-act="bCanal" data-k="${h(d.k)}">
       <div class="cc-top"><div class="k-ic"><i data-lucide="megaphone"></i></div><span class="small muted">${d.ps.map(x=>PAISES[x.cod].f).join(' ')}</span></div>
       <div class="cc-nome">${h(d.k)}</div><div class="cc-valor">${moeda(d.orc, d.m)}</div>
-      <span class="tag ${d.definida?'t-verde-c':'t-amar'}" style="margin-top:10px">${d.definida?'Meta definida':'Meta a definir'}</span>
-      ${d.definida ? `<div class="small muted" style="margin-top:8px">${cols.map(cl=>`${numero(d.tot[cl.vol])} ${cl.vol.toLowerCase()} · ${cl.custo} ${moeda2(custo(d.tot['b_'+cl.vol], d.tot[cl.vol], cl.fator), d.m)}`).join('<br>')}</div>` : ''}</a>`).join('')}</div>`;
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${d.obj?`<span class="tag t-pet">${h(d.obj)}</span>`:''}${d.midia?`<span class="tag t-pet">${h(d.midia)}</span>`:''}<span class="tag ${d.definida?'t-verde-c':'t-amar'}">${d.definida?'Meta definida':'Meta a definir'}</span></div>
+      ${d.definida ? `<div class="small muted" style="margin-top:8px">${numero(d.tot.res)} resultado(s) · custo ${moeda2(custoMedio(d), d.m)}${d.fator===1000?' por mil':''}</div>` : ''}</a>`).join('')}</div>`;
   let detalhe = '';
-  if (sel) { const m = sel.m;
-    const celulas = x => cols.map(cl=>{ const cu = x.cus[cl.custo];
-      return `<td class="dir num"><b>${numero(x.vols[cl.vol])}</b></td><td class="dir">${ed && x.b ? `<input type="number" min="0" step="0.01" class="inp-uso" value="${cu??''}" placeholder="0,00" data-chg="kpiLinha" data-id="${c.id}" data-b="${x.b.id}" data-kpi="${cl.custo}">` : `<span class="num">${moeda2(cu, m)}</span>`}</td>`; }).join('');
-    detalhe = `<div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="megaphone"></i>${h(sel.k)}</h3><div style="display:flex;gap:10px;align-items:center">${ed?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Alterar budget →</a>`:''}<button class="icone-btn" data-act="bCanal" data-k="${h(sel.k)}" title="Fechar"><i data-lucide="x"></i></button></div></div>
-      ${!cols.length ? `<div class="alerta amar" style="margin:12px 18px 0"><i data-lucide="info"></i><div>Escolha o objetivo da campanha em Dados da campanha para definir a meta (Geração de leads → CPL; Awareness → CPM).</div></div>` : ''}
-      <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th class="dir">Budget</th>${cols.map(cl=>`<th class="dir">${cl.vol} <span class="muted" style="text-transform:none;font-weight:400">(calculado)</span></th><th class="dir">${cl.custo}</th>`).join('')}</tr></thead><tbody>
-      ${sel.ps.map(x=>`<tr><td>${pais(x.cod)}</td><td class="dir num">${moeda(x.bud,m)}</td>${celulas(x)}</tr>`).join('')}
-      <tr style="font-weight:700"><td>Total</td><td class="dir num">${moeda(sel.tot.budget,m)}</td>${cols.map(cl=>`<td class="dir num">${numero(sel.tot[cl.vol])}</td><td class="dir num">${moeda2(custo(sel.tot['b_'+cl.vol], sel.tot[cl.vol], cl.fator), m)}</td>`).join('')}</tr></tbody></table></div>
-      ${cols.length ? `<div class="small muted" style="padding:10px 18px">Digite o ${cols.map(cl=>cl.custo).join(' e o ')} de cada país; ${cols.map(cl=>cl.vol.toLowerCase()).join(' e ')} ${cols.length>1?'são calculados':'é calculado'} a partir do budget. A meta fica “definida” quando todos os países têm ${cols.map(cl=>cl.custo).join(' e ')}.</div>` : ''}</div>`; }
-  return cards + (sel ? detalhe : `<div class="small muted" style="margin-top:12px">Clique em um canal para ver os países e definir a meta.</div>`);
+  if (sel) { const m = sel.m, k = sel.k;
+    const chips = (tipo, lista, atual) => `<div class="chips">${lista.map(v=>`<span class="chip ${atual===v?'on':''}" ${ed?`data-act="objCanal" data-k="${h(k)}" data-tipo="${tipo}" data-v="${h(v)}"`:''}>${h(v)}</span>`).join('')}</div>`;
+    detalhe = `<div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="megaphone"></i>${h(k)}</h3><div style="display:flex;gap:10px;align-items:center">${ed?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Alterar budget →</a>`:''}<button class="icone-btn" data-act="bCanal" data-k="${h(k)}" title="Fechar"><i data-lucide="x"></i></button></div></div>
+      <div class="obj-canal"><div><div class="small muted" style="margin-bottom:8px">Objetivo da campanha</div>${chips('objetivo', OBJ_CANAL, sel.obj)}</div><div><div class="small muted" style="margin-bottom:8px">Objetivo de mídia</div>${chips('objMidia', OBJ_MIDIA, sel.midia)}</div></div>
+      <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th class="dir">Budget</th><th class="dir">Resultado <span class="muted" style="text-transform:none;font-weight:400">(calculado)</span></th><th class="dir">${rotCusto(sel)}</th></tr></thead><tbody>
+      ${sel.ps.map(x=>`<tr><td>${pais(x.cod)}</td><td class="dir num">${moeda(x.bud,m)}</td><td class="dir num"><b>${numero(x.res)}</b></td><td class="dir">${ed && x.b ? `<input type="number" min="0" step="0.01" class="inp-uso" value="${x.cu??''}" placeholder="0,00" data-chg="kpiLinha" data-id="${c.id}" data-b="${x.b.id}" data-kpi="custo">` : `<span class="num">${moeda2(x.cu, m)}</span>`}</td></tr>`).join('')}
+      <tr style="font-weight:700"><td>Total</td><td class="dir num">${moeda(sel.tot.budget,m)}</td><td class="dir num">${numero(sel.tot.res)}</td><td class="dir num">${moeda2(custoMedio(sel), m)}</td></tr></tbody></table></div>
+      <div class="small muted" style="padding:10px 18px">Digite o custo de cada país; o resultado é calculado a partir do budget (budget ÷ custo${sel.fator===1000?' × 1.000, porque em Alcance o custo é por mil':''}). A meta fica “definida” com o objetivo, o objetivo de mídia e o custo de todos os países preenchidos.</div></div>`; }
+  return cards + (sel ? detalhe : `<div class="small muted" style="margin-top:12px">Clique em um canal para escolher o objetivo e definir a meta.</div>`);
 }
 function abaBudgetAntiga(c){
   UI.fbm = UI.fbm || {}; const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], R = resumoBudget(c, m), ed = ehEquipe();
@@ -1947,6 +1950,9 @@ const ACT = {
   mselAbrir: el => { UI.mselAberto = UI.mselAberto===el.dataset.k ? null : el.dataset.k; render(); },
   mselLimpar: el => { const [o,p] = el.dataset.k.split('.'); UI[o][p] = []; render(); },
   limparFiltrosAcoes: () => { Object.assign(UI.fac, {status:[], pessoa:[], area:[], pais:[]}); UI.mselAberto = null; render(); },
+  objCanal: el => { const c = camp(rota()[1]); if (!c || !c.canaisCfg) return; const cf = c.canaisCfg[el.dataset.k]; if (!cf) return;
+    const t = el.dataset.tipo, v = el.dataset.v; cf[t] = cf[t]===v ? null : v;
+    registrar(`${t==='objetivo'?'Objetivo':'Objetivo de mídia'} de ${el.dataset.k} em “${c.nome}”: ${cf[t]||'—'}`); render(); },
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
   aAbrir: el => { UI.aAberto = UI.aAberto||{}; UI.aAberto[el.dataset.t] = !UI.aAberto[el.dataset.t]; render(); },
