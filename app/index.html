@@ -37,9 +37,11 @@ svg.lucide{width:17px;height:17px;stroke-width:2;flex-shrink:0}
 .topo{height:56px;background:var(--sup);border-bottom:1px solid var(--borda);display:flex;align-items:center;gap:12px;padding:0 24px;position:sticky;top:0;z-index:30}
 .topo .migalha{color:var(--tx2);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topo .migalha a{text-decoration:none;color:var(--tx2)}.topo .migalha b{color:var(--tx)}
-.btn-menu{display:none}
+.btn-menu{display:inline-grid}
+body.menu-oculto .lateral{transform:translateX(-100%)}body.menu-oculto .principal{margin-left:0}
+.lateral,.principal{transition:transform .2s,margin-left .2s}
 .aviso-demo{background:var(--amar-f);color:var(--amar);font-size:.78rem;padding:6px 24px;border-bottom:1px solid #f1dfb8;display:flex;gap:8px;align-items:center}
-.conteudo{padding:24px;max-width:1440px;width:100%}
+.conteudo{padding:20px 28px;max-width:1920px;width:100%}
 .cab{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
 .cab p{margin:4px 0 0;color:var(--tx2)}
 /* comps */
@@ -117,7 +119,7 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .gantt{overflow:auto;border-top:1px solid var(--borda);max-height:70vh}
 .g-int{position:relative}
 .g-lin{display:flex;height:30px;border-bottom:1px solid #f0f2f3}
-.gantt{--gn:290px}.g-nome{position:sticky;left:0;z-index:3;width:var(--gn);min-width:var(--gn);background:var(--sup);border-right:1px solid var(--borda);padding:0 10px;display:flex;align-items:center;gap:6px;font-size:.8rem;white-space:nowrap;overflow:hidden}
+.gantt{--gn:380px}.g-nome{position:sticky;left:0;z-index:3;width:var(--gn);min-width:var(--gn);background:var(--sup);border-right:1px solid var(--borda);padding:0 10px;display:flex;align-items:center;gap:6px;font-size:.8rem;white-space:nowrap;overflow:hidden}
 .g-nome .tx{overflow:hidden;text-overflow:ellipsis}
 .g-lin.fase .g-nome{font-weight:700;background:#f4f7f8;color:var(--pet-900)}.g-lin.fase{background:#f4f7f8}
 .g-lin.pais .g-nome{padding-left:34px;color:var(--tx2)}
@@ -201,7 +203,7 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
   <div class="lat-rodape">Hoje: <span id="hoje-txt"></span></div>
 </aside>
 <div class="principal">
-  <header class="topo"><button class="icone-btn btn-menu" data-act="menu"><i data-lucide="menu"></i></button><div class="migalha" id="migalha"></div><div class="topo-dir nao-imprimir"><span id="sync"></span><span class="quem" id="quem"></span><button class="btn btn-s" data-act="sair"><i data-lucide="log-out"></i>Sair</button></div></header>
+  <header class="topo"><button class="icone-btn btn-menu" data-act="menu" title="Mostrar ou ocultar o menu"><i data-lucide="panel-left"></i></button><div class="migalha" id="migalha"></div><div class="topo-dir nao-imprimir"><span id="sync"></span><span class="quem" id="quem"></span><button class="btn btn-s" data-act="sair"><i data-lucide="log-out"></i>Sair</button></div></header>
   <div class="aviso-demo" id="aviso-papel" hidden></div>
   <main class="conteudo" id="app"></main>
 </div>
@@ -459,6 +461,25 @@ function excluirEtapas(camp, ids, chaves){
 function rotuloEtapa(camp, chave){ const [tid, pp] = chave.split('@'), tpl = camp.modelo.find(m=>m.id===tid);
   const nome = (camp.renomeadas||{})[chave] || (tpl ? nomeTarefa(tpl, camp.idiomaBase) : tid); return nome + (pp ? ' ('+pp+')' : ''); }
 function snapshotCrono(c){ c.cronoHist.unshift({versao:c.crono.versao, data:c.crono.calculadoEm, motivo:c.crono.motivo, lancamento:c.crono.lancamento, tarefas:JSON.parse(JSON.stringify(c.crono.tarefas))}); }
+/* move a etapa mantendo a corrente ligada: as seguintes acompanham (para frente ou para trás)
+   e, se ela passar a começar antes do fim de uma anterior, a anterior recua junto */
+function moverConectado(camp, tid, ES, EF){
+  const cx = ctx(), ts = camp.crono.tarefas, por = Object.fromEntries(ts.map(t=>[t.id,t])), t = por[tid], movidas = new Set(), travadas = [];
+  t.ES = ES; t.EF = EF; t.dur = uteisEntre(ES, EF, t.cal, cx) + 1; t.manual = true;
+  const puxar = x => { for (const d of x.deps) { const p = por[d.id]; if (!p || p.status==='Concluída') continue;
+      if (d.tipo==='FS') { const lim = antU(x.ES, p.cal, cx); if (p.EF > lim) { p.EF = lim; p.ES = iniDe(lim, p.dur, p.cal, cx); p.manual = true; movidas.add(p.id); puxar(p); } }
+      else if (p.ES > x.ES) { p.ES = paraTras(x.ES, p.cal, cx); p.EF = fimDe(p.ES, p.dur, p.cal, cx); p.manual = true; movidas.add(p.id); puxar(p); } } };
+  puxar(t);
+  const succ = {}; ts.forEach(x=>x.deps.forEach(d=>(succ[d.id] = succ[d.id]||[]).push(x.id)));
+  const desc = new Set(), fila = [tid, ...movidas]; while (fila.length) for (const sid of succ[fila.shift()]||[]) if (!desc.has(sid)) { desc.add(sid); fila.push(sid); }
+  for (const s of ts) { if (s===t || !desc.has(s.id) || s.status==='Concluída' || s.marco) continue;
+    let es = null; for (const d of s.deps) { const p = por[d.id]; if (!p) continue; const v = d.tipo==='FS' ? proxU(p.EF, s.cal, cx) : paraFrente(p.ES, s.cal, cx); if (!es || v>es) es = v; }
+    if (!es) continue;
+    if (es > s.LS) { es = s.LS; travadas.push(s); }   // não passa do limite: o lançamento fica fixo
+    if (es!==s.ES) { s.ES = es; s.EF = fimDe(es, s.dur, s.cal, cx); if (s.manual) s.manual = true; movidas.add(s.id); } }
+  recalcFolgas(camp);
+  const r = [...movidas].map(id=>por[id]); r.travadas = travadas; return r;
+}
 function novasDatasArraste(t, modo, dd){
   const cx = ctx();
   const lim = t.marco ? t.LF : null;   // a etapa de lançamento não passa da data de lançamento
@@ -699,6 +720,7 @@ async function entrarNoApp(){
   render(); sincronizar(); statusSync('Salvo');
 }
 async function iniciar(){
+  try { if (localStorage.getItem('menu-oculto')) document.body.classList.add('menu-oculto'); } catch(e){}
   if (!window.supabase || !window.SUPA_URL) { document.body.innerHTML = '<p style="padding:24px">Não foi possível carregar a conexão com o banco. Recarregue a página.</p>'; return; }
   sb = window.supabase.createClient(window.SUPA_URL, window.SUPA_KEY);
   let recuperando = /type=recovery/.test(location.hash);
@@ -869,7 +891,22 @@ function render(){
   try { $('#app').innerHTML = pg(r); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
   icones(); posRender.forEach(f=>f()); posRender = [];
+  capturarDesfazer(r);
 }
+/* desfazer (Ctrl+Z) e refazer (Ctrl+Shift+Z ou Ctrl+Y): guarda o estado da campanha aberta a cada mudança */
+const DESF = {};   // por campanha: {pilha:[], refazer:[], atual:json}
+function capturarDesfazer(r){ if (r[0]!=='campanha' || !ehEquipe()) return; const c = camp(r[1]); if (!c) return;
+  const j = JSON.stringify(c), d = DESF[c.id] || (DESF[c.id] = {pilha:[], refazer:[], atual:j});
+  if (d.atual !== j) { d.pilha.push(d.atual); if (d.pilha.length > 60) d.pilha.shift(); d.refazer = []; d.atual = j; }
+  const bD = $('[data-act="desfazer"]'), bR = $('[data-act="refazer"]'); if (bD) bD.disabled = !d.pilha.length; if (bR) bR.disabled = !d.refazer.length; }
+function trocarCampanha(id, json){ const i = S.campanhas.findIndex(c=>c.id===id); if (i<0) return; S.campanhas[i] = JSON.parse(json); DESF[id].atual = json; salvar(); render(); }
+function desfazer(refazer){ const r = rota(); if (r[0]!=='campanha' || !ehEquipe()) return; const d = DESF[r[1]]; if (!d) return;
+  const de = refazer ? d.refazer : d.pilha, para = refazer ? d.pilha : d.refazer; if (!de.length) return toast(refazer?'Nada para refazer.':'Nada para desfazer.');
+  para.push(d.atual); trocarCampanha(r[1], de.pop()); toast(refazer?'Refeito.':'Desfeito. Ctrl+Shift+Z refaz.'); }
+document.addEventListener('keydown', e => { if (!(e.ctrlKey || e.metaKey) || e.altKey) return; const k = e.key.toLowerCase(); if (k!=='z' && k!=='y') return;
+  const a = document.activeElement; if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+  if ($('#modal-raiz').innerHTML || $('#login-raiz').innerHTML) return;
+  e.preventDefault(); desfazer(k==='y' || e.shiftKey); });
 let posRender = [];
 const migalha = partes => { $('#migalha').innerHTML = partes.map((p,i)=> i<partes.length-1 ? `<a href="${p[1]}">${h(p[0])}</a> / ` : `<b>${h(p[0])}</b>`).join(''); };
 
@@ -1017,7 +1054,7 @@ function abaCronograma(c){
   const hist = c.cronoHist.length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Histórico de versões do cronograma (${c.cronoHist.length})</summary><ul class="lista-simples">${c.cronoHist.map(v=>`<li><b>Versão ${v.versao}</b><span class="small muted">${fd(v.data)} · ${h(v.motivo)} · lançamento ${fd(v.lancamento)}</span><button class="btn btn-s" style="margin-left:auto" data-act="verVersao" data-id="${c.id}" data-v="${v.versao}">Ver</button></li>`).join('')}</ul></details>` : '';
   return alertasCampanha(c) + `<div class="card"><div class="card-cab nao-imprimir"><div class="seg"><button class="${f.visao==='gantt'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="gantt"><i data-lucide="gantt-chart"></i>Gantt</button><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="lista"><i data-lucide="list"></i>Lista</button></div>
     <div class="filtros"><select data-chg="fcr.area">${opts(AREAS,f.area,'Todos os responsáveis')}</select><select data-chg="fcr.pais">${opts([['global','Só etapas globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fcr.fase">${opts(Object.entries(FASES).map(([k,v])=>[k,v.split(' — ')[1]]),f.fase,'Todas as fases')}</select><select data-chg="fcr.status">${opts(['Não iniciada','Em andamento','Concluída','Atrasada'],f.status,'Todos os status')}</select>
-    ${ehEquipe()?`<button class="btn btn-p btn-s" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}<button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
+    ${ehEquipe()?`<button class="btn btn-s" data-act="desfazer" title="Desfazer (Ctrl+Z)" disabled><i data-lucide="undo-2"></i>Desfazer</button><button class="btn btn-s" data-act="refazer" title="Refazer (Ctrl+Shift+Z)" disabled><i data-lucide="redo-2"></i></button><button class="btn btn-p btn-s" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}<button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
     <div class="small muted" style="padding:10px 18px 0">Versão ${c.crono.versao} do cronograma · calculada em ${fd(c.crono.calculadoEm)} · ${h(c.crono.motivo)} · ${c.crono.tarefas.length} etapas (${c.crono.tarefas.filter(t=>!t.pais).length} globais e ${c.crono.tarefas.filter(t=>t.pais).length} por país)</div>
     ${f.visao==='gantt' ? gantt(c, ts) : listaCrono(c, ts)}</div>${(c.excluidas||[]).length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Etapas excluídas desta campanha (${c.excluidas.length})</summary><ul class="lista-simples">${c.excluidas.map(k=>`<li>${h(rotuloEtapa(c,k))}${ehEquipe()?`<button class="btn btn-s" style="margin-left:auto" data-act="restaurarEtapa" data-id="${c.id}" data-k="${h(k)}"><i data-lucide="undo-2"></i>Restaurar</button>`:''}</li>`).join('')}</ul></details>` : ''}${hist}`;
 }
@@ -1033,10 +1070,11 @@ function acoesEtapa(c, id, grupo){ if (!ehEquipe()) return '';
 function gantt(c, ts){
   const aberto = UI.gAberto || (UI.gAberto = {}), fFech = UI.gFase || (UI.gFase = {});
   if (!ts.length) return '<div class="vazio">Nenhuma etapa com esses filtros.</div>';
-  const W = 22, H = 30;
+  const H = 30, gnPx = innerWidth <= 860 ? 170 : 380;
+  const dispo = Math.max(300, (($('#app') && $('#app').clientWidth) || 1200) - gnPx - 30);
   const ini = addDias(ts.reduce((m,t)=>t.ES<m?t.ES:m, ts[0].ES), -2);
   const fimD = addDias(ts.reduce((m,t)=>{ const v = t.LF>t.EF?t.LF:t.EF; return v>m?v:m; }, ts[0].EF), 3);
-  const nd = difDias(ini, fimD)+1, x = s => difDias(ini,s)*W, larg = nd*W;
+  const nd = difDias(ini, fimD)+1, W = Math.max(22, Math.min(48, Math.floor(dispo/nd))), x = s => difDias(ini,s)*W, larg = nd*W;
   const linhas = [], linhaDe = {};
   for (const fase of [1,2,3]) {
     const daFase = ts.filter(t=>t.fase===fase); if (!daFase.length) continue;
@@ -1062,7 +1100,7 @@ function gantt(c, ts){
   const barra = (t, pais) => { const st = statusExib(t); let s = '';
     if (t.folga>0 && t.status!=='Concluída') s += `<div class="g-folga" style="left:${x(t.EF)+W}px;width:${x(t.LF)-x(t.EF)}px" title="Folga: ${t.folga} dia(s) útil(eis) — pode terminar até ${fd(t.LF)}"></div>`;
     const mov = t.status!=='Concluída';
-    s += `<div class="g-barra ${pais?'pais':''} ${t.critico?'crit':''} ${t.status==='Concluída'?'ok':''} ${t.manual?'manual':''}" ${mov?`data-t="${t.id}" data-c="${c.id}"`:''} style="left:${x(t.ES)}px;width:${x(t.EF)-x(t.ES)+W}px;${st==='Atrasada'?'outline:2px solid #d0443a;outline-offset:1px':''}" title="${h(t.nome)}${t.pais?' — '+t.pais:''}\n${fds(t.ES)} → ${fds(t.EF)} · ${t.dur} d.u. · folga ${t.folga}\n${st}${t.manual?' · ajustada manualmente':''}${mov?'\nArraste para mover · puxe a ponta direita para mudar a duração':''}">${mov?'<span class="g-alca"></span>':''}</div>`;
+    s += `<div class="g-barra ${pais?'pais':''} ${t.critico?'crit':''} ${t.status==='Concluída'?'ok':''} ${t.manual?'manual':''}" ${mov?`data-t="${t.id}" data-c="${c.id}"`:''} style="left:${x(t.ES)}px;width:${x(t.EF)-x(t.ES)+W}px;${st==='Atrasada'?'outline:2px solid #d0443a;outline-offset:1px':''}" title="${h(t.nome)}${t.pais?' — '+t.pais:''}\n${fds(t.ES)} → ${fds(t.EF)} · ${t.dur} d.u. · folga ${t.folga}\n${st}${t.manual?' · ajustada manualmente':''}${mov?'\nArraste para mover (as etapas ligadas acompanham; segure Shift para mover só esta) · puxe a ponta direita para mudar a duração':''}">${mov?'<span class="g-alca"></span>':''}</div>`;
     if (t.marco) s += `<div class="g-marco" style="left:${x(t.EF)+W+3}px" title="Lançamento ${t.pais||''}: ${fd(t.EF)}"></div>`;
     return s; };
   let corpo = '';
@@ -1082,7 +1120,7 @@ function gantt(c, ts){
     svg += `<path d="M${x1} ${y1} H${Math.max(x1+4, x2-6)} V${y2} H${x2}" fill="none" stroke="${t.critico&&p.critico?'#c9473d':'#9fb0b5'}" stroke-width="1.2" marker-end="url(#seta)"/>`;
   }
   const altura = linhas.length*H;
-  return `<div class="gantt"><div class="g-int" style="width:calc(var(--gn) + ${larg}px)">
+  return `<div class="gantt" data-w="${W}"><div class="g-int" style="width:calc(var(--gn) + ${larg}px)">
     <div class="g-lin g-cab"><div class="g-nome">Etapa</div><div class="g-area" style="width:${larg}px">${cab}</div></div>
     <div style="position:relative"><div style="position:absolute;left:var(--gn);top:0;bottom:0;width:${larg}px;pointer-events:none">${fundo}${hojeX}<svg class="g-svg" width="${larg}" height="${altura}" style="z-index:1"><defs><marker id="seta" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#9fb0b5"/></marker></defs>${svg}</svg></div>${corpo}</div></div></div>
     <div class="legenda"><span><i style="background:var(--pet-600)"></i>Etapa global</span><span><i style="background:repeating-linear-gradient(135deg,#5aa2b0,#5aa2b0 4px,#6fb2bf 4px,#6fb2bf 8px)"></i>Etapa por país</span><span><i style="background:#c9473d"></i>Caminho crítico (folga 0)</span><span><i style="background:#8fb99a"></i>Concluída</span><span><i style="background:var(--pet-600);box-shadow:inset 0 0 0 2px #0b2a31"></i>Ajustada manualmente</span><span><i style="height:2px;background:#9aa9ae"></i>Folga</span><span><i style="background:var(--pet-950);width:10px;height:10px;transform:rotate(45deg)"></i>Lançamento</span><span><i style="background:#f1f3f4;border:1px solid #ddd"></i>Fim de semana</span><span><i style="background:repeating-linear-gradient(45deg,#fde9e7,#fde9e7 3px,#fff 3px,#fff 6px);border:1px solid #f3c9c4"></i>Feriado da agência</span><span><i style="background:#e0a33a;width:3px"></i>Hoje</span></div>`;
@@ -1419,7 +1457,8 @@ function resumoCalc(r, lanc){
 }
 
 const ACT = {
-  menu: () => document.body.classList.toggle('menu-aberto'),
+  menu: () => { if (innerWidth <= 860) return document.body.classList.toggle('menu-aberto');
+    const o = document.body.classList.toggle('menu-oculto'); try { localStorage.setItem('menu-oculto', o?'1':''); } catch(e){} setTimeout(render, 220); },
   sair: async () => { await sincronizar(); await sb.auth.signOut(); },
   recarregar: () => location.reload(),
   loginModo: el => telaLogin(el.dataset.m),
@@ -1559,17 +1598,26 @@ const ACT = {
     ACT.compararRecalc(null, d, 'Item incluído: '+nome); },
   aAbrir: el => { UI.aAberto = UI.aAberto||{}; UI.aAberto[el.dataset.t] = !UI.aAberto[el.dataset.t]; render(); },
   aFase: el => { UI.aFase = UI.aFase||{}; UI.aFase[el.dataset.f] = !UI.aFase[el.dataset.f]; render(); },
+  desfazer: () => desfazer(false),
+  refazer: () => desfazer(true),
+  restaurarVersao: el => { const c = camp(el.dataset.id), v = c.cronoHist.find(x=>x.versao==el.dataset.v); if (!v) return;
+    const ant = Object.fromEntries(v.tarefas.map(t=>[t.id,t])); let n = 0;
+    snapshotCrono(c);
+    for (const t of c.crono.tarefas) { const a = ant[t.id]; if (!a) continue; if (a.ES!==t.ES || a.EF!==t.EF) n++; Object.assign(t, {ES:a.ES, EF:a.EF, dur:a.dur}); if (a.manual) t.manual = true; else delete t.manual; }
+    recalcFolgas(c); Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo:'Datas restauradas da versão '+v.versao});
+    registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: datas restauradas da versão ${v.versao} (${n} etapa(s))`); fecharModal(); render(); toast(n+' etapa(s) voltaram às datas da versão '+v.versao+'.'); },
   movSobrepor: () => ACT.movAplicar(false),
   movEmpurrar: () => ACT.movAplicar(true),
   movAplicar: empurrar => { const m = UI.pendMov; if (!m) return; const c = camp(m.cid), t = c.crono.tarefas.find(x=>x.id===m.tid);
     c.cronoHist.unshift({versao:c.crono.versao, data:c.crono.calculadoEm, motivo:c.crono.motivo, lancamento:c.crono.lancamento, tarefas:JSON.parse(JSON.stringify(c.crono.tarefas))});
-    const nome = t.nome+(t.pais?' ('+t.pais+')':''), mv = moverTarefa(c, m.tid, m.ES, m.EF, empurrar);
-    const motivo = `Ajuste manual: “${nome}” ${fdc(m.ES)}→${fdc(m.EF)}${empurrar?` (${mv.length} etapa(s) seguinte(s) empurrada(s))`:m.sobrepoe?' (sobrepondo a próxima)':''}`;
+    const nome = t.nome+(t.pais?' ('+t.pais+')':''), mv = empurrar==='conectado' ? moverConectado(c, m.tid, m.ES, m.EF) : moverTarefa(c, m.tid, m.ES, m.EF, empurrar);
+    const motivo = `Ajuste manual: “${nome}” ${fdc(m.ES)}→${fdc(m.EF)}${empurrar==='conectado'?(mv.length?` (${mv.length} etapa(s) ligada(s) acompanharam)`:''):empurrar?` (${mv.length} etapa(s) seguinte(s) empurrada(s))`:m.sobrepoe?' (sobrepondo a próxima)':''}`;
+    if (empurrar==='conectado' && mv.travadas && mv.travadas.length) setTimeout(()=>toast(mv.travadas.length+' etapa(s) chegaram ao limite antes do lançamento e ficaram sobrepostas.'), 2700);
     Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo});
     registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: ${motivo}`); UI.pendMov = null; fecharModal(); render();
     toast('Ajuste aplicado. O lançamento continua em '+fd(c.lancamento)+'.'); },
   verVersao: el => { const c = camp(el.dataset.id), v = c.cronoHist.find(x=>x.versao==el.dataset.v);
-    abrirModal('Versão '+v.versao+' do cronograma', `<p class="muted" style="margin-top:0">${fd(v.data)} · ${h(v.motivo)} · lançamento ${fd(v.lancamento)}</p>${tabelaPrevia(v.tarefas)}`, `<button class="btn" data-act="fechar">Fechar</button>`, true); },
+    abrirModal('Versão '+v.versao+' do cronograma', `<p class="muted" style="margin-top:0">${fd(v.data)} · ${h(v.motivo)} · lançamento ${fd(v.lancamento)}</p>${tabelaPrevia(v.tarefas)}`, `<button class="btn" data-act="fechar">Fechar</button>${ehEquipe()?`<button class="btn btn-p" data-act="restaurarVersao" data-id="${c.id}" data-v="${v.versao}"><i data-lucide="history"></i>Voltar às datas desta versão</button>`:''}`, true); },
   arquivarCamp: el => { const c = camp(el.dataset.id); c.arquivada = !c.arquivada; registrar((c.arquivada?'Campanha arquivada: ':'Campanha desarquivada: ')+c.nome); render(); toast(c.arquivada?'Campanha arquivada.':'Campanha desarquivada.'); },
   filtrarPais: el => { UI.fcr = Object.assign(UI.fcr||{visao:'lista',area:'',fase:'',status:''}, {pais:el.dataset.p}); location.hash = '#/campanha/'+el.dataset.id+'/cronograma'; },
   exportCsv: el => { const c = camp(el.dataset.id);
@@ -1790,9 +1838,9 @@ document.addEventListener('drop', e => { const z = e.target.closest('[data-drop]
 let gDrag = null;
 document.addEventListener('pointerdown', e => { const b = e.target.closest('.g-barra[data-t]'); if (!b || e.button!==0) return;
   const c = camp(b.dataset.c), t = c && c.crono.tarefas.find(x=>x.id===b.dataset.t); if (!t) return;
-  gDrag = {b, c, t, modo: e.target.classList.contains('g-alca') ? 'fim' : 'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
+  gDrag = {b, c, t, solto: e.shiftKey, modo: e.target.classList.contains('g-alca') ? 'fim' : 'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
   try { b.setPointerCapture(e.pointerId); } catch(_){} b.classList.add('arrastando'); e.preventDefault(); });
-document.addEventListener('pointermove', e => { if (!gDrag) return; const W = 22, g = gDrag;
+document.addEventListener('pointermove', e => { if (!gDrag) return; const g = gDrag, W = +(g.b.closest('.gantt')||{dataset:{}}).dataset.w || 22;
   let dd = Math.round((e.clientX - g.x0)/W); if (g.modo==='fim') dd = Math.max(dd, -Math.round(g.width/W)+1);
   if (dd===g.dd) return; g.dd = dd;
   if (g.modo==='mover') g.b.style.left = (g.left + dd*W)+'px'; else g.b.style.width = (g.width + dd*W)+'px';
@@ -1802,10 +1850,11 @@ document.addEventListener('pointermove', e => { if (!gDrag) return; const W = 22
 function fimArraste(e, cancelar){ if (!gDrag) return; const g = gDrag; gDrag = null; g.b.classList.remove('arrastando');
   const n = novasDatasArraste(g.t, g.modo, g.dd);
   if (cancelar || !g.dd || (n.ES===g.t.ES && n.EF===g.t.EF)) return render();
-  proporMovimento(g.c, g.t, n.ES, n.EF); render(); }
-function proporMovimento(c, t, ES, EF){ const g = {c, t};
+  proporMovimento(g.c, g.t, n.ES, n.EF, g.solto); render(); }
+function proporMovimento(c, t, ES, EF, soltar){ const g = {c, t};
   const n = {ES, EF}, conf = conflitosMov(g.c, g.t, n.ES, n.EF);
   UI.pendMov = {cid:g.c.id, tid:g.t.id, ES:n.ES, EF:n.EF, sobrepoe:conf.length>0};
+  if (!soltar) return ACT.movAplicar('conectado');
   if (!conf.length) return ACT.movAplicar(false);
   // simula o "empurrar" para mostrar o efeito antes de escolher
   const sim = JSON.parse(JSON.stringify(g.c)), mv = moverTarefa(sim, g.t.id, n.ES, n.EF, true);
@@ -1818,6 +1867,7 @@ function proporMovimento(c, t, ES, EF){ const g = {c, t};
 document.addEventListener('pointerup', e => fimArraste(e, false));
 document.addEventListener('pointercancel', e => fimArraste(e, true));
 window.addEventListener('hashchange', render);
+let _rs; window.addEventListener('resize', () => { clearTimeout(_rs); _rs = setTimeout(()=>{ if ($('.gantt') && !gDrag) render(); }, 250); });
 
 /* =====================================================================
    16. INÍCIO
