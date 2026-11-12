@@ -251,6 +251,7 @@ const PAISES = {
 const CANAIS = ['Meta Ads','YouTube Ads','Google Display','Email Marketing','Conteúdo orgânico / Social Media','Outros'];
 const AREAS = ['Atendimento','Planejamento','Conteúdo','Design','Digital','Validadores locais','Cliente','Design + Conteúdo','Fornecedor'];
 const ST_CAMP = ['Planejamento','Em produção','Em aprovação','Em veiculação','Concluída'];
+const OBJETIVOS = ['Geração de leads','Awareness'];
 const RESPONSAVEIS = ['Karen','Tamiris','Jéssica','Giovanna'];
 const ST_ACAO = ['Não iniciada','Em andamento','Aguardando cliente','Aguardando equipe','Em revisão','Concluída','Bloqueada','Cancelada'];
 const ST_TRAD = ['Não iniciada','Aguardando conteúdo original','Aguardando aprovação do master','Aguardando tradução','Em tradução','Aguardando validação local','Em ajustes','Aprovada','Bloqueada'];
@@ -1073,14 +1074,13 @@ function abaVisao(c){
     <div class="card kpi"><div class="r">Progresso do cronograma</div><div class="v">${prog}%</div><div class="barra" style="margin-top:6px"><i style="width:${prog}%"></i></div></div></div>
    <div class="grade g2" style="margin-top:16px">
     <div class="card card-p"><h3 style="margin-bottom:12px">Dados da campanha</h3><dl class="def">
-      <dt>Descrição</dt><dd>${h(c.descricao)||'—'}</dd><dt>Objetivo</dt><dd>${h(c.objetivo)||'—'}</dd>
+      <dt>Descrição</dt><dd>${h(c.descricao)||'—'}</dd><dt>Objetivo da campanha</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-pet">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
       <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Idioma-base</dt><dd>${IDIOMAS[c.idiomaBase]}</dd>
       <dt>Idiomas</dt><dd>${[...new Set(c.paises.map(p=>IDIOMAS[p.idioma]))].join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')}</dd>
-      <dt>Atendimento</dt><dd>${h(nomeU(c.respAtendimento))}</dd><dt>Planejamento</dt><dd>${h(nomeU(c.respPlanejamento))}</dd>
-      <dt>Orçamento previsto</dt><dd>${moeda(c.orcamento,c.moeda)}</dd>
+      <dt>Budget por país</dt><dd>${c.paises.some(p=>p.budget!=null) ? `<div style="display:grid;grid-template-columns:auto auto;gap:2px 14px;justify-content:start">${c.paises.map(p=>`<span>${pais(p.cod)}</span><span class="num">${p.budget!=null?moeda(p.budget,c.moeda):'<span class="muted">não informado</span>'}</span>`).join('')}<b>Total</b><b class="num">${moeda(c.paises.reduce((s,p)=>s+(+p.budget||0),0),c.moeda)}</b></div>` : `${c.orcamento?moeda(c.orcamento,c.moeda)+' (total, sem divisão por país) · ':''}<a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por país</a>`}</dd>
       <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?`<a href="${h(c.urlPlanejamento)}" target="_blank" rel="noopener">${h(c.urlPlanejamento)}</a>`:'—'}</dd>
       <dt>Relatório</dt><dd>${c.urlRelatorio?`<a href="${h(c.urlRelatorio)}" target="_blank" rel="noopener">${h(c.urlRelatorio)}</a>`:'—'}</dd>
-      <dt>Modelo de cronograma</dt><dd>versão ${c.modeloVersao} (cópia guardada na campanha)</dd><dt>Observações</dt><dd>${h(c.obs)||'—'}</dd></dl>
+      <dt>Modelo de cronograma</dt><dd>versão ${c.modeloVersao} (cópia guardada na campanha)</dd></dl>
       <div style="margin-top:14px"><label class="campo" style="max-width:240px">Status geral<select data-chg="statusCamp" data-id="${c.id}">${opts(ST_CAMP,c.status)}</select></label></div></div>
     <div><div class="card"><div class="card-cab"><h3>Próximas etapas do caminho crítico</h3><a href="#/campanha/${c.id}/cronograma" class="small">Ver cronograma</a></div>
       <ul class="lista-simples">${crit.map(t=>`<li><span class="ponto p-verm"></span><div style="flex:1;min-width:0"><div>${h(t.nome)}${t.pais?' · '+t.pais:''}</div><div class="small muted">${h(respDaArea(c,t.area,t.pais))}</div></div><span class="small num">${fdc(t.ES)} → ${fdc(t.EF)}</span></li>`).join('')||'<li class="muted">Nenhuma etapa crítica em aberto.</li>'}</ul></div>
@@ -1499,30 +1499,27 @@ function formCampanha(c){
     <label class="campo">Cliente *<select name="clienteId" required>${opts(S.clientes.filter(x=>!x.arquivado).map(x=>[x.id,x.nome]),d.clienteId,'Selecione')}</select></label>
     <label class="campo">Nome da campanha *<input name="nome" required value="${h(d.nome||'')}"></label>
     <label class="campo tudo">Descrição<textarea name="descricao" rows="2">${h(d.descricao||'')}</textarea></label>
-    <label class="campo tudo">Objetivo<input name="objetivo" value="${h(d.objetivo||'')}"></label>
+    <div class="campo tudo">Objetivo da campanha *<div class="chips">${OBJETIVOS.map(k=>`<label class="chip ${(d.objetivos||[]).includes(k)?'on':''}"><input type="checkbox" name="objetivo" value="${k}" ${(d.objetivos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <label class="campo">Data prevista de lançamento *<input type="date" name="lancamento" required value="${d.lancamento||''}" data-chg="lancForm"></label>
     <label class="campo">Fim da veiculação *<input type="date" name="fimVeiculacao" required value="${d.fimVeiculacao||''}"></label>
     <div class="tudo" id="aviso-lanc"></div>
     <div class="campo tudo">Regiões<div class="chips">${Object.entries(REGIOES).map(([k,n])=>`<span class="chip ${regs.includes(k)?'on':''}" data-act="chipRegiao" data-r="${k}">${n}</span>`).join('')}</div></div>
     <div class="campo tudo">Países participantes (todos lançam na data da campanha)
-      ${paisesDisp.length?`<div class="tabela-wrap" style="border:1px solid var(--borda);border-radius:8px"><table class="tab"><thead><tr><th></th><th>País</th><th>Idioma local</th></tr></thead><tbody>${paisesDisp.map(([k,p])=>{ const sel = (d.paises||[]).find(x=>x.cod===k); return `<tr><td><input type="checkbox" name="pais_${k}" ${sel?'checked':''}></td><td>${p.f} ${p.n}</td><td><select name="idioma_${k}">${opts(Object.entries(IDIOMAS),sel?sel.idioma:p.i)}</select></td></tr>`; }).join('')}</tbody></table></div>`:'<div class="small muted">Escolha uma região acima para listar os países.</div>'}</div>
+      ${paisesDisp.length?`<div class="tabela-wrap" style="border:1px solid var(--borda);border-radius:8px"><table class="tab"><thead><tr><th></th><th>País</th><th>Idioma local</th><th>Budget *</th></tr></thead><tbody>${paisesDisp.map(([k,p])=>{ const sel = (d.paises||[]).find(x=>x.cod===k); return `<tr><td><input type="checkbox" name="pais_${k}" ${sel?'checked':''}></td><td>${p.f} ${p.n}</td><td><select name="idioma_${k}">${opts(Object.entries(IDIOMAS),sel?sel.idioma:p.i)}</select></td><td><input type="number" name="budget_${k}" min="0" step="100" placeholder="0,00" value="${sel&&sel.budget!=null?sel.budget:''}" style="width:130px"></td></tr>`; }).join('')}</tbody></table></div>`:'<div class="small muted">Escolha uma região acima para listar os países.</div>'}</div>
     <label class="campo">Idioma-base da campanha<select name="idiomaBase">${opts(Object.entries(IDIOMAS),d.idiomaBase || (regs[0]?S.baseRegiao[regs[0]]:'EN'))}</select></label>
-    <label class="campo">Orçamento previsto<div style="display:flex;gap:6px"><select name="moeda" style="width:90px">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select><input type="number" name="orcamento" min="0" step="100" value="${d.orcamento||''}" style="flex:1"></div></label>
+    <label class="campo">Moeda do budget<select name="moeda">${opts(['BRL','USD','EUR'],d.moeda||'BRL')}</select></label>
     <div class="campo tudo">Canais<div class="chips">${CANAIS.map(k=>`<label class="chip ${(d.canais||[]).includes(k)?'on':''}"><input type="checkbox" name="canal" value="${k}" ${(d.canais||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
-    <label class="campo">Responsável pelo atendimento<select name="respAtendimento">${optsUsu(d.respAtendimento,'Atendimento')}</select></label>
-    <label class="campo">Responsável pelo planejamento<select name="respPlanejamento">${optsUsu(d.respPlanejamento,'Planejamento')}</select></label>
     <label class="campo">URL do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}"></label>
     <label class="campo">URL do relatório<input type="url" name="urlRelatorio" value="${h(d.urlRelatorio||'')}"></label>
-    <label class="campo tudo">Observações<textarea name="obs" rows="2">${h(d.obs||'')}</textarea></label>
   </div></form>`;
 }
 function lerFormCampanha(){
   const fm = $('#form-camp'), v = ler(fm);
   const regs = rascunho.regioes;
   const paises = Object.keys(PAISES).filter(k=>regs.includes(PAISES[k].r) && fm.elements['pais_'+k] && fm.elements['pais_'+k].checked)
-    .map(k=>{ const ant = (rascunho.paises||[]).find(p=>p.cod===k)||{}; return Object.assign({}, ant, {cod:k, idioma:v['idioma_'+k], lancamento:v.lancamento}); });
-  return Object.assign({}, rascunho, {clienteId:v.clienteId,nome:v.nome.trim(),descricao:v.descricao,objetivo:v.objetivo,lancamento:v.lancamento,fimVeiculacao:v.fimVeiculacao,idiomaBase:v.idiomaBase,
-    moeda:v.moeda,orcamento:+v.orcamento||0,canais:[...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value),respAtendimento:v.respAtendimento,respPlanejamento:v.respPlanejamento,urlPlanejamento:v.urlPlanejamento,urlRelatorio:v.urlRelatorio,obs:v.obs,paises});
+    .map(k=>{ const ant = (rascunho.paises||[]).find(p=>p.cod===k)||{}; return Object.assign({}, ant, {cod:k, idioma:v['idioma_'+k], lancamento:v.lancamento, budget: v['budget_'+k]==='' || v['budget_'+k]==null ? null : Math.max(0, +v['budget_'+k])}); });
+  return Object.assign({}, rascunho, {clienteId:v.clienteId,nome:v.nome.trim(),descricao:v.descricao,objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),lancamento:v.lancamento,fimVeiculacao:v.fimVeiculacao,idiomaBase:v.idiomaBase,
+    moeda:v.moeda,orcamento:paises.reduce((s,p)=>s+(+p.budget||0),0),canais:[...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value),urlPlanejamento:v.urlPlanejamento,urlRelatorio:v.urlRelatorio,paises});
 }
 function validarCampanha(d){
   const err = [];
@@ -1530,6 +1527,8 @@ function validarCampanha(d){
   if (!d.lancamento) err.push('Informe a data de lançamento.'); if (!d.fimVeiculacao) err.push('Informe o fim da veiculação.');
   if (d.lancamento && d.fimVeiculacao && d.fimVeiculacao < d.lancamento) err.push('O fim da veiculação não pode ser antes do lançamento.');
   if (!d.paises.length) err.push('Escolha pelo menos um país.');
+  if (!(d.objetivos||[]).length) err.push('Escolha o objetivo da campanha (geração de leads e/ou awareness).');
+  const semBudget = d.paises.filter(p=>p.budget==null); if (semBudget.length) err.push('Informe o budget de: '+semBudget.map(p=>PAISES[p.cod].n).join(', ')+'.');
   const dts = [d.lancamento, ...d.paises.map(p=>p.lancamento)].filter(Boolean);
   for (const x of new Set(dts)) { const m = ctx().motivo(x,'AG'); if (m) err.push(`A data ${fd(x)} cai em ${m}. Escolha uma data útil (o sistema não muda a data sozinho).`); }
   if (d.paises.length && d.paises.every(p=>p.lancamento!==d.lancamento)) err.push('A data de lançamento da campanha deve ser a de pelo menos um país (normalmente a primeira).');
