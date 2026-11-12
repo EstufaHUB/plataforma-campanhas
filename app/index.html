@@ -454,8 +454,8 @@ function novasDatasArraste(t, modo, dd){
   let ef = paraTras(addDias(t.EF, dd), t.cal, cx); if (ef < t.ES) ef = paraFrente(t.ES, t.cal, cx); if (lim && ef > lim) ef = lim;
   return {ES:t.ES, EF:ef};
 }
-function statusExib(t){ if (t.status==='Concluída') return 'Concluída'; if (t.EF < HOJE) return 'Atrasada'; if (t.status==='Não iniciada' && t.ES < HOJE) return 'Atrasada'; return t.status; }
-function fixosDe(tarefas){ const f={}; for (const t of tarefas) { if (t.manual && t.status!=='Concluída') f[t.id]={ini:t.ES,fim:t.EF,manual:true}; else if (t.status==='Concluída') f[t.id]={ini:t.ES,fim:t.EF}; else if (t.status==='Em andamento') f[t.id]={ini:t.ES}; } return f; }
+function statusExib(t){ if (t.status==='Concluída' || t.status==='Cancelada') return t.status; if (t.EF < HOJE) return 'Atrasada'; if (t.status==='Não iniciada' && t.ES < HOJE) return 'Atrasada'; return t.status; }
+function fixosDe(tarefas){ const f={}; for (const t of tarefas) { if (t.manual && t.status!=='Concluída') f[t.id]={ini:t.ES,fim:t.EF,manual:true}; else if (t.status==='Concluída') f[t.id]={ini:t.ES,fim:t.EF}; else if (t.status!=='Não iniciada' && t.status!=='Cancelada') f[t.id]={ini:t.ES}; } return f; }
 
 /* =====================================================================
    4. ESTADO E DADOS DE DEMONSTRAÇÃO
@@ -507,10 +507,11 @@ function novaCampanha(dados){
   for (const p of camp.paises) camp.traducoes[p.cod] = {texto:'',status: p.idioma===camp.idiomaBase ? 'N/A' : 'Aguardando conteúdo original',resp:'u4',validador:p.respLocal,prazo:null,versaoMaster:0,coment:[],hist:[],aprovadoEm:null};
   return camp;
 }
+const CAMPOS_ACAO = ['descricao','prioridade','pessoa','coment','hist'];
 function aplicarCronograma(camp, r, motivo){
   if (camp.crono) camp.cronoHist.unshift({versao:camp.crono.versao, data:camp.crono.calculadoEm, motivo:camp.crono.motivo, lancamento:camp.crono.lancamento, tarefas:camp.crono.tarefas});
   const antigo = camp.crono ? Object.fromEntries(camp.crono.tarefas.map(t=>[t.id,t])) : {};
-  for (const t of r.tarefas) if (antigo[t.id]) { t.status = antigo[t.id].status; if (antigo[t.id].manual && t.ES===antigo[t.id].ES && t.EF===antigo[t.id].EF) { t.manual = true; t.dur = antigo[t.id].dur; } }
+  for (const t of r.tarefas) if (antigo[t.id]) { for (const k of CAMPOS_ACAO) if (antigo[t.id][k]!==undefined) t[k] = antigo[t.id][k]; t.status = antigo[t.id].status; if (antigo[t.id].manual && t.ES===antigo[t.id].ES && t.EF===antigo[t.id].EF) { t.manual = true; t.dur = antigo[t.id].dur; } }
   camp.crono = {versao:(camp.crono?camp.crono.versao:0)+1, calculadoEm:HOJE, motivo, lancamento:camp.lancamento, inicio:r.inicio, inviaveis:r.inviaveis, tarefas:r.tarefas};
 }
 function acoesDoModelo(camp){
@@ -699,8 +700,34 @@ async function iniciar(){
   else if (!data.session) telaLogin('entrar');
 }
 /* regra: uma data de lançamento para todos os países, e o lançamento nunca é empurrado */
+/* as ações antigas (lista separada) passam a ser as próprias etapas do cronograma */
+function migrarAcoes(c){
+  const cx = ctx();
+  for (const a of c.acoes) {
+    const doModelo = (a.hist||[])[0] && a.hist[0].o==='Copiada do cronograma padrão';
+    const alvo = doModelo ? c.crono.tarefas.filter(t=>t.nome===a.nome) : [];
+    if (alvo.length) { for (const t of alvo) {
+        if (a.status!=='Não iniciada' && t.status==='Não iniciada') t.status = a.status;
+        if (a.descricao) t.descricao = a.descricao; if (a.prioridade && a.prioridade!=='Média') t.prioridade = a.prioridade;
+        if ((a.coment||[]).length) t.coment = [...(t.coment||[]), ...a.coment];
+        if ((a.hist||[]).length > 1) t.hist = [...(t.hist||[]), ...a.hist.slice(1)]; }
+      continue; }
+    if (doModelo) continue;   // ação do modelo cuja etapa não existe mais
+    // ação criada à mão: vira um item do cronograma com as datas que tinha
+    const tid = 'X'+Math.random().toString(36).slice(2,9), area = AREAS.includes(a.resp) ? a.resp : 'Atendimento';
+    const ini = paraFrente(a.inicio || a.prazo || HOJE, 'AG', cx); let fim = paraTras(a.prazo || a.inicio || HOJE, 'AG', cx); if (fim < ini) fim = ini;
+    c.modelo.push({id:tid, fase:1, nome:a.nome, area, dur:uteisEntre(ini,fim,'AG',cx)+1, escopo:a.pais?'pais':'global', deps:[], item:true});
+    if (a.pais) c.excluidas = [...(c.excluidas||[]), ...c.paises.filter(p=>p.cod!==a.pais).map(p=>tid+'@'+p.cod)];
+    c.crono.tarefas.push({id:a.pais?tid+'@'+a.pais:tid, tid, fase:1, nome:a.nome, area, pais:a.pais||null, dur:uteisEntre(ini,fim,'AG',cx)+1, cal:'AG', deps:[], escopo:a.pais?'pais':'global', marco:false,
+      ES:ini, EF:fim, LS:ini, LF:fim, folga:0, critico:false, status:a.status||'Não iniciada', manual:true,
+      descricao:a.descricao||'', prioridade:a.prioridade||'Média', pessoa:AREAS.includes(a.resp)?'':(a.resp||''), coment:a.coment||[], hist:a.hist||[]});
+  }
+  c.acoesAntigas = c.acoes; c.acoes = [];
+  recalcFolgas(c);
+}
 function migrarLancamento(){ CTX = null; let mudou = false;
   for (const c of S.campanhas) {
+    if (c.crono && (c.acoes||[]).length) { try { migrarAcoes(c); mudou = true; } catch(e){ console.error(e); } }
     const difPais = c.paises.some(p=>p.lancamento!==c.lancamento);
     c.paises.forEach(p=>p.lancamento = c.lancamento);
     if (!c.crono || !(difPais || (c.crono.inviaveis||[]).length || (S.migr||0) < 2)) continue;
@@ -747,7 +774,7 @@ function saude(c){
   return {cor:'verde',txt:'No prazo'};
 }
 const saudeHtml = c => { const s = saude(c); return `<span class="tag" style="gap:6px"><span class="ponto p-${s.cor}"></span>${s.txt}</span>`; };
-const progresso = c => { const ts=c.crono.tarefas; return ts.length ? Math.round(ts.filter(t=>t.status==='Concluída').length/ts.length*100) : 0; };
+const progresso = c => { const ts=c.crono.tarefas.filter(t=>t.status!=='Cancelada'); return ts.length ? Math.round(ts.filter(t=>t.status==='Concluída').length/ts.length*100) : 0; };
 const inicioPlan = c => c.crono.tarefas.reduce((m,t)=>!m||t.ES<m?t.ES:m,null);
 const naoIniciada = c => c.crono.tarefas.every(t=>t.status==='Não iniciada');
 const ativas = () => S.campanhas.filter(c=>!c.arquivada && !cliente(c.clienteId).arquivado);
@@ -978,7 +1005,7 @@ function abaCronograma(c){
   const hist = c.cronoHist.length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Histórico de versões do cronograma (${c.cronoHist.length})</summary><ul class="lista-simples">${c.cronoHist.map(v=>`<li><b>Versão ${v.versao}</b><span class="small muted">${fd(v.data)} · ${h(v.motivo)} · lançamento ${fd(v.lancamento)}</span><button class="btn btn-s" style="margin-left:auto" data-act="verVersao" data-id="${c.id}" data-v="${v.versao}">Ver</button></li>`).join('')}</ul></details>` : '';
   return alertasCampanha(c) + `<div class="card"><div class="card-cab nao-imprimir"><div class="seg"><button class="${f.visao==='gantt'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="gantt"><i data-lucide="gantt-chart"></i>Gantt</button><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="lista"><i data-lucide="list"></i>Lista</button></div>
     <div class="filtros"><select data-chg="fcr.area">${opts(AREAS,f.area,'Todos os responsáveis')}</select><select data-chg="fcr.pais">${opts([['global','Só etapas globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fcr.fase">${opts(Object.entries(FASES).map(([k,v])=>[k,v.split(' — ')[1]]),f.fase,'Todas as fases')}</select><select data-chg="fcr.status">${opts(['Não iniciada','Em andamento','Concluída','Atrasada'],f.status,'Todos os status')}</select>
-    <button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
+    ${ehEquipe()?`<button class="btn btn-p btn-s" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}<button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
     <div class="small muted" style="padding:10px 18px 0">Versão ${c.crono.versao} do cronograma · calculada em ${fd(c.crono.calculadoEm)} · ${h(c.crono.motivo)} · ${c.crono.tarefas.length} etapas (${c.crono.tarefas.filter(t=>!t.pais).length} globais e ${c.crono.tarefas.filter(t=>t.pais).length} por país)</div>
     ${f.visao==='gantt' ? gantt(c, ts) : listaCrono(c, ts)}</div>${(c.excluidas||[]).length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Etapas excluídas desta campanha (${c.excluidas.length})</summary><ul class="lista-simples">${c.excluidas.map(k=>`<li>${h(rotuloEtapa(c,k))}${ehEquipe()?`<button class="btn btn-s" style="margin-left:auto" data-act="restaurarEtapa" data-id="${c.id}" data-k="${h(k)}"><i data-lucide="undo-2"></i>Restaurar</button>`:''}</li>`).join('')}</ul></details>` : ''}${hist}`;
 }
@@ -986,7 +1013,7 @@ function listaCrono(c, ts){
   const nomeDe = id => { const t = c.crono.tarefas.find(x=>x.id===id); return t ? t.nome.slice(0,28)+(t.pais?' ('+t.pais+')':'') : id; };
   return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Etapa</th><th>País</th><th>Responsável</th><th>Início</th><th>Conclusão</th><th class="dir">Duração</th><th class="dir">Folga</th><th>Status</th><th>Depende de</th><th></th></tr></thead><tbody>
   ${ts.map(t=>{ const st = statusExib(t); return `<tr class="${st==='Atrasada'?'atrasada':''}"><td>${t.critico?'<span class="ponto p-verm" title="Caminho crítico"></span> ':''}${h(t.nome)}</td><td>${t.pais?pais(t.pais):'<span class="muted small">Global</span>'}</td><td><div>${h(respDaArea(c,t.area,t.pais))}</div><div class="small muted">${h(t.area)}${t.cal!=='AG'?' · calendário '+t.cal:''}</div></td><td class="num">${fds(t.ES)}</td><td class="num">${fds(t.EF)}</td><td class="dir num">${t.dur} d.u.</td><td class="dir num">${t.folga<0?`<span class="tag t-verm">${t.folga}</span>`:t.folga}</td>
-   <td><select data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}" style="padding:3px 6px;font-size:.8rem" class="${corStatus(st)}">${opts(['Não iniciada','Em andamento','Concluída'],t.status)}</select>${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td>
+   <td><select data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}" style="padding:3px 6px;font-size:.8rem" class="${corStatus(st)}">${opts(ST_ACAO,t.status)}</select>${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td>
    <td class="small muted">${t.deps.map(d=>`${h(nomeDe(d.id))} <b>${d.tipo==='FS'?'fim→início':'início junto'}</b>`).join('<br>')||'—'}</td><td style="white-space:nowrap">${acoesEtapa(c, t.id, false)}</td></tr>`; }).join('') || '<tr><td colspan="10" class="vazio">Nenhuma etapa com esses filtros.</td></tr>'}</tbody></table></div>`;
 }
 function acoesEtapa(c, id, grupo){ if (!ehEquipe()) return '';
@@ -1050,22 +1077,23 @@ function gantt(c, ts){
 }
 
 /* ---------- Gestão de ações ---------- */
+function respTarefa(c, t){ return t.pessoa || respDaArea(c, t.area, t.pais); }
 function abaAcoes(c){
-  const f = UI.fac || (UI.fac = {visao:'lista',resp:'',status:''});
-  const L = [...c.acoes].sort((a,b)=>a.ordem-b.ordem).filter(a=>(!f.resp||a.resp===f.resp)&&(!f.status||a.status===f.status));
-  const validas = c.acoes.filter(a=>a.status!=='Cancelada'), pc = validas.length ? Math.round(validas.filter(a=>a.status==='Concluída').length/validas.length*100) : 0;
-  const atr = a => a.prazo && a.prazo<HOJE && !['Concluída','Cancelada'].includes(a.status);
-  const resps = [...new Set(c.acoes.map(a=>a.resp))];
-  return `<div class="alerta azul"><i data-lucide="info"></i><div>A Gestão de ações é <b>independente do cronograma</b>: criar, excluir ou mudar uma ação aqui não altera o cronograma, e recalcular o cronograma não apaga as ações.</div></div>
+  const f = UI.fac || (UI.fac = {visao:'lista',resp:'',status:'',pais:''});
+  const todas = c.crono.tarefas;
+  const L = [...todas].sort((a,b)=> a.ES<b.ES?-1:a.ES>b.ES?1:0).filter(t=>(!f.resp||t.area===f.resp)&&(!f.pais||t.pais===f.pais||(f.pais==='global'&&!t.pais))&&(!f.status||statusExib(t)===f.status||(f.status!=='Atrasada'&&t.status===f.status)));
+  const validas = todas.filter(t=>t.status!=='Cancelada'), pc = validas.length ? Math.round(validas.filter(t=>t.status==='Concluída').length/validas.length*100) : 0;
+  const atr = t => statusExib(t)==='Atrasada';
+  const ed = ehEquipe(), nomeT = t => h(t.nome);
+  return `<div class="alerta azul"><i data-lucide="info"></i><div>As ações são as <b>mesmas etapas do cronograma</b>. Mudar status, responsável, datas ou nome aqui muda o cronograma, e vice-versa. Para criar uma ação nova, use “Incluir item”.</div></div>
   <div class="card"><div class="card-cab"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="seg"><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="lista"><i data-lucide="list"></i>Lista</button><button class="${f.visao==='kanban'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="kanban"><i data-lucide="kanban"></i>Kanban</button></div>
-   <div style="min-width:160px"><div class="small muted">${pc}% concluído · ${c.acoes.filter(atr).length} atrasada(s)</div><div class="barra" style="margin-top:4px"><i style="width:${pc}%"></i></div></div></div>
-   <div class="filtros"><select data-chg="fac.resp">${opts(resps,f.resp,'Todos os responsáveis')}</select><select data-chg="fac.status">${opts(ST_ACAO,f.status,'Todos os status')}</select><button class="btn btn-p" data-act="formAcao" data-id="${c.id}"><i data-lucide="plus"></i>Nova ação</button></div></div>
-  ${f.visao==='lista' ? `<div class="tabela-wrap"><table class="tab"><thead><tr><th></th><th>Ação</th><th>Responsável</th><th>País</th><th>Início</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th></th></tr></thead><tbody>
-   ${L.map((a,i)=>`<tr class="${atr(a)?'atrasada':''}"><td style="white-space:nowrap"><button class="icone-btn" data-act="moverAcao" data-id="${c.id}" data-a="${a.id}" data-d="-1" ${i===0?'disabled':''} title="Subir"><i data-lucide="arrow-up"></i></button><button class="icone-btn" data-act="moverAcao" data-id="${c.id}" data-a="${a.id}" data-d="1" title="Descer"><i data-lucide="arrow-down"></i></button></td>
-    <td><a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${a.id}">${h(a.nome)}</a>${a.coment.length?` <span class="small muted">· ${a.coment.length} coment.</span>`:''}</td><td>${h(a.resp)}</td><td>${a.pais?pais(a.pais):'—'}</td><td class="num">${fd(a.inicio)}</td><td class="num">${fd(a.prazo)}${atr(a)?' <span class="tag t-verm">Atrasada</span>':''}</td><td>${h(a.prioridade)}</td>
-    <td><select data-chg="statusAcao" data-id="${c.id}" data-a="${a.id}" style="padding:3px 6px;font-size:.8rem">${opts(ST_ACAO,a.status)}</select></td>
-    <td style="white-space:nowrap"><button class="icone-btn" title="Duplicar" data-act="dupAcao" data-id="${c.id}" data-a="${a.id}"><i data-lucide="copy"></i></button><button class="icone-btn" title="Excluir" data-act="delAcao" data-id="${c.id}" data-a="${a.id}"><i data-lucide="trash-2"></i></button></td></tr>`).join('') || '<tr><td colspan="9" class="vazio">Nenhuma ação.</td></tr>'}</tbody></table></div>`
-  : `<div class="card-p"><div class="kanban">${ST_ACAO.map(s=>{ const cs = L.filter(a=>a.status===s); return `<div class="kcol" data-drop="acao" data-s="${s}" data-id="${c.id}"><h4><span>${s}</span><span>${cs.length}</span></h4>${cs.map(a=>`<div class="kcard ${atr(a)?'atr':''}" draggable="true" data-drag="${a.id}" data-act="formAcao" data-id="${c.id}" data-a="${a.id}"><div style="font-weight:500">${h(a.nome)}</div><div class="small muted" style="margin-top:4px">${h(a.resp)}${a.pais?' · '+a.pais:''}${a.prazo?' · '+fdc(a.prazo):''}</div></div>`).join('')}</div>`; }).join('')}</div><div class="small muted">Arraste os cartões entre as colunas para mudar o status.</div></div>`}
+   <div style="min-width:160px"><div class="small muted">${pc}% concluído · ${todas.filter(atr).length} atrasada(s)</div><div class="barra" style="margin-top:4px"><i style="width:${pc}%"></i></div></div></div>
+   <div class="filtros"><select data-chg="fac.resp">${opts(AREAS,f.resp,'Todas as áreas')}</select><select data-chg="fac.pais">${opts([['global','Só itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fac.status">${opts([...ST_ACAO,'Atrasada'],f.status,'Todos os status')}</select>${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
+  ${f.visao==='lista' ? `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Ação / etapa</th><th>Responsável</th><th>País</th><th>Início</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th></th></tr></thead><tbody>
+   ${L.map(t=>`<tr class="${atr(t)?'atrasada':''}"><td><a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">${nomeT(t)}</a>${(t.coment||[]).length?` <span class="small muted">· ${t.coment.length} coment.</span>`:''}${t.manual?' <span class="small muted" title="Datas ajustadas à mão">· ajustada</span>':''}</td><td><div>${h(respTarefa(c,t))}</div><div class="small muted">${h(t.area)}</div></td><td>${t.pais?pais(t.pais):'<span class="muted small">Global</span>'}</td><td class="num">${fd(t.ES)}</td><td class="num">${fd(t.EF)}${atr(t)?' <span class="tag t-verm">Atrasada</span>':''}</td><td>${h(t.prioridade||'Média')}</td>
+    <td><select data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}" style="padding:3px 6px;font-size:.8rem" ${ed?'':'disabled'}>${opts(ST_ACAO,t.status)}</select></td>
+    <td style="white-space:nowrap">${ed?`<button class="icone-btn" title="Editar" data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><i data-lucide="pencil"></i></button>${t.marco?'':`<button class="icone-btn" title="Excluir" data-act="excluirEtapa" data-id="${c.id}" data-t="${t.id}"><i data-lucide="trash-2"></i></button>`}`:''}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Nenhuma ação com esses filtros.</td></tr>'}</tbody></table></div>`
+  : `<div class="card-p"><div class="kanban">${ST_ACAO.map(st=>{ const cs = L.filter(t=>t.status===st); return `<div class="kcol" data-drop="acao" data-s="${st}" data-id="${c.id}"><h4><span>${st}</span><span>${cs.length}</span></h4>${cs.map(t=>`<div class="kcard ${atr(t)?'atr':''}" ${ed?`draggable="true" data-drag="${t.id}"`:''} data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><div style="font-weight:500">${nomeT(t)}</div><div class="small muted" style="margin-top:4px">${h(respTarefa(c,t))}${t.pais?' · '+t.pais:''} · ${fdc(t.EF)}</div></div>`).join('')}</div>`; }).join('')}</div><div class="small muted">${ed?'Arraste os cartões entre as colunas para mudar o status.':''}</div></div>`}
   </div>`;
 }
 
@@ -1369,7 +1397,7 @@ const ACT = {
     abrirModal('Prévia do cronograma — '+h(d.nome), `<p class="muted" style="margin-top:0">Confira as datas calculadas de trás para frente a partir do lançamento, em dias úteis. Nada foi salvo ainda.</p>${resumoCalc(Object.assign({},r,{inicio:rSem.inicio}), d.lancamento)}${tabelaPrevia(r.tarefas)}`,
       `<button class="btn" data-act="voltarForm">Voltar e ajustar</button><button class="btn btn-p" data-act="confirmarCamp"><i data-lucide="check"></i>Confirmar e criar campanha</button>`, true); },
   voltarForm: () => abrirFormCampanha(Object.assign({}, rascunho, {_c:undefined,_r:undefined})),
-  confirmarCamp: () => { const c = rascunho._c, r = rascunho._r; aplicarCronograma(c, r, 'Cálculo inicial'); c.acoes = acoesDoModelo(c);
+  confirmarCamp: () => { const c = rascunho._c, r = rascunho._r; aplicarCronograma(c, r, 'Cálculo inicial'); c.acoes = [];
     S.campanhas.push(c); registrar('Campanha criada: '+c.nome+' (lançamento '+fd(c.lancamento)+')'); fecharModal(); location.hash = '#/campanha/'+c.id+'/cronograma'; toast('Campanha criada.'); },
   salvarEdicaoCamp: () => { const d = lerFormCampanha(), c = camp(d.id), err = validarCampanha(d);
     if (err.length) { $('#aviso-lanc').innerHTML = `<div class="alerta verm"><i data-lucide="alert-circle"></i><div>${err.map(h).join('<br>')}</div></div>`; icones(); return; }
@@ -1388,8 +1416,8 @@ const ACT = {
     ACT.compararRecalc(null, d, v.motivo || 'Data de lançamento alterada para '+fd(d.lancamento)); },
   recalcHoje: el => { const c = camp(el.dataset.id); ACT.compararRecalc(null, JSON.parse(JSON.stringify(c)), 'Recalculado a partir de hoje'); },
   compararRecalc: (el, d, motivo) => { const c = camp(d.id);
-    const base = Object.assign({}, c, {paises:d.paises.map(p=>Object.assign({},p)), lancamento:d.lancamento, idiomaBase:d.idiomaBase, excluidas:d.excluidas||c.excluidas||[], renomeadas:d.renomeadas||c.renomeadas||{}});
-    let r; try { r = calcularCronograma(base, {fixos:fixosDe(c.crono.tarefas), naoAntesDe:hojeUtil()}); } catch(e) { return toast(e.message); }
+    const base = Object.assign({}, c, {paises:d.paises.map(p=>Object.assign({},p)), lancamento:d.lancamento, idiomaBase:d.idiomaBase, excluidas:d.excluidas||c.excluidas||[], renomeadas:d.renomeadas||c.renomeadas||{}, modelo:d.modelo||c.modelo});
+    let r; try { r = calcularCronograma(base, {fixos:Object.assign(fixosDe(c.crono.tarefas), d._fixos||{}), naoAntesDe:hojeUtil()}); } catch(e) { return toast(e.message); }
     const ant = Object.fromEntries(c.crono.tarefas.map(t=>[t.id,t]));
     const mud = r.tarefas.filter(t=>!ant[t.id] || ant[t.id].ES!==t.ES || ant[t.id].EF!==t.EF).length;
     const rem = c.crono.tarefas.filter(t=>!r.tarefas.some(x=>x.id===t.id));
@@ -1398,7 +1426,9 @@ const ACT = {
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="aplicarRecalc" ${mud||rem.length||d.lancamento!==c.lancamento?'':'disabled'}><i data-lucide="check"></i>Aplicar nova versão</button>`, true); },
   aplicarRecalc: () => { const {d, r, motivo} = UI.pend, c = camp(d.id);
     const novosPaises = d.paises.filter(p=>!c.paises.some(x=>x.cod===p.cod));
+    const fixosNovos = d._fixos || {}, novoItem = d._novo; delete d._fixos; delete d._novo;
     Object.assign(c, d.nome!==undefined ? d : {}, {paises:d.paises, lancamento:d.lancamento, idiomaBase:d.idiomaBase});
+    for (const t of r.tarefas) { if (fixosNovos[t.id]) { t.manual = true; t.dur = uteisEntre(t.ES, t.EF, t.cal, ctx()) + 1; } if (novoItem && t.tid===novoItem.tid) Object.assign(t, JSON.parse(JSON.stringify(novoItem.campos))); }
     for (const p of novosPaises) if (!c.traducoes[p.cod]) c.traducoes[p.cod] = {texto:'',status:p.idioma===c.idiomaBase?'N/A':(c.master.status==='Aprovado'?'Aguardando tradução':'Aguardando aprovação do master'),resp:'u4',validador:p.respLocal||VALID_PAIS[p.cod]||'',prazo:null,versaoMaster:0,coment:[],hist:[],aprovadoEm:null};
     for (const p of c.paises) if (!p.respLocal) p.respLocal = VALID_PAIS[p.cod]||'';
     delete c._c; delete c._r;
@@ -1433,6 +1463,45 @@ const ACT = {
       for (const k of Object.keys(c.renomeadas)) if (k.startsWith(t0.tid+'@')) delete c.renomeadas[k]; }
     for (const t of c.crono.tarefas) if (porPais ? t.id===t0.id : t.tid===t0.tid) t.nome = nome;
     registrar(`Etapa renomeada em “${c.nome}”: “${antigo}” → “${nome}”${porPais?' ('+t0.pais+')':''}`); fecharModal(); render(); toast('Nome da etapa salvo.'); },
+  incluirItem: el => { const c = camp(el.dataset.id);
+    const etapas = c.modelo.map(m=>[m.id, FASES[m.fase].split(' — ')[0]+' · '+nomeTarefa(m, c.idiomaBase)+(m.escopo==='pais'?' (por país)':'')]);
+    abrirModal('Incluir item no cronograma', `<form id="f-item" class="form-g">
+      <label class="campo tudo">Nome *<input name="nome" required maxlength="160" placeholder="Ex.: Reunião de alinhamento com o México"></label>
+      <label class="campo">Fase<select name="fase">${opts(Object.entries(FASES).map(([k,v])=>[k,v]),'1')}</select></label>
+      <label class="campo">Área responsável<select name="area">${opts(AREAS,'Atendimento')}</select></label>
+      <label class="campo">Pessoa responsável<select name="pessoa">${opts(S.usuarios.map(u=>u.nome),'','Definida pela área')}</select></label>
+      <label class="campo">Prioridade<select name="prioridade">${opts(['Alta','Média','Baixa'],'Média')}</select></label>
+      <label class="campo">Vale para<select name="escopo" onchange="document.getElementById('it-paises').hidden=this.value!=='pais'"><option value="global">Uma etapa só (global)</option><option value="pais">Cada país separadamente</option></select></label>
+      <div class="campo" id="it-paises" hidden>Países<div class="chips">${c.paises.map(p=>`<label class="chip on"><input type="checkbox" name="pais_${p.cod}" checked style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${PAISES[p.cod].f} ${p.cod}</label>`).join('')}</div></div>
+      <label class="campo tudo">Como definir as datas<select name="modo" onchange="document.getElementById('it-dep').hidden=this.value!=='dep';document.getElementById('it-datas').hidden=this.value!=='datas'"><option value="dep">Encaixar depois de uma etapa (calculado em dias úteis)</option><option value="datas">Datas fixas</option></select></label>
+      <div class="tudo form-g" id="it-dep" style="padding:0">
+        <label class="campo">Começa depois de<select name="depois">${opts(etapas,'','Sem dependência')}</select></label>
+        <label class="campo">Ligação<select name="tipo"><option value="FS">Quando a anterior terminar</option><option value="SS">Junto com a anterior</option></select></label>
+        <label class="campo">Duração (dias úteis)<input type="number" name="dur" min="1" max="200" value="1"></label>
+        <label class="campo">Precisa terminar antes de (opcional)<select name="antes">${opts(etapas,'','Nenhuma')}</select></label></div>
+      <div class="tudo form-g" id="it-datas" hidden style="padding:0"><label class="campo">Início<input type="date" name="ini" value="${HOJE}"></label><label class="campo">Fim<input type="date" name="fim" value="${HOJE}"></label></div>
+      <label class="campo tudo">Descrição<textarea name="descricao"></textarea></label></form>
+      <p class="small muted" style="margin-bottom:0">O item entra no cronograma e na Gestão de ações desta campanha. O modelo padrão e as outras campanhas não mudam.</p>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="incluirItemOk" data-id="${c.id}"><i data-lucide="plus"></i>Incluir</button>`, true); },
+  incluirItemOk: el => { const c = camp(el.dataset.id), f = $('#f-item'), v = ler(f), nome = (v.nome||'').trim();
+    if (!nome) return toast('Informe o nome do item.');
+    const tid = 'X'+Date.now().toString(36), d = JSON.parse(JSON.stringify(c));
+    const paisesSel = c.paises.filter(p=>f.querySelector(`[name="pais_${p.cod}"]`).checked).map(p=>p.cod);
+    if (v.escopo==='pais' && !paisesSel.length) return toast('Escolha pelo menos um país.');
+    let dur = Math.max(1, Math.min(200, +v.dur||1)), deps = [];
+    if (v.modo==='datas') { if (!v.ini || !v.fim || v.fim < v.ini) return toast('Confira as datas: o fim não pode ser antes do início.'); }
+    else if (v.depois) deps = [[v.depois, v.tipo==='SS'?'SS':'FS']];
+    const tpl = {id:tid, fase:+v.fase||1, nome, area:v.area, dur, escopo:v.escopo==='pais'?'pais':'global', deps, item:true};
+    // posição no Gantt: logo depois da etapa anterior (se for da mesma fase), senão no fim da fase
+    const iDep = v.modo==='dep' && v.depois ? d.modelo.findIndex(m=>m.id===v.depois) : -1;
+    let pos = iDep>=0 && d.modelo[iDep].fase===tpl.fase ? iDep+1 : (()=>{ let k = -1; d.modelo.forEach((m,i)=>{ if (m.fase<=tpl.fase) k = i; }); return k+1; })();
+    d.modelo.splice(pos, 0, tpl);
+    if (v.modo==='dep' && v.antes) { const a = d.modelo.find(m=>m.id===v.antes); if (a) a.deps = [...a.deps, [tid,'FS']]; }
+    if (tpl.escopo==='pais') d.excluidas = [...(d.excluidas||[]), ...c.paises.filter(p=>!paisesSel.includes(p.cod)).map(p=>tid+'@'+p.cod)];
+    if (v.modo==='datas') { const cx = ctx(); d._fixos = {};
+      for (const id of tpl.escopo==='pais' ? paisesSel.map(p=>tid+'@'+p) : [tid]) d._fixos[id] = {ini:paraFrente(v.ini,'AG',cx), fim:paraTras(v.fim,'AG',cx) < paraFrente(v.ini,'AG',cx) ? paraFrente(v.ini,'AG',cx) : paraTras(v.fim,'AG',cx), manual:true}; }
+    d._novo = {tid, campos:{descricao:v.descricao||'', prioridade:v.prioridade||'Média', pessoa:v.pessoa||'', coment:[], hist:[{q:HOJE,o:'Item incluído'}]}};
+    ACT.compararRecalc(null, d, 'Item incluído: '+nome); },
   movSobrepor: () => ACT.movAplicar(false),
   movEmpurrar: () => ACT.movAplicar(true),
   movAplicar: empurrar => { const m = UI.pendMov; if (!m) return; const c = camp(m.cid), t = c.crono.tarefas.find(x=>x.id===m.tid);
@@ -1451,28 +1520,35 @@ const ACT = {
     const csv = '﻿'+L.map(l=>l.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download = 'cronograma-'+c.nome.replace(/\W+/g,'-').toLowerCase()+'.csv'; a.click(); },
   /* ações */
-  formAcao: (el,e) => { if (e && e.type!=='click') return; const c = camp(el.dataset.id), a = c.acoes.find(x=>x.id===el.dataset.a) || {};
-    abrirModal(a.id?'Ação':'Nova ação', `<form id="f-acao" class="form-g"><label class="campo tudo">Nome *<input name="nome" value="${h(a.nome||'')}"></label><label class="campo tudo">Descrição<textarea name="descricao">${h(a.descricao||'')}</textarea></label>
-      <label class="campo">Responsável<select name="resp">${opts([...AREAS,...S.usuarios.map(u=>u.nome)],a.resp)}</select></label><label class="campo">País<select name="pais">${opts(c.paises.map(p=>[p.cod,PAISES[p.cod].n]),a.pais,'Nenhum / global')}</select></label>
-      <label class="campo">Início<input type="date" name="inicio" value="${a.inicio||''}"></label><label class="campo">Prazo<input type="date" name="prazo" value="${a.prazo||''}"></label>
-      <label class="campo">Prioridade<select name="prioridade">${opts(['Alta','Média','Baixa'],a.prioridade||'Média')}</select></label><label class="campo">Status<select name="status">${opts(ST_ACAO,a.status||'Não iniciada')}</select></label>
-      <label class="campo tudo">Novo comentário<input name="coment" placeholder="Escreva e salve"></label></form>
-      ${a.id?`<div class="duas" style="margin-top:14px"><div><b class="small">Comentários</b><div class="hist">${a.coment.map(x=>`<div>${fd(x.q)} — ${h(x.o)}</div>`).join('')||'<div>Nenhum.</div>'}</div></div><div><b class="small">Histórico</b><div class="hist">${a.hist.map(x=>`<div>${fd(x.q)} — ${h(x.o)}</div>`).join('')}</div></div></div>`:''}`,
-      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarAcao" data-id="${c.id}" data-a="${a.id||''}">Salvar</button>`); },
-  salvarAcao: el => { const c = camp(el.dataset.id), v = ler($('#f-acao')); if (!v.nome.trim()) return toast('Informe o nome.');
-    let a = c.acoes.find(x=>x.id===el.dataset.a);
-    if (!a) { a = {id:novoId('a'),ordem:Math.max(0,...c.acoes.map(x=>x.ordem))+1,coment:[],hist:[{q:HOJE,o:'Criada'}]}; c.acoes.push(a); }
-    else { const muda = ['status','prazo','resp'].filter(k=>a[k]!==v[k]).map(k=>`${k}: ${a[k]||'—'} → ${v[k]||'—'}`); if (muda.length) a.hist.push({q:HOJE,o:muda.join('; ')}); }
-    if (v.coment) a.coment.push({q:HOJE,o:v.coment}); delete v.coment; Object.assign(a, v);
-    registrar(`Ação salva em “${c.nome}”: ${a.nome}`); fecharModal(); render(); },
-  delAcao: el => { const c = camp(el.dataset.id), a = c.acoes.find(x=>x.id===el.dataset.a);
-    abrirModal('Excluir ação', `<p>Excluir a ação <b>${h(a.nome)}</b>?</p><p class="small muted">A etapa correspondente no cronograma <b>não</b> será excluída.</p>`, `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-perigo" data-act="delAcaoOk" data-id="${c.id}" data-a="${a.id}">Excluir</button>`); },
-  delAcaoOk: el => { const c = camp(el.dataset.id); const a = c.acoes.find(x=>x.id===el.dataset.a); c.acoes = c.acoes.filter(x=>x!==a); registrar(`Ação excluída em “${c.nome}”: ${a.nome}`); fecharModal(); render(); toast('Ação excluída. O cronograma não mudou.'); },
-  dupAcao: el => { const c = camp(el.dataset.id), a = c.acoes.find(x=>x.id===el.dataset.a);
-    const n = Object.assign(JSON.parse(JSON.stringify(a)), {id:novoId('a'),nome:a.nome+' (cópia)',status:'Não iniciada',ordem:a.ordem+.5,coment:[],hist:[{q:HOJE,o:'Duplicada de "'+a.nome+'"'}]});
-    c.acoes.push(n); c.acoes.sort((x,y)=>x.ordem-y.ordem).forEach((x,i)=>x.ordem=i); registrar('Ação duplicada: '+a.nome); render(); },
-  moverAcao: el => { const c = camp(el.dataset.id), L = [...c.acoes].sort((x,y)=>x.ordem-y.ordem), i = L.findIndex(x=>x.id===el.dataset.a), j = i + (+el.dataset.d);
-    if (j<0||j>=L.length) return; [L[i],L[j]] = [L[j],L[i]]; L.forEach((x,k)=>x.ordem=k); salvar(); render(); },
+  formAcao: (el,e) => { if (e && e.type!=='click') return; const c = camp(el.dataset.id), t = c.crono.tarefas.find(x=>x.id===el.dataset.a); if (!t) return;
+    const ed = ehEquipe(), dis = ed ? '' : 'disabled';
+    abrirModal(h(t.nome)+(t.pais?' — '+t.pais:''), `<form id="f-acao" class="form-g"><label class="campo tudo">Nome *<input name="nome" value="${h(t.nome)}" ${dis}></label><label class="campo tudo">Descrição<textarea name="descricao" ${dis}>${h(t.descricao||'')}</textarea></label>
+      <label class="campo">Área<input value="${h(t.area)}" disabled></label><label class="campo">Pessoa responsável<select name="pessoa" ${dis}>${opts(S.usuarios.map(u=>u.nome),t.pessoa||'','Definida pela área ('+h(respDaArea(c,t.area,t.pais))+')')}</select></label>
+      <label class="campo">Início<input type="date" name="ini" value="${t.ES}" ${dis||(t.status==='Concluída'?'disabled':'')}></label><label class="campo">Prazo<input type="date" name="fim" value="${t.EF}" ${dis||(t.status==='Concluída'?'disabled':'')}></label>
+      <label class="campo">Prioridade<select name="prioridade" ${dis}>${opts(['Alta','Média','Baixa'],t.prioridade||'Média')}</select></label><label class="campo">Status<select name="status" ${dis}>${opts(ST_ACAO,t.status)}</select></label>
+      ${ed?'<label class="campo tudo">Novo comentário<input name="coment" placeholder="Escreva e salve"></label>':''}</form>
+      <div class="small muted" style="margin-top:8px">${t.pais?pais(t.pais)+' · ':''}${t.dur} dia(s) útil(eis) · folga ${t.folga}${t.critico?' · <b style="color:#b3392f">caminho crítico</b>':''}${t.marco?' · etapa de lançamento':''}</div>
+      <div class="duas" style="margin-top:14px"><div><b class="small">Comentários</b><div class="hist">${(t.coment||[]).map(x=>`<div>${fd(x.q)} — ${h(x.o)}</div>`).join('')||'<div>Nenhum.</div>'}</div></div><div><b class="small">Histórico</b><div class="hist">${(t.hist||[]).map(x=>`<div>${fd(x.q)} — ${h(x.o)}</div>`).join('')||'<div>Nenhum.</div>'}</div></div></div>`,
+      ed ? `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarAcao" data-id="${c.id}" data-a="${t.id}">Salvar</button>` : `<button class="btn" data-act="fechar">Fechar</button>`, true); },
+  salvarAcao: el => { const c = camp(el.dataset.id), t = c.crono.tarefas.find(x=>x.id===el.dataset.a), v = ler($('#f-acao')), nome = (v.nome||'').trim();
+    if (!nome) return toast('Informe o nome.');
+    t.hist = t.hist||[]; t.coment = t.coment||[];
+    const muda = [];
+    if (t.status!==v.status) muda.push(`Status: ${t.status} → ${v.status}`);
+    if ((t.pessoa||'')!==(v.pessoa||'')) muda.push(`Responsável: ${t.pessoa||'área'} → ${v.pessoa||'área'}`);
+    if ((t.prioridade||'Média')!==v.prioridade) muda.push(`Prioridade: ${t.prioridade||'Média'} → ${v.prioridade}`);
+    if (nome!==t.nome) { muda.push(`Nome: ${t.nome} → ${nome}`); c.renomeadas = c.renomeadas||{};
+      if (t.pais) c.renomeadas[t.id] = nome; else { c.renomeadas[t.tid] = nome; const tpl = c.modelo.find(m=>m.id===t.tid); if (tpl) tpl.nome = nome; }
+      t.nome = nome; }
+    if (muda.length) t.hist.push({q:HOJE,o:muda.join('; ')});
+    if (v.coment) t.coment.push({q:HOJE,o:v.coment});
+    Object.assign(t, {descricao:v.descricao||'', pessoa:v.pessoa||'', prioridade:v.prioridade||'Média', status:v.status});
+    registrar(`Ação salva em “${c.nome}”: ${t.nome}${t.pais?' ('+t.pais+')':''}`); fecharModal();
+    // datas mudaram: mesmo ajuste do Gantt (pergunta se sobrepõe ou empurra)
+    if (v.ini && v.fim && (v.ini!==t.ES || v.fim!==t.EF)) { const cx = ctx(); let es = paraFrente(v.ini, t.cal, cx), ef = paraTras(v.fim, t.cal, cx); if (ef < es) ef = es;
+      if (t.marco && ef > t.LF) ef = t.LF; if (es > ef) es = ef;
+      if (es!==t.ES || ef!==t.EF) { proporMovimento(c, t, es, ef); render(); return; } }
+    render(); },
   /* budget/kpi */
   formBudget: el => { const c = camp(el.dataset.id), b = c.budgets.find(x=>x.id===el.dataset.b) || {};
     abrirModal(b.id?'Editar budget':'Nova linha de budget', `<form id="f-bud" class="form-g"><label class="campo">Canal / plataforma<select name="canal">${opts(c.canais,b.canal)}</select></label><label class="campo">País / mercado<select name="pais">${opts(c.paises.map(p=>[p.cod,PAISES[p.cod].n]),b.pais)}</select></label>
@@ -1631,8 +1707,8 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
     sb.from('perfis').update(campo).eq('id', el.dataset.p).select().then(r=>{ if (r.error || !r.data.length) return toast('Não foi possível alterar o acesso.'); Object.assign(PERFIS.find(p=>p.id===el.dataset.p), r.data[0]); registrar(`Acesso de ${r.data[0].email}: ${PAPEIS[r.data[0].papel]}`); render(); }); return; }
   if (k==='cliArq') { UI.cliArq = v; return render(); }
   if (k==='statusCamp') { const c = camp(el.dataset.id); c.status = v; registrar(`Status de “${c.nome}”: ${v}`); return render(); }
-  if (k==='statusTarefa') { const c = camp(el.dataset.id), t = c.crono.tarefas.find(x=>x.id===el.dataset.t); t.status = v; registrar(`Etapa “${t.nome}${t.pais?' ('+t.pais+')':''}” de “${c.nome}”: ${v}`); return render(); }
-  if (k==='statusAcao') { const c = camp(el.dataset.id), a = c.acoes.find(x=>x.id===el.dataset.a); a.hist.push({q:HOJE,o:`Status: ${a.status} → ${v}`}); a.status = v; registrar(`Ação “${a.nome}”: ${v}`); return render(); }
+  if (k==='statusTarefa') { const c = camp(el.dataset.id), t = c.crono.tarefas.find(x=>x.id===el.dataset.t); (t.hist = t.hist||[]).push({q:HOJE,o:`Status: ${t.status} → ${v}`}); t.status = v; registrar(`Etapa “${t.nome}${t.pais?' ('+t.pais+')':''}” de “${c.nome}”: ${v}`); return render(); }
+  if (k==='statusAcao_antigo') { const c = camp(el.dataset.id), a = c.acoes.find(x=>x.id===el.dataset.a); a.hist.push({q:HOJE,o:`Status: ${a.status} → ${v}`}); a.status = v; registrar(`Ação “${a.nome}”: ${v}`); return render(); }
   if (k==='baseRegiao') { S.baseRegiao[el.dataset.r] = v; registrar(`Idioma-base de ${REGIOES[el.dataset.r]}: ${IDIOMAS[v]}`); return toast('Salvo.'); }
   if (k==='lancForm') { const m = el.value && ctx().motivo(el.value,'AG'); $('#aviso-lanc').innerHTML = m ? `<div class="alerta verm"><i data-lucide="alert-circle"></i>${fd(el.value)} cai em ${h(m)}. Escolha uma data útil.</div>` : ''; icones(); return; }
   const [o,p] = k.split('.'); if (UI[o]) { UI[o][p] = v; render(); }
@@ -1644,7 +1720,7 @@ document.addEventListener('dragstart', e => { const el = e.target.closest('[data
 document.addEventListener('dragover', e => { const z = e.target.closest('[data-drop]'); if (z && arrastando) { e.preventDefault(); z.classList.add('sobre'); } });
 document.addEventListener('dragleave', e => { const z = e.target.closest('[data-drop]'); if (z) z.classList.remove('sobre'); });
 document.addEventListener('drop', e => { const z = e.target.closest('[data-drop]'); if (!z || !arrastando) return; e.preventDefault();
-  if (z.dataset.drop==='acao') { const c = camp(z.dataset.id), a = c.acoes.find(x=>x.id===arrastando.id); if (a && a.status!==z.dataset.s) { a.hist.push({q:HOJE,o:`Status: ${a.status} → ${z.dataset.s}`}); a.status = z.dataset.s; registrar(`Ação “${a.nome}”: ${a.status}`); } }
+  if (z.dataset.drop==='acao') { const c = camp(z.dataset.id), a = c.crono.tarefas.find(x=>x.id===arrastando.id); if (a && a.status!==z.dataset.s) { (a.hist = a.hist||[]).push({q:HOJE,o:`Status: ${a.status} → ${z.dataset.s}`}); a.status = z.dataset.s; registrar(`Ação “${a.nome}”${a.pais?' ('+a.pais+')':''}: ${a.status}`); } }
   if (z.dataset.drop==='post') { const c = camp(arrastando.c), p = c && c.posts.find(x=>x.id===arrastando.id); if (p && p.data!==z.dataset.d) { registrar(`Publicação “${p.tema}” movida de ${fd(p.data)} para ${fd(z.dataset.d)}`); p.data = z.dataset.d; } }
   arrastando = null; render(); });
 /* arrastar barras do Gantt (mover ou mudar a duração) */
@@ -1663,7 +1739,9 @@ document.addEventListener('pointermove', e => { if (!gDrag) return; const W = 22
 function fimArraste(e, cancelar){ if (!gDrag) return; const g = gDrag; gDrag = null; g.b.classList.remove('arrastando');
   const n = novasDatasArraste(g.t, g.modo, g.dd);
   if (cancelar || !g.dd || (n.ES===g.t.ES && n.EF===g.t.EF)) return render();
-  const conf = conflitosMov(g.c, g.t, n.ES, n.EF);
+  proporMovimento(g.c, g.t, n.ES, n.EF); render(); }
+function proporMovimento(c, t, ES, EF){ const g = {c, t};
+  const n = {ES, EF}, conf = conflitosMov(g.c, g.t, n.ES, n.EF);
   UI.pendMov = {cid:g.c.id, tid:g.t.id, ES:n.ES, EF:n.EF, sobrepoe:conf.length>0};
   if (!conf.length) return ACT.movAplicar(false);
   // simula o "empurrar" para mostrar o efeito antes de escolher
@@ -1673,8 +1751,7 @@ function fimArraste(e, cancelar){ if (!gDrag) return; const g = gDrag; gDrag = n
     <ul class="lista-simples">${conf.slice(0,6).map(s=>`<li>${nome(s)}<span class="small muted" style="margin-left:auto">começa ${fds(s.ES)}</span></li>`).join('')}${conf.length>6?`<li class="muted small">e mais ${conf.length-6}</li>`:''}</ul>
     <div class="grade g2" style="margin-top:14px"><div class="card card-p"><b>Sobrepor</b><p class="small muted" style="margin:6px 0 0">As próximas etapas ficam onde estão e correm em paralelo com esta. Nenhuma outra data muda.</p></div>
     <div class="card card-p"><b>Empurrar para frente</b><p class="small muted" style="margin:6px 0 0">${mv.length} etapa(s) seguinte(s) andam para frente, mantendo a duração. O lançamento continua em ${fds(g.c.lancamento)}.${mv.travadas.length?` <span style="color:#b3392f">${mv.travadas.length} etapa(s) chegam ao limite antes do lançamento e ficam sobrepostas.</span>`:''}</p></div></div>`,
-    `<button class="btn" data-act="fechar">Cancelar</button><button class="btn" data-act="movSobrepor"><i data-lucide="layers"></i>Sobrepor</button><button class="btn btn-p" data-act="movEmpurrar"><i data-lucide="chevrons-right"></i>Empurrar as próximas</button>`);
-  render(); }
+    `<button class="btn" data-act="fechar">Cancelar</button><button class="btn" data-act="movSobrepor"><i data-lucide="layers"></i>Sobrepor</button><button class="btn btn-p" data-act="movEmpurrar"><i data-lucide="chevrons-right"></i>Empurrar as próximas</button>`); }
 document.addEventListener('pointerup', e => fimArraste(e, false));
 document.addEventListener('pointercancel', e => fimArraste(e, true));
 window.addEventListener('hashchange', render);
