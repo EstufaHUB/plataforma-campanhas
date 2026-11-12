@@ -1407,18 +1407,19 @@ function abaBudget(c){
   const canais = c.canais.filter(k=>((c.canaisCfg[k]||{}).moeda||c.moeda||'BRL')===m);
   const linha = (k, cod) => c.budgets.find(b=>b.canal===k && b.pais===cod);
   const custo = (bud, vol, f) => vol>0 ? bud/vol*f : null;
-  const celulas = (bud, vols, editar) => cols.map(cl=>{ const v = vols[cl.vol];
-    return `<td class="dir">${editar ? `<input type="number" min="0" step="1" class="inp-uso" value="${v??''}" placeholder="0" data-chg="kpiLinha" data-id="${c.id}" data-b="${editar.id}" data-kpi="${cl.vol}">` : `<b class="num">${numero(v)}</b>`}</td><td class="dir num">${moeda2(custo(bud, +v||0, cl.fator), m)}</td>`; }).join('');
+  const volDe = (bud, cu, f) => cu>0 ? Math.round(bud/cu*f) : null;
+  const celulas = (bud, cus, editar) => cols.map(cl=>{ const cu = cus[cl.custo];
+    return `<td class="dir num"><b>${numero(volDe(bud, +cu||0, cl.fator))}</b></td><td class="dir">${editar ? `<input type="number" min="0" step="0.01" class="inp-uso" value="${cu??''}" placeholder="0,00" data-chg="kpiLinha" data-id="${c.id}" data-b="${editar.id}" data-kpi="${cl.custo}">` : `<span class="num">${moeda2(cu, m)}</span>`}</td>`; }).join('');
   const totais = {budget:0}; cols.forEach(cl=>{ totais[cl.vol]=0; totais['b_'+cl.vol]=0; });
   const porPais = {};
   const tabelas = canais.map(k=>{ const cf = c.canaisCfg[k]||{}; const tot = {budget:0}; cols.forEach(cl=>{ tot[cl.vol]=0; tot['b_'+cl.vol]=0; });
-    const linhas = (cf.paises||[]).map(p=>{ const b = linha(k,p.cod), bud = +p.budget||0, vols = Object.fromEntries(cols.map(cl=>[cl.vol, b && b.kpis ? b.kpis[cl.vol] : null]));
+    const linhas = (cf.paises||[]).map(p=>{ const b = linha(k,p.cod), bud = +p.budget||0, cus = Object.fromEntries(cols.map(cl=>[cl.custo, b && b.kpis ? b.kpis[cl.custo] : null])), vols = Object.fromEntries(cols.map(cl=>[cl.vol, volDe(bud, +cus[cl.custo]||0, cl.fator)]));
       tot.budget += bud; cols.forEach(cl=>{ tot[cl.vol] += +vols[cl.vol]||0; if (+vols[cl.vol]>0) tot['b_'+cl.vol] += bud; });
       const o = porPais[p.cod] || (porPais[p.cod] = {budget:0, canais:[]}); o.budget += bud; o.canais.push(k); cols.forEach(cl=>{ o[cl.vol] = (o[cl.vol]||0) + (+vols[cl.vol]||0); o['b_'+cl.vol] = (o['b_'+cl.vol]||0) + (+vols[cl.vol]>0 ? bud : 0); });
-      return `<tr><td>${pais(p.cod)}</td><td class="dir num">${moeda(bud,m)}</td>${celulas(bud, vols, ed && b ? b : null)}</tr>`; }).join('');
+      return `<tr><td>${pais(p.cod)}</td><td class="dir num">${moeda(bud,m)}</td>${celulas(bud, cus, ed && b ? b : null)}</tr>`; }).join('');
     totais.budget += tot.budget; cols.forEach(cl=>{ totais[cl.vol] += tot[cl.vol]; totais['b_'+cl.vol] += tot['b_'+cl.vol]; });
     return `<div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="megaphone"></i>${h(k)}</h3><span class="small muted">${(cf.paises||[]).length} país(es) · ${moeda(+cf.orcamento||0,m)}</span></div>
-      <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th class="dir">Budget</th>${cols.map(cl=>`<th class="dir">${cl.vol}</th><th class="dir">${cl.custo}</th>`).join('')}</tr></thead><tbody>${linhas}
+      <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th class="dir">Budget</th>${cols.map(cl=>`<th class="dir">${cl.vol} <span class="muted" style="text-transform:none;font-weight:400">(calculado)</span></th><th class="dir">${cl.custo}</th>`).join('')}</tr></thead><tbody>${linhas}
       <tr style="font-weight:700"><td>Total</td><td class="dir num">${moeda(tot.budget,m)}</td>${cols.map(cl=>`<td class="dir num">${numero(tot[cl.vol])}</td><td class="dir num">${moeda2(custo(tot['b_'+cl.vol], tot[cl.vol], cl.fator), m)}</td>`).join('')}</tr></tbody></table></div></div>`; }).join('');
   return `${moedas.length>1 ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><div class="seg">${moedas.map(x=>`<button class="${x===m?'ativo':''}" data-act="ui" data-k="fbm.v" data-v="${x}">${x}</button>`).join('')}</div><span class="small muted">Canais em moedas diferentes: os números abaixo são dos canais em ${m}.</span></div>` : ''}
   <div class="grade g4">
@@ -1430,7 +1431,7 @@ function abaBudget(c){
   ${cols.length && Object.keys(porPais).length ? `<div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="globe-2"></i>Resumo por país</h3><span class="small muted">soma dos canais em ${m}</span></div>
    <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th class="dir">Budget</th>${cols.map(cl=>`<th class="dir">${cl.vol}</th><th class="dir">${cl.custo}</th>`).join('')}</tr></thead><tbody>
    ${Object.entries(porPais).map(([cod,o])=>`<tr><td>${pais(cod)} <span class="small muted">${o.canais.map(h).join(', ')}</span></td><td class="dir num">${moeda(o.budget,m)}</td>${cols.map(cl=>`<td class="dir num">${numero(o[cl.vol])}</td><td class="dir num">${moeda2(custo(o['b_'+cl.vol], o[cl.vol], cl.fator), m)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>` : ''}
-  <div class="small muted" style="margin-top:10px">O budget vem da ficha da campanha. Digite ${cols.map(cl=>cl.vol.toLowerCase()).join(' e ')||'os volumes'} em cada país; ${cols.map(cl=>cl.custo).join(' e ')||'o custo'} é calculado automaticamente (budget ÷ volume${cols.some(cl=>cl.fator===1000)?' × 1.000 no CPM':''}).</div>`;
+  <div class="small muted" style="margin-top:10px">O budget vem da ficha da campanha. Digite o ${cols.map(cl=>cl.custo).join(' e o ')||'custo'} de cada país; ${cols.map(cl=>cl.vol.toLowerCase()).join(' e ')||'o volume'} ${cols.length>1?'são calculados':'é calculado'} automaticamente (budget ÷ ${cols.map(cl=>cl.custo).join(' ou ')||'custo'}${cols.some(cl=>cl.fator===1000)?'; impressões = budget ÷ CPM × 1.000':''}).</div>`;
 }
 function abaBudgetAntiga(c){
   UI.fbm = UI.fbm || {}; const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], R = resumoBudget(c, m), ed = ehEquipe();
