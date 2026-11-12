@@ -70,8 +70,8 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .farol.f-cinza{background-color:#f1f3f4;color:#5b6b70;border-color:#dfe3e5;background-image:radial-gradient(circle,#9aa9ae 60%,transparent 62%)}
 .farol.f-azul{background-color:#e6f1f8;color:#1d5f86;border-color:#c3dcec;background-image:radial-gradient(circle,#2f80b8 60%,transparent 62%)}
 .farol:disabled{opacity:1}
-.tab tr.a-fase td{background:#f4f7f8;font-weight:700;color:var(--pet-900)}.tab tr.a-pais td:first-child{padding-left:42px}
-.tab tr.a-grupo td:first-child,.tab tr.a-fase td:first-child{white-space:nowrap}
+.tab tr.a-fase td{background:#f4f7f8;font-weight:700;color:var(--pet-900)}.tab tr.a-pais td:nth-child(2){padding-left:42px}
+.tab tr.a-grupo td:nth-child(2),.tab tr.a-fase td:first-child{white-space:nowrap}
 .sel-resp{padding:3px 6px;font-size:.8rem;min-width:118px}
 .menu-barra{position:fixed;z-index:120;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:10px;min-width:230px;max-width:320px}
 .chave-dep{gap:8px}.chave{width:28px;height:16px;border-radius:999px;background:#c9d1d4;position:relative;display:inline-block;transition:background .15s}
@@ -81,6 +81,12 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .mb-tit{font-weight:600;font-size:.88rem;line-height:1.3}
 .mb-op{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:7px 8px;border-radius:6px;font:inherit;font-size:.85rem;color:var(--tx);cursor:pointer;text-align:left}
 .mb-op:hover{background:var(--pet-50)}.mb-op svg{width:16px;height:16px}.mb-op.mb-ok{color:#1f6b3a;font-weight:600}
+.msel{position:relative;display:inline-block}
+.msel-btn{display:inline-flex;align-items:center;gap:8px;justify-content:space-between;min-width:150px;padding:7px 10px;border:1px solid var(--borda-f);border-radius:8px;background:var(--sup);font:inherit;font-size:.86rem;color:var(--tx);cursor:pointer}
+.msel-btn svg{width:15px;height:15px;color:var(--tx2)}.msel-btn.ativo{border-color:var(--pet-600);background:var(--pet-50);color:var(--pet-800);font-weight:600}
+.msel-pop{position:absolute;top:calc(100% + 4px);left:0;z-index:60;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:6px;min-width:220px;max-height:320px;overflow:auto}
+.msel-op{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:.86rem;cursor:pointer;white-space:nowrap}.msel-op:hover{background:var(--pet-50)}
+.msel-limpar{width:100%;margin-top:4px;border:0;border-top:1px solid var(--borda);background:none;padding:7px;font:inherit;font-size:.82rem;color:var(--pet-700);cursor:pointer}
 .legenda-farol{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--tx2);padding:10px 18px}.legenda-farol span{display:inline-flex;align-items:center;gap:6px}.legenda-farol i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .tab tr.mudou td{background:#fff8e6}.tab tr.atrasada td:first-child{box-shadow:inset 3px 0 0 #d0443a}
 .tab .dir{text-align:right}
@@ -1130,6 +1136,7 @@ function reordenarModelo(c, tid, alvo, depois, fase){
   M.splice(pos, 0, m);
   for (const t of c.crono.tarefas) if (t.tid===tid) t.fase = m.fase;
   return true; }
+document.addEventListener('click', e => { if (UI.mselAberto && !e.target.closest('.msel')) { UI.mselAberto = null; render(); } });
 let linhaDrag = null;
 document.addEventListener('dragstart', e => { const g = e.target.closest && e.target.closest('[data-linha-drag]'); if (!g) return;
   linhaDrag = g.dataset.linhaDrag; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', linhaDrag); } catch(_){}
@@ -1227,10 +1234,9 @@ function listaAcoes(c, L, ed){
   const selResp = (attrs, val, misto) => ed ? `<select class="sel-resp" ${attrs}>${misto?'<option value="" selected>Vários</option>':''}${opts(optsResp(val), misto?'__':val||'', 'Selecione')}</select>` : h(val||'—');
   const selStatus = (attrs, t, cls, misto, val) => `<select class="farol ${cls}" ${attrs} ${ed?'':'disabled'}>${misto?'<option value="" selected>Vários</option>':''}${opts(ST_ACAO, misto?'__':val)}</select>`;
   const linha = (t, sub) => { const st = statusExib(t);
-    return `<tr class="${sub?'a-pais':''} ${st==='Atrasada'?'atrasada':''}"><td>${sub?pais(t.pais):`<a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">${h(t.nome)}</a>`}${sub?` <a href="javascript:void 0" class="small" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">abrir</a>`:''}${(t.coment||[]).length?` <span class="small muted">· ${t.coment.length} coment.</span>`:''}${t.manual?' <span class="small muted" title="Datas ajustadas à mão">· ajustada</span>':''}</td>
+    return `<tr class="${sub?'a-pais':''} ${st==='Atrasada'?'atrasada':''}"><td style="white-space:nowrap">${selStatus(`data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}"`, t, farolDe(t), false, t.status)}${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td><td>${sub?pais(t.pais):`<a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">${h(t.nome)}</a>`}${sub?` <a href="javascript:void 0" class="small" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">abrir</a>`:''}${(t.coment||[]).length?` <span class="small muted">· ${t.coment.length} coment.</span>`:''}${t.manual?' <span class="small muted" title="Datas ajustadas à mão">· ajustada</span>':''}</td>
       <td>${selResp(`data-chg="pessoaTarefa" data-id="${c.id}" data-t="${t.id}"`, t.pessoa)}</td><td class="small muted">${h(t.area)}</td><td>${t.pais?(sub?'':pais(t.pais)):'<span class="muted small">Global</span>'}</td>
       <td class="num">${fd(t.ES)}</td><td class="num">${fd(t.EF)}</td><td>${h(t.prioridade||'Média')}</td>
-      <td>${selStatus(`data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}"`, t, farolDe(t), false, t.status)}${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td>
       <td style="white-space:nowrap">${ed?`<button class="icone-btn" title="Editar" data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><i data-lucide="pencil"></i></button>${t.marco?'':`<button class="icone-btn" title="Excluir" data-act="excluirEtapa" data-id="${c.id}" data-t="${t.id}"><i data-lucide="trash-2"></i></button>`}`:''}</td></tr>`; };
   let corpo = '';
   for (const fase of ORDEM_FASES) {
@@ -1244,29 +1250,38 @@ function listaAcoes(c, L, ed){
       if (tpl.escopo==='global' || !ins[0].pais) { ins.forEach(t=>corpo += linha(t,false)); continue; }
       const ES = ins.reduce((m,t)=>t.ES<m?t.ES:m, ins[0].ES), EF = ins.reduce((m,t)=>t.EF>m?t.EF:m, ins[0].EF);
       const pessoas = [...new Set(ins.map(t=>t.pessoa||''))], sts = [...new Set(ins.map(t=>t.status))], atrasada = ins.some(t=>statusExib(t)==='Atrasada');
-      corpo += `<tr class="a-grupo ${atrasada?'atrasada':''}"><td><button class="icone-btn" data-act="aAbrir" data-t="${tpl.id}" title="Ver por país"><i data-lucide="${ab[tpl.id]?'chevron-down':'chevron-right'}"></i></button><a href="javascript:void 0" data-act="aAbrir" data-t="${tpl.id}">${h(ins[0].nome)}</a> <span class="tag t-pet">${ins.length} país${ins.length>1?'es':''}</span></td>
+      corpo += `<tr class="a-grupo ${atrasada?'atrasada':''}"><td style="white-space:nowrap">${selStatus(`data-chg="statusGrupo" data-id="${c.id}" data-t="${tpl.id}"`, null, farolGrupo(ins), sts.length>1, sts[0])}${atrasada?' <span class="tag t-verm">Atrasada</span>':''}</td><td><button class="icone-btn" data-act="aAbrir" data-t="${tpl.id}" title="Ver por país"><i data-lucide="${ab[tpl.id]?'chevron-down':'chevron-right'}"></i></button><a href="javascript:void 0" data-act="aAbrir" data-t="${tpl.id}">${h(ins[0].nome)}</a> <span class="tag t-pet">${ins.length} país${ins.length>1?'es':''}</span></td>
         <td>${selResp(`data-chg="pessoaGrupo" data-id="${c.id}" data-t="${tpl.id}"`, pessoas[0], pessoas.length>1)}</td><td class="small muted">${h(tpl.area)}</td><td class="small">${ins.map(t=>PAISES[t.pais].f).join(' ')}</td>
         <td class="num">${fd(ES)}</td><td class="num">${fd(EF)}</td><td></td>
-        <td>${selStatus(`data-chg="statusGrupo" data-id="${c.id}" data-t="${tpl.id}"`, null, farolGrupo(ins), sts.length>1, sts[0])}${atrasada?' <span class="tag t-verm">Atrasada</span>':''}</td><td></td></tr>`;
+        <td></td></tr>`;
       if (ab[tpl.id]) ins.forEach(t=>corpo += linha(t,true));
     }
     daFase.filter(t=>!vistos.has(t.id)).forEach(t=>corpo += linha(t,false));
   }
-  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Ação / etapa</th><th>Responsável</th><th>Área</th><th>País</th><th>Início</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th></th></tr></thead><tbody>
+  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Área</th><th>País</th><th>Início</th><th>Prazo</th><th>Prioridade</th><th></th></tr></thead><tbody>
     ${corpo || '<tr><td colspan="9" class="vazio">Nenhuma ação com esses filtros.</td></tr>'}</tbody></table></div>
     <div class="legenda-farol"><span><i style="background:#2e9d55"></i>Concluída</span><span><i style="background:#2f80b8"></i>Em andamento</span><span><i style="background:#e0a100"></i>Aguardando / em revisão</span><span><i style="background:#d0443a"></i>Atrasada ou bloqueada</span><span><i style="background:#9aa9ae"></i>Não iniciada / cancelada</span></div>`;
 }
+/* seleção múltipla: botão que abre uma lista de caixas de marcar */
+function multiSel(chave, opcoes, sel, todos, plural){
+  const aberto = UI.mselAberto===chave, rot = !sel.length ? todos : sel.length===1 ? (opcoes.find(o=>o[0]===sel[0])||[0,sel[0]])[1] : sel.length+' '+plural;
+  return `<div class="msel ${aberto?'aberto':''}"><button type="button" class="msel-btn ${sel.length?'ativo':''}" data-act="mselAbrir" data-k="${chave}">${h(rot)}<i data-lucide="chevron-down"></i></button>${aberto?`<div class="msel-pop">${opcoes.map(([v,l])=>`<label class="msel-op"><input type="checkbox" data-chg="msel" data-k="${chave}" value="${h(v)}" ${sel.includes(v)?'checked':''}>${h(l)}</label>`).join('')}${sel.length?`<button type="button" class="msel-limpar" data-act="mselLimpar" data-k="${chave}">Limpar</button>`:''}</div>`:''}</div>`; }
 function abaAcoes(c){
-  const f = UI.fac || (UI.fac = {visao:'lista',resp:'',status:'',pais:''});
+  const f = UI.fac || (UI.fac = {visao:'lista'});
+  for (const k of ['area','pessoa','pais','status']) if (!Array.isArray(f[k])) f[k] = [];
   const todas = c.crono.tarefas;
-  const L = [...todas].sort((a,b)=> a.ES<b.ES?-1:a.ES>b.ES?1:0).filter(t=>(!f.resp||t.area===f.resp)&&(!f.pais||t.pais===f.pais||(f.pais==='global'&&!t.pais))&&(!f.status||statusExib(t)===f.status||(f.status!=='Atrasada'&&t.status===f.status)));
+  const L = [...todas].sort((a,b)=> a.ES<b.ES?-1:a.ES>b.ES?1:0).filter(t=>
+    (!f.area.length || f.area.includes(t.area)) &&
+    (!f.pessoa.length || f.pessoa.includes(t.pessoa||'—')) &&
+    (!f.pais.length || f.pais.includes(t.pais||'global')) &&
+    (!f.status.length || f.status.some(v => v==='Atrasada' ? statusExib(t)==='Atrasada' : t.status===v)));
   const validas = todas.filter(t=>t.status!=='Cancelada'), pc = validas.length ? Math.round(validas.filter(t=>t.status==='Concluída').length/validas.length*100) : 0;
   const atr = t => statusExib(t)==='Atrasada';
   const ed = ehEquipe(), nomeT = t => h(t.nome);
   return `<div class="alerta azul"><i data-lucide="info"></i><div>As ações são as <b>mesmas etapas do cronograma</b>. Mudar status, responsável, datas ou nome aqui muda o cronograma, e vice-versa. Para criar uma ação nova, use “Incluir item”.</div></div>
   <div class="card"><div class="card-cab"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="seg"><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="lista"><i data-lucide="list"></i>Lista</button><button class="${f.visao==='kanban'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="kanban"><i data-lucide="kanban"></i>Kanban</button></div>
    <div style="min-width:160px"><div class="small muted">${pc}% concluído · ${todas.filter(atr).length} atrasada(s)</div><div class="barra" style="margin-top:4px"><i style="width:${pc}%"></i></div></div></div>
-   <div class="filtros"><select data-chg="fac.resp">${opts(AREAS,f.resp,'Todas as áreas')}</select><select data-chg="fac.pais">${opts([['global','Só itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fac.status">${opts([...ST_ACAO,'Atrasada'],f.status,'Todos os status')}</select>${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
+   <div class="filtros">${multiSel('fac.status', [...ST_ACAO,'Atrasada'].map(v=>[v,v]), f.status, 'Todos os status', 'status')}${multiSel('fac.pessoa', [...RESPONSAVEIS,'—'].map(v=>[v, v==='—'?'Sem responsável':v]), f.pessoa, 'Todos os responsáveis', 'responsáveis')}${multiSel('fac.area', AREAS.map(v=>[v,v]), f.area, 'Todas as áreas', 'áreas')}${multiSel('fac.pais', [['global','Itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].f+' '+PAISES[p.cod].n])], f.pais, 'Todos os países', 'países')}${(f.status.length||f.pessoa.length||f.area.length||f.pais.length)?`<button class="btn btn-s btn-g" data-act="limparFiltrosAcoes"><i data-lucide="x"></i>Limpar filtros</button>`:''}${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
   ${f.visao==='lista' ? listaAcoes(c, L, ed) : ''}
   ${f.visao!=='lista' ? `<div class="card-p"><div class="kanban">${ST_ACAO.map(st=>{ const cs = L.filter(t=>t.status===st); return `<div class="kcol" data-drop="acao" data-s="${st}" data-id="${c.id}"><h4><span>${st}</span><span>${cs.length}</span></h4>${cs.map(t=>`<div class="kcard ${atr(t)?'atr':''}" ${ed?`draggable="true" data-drag="${t.id}"`:''} data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><div style="font-weight:500">${nomeT(t)}</div><div class="small muted" style="margin-top:4px">${h(respTarefa(c,t))}${t.pais?' · '+t.pais:''} · ${fdc(t.EF)}</div></div>`).join('')}</div>`; }).join('')}</div><div class="small muted">${ed?'Arraste os cartões entre as colunas para mudar o status.':''}</div></div>` : ''}
   </div>`;
@@ -1678,6 +1693,9 @@ const ACT = {
       for (const id of tpl.escopo==='pais' ? paisesSel.map(p=>tid+'@'+p) : [tid]) d._fixos[id] = {ini:paraFrente(v.ini,'AG',cx), fim:paraTras(v.fim,'AG',cx) < paraFrente(v.ini,'AG',cx) ? paraFrente(v.ini,'AG',cx) : paraTras(v.fim,'AG',cx), manual:true}; }
     d._novo = {tid, campos:{descricao:v.descricao||'', prioridade:v.prioridade||'Média', pessoa:v.pessoa||'', coment:[], hist:[{q:HOJE,o:'Item incluído'}]}};
     ACT.compararRecalc(null, d, 'Item incluído: '+nome); },
+  mselAbrir: el => { UI.mselAberto = UI.mselAberto===el.dataset.k ? null : el.dataset.k; render(); },
+  mselLimpar: el => { const [o,p] = el.dataset.k.split('.'); UI[o][p] = []; render(); },
+  limparFiltrosAcoes: () => { Object.assign(UI.fac, {status:[], pessoa:[], area:[], pais:[]}); UI.mselAberto = null; render(); },
   aAbrir: el => { UI.aAberto = UI.aAberto||{}; UI.aAberto[el.dataset.t] = !UI.aAberto[el.dataset.t]; render(); },
   aFase: el => { UI.aFase = UI.aFase||{}; UI.aFase[el.dataset.f] = !UI.aFase[el.dataset.f]; render(); },
   alternarDep: () => { DEP_ATIVAS = !DEP_ATIVAS; try { localStorage.setItem('dep-off', DEP_ATIVAS?'':'1'); } catch(e){} render();
@@ -1916,6 +1934,7 @@ document.addEventListener('click', e => { const el = e.target.closest('[data-act
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (!el) return; const k = el.dataset.chg, v = el.type==='checkbox' ? el.checked : el.value;
   if (k==='papelPerfil' || k==='clientePerfil') { const campo = k==='papelPerfil' ? {papel:v} : {cliente_id:v||null};
     sb.from('perfis').update(campo).eq('id', el.dataset.p).select().then(r=>{ if (r.error || !r.data.length) return toast('Não foi possível alterar o acesso.'); Object.assign(PERFIS.find(p=>p.id===el.dataset.p), r.data[0]); registrar(`Acesso de ${r.data[0].email}: ${PAPEIS[r.data[0].papel]}`); render(); }); return; }
+  if (k==='msel') { const [o,p] = el.dataset.k.split('.'), arr = UI[o][p] || (UI[o][p] = []), i = arr.indexOf(el.value); if (el.checked && i<0) arr.push(el.value); if (!el.checked && i>=0) arr.splice(i,1); return render(); }
   if (k==='cliArq') { UI.cliArq = v; return render(); }
   if (k==='statusCamp') { const c = camp(el.dataset.id); c.status = v; registrar(`Status de “${c.nome}”: ${v}`); return render(); }
   if (k==='pessoaTarefa' || k==='pessoaGrupo' || k==='statusGrupo') { if (!v) return render(); const c = camp(el.dataset.id);
