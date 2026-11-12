@@ -72,6 +72,10 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .tab tr.a-fase td{background:#f4f7f8;font-weight:700;color:var(--pet-900)}.tab tr.a-pais td:first-child{padding-left:42px}
 .tab tr.a-grupo td:first-child,.tab tr.a-fase td:first-child{white-space:nowrap}
 .sel-resp{padding:3px 6px;font-size:.8rem;min-width:118px}
+.menu-barra{position:fixed;z-index:120;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:10px;min-width:230px;max-width:320px}
+.mb-tit{font-weight:600;font-size:.88rem;line-height:1.3}
+.mb-op{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:7px 8px;border-radius:6px;font:inherit;font-size:.85rem;color:var(--tx);cursor:pointer;text-align:left}
+.mb-op:hover{background:var(--pet-50)}.mb-op svg{width:16px;height:16px}.mb-op.mb-ok{color:#1f6b3a;font-weight:600}
 .legenda-farol{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--tx2);padding:10px 18px}.legenda-farol span{display:inline-flex;align-items:center;gap:6px}.legenda-farol i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .tab tr.mudou td{background:#fff8e6}.tab tr.atrasada td:first-child{box-shadow:inset 3px 0 0 #d0443a}
 .tab .dir{text-align:right}
@@ -119,15 +123,19 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .gantt{overflow:auto;border-top:1px solid var(--borda);max-height:70vh}
 .g-int{position:relative}
 .g-lin{display:flex;height:30px;border-bottom:1px solid #f0f2f3}
-.gantt{--gn:380px}.g-nome{position:sticky;left:0;z-index:3;width:var(--gn);min-width:var(--gn);background:var(--sup);border-right:1px solid var(--borda);padding:0 10px;display:flex;align-items:center;gap:6px;font-size:.8rem;white-space:nowrap;overflow:hidden}
+.gantt{--gn:500px}.g-nome{position:sticky;left:0;z-index:3;width:var(--gn);min-width:var(--gn);background:var(--sup);border-right:1px solid var(--borda);padding:0 10px;display:flex;align-items:center;gap:6px;font-size:.8rem;white-space:nowrap;overflow:hidden}
 .g-nome .tx{overflow:hidden;text-overflow:ellipsis}
 .g-lin.fase .g-nome{font-weight:700;background:#f4f7f8;color:var(--pet-900)}.g-lin.fase{background:#f4f7f8}
 .g-lin.pais .g-nome{padding-left:34px;color:var(--tx2)}
-.g-acoes{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:none;gap:0;background:var(--sup);border:1px solid var(--borda);border-radius:6px;box-shadow:0 1px 3px rgba(11,42,49,.12)}
+.g-acoes{position:absolute;right:124px;top:50%;transform:translateY(-50%);display:none;gap:0;background:var(--sup);border:1px solid var(--borda);border-radius:6px;box-shadow:0 1px 3px rgba(11,42,49,.12)}
 .g-acoes .icone-btn{width:26px;height:24px}.g-acoes svg{width:14px;height:14px}
 .g-lin:hover .g-acoes,.g-acoes:focus-within{display:inline-flex}@media (hover:none){.g-acoes{display:inline-flex}}
 .tab .g-acoes{position:static;transform:none;display:inline-flex;border:0;box-shadow:none;background:none}
 .g-nome .ponto,.g-nome .tag{flex-shrink:0}
+.g-nome .tx{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.g-resp{width:112px;flex-shrink:0;margin-left:8px;font-size:.78rem;color:var(--tx2);overflow:hidden;text-overflow:ellipsis}
+.g-resp select{width:100%;padding:2px 4px;font-size:.76rem;border:1px solid var(--borda);border-radius:6px;background:var(--sup);color:var(--tx)}
+.g-cab .g-resp{color:var(--tx2);font-weight:600;font-size:.8rem}
 .g-area{position:relative;flex-shrink:0}
 .g-cab{position:sticky;top:0;z-index:5;background:var(--sup);height:44px;border-bottom:1px solid var(--borda)}
 .g-cab .g-nome{z-index:6;font-weight:600;color:var(--tx2)}
@@ -139,7 +147,7 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .g-barra.crit{background:#c9473d}.g-barra.pais{background:repeating-linear-gradient(135deg,#5aa2b0,#5aa2b0 5px,#6fb2bf 5px,#6fb2bf 10px)}
 .g-barra.pais.crit{background:repeating-linear-gradient(135deg,#d9675e,#d9675e 5px,#e27b72 5px,#e27b72 10px)}
 .g-barra.ok{background:#8fb99a}.g-barra.grp{top:10px;height:10px;opacity:.85}
-.g-barra[data-t]{cursor:grab;touch-action:none}.g-barra.arrastando{cursor:grabbing;z-index:6;box-shadow:0 2px 8px rgba(11,42,49,.35);opacity:.9}
+.g-barra[data-t]{cursor:grab;touch-action:none}.g-barra[data-fixa]{cursor:pointer}.g-barra.arrastando{cursor:grabbing;z-index:6;box-shadow:0 2px 8px rgba(11,42,49,.35);opacity:.9}
 .g-barra.manual{box-shadow:inset 0 0 0 2px #0b2a31}
 .g-alca{position:absolute;right:-2px;top:-2px;bottom:-2px;width:9px;cursor:ew-resize;border-radius:0 4px 4px 0}.g-barra[data-t]:hover .g-alca{background:rgba(11,42,49,.25)}
 .g-dica{position:absolute;top:-26px;left:0;white-space:nowrap;background:#0b2a31;color:#fff;font-size:.72rem;padding:3px 7px;border-radius:5px;pointer-events:none}
@@ -181,7 +189,7 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
   body.menu-aberto::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:35}
   .principal{margin-left:0}.btn-menu{display:inline-grid}.conteudo{padding:16px}.topo{padding:0 16px}.aviso-demo{padding:6px 16px}
   .g2,.g3{grid-template-columns:1fr}.form-g{grid-template-columns:1fr}.def{grid-template-columns:1fr}.duas{grid-template-columns:1fr}
-  .gantt{--gn:170px}.an-lin{grid-template-columns:150px 1fr}
+  .gantt{--gn:170px}.g-resp{display:none}.g-acoes{right:4px}.an-lin{grid-template-columns:150px 1fr}
   .cal .dia{min-height:70px}.post{font-size:.65rem}
 }
 @media (max-width:520px){.g4{grid-template-columns:1fr 1fr}.kpi .v{font-size:1.3rem}}
@@ -880,6 +888,7 @@ const UI = {};  // estado de tela (filtros, visões)
 function rota(){ const p = (location.hash||'#/dashboard').slice(2).split('?')[0].split('/'); return p; }
 function render(){
   if (!S) return;
+  fecharMenuBarra();
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida).length;
   const itens = [['dashboard','layout-dashboard','Dashboard'],['clientes','building-2','Clientes'],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','bell','Notificações',nN],['config','settings','Configurações']];
@@ -1065,12 +1074,16 @@ function listaCrono(c, ts){
    <td><select data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}" style="padding:3px 6px;font-size:.8rem" class="${corStatus(st)}">${opts(ST_ACAO,t.status)}</select>${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td>
    <td class="small muted">${t.deps.map(d=>`${h(nomeDe(d.id))} <b>${d.tipo==='FS'?'fim→início':'início junto'}</b>`).join('<br>')||'—'}</td><td style="white-space:nowrap">${acoesEtapa(c, t.id, false)}</td></tr>`; }).join('') || '<tr><td colspan="10" class="vazio">Nenhuma etapa com esses filtros.</td></tr>'}</tbody></table></div>`;
 }
+function respGantt(c, ins, grupo, id){
+  const ps = [...new Set(ins.map(t=>t.pessoa||''))], misto = ps.length>1, val = misto ? '' : ps[0];
+  if (!ehEquipe()) return `<span class="g-resp" title="Responsável">${h(misto?'Vários':val||'—')}</span>`;
+  return `<span class="g-resp"><select data-chg="${grupo?'pessoaGrupo':'pessoaTarefa'}" data-id="${c.id}" data-t="${id}" title="Responsável${grupo?' (todos os países)':''}">${misto?'<option value="" selected>Vários</option>':''}${opts(optsResp(val), misto?'__':val||'', '—')}</select></span>`; }
 function acoesEtapa(c, id, grupo){ if (!ehEquipe()) return '';
   return `<span class="g-acoes nao-imprimir"><button class="icone-btn" data-act="editarEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Editar nome"><i data-lucide="pencil"></i></button><button class="icone-btn" data-act="excluirEtapa" data-id="${c.id}" data-t="${id}" ${grupo?'data-grupo="1"':''} title="Excluir etapa"><i data-lucide="trash-2"></i></button></span>`; }
 function gantt(c, ts){
   const aberto = UI.gAberto || (UI.gAberto = {}), fFech = UI.gFase || (UI.gFase = {});
   if (!ts.length) return '<div class="vazio">Nenhuma etapa com esses filtros.</div>';
-  const H = 30, gnPx = innerWidth <= 860 ? 170 : 380;
+  const H = 30, gnPx = innerWidth <= 860 ? 170 : 500;
   const dispo = Math.max(300, (($('#app') && $('#app').clientWidth) || 1200) - gnPx - 30);
   const ini = addDias(ts.reduce((m,t)=>t.ES<m?t.ES:m, ts[0].ES), -2);
   const fimD = addDias(ts.reduce((m,t)=>{ const v = t.LF>t.EF?t.LF:t.EF; return v>m?v:m; }, ts[0].EF), 3);
@@ -1098,16 +1111,16 @@ function gantt(c, ts){
     cab += `<div class="g-dia" style="left:${i*W}px;width:${W}px;${w===0||w===6?'color:#c3cbce':''}">${+d.slice(8)}</div>`; }
   const hojeX = HOJE>=ini && HOJE<=fimD ? `<div class="g-hoje" style="left:${x(HOJE)+W/2}px" title="Hoje"></div>` : '';
   const barra = (t, pais) => { const st = statusExib(t); let s = '';
-    if (t.folga>0 && t.status!=='Concluída') s += `<div class="g-folga" style="left:${x(t.EF)+W}px;width:${x(t.LF)-x(t.EF)}px" title="Folga: ${t.folga} dia(s) útil(eis) — pode terminar até ${fd(t.LF)}"></div>`;
-    const mov = t.status!=='Concluída';
-    s += `<div class="g-barra ${pais?'pais':''} ${t.critico?'crit':''} ${t.status==='Concluída'?'ok':''} ${t.manual?'manual':''}" ${mov?`data-t="${t.id}" data-c="${c.id}"`:''} style="left:${x(t.ES)}px;width:${x(t.EF)-x(t.ES)+W}px;${st==='Atrasada'?'outline:2px solid #d0443a;outline-offset:1px':''}" title="${h(t.nome)}${t.pais?' — '+t.pais:''}\n${fds(t.ES)} → ${fds(t.EF)} · ${t.dur} d.u. · folga ${t.folga}\n${st}${t.manual?' · ajustada manualmente':''}${mov?'\nArraste para mover (as etapas ligadas acompanham; segure Shift para mover só esta) · puxe a ponta direita para mudar a duração':''}">${mov?'<span class="g-alca"></span>':''}</div>`;
+    if (UI.fcr.folga && t.folga>0 && t.status!=='Concluída') s += `<div class="g-folga" style="left:${x(t.EF)+W}px;width:${x(t.LF)-x(t.EF)}px" title="Folga: ${t.folga} dia(s) útil(eis) — pode terminar até ${fd(t.LF)}"></div>`;
+    const mov = t.status!=='Concluída' && ehEquipe();
+    s += `<div class="g-barra ${pais?'pais':''} ${t.critico?'crit':''} ${t.status==='Concluída'?'ok':''} ${t.manual?'manual':''}" data-t="${t.id}" data-c="${c.id}" ${mov?'':'data-fixa="1"'} style="left:${x(t.ES)}px;width:${x(t.EF)-x(t.ES)+W}px;${st==='Atrasada'?'outline:2px solid #d0443a;outline-offset:1px':''}" title="${h(t.nome)}${t.pais?' — '+t.pais:''}\n${fds(t.ES)} → ${fds(t.EF)} · ${t.dur} d.u. · folga ${t.folga}\n${st}${t.manual?' · ajustada manualmente':''}${'\nClique para concluir ou abrir'}${mov?' · arraste para mover (as etapas ligadas acompanham; segure Shift para mover só esta) · puxe a ponta direita para mudar a duração':''}">${mov?'<span class="g-alca"></span>':''}</div>`;
     if (t.marco) s += `<div class="g-marco" style="left:${x(t.EF)+W+3}px" title="Lançamento ${t.pais||''}: ${fd(t.EF)}"></div>`;
     return s; };
   let corpo = '';
   linhas.forEach(l=>{
     if (l.tipo==='fase') corpo += `<div class="g-lin fase"><div class="g-nome"><button class="icone-btn" data-act="gFase" data-f="${l.fase}"><i data-lucide="${fFech[l.fase]?'chevron-right':'chevron-down'}"></i></button><span class="tx">${FASES[l.fase]}</span></div><div class="g-area" style="width:${larg}px"></div></div>`;
-    else if (l.tipo==='grupo') corpo += `<div class="g-lin"><div class="g-nome"><button class="icone-btn" data-act="gAbrir" data-t="${l.tid}" title="Ver por país"><i data-lucide="${aberto[l.tid]?'chevron-down':'chevron-right'}"></i></button><span class="tx" title="${h(l.nome)}">${h(l.nome)}</span>${acoesEtapa(c, l.tid, true)}<span class="tag t-pet" style="margin-left:auto">${l.ins.length} país${l.ins.length>1?'es':''}</span></div><div class="g-area" style="width:${larg}px">${aberto[l.tid]?`<div class="g-barra grp pais ${l.crit?'crit':''}" style="left:${x(l.ES)}px;width:${x(l.EF)-x(l.ES)+W}px"></div>`:l.ins.map(t=>barra(t,true)).join('')}</div></div>`;
-    else corpo += `<div class="g-lin ${l.pais?'pais':''}"><div class="g-nome"><span class="tx" title="${h(l.t.nome)}">${l.pais?pais(l.t.pais):h(l.t.nome)}</span>${acoesEtapa(c, l.t.id, false)}${l.t.critico&&!l.pais?'<span class="ponto p-verm" style="margin-left:auto" title="Caminho crítico"></span>':''}</div><div class="g-area" style="width:${larg}px">${barra(l.t,l.pais)}</div></div>`;
+    else if (l.tipo==='grupo') corpo += `<div class="g-lin"><div class="g-nome"><button class="icone-btn" data-act="gAbrir" data-t="${l.tid}" title="Ver por país"><i data-lucide="${aberto[l.tid]?'chevron-down':'chevron-right'}"></i></button><span class="tx" title="${h(l.nome)}">${h(l.nome)}</span>${acoesEtapa(c, l.tid, true)}<span class="tag t-pet">${l.ins.length} país${l.ins.length>1?'es':''}</span>${respGantt(c, l.ins, true, l.tid)}</div><div class="g-area" style="width:${larg}px">${aberto[l.tid]?`<div class="g-barra grp pais ${l.crit?'crit':''}" style="left:${x(l.ES)}px;width:${x(l.EF)-x(l.ES)+W}px"></div>`:l.ins.map(t=>barra(t,true)).join('')}</div></div>`;
+    else corpo += `<div class="g-lin ${l.pais?'pais':''}"><div class="g-nome"><span class="tx" title="${h(l.t.nome)}">${l.pais?pais(l.t.pais):h(l.t.nome)}</span>${acoesEtapa(c, l.t.id, false)}${l.t.critico&&!l.pais?'<span class="ponto p-verm" style="margin-left:6px" title="Caminho crítico"></span>':''}${respGantt(c, [l.t], false, l.t.id)}</div><div class="g-area" style="width:${larg}px">${barra(l.t,l.pais)}</div></div>`;
   });
   // setas de dependência (desenhadas depois de montar)
   const arestas = new Set(); let svg = '';
@@ -1121,9 +1134,9 @@ function gantt(c, ts){
   }
   const altura = linhas.length*H;
   return `<div class="gantt" data-w="${W}"><div class="g-int" style="width:calc(var(--gn) + ${larg}px)">
-    <div class="g-lin g-cab"><div class="g-nome">Etapa</div><div class="g-area" style="width:${larg}px">${cab}</div></div>
+    <div class="g-lin g-cab"><div class="g-nome"><span class="tx">Etapa</span><span class="g-resp">Responsável</span></div><div class="g-area" style="width:${larg}px">${cab}</div></div>
     <div style="position:relative"><div style="position:absolute;left:var(--gn);top:0;bottom:0;width:${larg}px;pointer-events:none">${fundo}${hojeX}<svg class="g-svg" width="${larg}" height="${altura}" style="z-index:1"><defs><marker id="seta" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#9fb0b5"/></marker></defs>${svg}</svg></div>${corpo}</div></div></div>
-    <div class="legenda"><span><i style="background:var(--pet-600)"></i>Etapa global</span><span><i style="background:repeating-linear-gradient(135deg,#5aa2b0,#5aa2b0 4px,#6fb2bf 4px,#6fb2bf 8px)"></i>Etapa por país</span><span><i style="background:#c9473d"></i>Caminho crítico (folga 0)</span><span><i style="background:#8fb99a"></i>Concluída</span><span><i style="background:var(--pet-600);box-shadow:inset 0 0 0 2px #0b2a31"></i>Ajustada manualmente</span><span><i style="height:2px;background:#9aa9ae"></i>Folga</span><span><i style="background:var(--pet-950);width:10px;height:10px;transform:rotate(45deg)"></i>Lançamento</span><span><i style="background:#f1f3f4;border:1px solid #ddd"></i>Fim de semana</span><span><i style="background:repeating-linear-gradient(45deg,#fde9e7,#fde9e7 3px,#fff 3px,#fff 6px);border:1px solid #f3c9c4"></i>Feriado da agência</span><span><i style="background:#e0a33a;width:3px"></i>Hoje</span></div>`;
+    <div class="legenda"><span><i style="background:var(--pet-600)"></i>Etapa global</span><span><i style="background:repeating-linear-gradient(135deg,#5aa2b0,#5aa2b0 4px,#6fb2bf 4px,#6fb2bf 8px)"></i>Etapa por país</span><span><i style="background:#c9473d"></i>Caminho crítico (folga 0)</span><span><i style="background:#8fb99a"></i>Concluída</span><span><i style="background:var(--pet-600);box-shadow:inset 0 0 0 2px #0b2a31"></i>Ajustada manualmente</span><a href="javascript:void 0" data-act="ui" data-k="fcr.folga" data-v="${UI.fcr.folga?'':'1'}" title="Linha cinza depois da barra: até quando a etapa pode terminar sem atrasar o lançamento" style="display:inline-flex;align-items:center;gap:6px;color:inherit"><i style="height:2px;background:#9aa9ae"></i>${UI.fcr.folga?'Ocultar folga':'Mostrar folga'}</a><span><i style="background:var(--pet-950);width:10px;height:10px;transform:rotate(45deg)"></i>Lançamento</span><span><i style="background:#f1f3f4;border:1px solid #ddd"></i>Fim de semana</span><span><i style="background:repeating-linear-gradient(45deg,#fde9e7,#fde9e7 3px,#fff 3px,#fff 6px);border:1px solid #f3c9c4"></i>Feriado da agência</span><span><i style="background:#e0a33a;width:3px"></i>Hoje</span></div>`;
 }
 
 /* ---------- Gestão de ações ---------- */
@@ -1606,6 +1619,9 @@ const ACT = {
     for (const t of c.crono.tarefas) { const a = ant[t.id]; if (!a) continue; if (a.ES!==t.ES || a.EF!==t.EF) n++; Object.assign(t, {ES:a.ES, EF:a.EF, dur:a.dur}); if (a.manual) t.manual = true; else delete t.manual; }
     recalcFolgas(c); Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo:'Datas restauradas da versão '+v.versao});
     registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: datas restauradas da versão ${v.versao} (${n} etapa(s))`); fecharModal(); render(); toast(n+' etapa(s) voltaram às datas da versão '+v.versao+'.'); },
+  statusBarra: el => { const c = camp(el.dataset.id), t = c.crono.tarefas.find(x=>x.id===el.dataset.t), v = el.dataset.v; fecharMenuBarra(); if (!t || t.status===v) return;
+    (t.hist = t.hist||[]).push({q:HOJE,o:`Status: ${t.status} → ${v}`}); t.status = v;
+    registrar(`Etapa “${t.nome}${t.pais?' ('+t.pais+')':''}” de “${c.nome}”: ${v}`); render(); toast(v==='Concluída'?'Etapa concluída.':'Status: '+v+'.'); },
   movSobrepor: () => ACT.movAplicar(false),
   movEmpurrar: () => ACT.movAplicar(true),
   movAplicar: empurrar => { const m = UI.pendMov; if (!m) return; const c = camp(m.cid), t = c.crono.tarefas.find(x=>x.id===m.tid);
@@ -1625,7 +1641,7 @@ const ACT = {
     const csv = '﻿'+L.map(l=>l.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download = 'cronograma-'+c.nome.replace(/\W+/g,'-').toLowerCase()+'.csv'; a.click(); },
   /* ações */
-  formAcao: (el,e) => { if (e && e.type!=='click') return; const c = camp(el.dataset.id), t = c.crono.tarefas.find(x=>x.id===el.dataset.a); if (!t) return;
+  formAcao: (el,e) => { if (e && e.type!=='click') return; fecharMenuBarra(); const c = camp(el.dataset.id), t = c.crono.tarefas.find(x=>x.id===el.dataset.a); if (!t) return;
     const ed = ehEquipe(), dis = ed ? '' : 'disabled';
     abrirModal(h(t.nome)+(t.pais?' — '+t.pais:''), `<form id="f-acao" class="form-g"><label class="campo tudo">Nome *<input name="nome" value="${h(t.nome)}" ${dis}></label><label class="campo tudo">Descrição<textarea name="descricao" ${dis}>${h(t.descricao||'')}</textarea></label>
       <label class="campo">Área<input value="${h(t.area)}" disabled></label><label class="campo">Responsável<select name="pessoa" ${dis}>${opts(optsResp(t.pessoa),t.pessoa||'','Selecione')}</select></label>
@@ -1838,16 +1854,31 @@ document.addEventListener('drop', e => { const z = e.target.closest('[data-drop]
 let gDrag = null;
 document.addEventListener('pointerdown', e => { const b = e.target.closest('.g-barra[data-t]'); if (!b || e.button!==0) return;
   const c = camp(b.dataset.c), t = c && c.crono.tarefas.find(x=>x.id===b.dataset.t); if (!t) return;
-  gDrag = {b, c, t, solto: e.shiftKey, modo: e.target.classList.contains('g-alca') ? 'fim' : 'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
+  fecharMenuBarra(); gDrag = {b, c, t, fixa: !!b.dataset.fixa, solto: e.shiftKey, modo: e.target.classList.contains('g-alca') ? 'fim' : 'mover', x0:e.clientX, left:parseFloat(b.style.left), width:parseFloat(b.style.width), dd:0};
   try { b.setPointerCapture(e.pointerId); } catch(_){} b.classList.add('arrastando'); e.preventDefault(); });
-document.addEventListener('pointermove', e => { if (!gDrag) return; const g = gDrag, W = +(g.b.closest('.gantt')||{dataset:{}}).dataset.w || 22;
+document.addEventListener('pointermove', e => { if (!gDrag || gDrag.fixa) return; const g = gDrag, W = +(g.b.closest('.gantt')||{dataset:{}}).dataset.w || 22;
   let dd = Math.round((e.clientX - g.x0)/W); if (g.modo==='fim') dd = Math.max(dd, -Math.round(g.width/W)+1);
   if (dd===g.dd) return; g.dd = dd;
   if (g.modo==='mover') g.b.style.left = (g.left + dd*W)+'px'; else g.b.style.width = (g.width + dd*W)+'px';
   const n = novasDatasArraste(g.t, g.modo, dd);
   let dica = g.b.querySelector('.g-dica'); if (!dica) { dica = document.createElement('span'); dica.className = 'g-dica'; g.b.appendChild(dica); }
   dica.textContent = dd ? `${fdc(n.ES)} → ${fdc(n.EF)} · ${uteisEntre(n.ES,n.EF,g.t.cal,ctx())+1} d.u.` : ''; dica.style.display = dd ? '' : 'none'; });
+function fecharMenuBarra(){ const m = document.getElementById('menu-barra'); if (m) m.remove(); }
+function menuBarra(c, t, x, y){ fecharMenuBarra();
+  const st = statusExib(t), ed = ehEquipe(), b = (v, ic, txt, cls='') => `<button class="mb-op ${cls}" data-act="statusBarra" data-id="${c.id}" data-t="${t.id}" data-v="${v}"><i data-lucide="${ic}"></i>${txt}</button>`;
+  const d = document.createElement('div'); d.id = 'menu-barra'; d.className = 'menu-barra';
+  d.innerHTML = `<div class="mb-tit">${h(t.nome)}${t.pais?' — '+t.pais:''}</div><div class="small muted" style="margin:2px 0 8px">${fdc(t.ES)} → ${fdc(t.EF)} · <span class="farol ${farolDe(t)}" style="padding:1px 7px 1px 18px;background-position:6px center">${h(st)}</span></div>
+    ${ed ? (t.status!=='Concluída' ? b('Concluída','check-circle-2','Marcar como concluída','mb-ok') : b('Em andamento','rotate-ccw','Reabrir (em andamento)'))
+      + (t.status!=='Em andamento' && t.status!=='Concluída' ? b('Em andamento','play','Em andamento') : '')
+      + (t.status!=='Aguardando cliente' && t.status!=='Concluída' ? b('Aguardando cliente','hourglass','Aguardando cliente') : '') : ''}
+    <button class="mb-op" data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><i data-lucide="file-text"></i>Abrir detalhes</button>`;
+  document.body.appendChild(d);
+  const r = d.getBoundingClientRect(); d.style.left = Math.max(8, Math.min(x+8, innerWidth - r.width - 8))+'px'; d.style.top = Math.max(8, Math.min(y+10, innerHeight - r.height - 8))+'px';
+  icones(); }
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#menu-barra') && !e.target.closest('.g-barra')) fecharMenuBarra(); });
+document.addEventListener('keydown', e => { if (e.key==='Escape') fecharMenuBarra(); });
 function fimArraste(e, cancelar){ if (!gDrag) return; const g = gDrag; gDrag = null; g.b.classList.remove('arrastando');
+  if (!cancelar && !g.dd) return menuBarra(g.c, g.t, e.clientX, e.clientY);   // clique sem arrastar: menu da etapa
   const n = novasDatasArraste(g.t, g.modo, g.dd);
   if (cancelar || !g.dd || (n.ES===g.t.ES && n.EF===g.t.EF)) return render();
   proporMovimento(g.c, g.t, n.ES, n.EF, g.solto); render(); }
