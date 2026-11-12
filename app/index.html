@@ -243,40 +243,46 @@ const ST_ACAO = ['Não iniciada','Em andamento','Aguardando cliente','Aguardando
 const ST_TRAD = ['Não iniciada','Aguardando conteúdo original','Aguardando aprovação do master','Aguardando tradução','Em tradução','Aguardando validação local','Em ajustes','Aprovada','Bloqueada'];
 const ST_POST = ['Ideia','Em planejamento','Em redação','Aguardando aprovação','Aprovado','Em design','Pronto para publicação','Publicado'];
 const ETAPAS_ENT = {briefing:'Briefing',aprov_conteudo:'Aprovação do conteúdo',ajuste_conteudo:'Ajustes no conteúdo',producao:'Produção',aprov_asset:'Aprovação do asset',ajuste_asset:'Ajustes no asset',concluido:'Concluído'};
-const FASES = {1:'Fase 1 — Planejamento e landing page',2:'Fase 2 — Conteúdos e assets',3:'Fase 3 — Programação e lançamento'};
-
-/* Modelo padrão de cronograma.  escopo: global | pais.  trad: só existe para países cujo idioma é diferente do idioma-base.
-   deps: [id, tipo]  FS = fim para início (começa no dia útil seguinte)  SS = início simultâneo (começa no mesmo dia) */
+/* etapas (agrupamento) do cronograma — mesma organização da planilha de atividades macro */
+const FASES = {1:'📥 Briefing',2:'🧠 Estratégia & Conceito',3:'🎨 Criação & Direção de Arte (KV)',4:'🛬 Landing Page',5:'🔧 Configuração Sales Force',6:'✍️ Conteúdo (Copy & Texto)',7:'⚙️ Organização',8:'🖼️ Produção de Assets',9:'🔍 Pré-Lançamento'};
+const ORDEM_FASES = [1,2,3,4,5,6,7,8,9];
+/* modelo padrão. dur em dias úteis (corridos:true = dias corridos). escopo pais = uma etapa por país; trad = só países com idioma diferente do base */
 const MODELO_PADRAO = [
  {id:'F1-01',fase:1,nome:'Recebimento do briefing',area:'Atendimento',dur:1,escopo:'global',deps:[]},
- {id:'F1-02',fase:1,nome:'Criar conceito estratégico da campanha',area:'Planejamento',dur:2,escopo:'global',deps:[['F1-01','FS']]},
- {id:'F1-03',fase:1,nome:'Aprovar conceito com o cliente',area:'Cliente',dur:1,escopo:'global',deps:[['F1-02','FS']]},
- {id:'F1-04',fase:1,nome:'Criar KV da campanha',area:'Design',dur:3,escopo:'global',deps:[['F1-03','FS']]},
- {id:'F1-05',fase:1,nome:'Criar conteúdo da landing page',area:'Conteúdo',dur:2,escopo:'global',deps:[['F1-03','FS']]},
- {id:'F1-06',fase:1,nome:'Aprovar conteúdo da LP',area:'Cliente',dur:1,escopo:'global',deps:[['F1-05','FS']]},
- {id:'F1-07',fase:1,nome:'Aprovar KV da campanha',area:'Cliente',dur:1,escopo:'global',deps:[['F1-04','FS']]},
- {id:'F1-08',fase:1,nome:'Traduzir conteúdo da LP',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F1-06','FS']]},
- {id:'F1-09',fase:1,nome:'Validar conteúdo traduzido da LP',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F1-08','SS']]},
- {id:'F1-10',fase:1,nome:'Criar layout da LP',area:'Design',dur:1,escopo:'global',deps:[['F1-08','FS'],['F1-07','FS']]},
- {id:'F1-11',fase:1,nome:'Validar layout da LP',area:'Cliente',dur:1,escopo:'global',deps:[['F1-10','FS']]},
- {id:'F1-12',fase:1,nome:'Enviar LP para programação em todas as línguas',area:'Atendimento',dur:1,escopo:'global',deps:[['F1-11','FS'],['F1-09','FS']]},
- {id:'F1-13',fase:1,nome:'Programação da LP (fornecedor)',area:'Fornecedor',dur:5,escopo:'global',deps:[['F1-12','FS']]},
- {id:'F2-01',fase:2,nome:'Criar textos em {base}',area:'Conteúdo',dur:3,escopo:'global',deps:[['F1-03','FS']]},
- {id:'F2-02',fase:2,nome:'Validar conteúdos em {base}',area:'Cliente',dur:2,escopo:'global',deps:[['F2-01','FS']]},
- {id:'F2-03',fase:2,nome:'Traduzir conteúdos',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F2-02','FS']]},
- {id:'F2-04',fase:2,nome:'Criar assets em {base} + Canva template',area:'Design',dur:4,escopo:'global',deps:[['F2-03','SS']]},
- {id:'F2-05',fase:2,nome:'Validar traduções',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F2-03','FS']]},
- {id:'F2-06',fase:2,nome:'Aprovar assets em {base}',area:'Cliente',dur:2,escopo:'global',deps:[['F2-04','FS']]},
- {id:'F2-07',fase:2,nome:'Janela para ajustar assets em {base}',area:'Design',dur:1,escopo:'global',deps:[['F2-06','FS']]},
- {id:'F2-08',fase:2,nome:'Adaptar assets para as demais línguas',area:'Design',dur:2,escopo:'pais',trad:true,deps:[['F2-07','FS'],['F2-05','FS']]},
- {id:'F2-09',fase:2,nome:'Enviar assets de todas as línguas para aprovação',area:'Atendimento',dur:1,escopo:'global',deps:[['F2-08','FS']]},
- {id:'F2-10',fase:2,nome:'Aprovar assets de todas as línguas',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F2-09','FS']]},
- {id:'F2-11',fase:2,nome:'Janela para ajustar assets das demais línguas',area:'Design',dur:1,escopo:'pais',trad:true,deps:[['F2-10','FS']]},
- {id:'F2-12',fase:2,nome:'Aprovação final dos assets traduzidos',area:'Validadores locais',dur:2,escopo:'pais',trad:true,deps:[['F2-11','FS']]},
- {id:'F3-01',fase:3,nome:'Receber as landing pages programadas',area:'Atendimento',dur:1,escopo:'global',deps:[['F1-13','FS']]},
- {id:'F3-02',fase:3,nome:'Revisar LP recebida: layout, textos, traduções e formulário',area:'Design + Conteúdo',dur:1,escopo:'pais',deps:[['F3-01','FS']]},
- {id:'F3-03',fase:3,nome:'Programar campanha no gerenciador e lançar',area:'Digital',dur:2,escopo:'pais',fimNoLanc:true,deps:[['F3-02','FS'],['F2-12','FS']]}
+ {id:'F1-02',fase:2,nome:'Criar conceito estratégico da campanha',area:'Planejamento',dur:2,escopo:'global',deps:[['F1-01','FS']]},
+ {id:'F1-03',fase:2,nome:'Aprovar conceito com o cliente',area:'Cliente',dur:1,escopo:'global',deps:[['F1-02','FS']]},
+ {id:'F1-04',fase:3,nome:'Criar KV da campanha',area:'Design',dur:3,escopo:'global',deps:[['F1-03','FS']]},
+ {id:'F1-07',fase:3,nome:'Aprovar KV da campanha',area:'Cliente',dur:1,escopo:'global',deps:[['F1-04','FS']]},
+ {id:'F1-05',fase:4,nome:'Criar conteúdo da landing page',area:'Conteúdo',dur:2,escopo:'global',deps:[['F1-03','FS']]},
+ {id:'F1-06',fase:4,nome:'Aprovar conteúdo da LP',area:'Cliente',dur:1,escopo:'global',deps:[['F1-05','FS']]},
+ {id:'F1-10',fase:4,nome:'Criar layout da LP (em paralelo com a tradução)',area:'Design',dur:1,escopo:'global',deps:[['F1-06','FS'],['F1-07','FS']]},
+ {id:'F1-08',fase:4,nome:'Traduzir conteúdo da LP (em paralelo com a criação do layout)',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F1-06','FS']]},
+ {id:'F1-11',fase:4,nome:'Validar layout da LP (em paralelo com a validação do conteúdo traduzido)',area:'Cliente',dur:1,escopo:'global',deps:[['F1-10','FS']]},
+ {id:'F1-09',fase:4,nome:'Validar conteúdo traduzido da LP (em paralelo com a validação do layout)',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F1-08','FS']]},
+ {id:'F1-12',fase:4,nome:'Enviar LP para programação em todas as línguas',area:'Atendimento',dur:1,escopo:'global',deps:[['F1-11','FS'],['F1-09','FS']]},
+ {id:'F1-14',fase:5,nome:'Configuração LP Sales Force (30 dias corridos)',area:'Digital',dur:30,corridos:true,escopo:'global',deps:[['F1-12','FS']]},
+ {id:'F2-01',fase:6,nome:'Criar textos em {base}',area:'Conteúdo',dur:3,escopo:'global',deps:[['F1-03','FS']]},
+ {id:'F2-02',fase:6,nome:'Validar conteúdos em {base}',area:'Cliente',dur:2,escopo:'global',deps:[['F2-01','FS']]},
+ {id:'F2-03',fase:6,nome:'Traduzir conteúdos (em paralelo com a criação dos assets)',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F2-02','FS']]},
+ {id:'F2-05',fase:6,nome:'Validar traduções (não depende da aprovação dos assets)',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F2-03','FS']]},
+ {id:'F2-04',fase:6,nome:'Criar assets em {base} + Canva template',area:'Design',dur:4,escopo:'global',deps:[['F2-03','SS']]},
+ {id:'F2-06',fase:8,nome:'Aprovar assets em {base}',area:'Cliente',dur:2,escopo:'global',deps:[['F2-04','FS']]},
+ {id:'F2-07',fase:8,nome:'Janela para ajustar os assets em {base}',area:'Design',dur:1,escopo:'global',deps:[['F2-06','FS']]},
+ {id:'F2-08',fase:8,nome:'Adaptar os assets para as demais línguas',area:'Design',dur:2,escopo:'pais',trad:true,deps:[['F2-07','FS'],['F2-05','FS']]},
+ {id:'F2-09',fase:8,nome:'Enviar assets de todas as línguas para aprovação',area:'Atendimento',dur:1,escopo:'global',deps:[['F2-08','FS']]},
+ {id:'F2-10',fase:8,nome:'Aprovar assets de todas as línguas',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F2-09','FS']]},
+ {id:'F2-11',fase:8,nome:'Janela para ajustar os assets das demais línguas',area:'Design',dur:1,escopo:'pais',trad:true,deps:[['F2-10','FS']]},
+ {id:'F2-12',fase:8,nome:'Aprovação final dos assets traduzidos',area:'Validadores locais',dur:2,escopo:'pais',trad:true,deps:[['F2-11','FS']]},
+ {id:'F2-13',fase:7,nome:'Subir assets da campanha para os dealers',area:'Atendimento',dur:1,escopo:'pais',deps:[['F2-12','FS']]},
+ {id:'F3-01',fase:9,nome:'Receber as landing pages programadas',area:'Atendimento',dur:1,escopo:'global',deps:[['F1-14','FS']]},
+ {id:'F3-02',fase:9,nome:'Revisar as LPs recebidas — layout, textos, traduções e formulário',area:'Design + Conteúdo',dur:1,escopo:'pais',deps:[['F3-01','FS']]},
+ {id:'F3-04',fase:7,nome:'Subir LP no linktree',area:'Digital',dur:1,escopo:'global',deps:[['F3-02','FS']]},
+ {id:'F3-03',fase:9,nome:'Programar a campanha no gerenciador e lançar',area:'Digital',dur:2,escopo:'pais',fimNoLanc:true,deps:[['F3-02','FS'],['F2-12','FS'],['F2-13','FS']]}
 ];
+const VERSAO_MODELO_PLANILHA = 'planilha-2026-11';
+/* etapa nova de cada código antigo (para campanhas criadas antes desta organização) */
+const FASE_POR_ID = Object.fromEntries(MODELO_PADRAO.map(m=>[m.id, m.fase]));
+const FASE_ANTIGA = {1:4, 2:6, 3:9};
 
 /* =====================================================================
    2. DIAS ÚTEIS E FERIADOS
@@ -308,8 +314,8 @@ function criarCtx(feriados){
     return sets[cal] = st;
   };
   return {
-    util: (s,cal) => { const w = dow(s); return w!==0 && w!==6 && !get(cal).has(s); },
-    motivo: (s,cal) => { const w=dow(s); if (w===0) return 'domingo'; if (w===6) return 'sábado'; get(cal); return nomes[cal][s] ? 'feriado: '+nomes[cal][s] : null; },
+    util: (s,cal) => { if (cal==='CORR') return true; const w = dow(s); return w!==0 && w!==6 && !get(cal).has(s); },
+    motivo: (s,cal) => { if (cal==='CORR') return null; const w=dow(s); if (w===0) return 'domingo'; if (w===6) return 'sábado'; get(cal); return nomes[cal][s] ? 'feriado: '+nomes[cal][s] : null; },
     fer: cal => get(cal)
   };
 }
@@ -364,7 +370,7 @@ function montarGrafo(camp, modelo){
     const m = {};
     for (const d of resolver(n.deps0, new Set())) if (!m[d.id] || d.tipo==='FS') m[d.id] = d.tipo;
     n.deps = Object.entries(m).map(([id,tipo])=>({id,tipo}));
-    n.cal = (n.t.area==='Validadores locais' && n.pais) ? n.pais : 'AG';
+    n.cal = n.t.corridos ? 'CORR' : (n.t.area==='Validadores locais' && n.pais) ? n.pais : 'AG';
     n.dur = Math.max(1, +n.t.dur||1); n.succ = [];
   }
   const porId = Object.fromEntries(lista.map(n=>[n.id,n]));
@@ -547,7 +553,7 @@ const VALID_PAIS = {DE:'u7',FR:'u8',IT:'u9',UK:'u10',ES:'u8',AR:'u11',CL:'u11',M
 function novaCampanha(dados){
   const camp = Object.assign({id:novoId('c'),status:'Planejamento',arquivada:false,obs:'',descricao:'',objetivo:'',urlPlanejamento:'',urlRelatorio:'',orcamento:0,moeda:'BRL',canais:[],regioes:[],
     acoes:[],entregaveis:[],budgets:[],kpis:[],posts:[],cronoHist:[],master:{texto:'',status:'Rascunho',versao:1,aprovadoEm:null,hist:[]},traducoes:{}}, dados);
-  camp.modelo = JSON.parse(JSON.stringify(S.modelo.tarefas)); camp.modeloVersao = S.modelo.versao;
+  camp.modelo = JSON.parse(JSON.stringify(S.modelo.tarefas)); camp.modeloVersao = S.modelo.versao; camp.etapasNovas = true;
   camp.paises = camp.paises.map(p=>Object.assign({respLocal:VALID_PAIS[p.cod]||'',obs:'',links:''},p));
   for (const p of camp.paises) camp.traducoes[p.cod] = {texto:'',status: p.idioma===camp.idiomaBase ? 'N/A' : 'Aguardando conteúdo original',resp:'u4',validador:p.respLocal,prazo:null,versaoMaster:0,coment:[],hist:[],aprovadoEm:null};
   return camp;
@@ -635,7 +641,7 @@ const PAPEIS = {pendente:'Aguardando liberação', equipe:'Equipe da agência', 
 function estadoInicial(){
   seq = 1000;
   return {migr:2, agencia:{pais:'BR',estado:'',cidade:''}, usuarios:[], feriados:feriadosIniciais(),
-    modelo:{versao:1, data:HOJE, tarefas:JSON.parse(JSON.stringify(MODELO_PADRAO))}, modeloHist:[],
+    modelo:{versao:1, data:HOJE, origem:VERSAO_MODELO_PLANILHA, tarefas:JSON.parse(JSON.stringify(MODELO_PADRAO))}, modeloHist:[],
     baseRegiao:{EMEA:'EN',LATAM:'PT',NA:'EN',APAC:'EN',OUT:'EN'}, notifLidas:{}, log:[], clientes:[], campanhas:[]};
 }
 const cliRow = c => ({id:c.id, nome:c.nome, segmento:c.segmento||'', contato:c.contato||'', arquivado:!!c.arquivado});
@@ -772,6 +778,14 @@ function migrarAcoes(c){
   recalcFolgas(c);
 }
 function migrarLancamento(){ CTX = null; let mudou = false;
+  if (S.modelo && S.modelo.origem!==VERSAO_MODELO_PLANILHA && ehEquipe()) {
+    S.modeloHist.unshift({versao:S.modelo.versao, data:S.modelo.data, tarefas:S.modelo.tarefas});
+    S.modelo = {versao:S.modelo.versao+1, data:HOJE, origem:VERSAO_MODELO_PLANILHA, tarefas:JSON.parse(JSON.stringify(MODELO_PADRAO))}; mudou = true; }
+  for (const c of S.campanhas) if (!c.etapasNovas && c.modelo) {
+    const mapa = m => FASE_POR_ID[m.id] || FASE_ANTIGA[m.fase] || m.fase;
+    for (const m of c.modelo) m.fase = mapa(m);
+    if (c.crono) { const fm = Object.fromEntries(c.modelo.map(m=>[m.id,m.fase])); for (const t of c.crono.tarefas) t.fase = fm[t.tid] || FASE_ANTIGA[t.fase] || t.fase; }
+    c.etapasNovas = true; mudou = true; }
   for (const c of S.campanhas) {
     if (c.crono && (c.acoes||[]).length) { try { migrarAcoes(c); mudou = true; } catch(e){ console.error(e); } }
     const difPais = c.paises.some(p=>p.lancamento!==c.lancamento);
@@ -1067,8 +1081,9 @@ function abaCronograma(c){
   const ts = c.crono.tarefas.filter(t=>(!f.area||t.area===f.area)&&(!f.pais||t.pais===f.pais||(f.pais==='global'&&!t.pais))&&(!f.fase||String(t.fase)===f.fase)&&(!f.status||statusExib(t)===f.status));
   const hist = c.cronoHist.length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Histórico de versões do cronograma (${c.cronoHist.length})</summary><ul class="lista-simples">${c.cronoHist.map(v=>`<li><b>Versão ${v.versao}</b><span class="small muted">${fd(v.data)} · ${h(v.motivo)} · lançamento ${fd(v.lancamento)}</span><button class="btn btn-s" style="margin-left:auto" data-act="verVersao" data-id="${c.id}" data-v="${v.versao}">Ver</button></li>`).join('')}</ul></details>` : '';
   return alertasCampanha(c) + `<div class="card"><div class="card-cab nao-imprimir"><div class="seg"><button class="${f.visao==='gantt'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="gantt"><i data-lucide="gantt-chart"></i>Gantt</button><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="lista"><i data-lucide="list"></i>Lista</button></div>
-    <div class="filtros"><select data-chg="fcr.area">${opts(AREAS,f.area,'Todos os responsáveis')}</select><select data-chg="fcr.pais">${opts([['global','Só etapas globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fcr.fase">${opts(Object.entries(FASES).map(([k,v])=>[k,v.split(' — ')[1]]),f.fase,'Todas as fases')}</select><select data-chg="fcr.status">${opts(['Não iniciada','Em andamento','Concluída','Atrasada'],f.status,'Todos os status')}</select>
+    <div class="filtros"><select data-chg="fcr.area">${opts(AREAS,f.area,'Todos os responsáveis')}</select><select data-chg="fcr.pais">${opts([['global','Só etapas globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fcr.fase">${opts(Object.entries(FASES),f.fase,'Todas as etapas')}</select><select data-chg="fcr.status">${opts(['Não iniciada','Em andamento','Concluída','Atrasada'],f.status,'Todos os status')}</select>
     ${ehEquipe()?`<button class="btn btn-s chave-dep ${DEP_ATIVAS?'on':''}" data-act="alternarDep" title="${DEP_ATIVAS?'Ligadas: ao mover uma barra, as etapas ligadas que ainda não começaram vão junto':'Desligadas: cada barra se move sozinha'}"><span class="chave"><i></i></span>Dependências ${DEP_ATIVAS?'ativadas':'desativadas'}</button><button class="btn btn-s" data-act="desfazer" title="Desfazer (Ctrl+Z)" disabled><i data-lucide="undo-2"></i>Desfazer</button><button class="btn btn-s" data-act="refazer" title="Refazer (Ctrl+Shift+Z)" disabled><i data-lucide="redo-2"></i></button><button class="btn btn-p btn-s" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}<button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
+    ${ehEquipe() && (c.modeloVersao||0) < S.modelo.versao ? `<div class="alerta azul" style="margin:12px 18px 0"><i data-lucide="list-plus"></i><div style="flex:1">O modelo padrão de etapas mudou (versão ${S.modelo.versao}). Esta campanha usa a versão ${c.modeloVersao||1}.</div><button class="btn btn-s" data-act="atualizarModelo" data-id="${c.id}">Ver o que muda</button></div>` : ''}
     <div class="small muted" style="padding:10px 18px 0">Versão ${c.crono.versao} do cronograma · calculada em ${fd(c.crono.calculadoEm)} · ${h(c.crono.motivo)} · ${c.crono.tarefas.length} etapas (${c.crono.tarefas.filter(t=>!t.pais).length} globais e ${c.crono.tarefas.filter(t=>t.pais).length} por país)</div>
     ${f.visao==='gantt' ? gantt(c, ts) : listaCrono(c, ts)}</div>${(c.excluidas||[]).length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Etapas excluídas desta campanha (${c.excluidas.length})</summary><ul class="lista-simples">${c.excluidas.map(k=>`<li>${h(rotuloEtapa(c,k))}${ehEquipe()?`<button class="btn btn-s" style="margin-left:auto" data-act="restaurarEtapa" data-id="${c.id}" data-k="${h(k)}"><i data-lucide="undo-2"></i>Restaurar</button>`:''}</li>`).join('')}</ul></details>` : ''}${hist}`;
 }
@@ -1094,7 +1109,7 @@ function gantt(c, ts){
   const fimD = addDias(ts.reduce((m,t)=>{ const v = t.LF>t.EF?t.LF:t.EF; return v>m?v:m; }, ts[0].EF), 3);
   const nd = difDias(ini, fimD)+1, W = Math.max(22, Math.min(48, Math.floor(dispo/nd))), x = s => difDias(ini,s)*W, larg = nd*W;
   const linhas = [], linhaDe = {};
-  for (const fase of [1,2,3]) {
+  for (const fase of ORDEM_FASES) {
     const daFase = ts.filter(t=>t.fase===fase); if (!daFase.length) continue;
     linhas.push({tipo:'fase',fase});
     if (fFech[fase]) { daFase.forEach(t=>linhaDe[t.id]=linhas.length-1); continue; }
@@ -1169,7 +1184,7 @@ function listaAcoes(c, L, ed){
       <td>${selStatus(`data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}"`, t, farolDe(t), false, t.status)}${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td>
       <td style="white-space:nowrap">${ed?`<button class="icone-btn" title="Editar" data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><i data-lucide="pencil"></i></button>${t.marco?'':`<button class="icone-btn" title="Excluir" data-act="excluirEtapa" data-id="${c.id}" data-t="${t.id}"><i data-lucide="trash-2"></i></button>`}`:''}</td></tr>`; };
   let corpo = '';
-  for (const fase of [1,2,3]) {
+  for (const fase of ORDEM_FASES) {
     const daFase = L.filter(t=>t.fase===fase); if (!daFase.length) continue;
     const conc = daFase.filter(t=>t.status==='Concluída').length;
     corpo += `<tr class="a-fase"><td colspan="9"><button class="icone-btn" data-act="aFase" data-f="${fase}"><i data-lucide="${ff[fase]?'chevron-right':'chevron-down'}"></i></button>${FASES[fase]} <span class="small muted" style="font-weight:500;margin-left:8px">${conc}/${daFase.length} concluída(s)</span></td></tr>`;
@@ -1379,7 +1394,7 @@ function cfgModelo(){
   return `<div class="alerta azul"><i data-lucide="info"></i><div>Este é o modelo usado nas <b>novas</b> campanhas (versão ${S.modelo.versao}). Ao salvar, é criada uma nova versão: campanhas já criadas guardam a própria cópia e não mudam. Durações em <b>dias úteis</b>. Dependências: <b>FS</b> = começa no dia útil seguinte ao fim da anterior; <b>SS</b> = começa no mesmo dia que a anterior.</div></div>
   <form id="form-modelo" class="card"><div class="card-cab"><h3>Etapas do modelo padrão</h3><div class="filtros"><span class="small muted">${S.modeloHist.length} versão(ões) anterior(es)</span><button type="button" class="btn btn-p" data-act="salvarModelo"><i data-lucide="save"></i>Salvar nova versão</button></div></div>
   <div class="tabela-wrap"><table class="tab"><thead><tr><th>Código</th><th>Etapa</th><th>Responsável</th><th>Duração</th><th>Escopo</th><th>Depende de</th></tr></thead><tbody>
-  ${T.map((t,i)=>`<tr ${i&&T[i-1].fase!==t.fase?'style="border-top:2px solid var(--borda-f)"':''}><td class="small num">${t.id}</td><td><input name="nome_${i}" value="${h(t.nome)}" style="width:100%;min-width:260px"></td><td><select name="area_${i}">${opts(AREAS,t.area)}</select></td><td><input name="dur_${i}" type="number" min="1" max="60" value="${t.dur}" style="width:64px"></td>
+  ${T.map((t,i)=>`<tr ${i&&T[i-1].fase!==t.fase?'style="border-top:2px solid var(--borda-f)"':''}><td class="small num">${t.id}</td><td><input name="nome_${i}" value="${h(t.nome)}" style="width:100%;min-width:260px"></td><td><select name="area_${i}">${opts(AREAS,t.area)}</select></td><td style="white-space:nowrap"><input name="dur_${i}" type="number" min="1" max="120" value="${t.dur}" style="width:64px">${t.corridos?' <span class="small muted">corridos</span>':''}</td>
    <td class="small">${t.escopo==='global'?'Global':'Por país'}${t.trad?'<br><span class="muted">só idioma ≠ base</span>':''}${t.fimNoLanc?'<br><b>termina no lançamento</b>':''}</td><td><input name="deps_${i}" value="${h(t.deps.map(d=>d.join(' ')).join(', '))}" style="width:170px" placeholder="F1-01 FS"></td></tr>`).join('')}</tbody></table></div>
   <div class="small muted" style="padding:10px 18px">“{base}” no nome é trocado pelo idioma-base da campanha (ex.: “Criar textos em inglês” ou “em português”).</div></form>`;
 }
@@ -1534,7 +1549,7 @@ const ACT = {
     const mud = r.tarefas.filter(t=>!ant[t.id] || ant[t.id].ES!==t.ES || ant[t.id].EF!==t.EF).length;
     const rem = c.crono.tarefas.filter(t=>!r.tarefas.some(x=>x.id===t.id));
     UI.pend = {d, r, motivo};
-    abrirModal('Comparar cronograma atual × novo', `<p class="muted" style="margin-top:0">${h(motivo)}. <b>${mud}</b> etapa(s) mudam de data (destacadas). ${rem.length?`<b>${rem.length}</b> etapa(s) deixam de existir (país removido ou idioma alterado). `:''}Nada é aplicado sem sua confirmação; a versão atual fica guardada no histórico.</p>${resumoCalc(r, d.lancamento)}${tabelaPrevia(r.tarefas, c.crono.tarefas)}`,
+    abrirModal('Comparar cronograma atual × novo', `<p class="muted" style="margin-top:0">${h(motivo)}. <b>${mud}</b> etapa(s) mudam de data (destacadas). ${rem.length?`<b>${rem.length}</b> etapa(s) deixam de existir (etapa fora do modelo, país removido ou idioma alterado): ${rem.slice(0,4).map(t=>h(t.nome)+(t.pais?' ('+t.pais+')':'')).join(', ')}${rem.length>4?'…':''}. `:''}Nada é aplicado sem sua confirmação; a versão atual fica guardada no histórico.</p>${resumoCalc(r, d.lancamento)}${tabelaPrevia(r.tarefas, c.crono.tarefas)}`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="aplicarRecalc" ${mud||rem.length||d.lancamento!==c.lancamento?'':'disabled'}><i data-lucide="check"></i>Aplicar nova versão</button>`, true); },
   aplicarRecalc: () => { const {d, r, motivo} = UI.pend, c = camp(d.id);
     const novosPaises = d.paises.filter(p=>!c.paises.some(x=>x.cod===p.cod));
@@ -1576,10 +1591,10 @@ const ACT = {
     for (const t of c.crono.tarefas) if (porPais ? t.id===t0.id : t.tid===t0.tid) t.nome = nome;
     registrar(`Etapa renomeada em “${c.nome}”: “${antigo}” → “${nome}”${porPais?' ('+t0.pais+')':''}`); fecharModal(); render(); toast('Nome da etapa salvo.'); },
   incluirItem: el => { const c = camp(el.dataset.id);
-    const etapas = c.modelo.map(m=>[m.id, FASES[m.fase].split(' — ')[0]+' · '+nomeTarefa(m, c.idiomaBase)+(m.escopo==='pais'?' (por país)':'')]);
+    const etapas = c.modelo.map(m=>[m.id, (FASES[m.fase]||'')+' · '+nomeTarefa(m, c.idiomaBase)+(m.escopo==='pais'?' (por país)':'')]);
     abrirModal('Incluir item no cronograma', `<form id="f-item" class="form-g">
       <label class="campo tudo">Nome *<input name="nome" required maxlength="160" placeholder="Ex.: Reunião de alinhamento com o México"></label>
-      <label class="campo">Fase<select name="fase">${opts(Object.entries(FASES).map(([k,v])=>[k,v]),'1')}</select></label>
+      <label class="campo">Etapa<select name="fase">${opts(Object.entries(FASES),'1')}</select></label>
       <label class="campo">Área responsável<select name="area">${opts(AREAS,'Atendimento')}</select></label>
       <label class="campo">Responsável<select name="pessoa">${opts(RESPONSAVEIS,'','Selecione')}</select></label>
       <label class="campo">Prioridade<select name="prioridade">${opts(['Alta','Média','Baixa'],'Média')}</select></label>
@@ -1606,7 +1621,7 @@ const ACT = {
     const tpl = {id:tid, fase:+v.fase||1, nome, area:v.area, dur, escopo:v.escopo==='pais'?'pais':'global', deps, item:true};
     // posição no Gantt: logo depois da etapa anterior (se for da mesma fase), senão no fim da fase
     const iDep = v.modo==='dep' && v.depois ? d.modelo.findIndex(m=>m.id===v.depois) : -1;
-    let pos = iDep>=0 && d.modelo[iDep].fase===tpl.fase ? iDep+1 : (()=>{ let k = -1; d.modelo.forEach((m,i)=>{ if (m.fase<=tpl.fase) k = i; }); return k+1; })();
+    let pos = iDep>=0 && d.modelo[iDep].fase===tpl.fase ? iDep+1 : (()=>{ let k = -1; d.modelo.forEach((m,i)=>{ if (ORDEM_FASES.indexOf(m.fase)<=ORDEM_FASES.indexOf(tpl.fase)) k = i; }); return k+1; })();
     d.modelo.splice(pos, 0, tpl);
     if (v.modo==='dep' && v.antes) { const a = d.modelo.find(m=>m.id===v.antes); if (a) a.deps = [...a.deps, [tid,'FS']]; }
     if (tpl.escopo==='pais') d.excluidas = [...(d.excluidas||[]), ...c.paises.filter(p=>!paisesSel.includes(p.cod)).map(p=>tid+'@'+p.cod)];
@@ -1626,6 +1641,13 @@ const ACT = {
     for (const t of c.crono.tarefas) { const a = ant[t.id]; if (!a) continue; if (a.ES!==t.ES || a.EF!==t.EF) n++; Object.assign(t, {ES:a.ES, EF:a.EF, dur:a.dur}); if (a.manual) t.manual = true; else delete t.manual; }
     recalcFolgas(c); Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo:'Datas restauradas da versão '+v.versao});
     registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: datas restauradas da versão ${v.versao} (${n} etapa(s))`); fecharModal(); render(); toast(n+' etapa(s) voltaram às datas da versão '+v.versao+'.'); },
+  atualizarModelo: el => { const c = camp(el.dataset.id), d = JSON.parse(JSON.stringify(c));
+    const novo = JSON.parse(JSON.stringify(S.modelo.tarefas)), ids = new Set(novo.map(m=>m.id));
+    // mantém os nomes que você editou e os itens incluídos nesta campanha
+    for (const m of novo) { const ant = c.modelo.find(x=>x.id===m.id); if (ant && (c.renomeadas||{})[m.id]) m.nome = ant.nome; }
+    for (const m of c.modelo) if (m.item && !ids.has(m.id)) { const k = novo.map(x=>ORDEM_FASES.indexOf(x.fase)).lastIndexOf(ORDEM_FASES.indexOf(m.fase)); novo.splice(k<0?novo.length:k+1, 0, JSON.parse(JSON.stringify(m))); }
+    d.modelo = novo; d.modeloVersao = S.modelo.versao;
+    ACT.compararRecalc(null, d, 'Atualizado para o modelo padrão versão '+S.modelo.versao); },
   statusBarra: el => { const c = camp(el.dataset.id), v = el.dataset.v; fecharMenuBarra();
     if (el.dataset.g) { const ins = c.crono.tarefas.filter(x=>x.tid===el.dataset.g); let n = 0;
       for (const x of ins) if (x.status!==v) { (x.hist = x.hist||[]).push({q:HOJE,o:`Status: ${x.status} → ${v}`}); x.status = v; n++; }
