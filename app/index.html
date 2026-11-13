@@ -1425,7 +1425,7 @@ function abaBudget(c){
   const cards = `<div class="canal-grade">${dados.map(d=>`<a href="javascript:void 0" class="card canal-card ${d.k===UI.bCanal?'sel':''}" data-act="bCanal" data-k="${h(d.k)}">
       <div class="cc-top"><div class="k-ic"><i data-lucide="megaphone"></i></div><span class="small muted">${d.ps.map(x=>PAISES[x.cod].f).join(' ')}</span></div>
       <div class="cc-nome">${h(d.k)}</div><div class="cc-valor">${moeda(d.orc, d.m)}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${d.obj?`<span class="tag t-pet">${h(d.obj)}</span>`:''}${d.midia?`<span class="tag t-pet">${h(d.midia)}</span>`:''}</div></a>`).join('')}</div>`;
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${d.obj?`<span class="tag t-pet">${h(d.obj)}</span>`:''}${d.midia?`<span class="tag t-pet">${h(d.midia)}</span>`:''}<span class="tag ${d.definida?'t-verde-c':'t-amar'}">${d.definida?'Meta definida':'Meta a definir'}</span></div></a>`).join('')}</div>`;
   let detalhe = '';
   if (sel) { const m = sel.m, k = sel.k;
     const chips = (tipo, lista, atual) => `<div class="chips">${lista.map(v=>`<span class="chip ${atual===v?'on':''}" ${ed?`data-act="objCanal" data-k="${h(k)}" data-tipo="${tipo}" data-v="${h(v)}"`:''}>${h(v)}</span>`).join('')}</div>`;
