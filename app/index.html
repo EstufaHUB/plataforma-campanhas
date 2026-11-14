@@ -848,11 +848,17 @@ async function carregar(){
   PERFIS = pf;
   RESULTADOS = {}; for (const r of rm) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r);
   NOTION = {}; for (const r of rn) (NOTION[r.campanha_id] = NOTION[r.campanha_id] || []).push(r);
+  /* se uma página aberta antiga salvou por cima e apagou os vínculos, recupera a partir dos resultados gravados */
+  const vincRecup = [];
+  for (const row of ca) { const d = row.dados || {};
+    if (d.metaVinculos===undefined && (RESULTADOS[row.id]||[]).length) { d.metaVinculos = RESULTADOS[row.id].map(r=>r.dados && r.dados.vinculo).filter(Boolean); vincRecup.push(row.id); }
+    if (d.notionVinculos===undefined && (NOTION[row.id]||[]).length) { d.notionVinculos = NOTION[row.id].map(r=>({db:r.notion_db, url:(r.dados||{}).url||'', titulo:(r.dados||{}).titulo||''})); vincRecup.push(row.id); } }
   SNAP.cli = {}; SNAP.camp = {}; SNAP.cfg = {};
   for (const c of S.clientes) SNAP.cli[c.id] = JSON.stringify(cliRow(c));
   for (const c of S.campanhas) SNAP.camp[c.id] = JSON.stringify(c);
   for (const r of cf) SNAP.cfg[r.chave] = JSON.stringify(r.valor);   // chaves que faltam são gravadas na primeira sincronização (padrões)
   CTX = null; migrarLancamento();
+  if (vincRecup.length && ehEquipe()) { vincRecup.forEach(id=>{ SNAP.camp[id] = ''; }); salvar(); }   // grava os vínculos recuperados
 }
 let sincronizando = false, sincPendente = false;
 function statusSync(t, erro){ const el = $('#sync'); if (!el) return; el.textContent = t; el.classList.toggle('erro', !!erro); }
@@ -1038,7 +1044,7 @@ function saude(c){
 /* farol da campanha no cabeçalho (dados do Meta × metas) */
 function nivelSaude(score){ return score==null ? null : score>=0.9 ? {t:'Saudável', cls:'sd-verde'} : score>=0.7 ? {t:'Atenção', cls:'sd-amar'} : {t:'Crítica', cls:'sd-verm'}; }
 function farolCab(c){ if (!(RESULTADOS[c.id]||[]).length) return ''; const S2 = dadosSaude(c), n = nivelSaude(S2.score); if (!n) return '';
-  const pr = `leads ${Math.round(S2.ritmo*100)}% do ritmo, CPL ${S2.cplRatio>=1?Math.round((1-1/S2.cplRatio)*100)+'% melhor':Math.round((1/S2.cplRatio-1)*100)+'% acima'} que a meta`;
+  const aw = S2.tipoScore==='engajamento', pr = `${aw?'engajamento':'leads'} ${Math.round(S2.ritmo*100)}% do ritmo, ${aw?'custo por engajamento':'CPL'} ${S2.cplRatio>=1?Math.round((1-1/S2.cplRatio)*100)+'% melhor':Math.round((1/S2.cplRatio-1)*100)+'% acima'} que a meta`;
   return `<a href="#/campanha/${c.id}/saude" class="sd-pill ${n.cls} cc-farol" title="Saúde da campanha, a partir dos dados do Meta"><i data-lucide="gauge"></i>${n.t} · ${pr}</a>`; }
 const saudeHtml = c => { const s = saude(c); if (!s.txt) return ''; return `<span class="tag" style="gap:6px"><span class="ponto p-${s.cor}"></span>${s.txt}</span>`; };
 const progresso = c => { const ts=c.crono.tarefas.filter(t=>t.status!=='Cancelada'); return ts.length ? Math.round(ts.filter(t=>t.status==='Concluída').length/ts.length*100) : 0; };
@@ -1686,7 +1692,7 @@ function dadosSaude(c){
     const b = c.budgets.find(x=>x.canal===v.canal && x.pais===v.pais && mesmaLinha(x, chv));
     const cplMeta = cf.objetivo==='Awareness' ? null : custoLinha(b), leadsMeta = cplMeta>0 ? Math.round(bud/cplMeta) : null;   // em awareness o custo não é CPL
     const leads = +r.dados.leads||0, inv = +r.dados.investido||0;
-    return {r, v, bud, cplMeta, leadsMeta, leads, inv, alcance:+r.dados.alcance||0, impressoes:+r.dados.impressoes||0, cliques:+r.dados.cliques||0, engaj:+r.dados.engajamentos||0, objetivo:cf.objetivo||null, cpl: leads ? inv/leads : null, moeda: r.dados.moeda || cf.moeda || c.moeda || 'BRL', porDia: r.dados.porDia||[], atualizado: r.atualizado_em}; });
+    return {r, v, bud, cplMeta, leadsMeta, custoAw: cf.objetivo==='Awareness' ? custoLinha(b) : null, objMidia: cf.objMidia||null, leads, inv, alcance:+r.dados.alcance||0, impressoes:+r.dados.impressoes||0, cliques:+r.dados.cliques||0, engaj:+r.dados.engajamentos||0, objetivo:cf.objetivo||null, cpl: leads ? inv/leads : null, moeda: r.dados.moeda || cf.moeda || c.moeda || 'BRL', porDia: r.dados.porDia||[], atualizado: r.atualizado_em}; });
   let ini = c.lancamento, fim = c.fimVeiculacao || c.lancamento;
   if (faseada(c) && linhas.length) { const fs = [...new Set(linhas.map(x=>x.v.fase||'Lead gen'))]; if (fs.length===1) { const pf = periodoFase(c, fs[0]); ini = pf.ini || ini; fim = pf.fim || fim; } }
   const total = Math.max(1, difDias(ini, fim)+1);
@@ -1697,7 +1703,11 @@ function dadosSaude(c){
     const lm = comMeta.reduce((s,x)=>s+x.leadsMeta,0), lr = comMeta.reduce((s,x)=>s+x.leads,0), inv = comMeta.reduce((s,x)=>s+x.inv,0), bud = comMeta.reduce((s,x)=>s+x.bud,0);
     ritmo = lr / (lm*frac); const cplR = lr ? inv/lr : null, cplM = bud/lm; cplRatio = cplR ? cplM/cplR : 0;
     score = Math.min(ritmo, cplRatio); }
-  return {linhas, ini, fim, total, decorridos, frac, restam, score, ritmo, cplRatio}; }
+  let tipoScore = 'leads';
+  if (score==null && linhas.length && frac>0 && linhas.every(x=>x.objetivo==='Awareness' && x.custoAw>0 && (x.objMidia||'Engajamento')==='Engajamento')) {   // awareness: engajamento × custo por engajamento
+    const em = linhas.reduce((s,x)=>s+x.bud/x.custoAw,0), er = linhas.reduce((s,x)=>s+x.engaj,0), inv = linhas.reduce((s,x)=>s+x.inv,0), bud = linhas.reduce((s,x)=>s+x.bud,0);
+    ritmo = er/(em*Math.min(1,frac)); cplRatio = er && inv ? (bud/em)/(inv/er) : 0; score = Math.min(ritmo, cplRatio); tipoScore = 'engajamento'; }
+  return {linhas, ini, fim, total, decorridos, frac, restam, score, ritmo, cplRatio, tipoScore}; }
 function pontosAtencao(c, S2){   // [{t, n}] n = verm | amar | verde | info
   const p = [], add = (n, t) => p.push({n, t});
   if (!S2.linhas.length) return p;
@@ -1751,7 +1761,7 @@ function graficoRitmo(S2, W = 640, H = 190, campo = 'leads'){
     <text x="${L}" y="${H-6}" font-size="11" fill="#8a989c">${fdm(ini)}</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="11" fill="#8a989c">${fdm(fim)}</text></svg>`; }
 /* saúde de campanha (ou fase) de awareness: alcance, engajamento e investimento */
 function saudeAwareness(c, S2){
-  const moe = S2.linhas[0].moeda, soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0), pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
+  const moe = S2.linhas[0].moeda, mc = v => v!=null && v<0.1 ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:moe,minimumFractionDigits:4,maximumFractionDigits:4}) : moeda2(v, moe), soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0), pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
   const alc = soma('alcance'), imp = soma('impressoes'), eng = soma('engaj'), cli = soma('cliques'), inv = soma('inv'), bud = soma('bud');
   const cpm = imp ? inv/imp*1000 : null, freq = alc ? imp/alc : null, cpe = eng ? inv/eng : null, taxa = imp ? eng/imp : null;
   const encerrada = S2.frac>=1, emCurso = S2.frac>0 && S2.frac<1, projI = emCurso ? inv/S2.frac : null;
@@ -1761,8 +1771,14 @@ function saudeAwareness(c, S2){
   const porMarca = k => { const m = {}; for (const x of S2.linhas) { const n = [x.v.marca, x.v.pais].filter(Boolean).join(' · ') || 'Campanha'; m[n] = (m[n]||0) + (+x[k]||0); } const e = Object.entries(m); return e.length>1 ? `<div class="sd-pais">${e.map(([n,v])=>`<div><span>${h(n)}</span><b>${k==='inv'?moedaCurta(v,moe):numCurto(v)}</b></div>`).join('')}</div>` : ''; };
   const cAlc = cartao('radio-tower', 'Alcance', numCurto(alc), 'pessoas', barra(Math.min(1, (freq||0)/4), '#2f80b8', null), `Impressões: ${numCurto(imp)} · frequência ${freq?freq.toLocaleString('pt-BR',{maximumFractionDigits:2}):'—'}`,
     freq==null ? pill('cinza','Sem dados') : freq>3.5 ? pill('amar','Frequência alta') : pill('verde','Frequência saudável'), `CPM: <b>${moeda2(cpm, moe)}</b>`) .replace('</div></div>', porMarca('alcance')+'</div></div>');
-  const cEng = cartao('heart-handshake', 'Engajamento', numCurto(eng), 'interações', barra(Math.min(1, (taxa||0)/0.6), '#2e9d55', null), `Custo por engajamento: ${cpe!=null?moeda2(cpe, moe):'—'}`,
-    taxa==null ? pill('cinza','Sem dados') : pill(taxa>=0.3?'verde':taxa>=0.1?'amar':'verm', `${(taxa*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões`), `Cliques: <b>${numCurto(cli)}</b>`);
+  const comMeta = S2.linhas.filter(x=>x.custoAw>0 && (x.objMidia||'Engajamento')==='Engajamento'), engMeta = comMeta.length===S2.linhas.length ? comMeta.reduce((s,x)=>s+x.bud/x.custoAw,0) : null, cpeMeta = engMeta ? bud/engMeta : null;
+  const espE = engMeta ? engMeta*Math.min(1,S2.frac) : null, dE = espE ? eng/espE-1 : null, dC = cpe && cpeMeta ? cpe/cpeMeta-1 : null;
+  const cEng = cartao('heart-handshake', 'Engajamento', numCurto(eng), engMeta ? 'de '+numCurto(engMeta) : 'interações',
+    engMeta ? barra(eng/engMeta, dE<-0.1?'#e0a100':'#2e9d55', Math.min(1,S2.frac), encerrada?'Meta da fase':'Esperado hoje') : barra(Math.min(1, (taxa||0)/0.6), '#2e9d55', null),
+    `Custo por engajamento: ${cpe!=null?mc(cpe):'—'}${cpeMeta?` · meta ${mc(cpeMeta)}`:''}`,
+    engMeta ? pill(dE<-0.25||dC>0.15?'verm':dE<-0.1||dC>0.05?'amar':'verde', `${Math.round(eng/engMeta*100)}% da meta${dC!=null?` · custo ${Math.round(Math.abs(dC)*100)}% ${dC>0?'acima':'abaixo'}`:''}`)
+      : taxa==null ? pill('cinza','Sem dados') : pill('cinza','Meta a definir'),
+    `${(taxa*100||0).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões · cliques: <b>${numCurto(cli)}</b>`);
   const dI = bud ? inv/bud - S2.frac : null;
   const cInv = cartao('wallet', 'Investimento', moedaCurta(inv,moe), bud?'de '+moedaCurta(bud,moe):'', bud ? barra(inv/bud, '#2f80b8', Math.min(1,S2.frac), 'Ideal hoje') : barra(0,'#ccc',null),
     bud ? (encerrada ? `Fase encerrada · ${Math.round(inv/bud*100)}% do budget investido` : `Ideal hoje: ${moedaCurta(bud*S2.frac,moe)}${projI!=null?` · projeção ${moedaCurta(projI,moe)}`:''}`) : 'Sem budget',
@@ -1774,7 +1790,8 @@ function saudeAwareness(c, S2){
   if (freq!=null) pts.push(freq>3.5 ? {n:'amar', t:`Frequência de ${freq.toLocaleString('pt-BR',{maximumFractionDigits:1})}: o mesmo público está vendo muitas vezes. Vale renovar criativos ou ampliar o público.`} : {n:'verde', t:`Frequência de ${freq.toLocaleString('pt-BR',{maximumFractionDigits:1})}: alcance bem distribuído.`});
   const cpms = S2.linhas.filter(x=>x.impressoes).map(x=>({n:[x.v.marca,x.v.pais].filter(Boolean).join(' · '), cpm:x.inv/x.impressoes*1000})).sort((a,b)=>a.cpm-b.cpm);
   if (cpms.length>1) pts.push({n:'info', t:`CPM mais baixo: ${cpms[0].n} (${moeda2(cpms[0].cpm,moe)}); mais alto: ${cpms[cpms.length-1].n} (${moeda2(cpms[cpms.length-1].cpm,moe)}).`});
-  if (taxa!=null) pts.push({n: taxa>=0.3?'verde':'amar', t:`${(taxa*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões geraram engajamento (custo de ${moeda2(cpe,moe)} por interação).`});
+  if (engMeta) { const r = eng/engMeta; pts.push({n: r>=1?'verde':r>=0.85?'amar':'verm', t:`${encerrada?'A fase fechou com':'Até agora,'} ${numCurto(eng)} engajamentos de ${numCurto(engMeta)} previstos (${Math.round(r*100)}%), a ${mc(cpe)} cada (meta ${mc(cpeMeta)}).`}); }
+  else if (taxa!=null) pts.push({n: taxa>=0.3?'verde':'amar', t:`${(taxa*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões geraram engajamento (custo de ${mc(cpe)} por interação).`});
   const ordem = {verm:0, amar:1, verde:2, info:3}; pts.sort((a,b)=>ordem[a.n]-ordem[b.n]);
   return `<div class="sd-kpis">${cAlc}${cEng}${cInv}</div>
   <div class="sd-meio">
