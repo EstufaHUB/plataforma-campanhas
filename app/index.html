@@ -141,6 +141,17 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .sd-kpis .sd-big{font-size:2.1rem}.sd-sub{font-size:.8rem;color:var(--tx2);margin-top:2px}.sd-rod{margin-top:auto;padding-top:10px;border-top:1px solid var(--borda);font-size:.8rem;color:var(--tx2)}.sd-rod b{color:var(--pet-950);font-weight:700}
 .sd-kpis .sd-pill{margin:8px 0 12px;align-self:flex-start}
 .cc-farol{margin-top:0!important;display:inline-flex!important;align-items:center;gap:5px;text-decoration:none}.cc-farol svg{width:13px;height:13px}
+.nt-barra{display:flex;height:9px;border-radius:5px;overflow:hidden;background:#e8eef0;margin:12px 0 8px}.nt-barra i{display:block;height:100%}
+.nt-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;color:var(--tx2)}.nt-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.nt-lin{display:grid;grid-template-columns:minmax(0,1fr) 170px 110px 70px 36px;gap:12px;align-items:center;padding:10px 18px;border-top:1px solid var(--borda);font-size:.88rem}
+.nt-cab{font-size:.72rem;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.03em;border-top:0;padding:10px 18px}
+.nt-grp{display:flex;align-items:center;gap:8px;padding:10px 18px;background:#f4f7f8;border-top:1px solid var(--borda);font-weight:700;color:var(--pet-900)}.nt-grp svg{width:16px;height:16px;color:var(--pet-600)}.nt-grp .small{font-weight:500}
+.nt-nome{color:var(--tx);text-decoration:none;font-weight:500}.nt-nome:hover{text-decoration:underline}
+.nt-obs{display:flex;gap:6px;align-items:flex-start;font-size:.78rem;color:#8a5a00;margin-top:3px}.nt-obs svg{width:13px;height:13px;flex:none;margin-top:2px}
+.nt-ap{display:inline-flex;gap:4px}.nt-ap span{width:22px;height:22px;border-radius:6px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}.nt-ap .ok{background:#e7f4e8;color:#2e6b31}.nt-ap .no{background:#eef1f2;color:#9aa9ae}
+.nt-av{display:inline-flex;width:26px;height:26px;border-radius:50%;background:#e6f1fb;color:#185fa5;font-size:.7rem;font-weight:700;align-items:center;justify-content:center;margin-right:-6px;border:2px solid #fff}.nt-av.nt-sem{background:#eef1f2;color:#9aa9ae}
+.nt-mais{grid-template-columns:1fr;font-size:.82rem}.nt-mais a{color:var(--tx2)}
+@media (max-width:800px){.nt-lin{grid-template-columns:minmax(0,1fr) 130px 36px}.nt-lin>div:nth-child(3),.nt-lin>div:nth-child(4){display:none}}
 .saude-fonte.velho{background:#fdecea;border-color:#f3c3be;color:#a3261c}.sd-kpis>.card,.sd-meio>.card{margin:0!important}
 .sd-lb{display:flex;align-items:center;gap:7px;font-size:.84rem;font-weight:600;color:var(--tx2)}.sd-lb svg{width:16px;height:16px;color:var(--pet-600)}
 .sd-big{font-size:1.75rem;font-weight:700;color:var(--pet-950);line-height:1.15;margin-top:8px}.sd-big small{font-size:.85rem;font-weight:500;color:var(--tx2);white-space:nowrap}
@@ -763,7 +774,7 @@ function salvar(){ try { localStorage.setItem(CHAVE+'-lidas-'+(SESSAO?SESSAO.use
 /* =====================================================================
    NUVEM (Supabase): login, carga e gravação
    ===================================================================== */
-let sb = null, SESSAO = null, PERFIL = null, PERFIS = [], RESULTADOS = {};
+let sb = null, SESSAO = null, PERFIL = null, PERFIS = [], RESULTADOS = {}, NOTION = {};
 const SNAP = {cli:{}, camp:{}, cfg:{}};
 const CFG_CHAVES = ['agencia','usuarios','feriados','modelo','modeloHist','baseRegiao'];
 const ehEquipe = () => PERFIL && (PERFIL.papel==='equipe' || PERFIL.papel==='admin');
@@ -778,13 +789,14 @@ function estadoInicial(){
 const cliRow = c => ({id:c.id, nome:c.nome, segmento:c.segmento||'', contato:c.contato||'', arquivado:!!c.arquivado});
 async function carregar(){
   const q = (x) => x.then(r => { if (r.error) throw r.error; return r.data; });
-  const [cl, ca, cf, pf, rm, lg] = await Promise.all([
+  const [cl, ca, cf, pf, rm, lg, rn] = await Promise.all([
     q(sb.from('clientes').select('*').order('nome')),
     q(sb.from('campanhas').select('id,dados')),
     q(sb.from('config').select('chave,valor')),
     q(sb.from('perfis').select('*').order('email')),
     q(sb.from('resultados_meta').select('*')),
-    ehEquipe() ? q(sb.from('log').select('quando,quem,texto').order('quando',{ascending:false}).limit(300)) : Promise.resolve([])
+    ehEquipe() ? q(sb.from('log').select('quando,quem,texto').order('quando',{ascending:false}).limit(300)) : Promise.resolve([]),
+    q(sb.from('resultados_notion').select('*'))
   ]);
   S = estadoInicial();
   for (const r of cf) if (CFG_CHAVES.includes(r.chave)) S[r.chave] = r.valor;
@@ -794,6 +806,7 @@ async function carregar(){
   try { S.notifLidas = JSON.parse(localStorage.getItem(CHAVE+'-lidas-'+SESSAO.user.id)||'{}'); } catch(e){}
   PERFIS = pf;
   RESULTADOS = {}; for (const r of rm) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r);
+  NOTION = {}; for (const r of rn) (NOTION[r.campanha_id] = NOTION[r.campanha_id] || []).push(r);
   SNAP.cli = {}; SNAP.camp = {}; SNAP.cfg = {};
   for (const c of S.clientes) SNAP.cli[c.id] = JSON.stringify(cliRow(c));
   for (const c of S.campanhas) SNAP.camp[c.id] = JSON.stringify(c);
@@ -1720,12 +1733,54 @@ function abaSaude(c){
   </div>`; }
 
 /* ---------- Entregáveis ---------- */
+/* entregáveis vindos de um banco do Notion (só leitura; quem edita é o Notion) */
+const ST_NOTION = {'Not started':['Não iniciada','cinza','and'],'On hold':['Em espera','cinza','and'],'In progress':['Em andamento','azul','and'],'Design in progress':['Design em andamento','azul','and'],
+  'Internal review':['Revisão interna','amar','agu'],'Text approval':['Aprovação do texto','amar','agu'],'Asset approval':['Aprovação do asset','amar','agu'],'Adjust':['Ajuste','verm','aju'],
+  'Ready to post':['Pronta para publicar','verdec','apr'],'Schedule':['Agendada','verdec','apr'],'Approved':['Aprovada','verdec','apr'],'Posted':['Publicada','verde','pub'],'Canceled':['Cancelada','cinza','can']};
+const GRUPO_ST = {aju:['em ajuste','#d0443a'], agu:['aguardando aprovação','#e0a100'], and:['em produção','#2f80b8'], apr:['aprovadas','#97c459'], pub:['publicadas','#2e9d55']};
+const ORDEM_ST = ['aju','agu','and','apr','pub','can'];
+const TOPICO_NOTION = {'META ADS':['Meta Ads','megaphone'],'YOUTUBE ADS':['YouTube Ads','play-circle'],'GOOGLE ADS':['Google Ads','search'],'LANDING PAGE':['Landing page','globe'],'EMAIL':['E-mail','mail'],'WHATSAPP':['WhatsApp','message-circle']};
+const iniciais = n => (n||'').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('') || '?';
+function entregaveisNotion(c){
+  const ed = ehEquipe(), vs = c.notionVinculos||[], rs = NOTION[c.id]||[];
+  const atual = rs.reduce((m,r)=>!m||r.atualizado_em>m?r.atualizado_em:m, null);
+  const horas = atual ? (Date.now()-new Date(atual).getTime())/36e5 : null, velho = horas!=null && horas>24;
+  const ha = horas==null ? 'ainda não sincronizado' : 'atualizado ' + (horas<1/60 ? 'agora' : horas<1 ? `há ${Math.max(1,Math.round(horas*60))} min` : horas<48 ? `há ${Math.round(horas)} h` : `há ${Math.round(horas/24)} dias`);
+  const fonte = `<div class="saude-fonte ${velho?'velho':''}" style="margin-bottom:12px"><i data-lucide="${velho?'alert-circle':'book-open'}"></i><span>Notion · ${h(vs.map(v=>v.titulo||'banco vinculado').join(', '))} · ${ha}${velho?' — dados desatualizados':''}</span>
+    <span style="margin-left:auto;display:flex;gap:8px">${vs[0]&&vs[0].url?`<a class="btn btn-s" href="${h(vs[0].url)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Abrir no Notion</a>`:''}${ed?`<button class="btn btn-s" data-act="sincNotion" data-id="${c.id}"><i data-lucide="refresh-cw"></i>Atualizar</button><button class="btn btn-s" data-act="vincularNotion" data-id="${c.id}"><i data-lucide="link"></i>Vínculo</button>`:''}</span></div>`;
+  const itens = rs.flatMap(r=>(r.dados&&r.dados.itens)||[]).filter(x=>(x.material||'').trim() && ((x.topicos||[]).length || x.link || (x.status && x.status!=='Not started')));   // ignora rascunhos vazios
+  if (!itens.length) return fonte + `<div class="card card-p"><div class="vazio">${rs.length?'O banco do Notion está vazio.':'Clique em “Atualizar” para trazer as peças do Notion.'}</div></div>`;
+  const grp = x => (ST_NOTION[x.status]||[x.status||'—','cinza','and'])[2];
+  const validos = itens.filter(x=>grp(x)!=='can'), cont = {}; for (const x of validos) cont[grp(x)] = (cont[grp(x)]||0)+1;
+  const regioes = [...new Set(itens.map(x=>x.regiao).filter(Boolean))];
+  const resumo = `<div class="card card-p" style="margin-bottom:12px"><div style="display:flex;align-items:baseline;gap:8px"><span class="sd-big" style="margin:0">${cont.pub||0} de ${validos.length}</span><span class="small muted">peças publicadas</span></div>
+    <div class="nt-barra">${['pub','apr','agu','aju','and'].filter(k=>cont[k]).map(k=>`<i style="width:${cont[k]/validos.length*100}%;background:${GRUPO_ST[k][1]}" title="${cont[k]} ${GRUPO_ST[k][0]}"></i>`).join('')}</div>
+    <div class="nt-leg">${['pub','apr','agu','aju','and'].filter(k=>cont[k]).map(k=>`<span><i style="background:${GRUPO_ST[k][1]}"></i>${cont[k]} ${GRUPO_ST[k][0]}</span>`).join('')}</div></div>`;
+  const porTop = {}; for (const x of itens) { const t = (x.topicos||[])[0] || 'OUTROS'; (porTop[t] = porTop[t]||[]).push(x); }
+  const ordemTop = [...Object.keys(TOPICO_NOTION), 'OUTROS'].filter(t=>porTop[t]).concat(Object.keys(porTop).filter(t=>!TOPICO_NOTION[t] && t!=='OUTROS'));
+  const ab = UI.ntAberto || (UI.ntAberto = {});
+  const linha = x => { const st = ST_NOTION[x.status] || [x.status||'—','cinza'], resp = x.responsaveis||[];
+    const ap = (v, l, t) => `<span class="${v?'ok':'no'}" title="${t}: ${v?'aprovado':'pendente'}">${l}</span>`;
+    return `<div class="nt-lin"><div><a href="${h(x.url||'#')}" target="_blank" rel="noopener" class="nt-nome">${h(x.material)}</a>${regioes.length>1&&x.regiao?` <span class="tag t-pet">${h(x.regiao)}</span>`:''}${x.obs?`<div class="nt-obs"><i data-lucide="alert-triangle"></i>${h(x.obs)}</div>`:''}</div>
+      <div><span class="sd-pill sd-${st[1]==='verdec'?'verde':st[1]}" style="margin:0">${h(st[0])}</span></div>
+      <div class="nt-ap">${ap(x.aprovTexto,'T','Texto')}${ap(x.aprovCopy,'C','Copy')}${ap(x.aprovAsset,'A','Asset')}</div>
+      <div>${resp.length?resp.map(n=>`<span class="nt-av" title="${h(n)}">${iniciais(n)}</span>`).join(''):`<span class="nt-av nt-sem" title="Sem responsável identificado">—</span>`}</div>
+      <div>${x.link?`<a class="icone-btn" href="${h(x.link)}" target="_blank" rel="noopener" title="Abrir asset"><i data-lucide="external-link"></i></a>`:''}</div></div>`; };
+  const grupos = ordemTop.map(t=>{ const L = porTop[t].filter(x=>grp(x)!=='can').sort((a,b)=>ORDEM_ST.indexOf(grp(a))-ORDEM_ST.indexOf(grp(b)) || (a.material||'').localeCompare(b.material||'','pt',{numeric:true}));
+    const pubs = L.filter(x=>grp(x)==='pub'), outros = L.filter(x=>grp(x)!=='pub'), mostra = ab[t] || pubs.length<=2 ? pubs : pubs.slice(0,2);
+    const [nome, ic] = TOPICO_NOTION[t] || [t==='OUTROS'?'Sem canal':t, 'folder'];
+    return `<div class="nt-grp"><i data-lucide="${ic}"></i>${h(nome)} <span class="small muted">${L.length} peça${L.length===1?'':'s'} · ${pubs.length} publicada${pubs.length===1?'':'s'}</span></div>${outros.map(linha).join('')}${mostra.map(linha).join('')}
+      ${pubs.length>2?`<div class="nt-lin nt-mais"><a href="javascript:void 0" data-act="ntMais" data-t="${h(t)}">${ab[t]?'Mostrar menos':`+ ${pubs.length-2} publicada${pubs.length-2===1?'':'s'}`}</a></div>`:''}`; }).join('');
+  return fonte + resumo + `<div class="card" style="overflow:hidden"><div class="nt-lin nt-cab"><div>Material</div><div>Status</div><div title="Texto · Copy · Asset">Aprovações</div><div>Resp.</div><div></div></div>${grupos}</div>
+    <div class="small muted" style="margin-top:8px">As peças são editadas no Notion. Aqui é só visualização.</div>`; }
+
 function abaEntregaveis(c){
   const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:'',marca:''});
   const temOrg = temOrganico(c), sep = marcaSeparada(c);
   const sub = `<div class="seg" style="margin-bottom:14px"><button class="${f.sub==='pecas'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="pecas"><i data-lucide="package"></i>Peças</button><button class="${f.sub==='conteudos'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="conteudos"><i data-lucide="languages"></i>Conteúdos por país</button>${temOrg?`<button class="${f.sub==='editorial'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="editorial"><i data-lucide="calendar-days"></i>Calendário editorial</button>`:''}</div>`;
   if (f.sub==='conteudos') return sub + conteudosPorPais(c);
   if (f.sub==='editorial' && temOrg) return sub + calendarioEditorial([c], c.id);
+  if ((c.notionVinculos||[]).length) return sub + entregaveisNotion(c);
   const L = c.entregaveis.filter(e=>(!f.canal||e.canal===f.canal)&&(!f.pais||e.paises.includes(f.pais))&&(!f.etapa||e.etapa===f.etapa)&&(!sep||!f.marca||e.marca===f.marca)&&(f.marca===e.marca||!(e.marca && marcaCancelada(c,e.marca)))).sort((a,b)=>sep ? (a.nome||'').localeCompare(b.nome||'') || MARCAS_SEP.indexOf(a.marca) - MARCAS_SEP.indexOf(b.marca) : 0);
   const semMarca = sep ? c.entregaveis.filter(e=>!e.marca).length : 0;
   const ocultasCancel = c.entregaveis.filter(e=>e.marca && marcaCancelada(c,e.marca) && f.marca!==e.marca).length;
@@ -1734,7 +1789,7 @@ function abaEntregaveis(c){
   const stDes = e => ({briefing:'Não iniciado',aprov_conteudo:'Não iniciado',ajuste_conteudo:'Não iniciado',producao:'Em produção',aprov_asset:'Aguardando aprovação',ajuste_asset:'Em ajustes',concluido:'Aprovado'})[e.etapa];
   const stFin = e => e.etapa==='concluido' ? 'Aprovado' : 'Pendente';
   return sub + (ocultasCancel ? `<div class="small muted" style="margin:0 0 10px">${ocultasCancel} peça(s) de marca cancelada ocultas — use o filtro de marca para ver.</div>` : '') + (semMarca ? `<div class="alerta azul" style="margin-bottom:12px"><i data-lucide="copy"></i><div style="flex:1">Esta campanha é separada para PTx Trimble e Precision Planting. ${semMarca} peça(s) ainda não têm marca.</div><button class="btn btn-s" data-act="duplicarPorMarca" data-id="${c.id}">Duplicar por marca</button></div>` : '') + `<div class="card"><div class="card-cab"><div class="seg"><button class="${f.visao==='tabela'?'ativo':''}" data-act="ui" data-k="fen.visao" data-v="tabela"><i data-lucide="table"></i>Tabela</button><button class="${f.visao==='cards'?'ativo':''}" data-act="ui" data-k="fen.visao" data-v="cards"><i data-lucide="layout-grid"></i>Cards</button></div>
-   <div class="filtros"><select data-chg="fen.canal">${opts(c.canais,f.canal,'Todos os canais')}</select><select data-chg="fen.pais">${opts(c.paises.map(p=>[p.cod,PAISES[p.cod].n]),f.pais,'Todos os países')}</select><select data-chg="fen.etapa">${opts(Object.entries(ETAPAS_ENT),f.etapa,'Todas as etapas')}</select>${sep?`<select data-chg="fen.marca">${opts(MARCAS_SEP,f.marca,'Todas as marcas')}</select>`:''}<button class="btn btn-p" data-act="formEnt" data-id="${c.id}"><i data-lucide="plus"></i>Novo entregável</button></div></div>
+   <div class="filtros"><select data-chg="fen.canal">${opts(c.canais,f.canal,'Todos os canais')}</select><select data-chg="fen.pais">${opts(c.paises.map(p=>[p.cod,PAISES[p.cod].n]),f.pais,'Todos os países')}</select><select data-chg="fen.etapa">${opts(Object.entries(ETAPAS_ENT),f.etapa,'Todas as etapas')}</select>${sep?`<select data-chg="fen.marca">${opts(MARCAS_SEP,f.marca,'Todas as marcas')}</select>`:''}${ehEquipe()?`<button class="btn" data-act="vincularNotion" data-id="${c.id}"><i data-lucide="link"></i>Vincular banco do Notion</button>`:''}<button class="btn btn-p" data-act="formEnt" data-id="${c.id}"><i data-lucide="plus"></i>Novo entregável</button></div></div>
   ${f.visao==='tabela' ? `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Entregável</th><th>Canal</th><th>País</th><th>Prazo</th><th>Conteúdo</th><th>Design</th><th>Aprovação final</th><th>Etapa atual</th></tr></thead><tbody>
    ${L.map(e=>`<tr class="clic" data-act="abrirEnt" data-id="${c.id}" data-e="${e.id}"><td><b>${h(e.nome)}</b>${tagMarca(e)}<div class="small muted">${h(e.formato)} · v${e.versoes.length||0}</div></td><td>${h(e.canal)}</td><td>${e.paises.map(p=>PAISES[p].f).join(' ')}${e.paises.length>1?` <span class="small muted">(compartilhado)</span>`:''}</td><td class="num">${fd(e.prazo)}</td><td>${tag(stCont(e))}</td><td>${tag(stDes(e))}</td><td>${tag(stFin(e))}</td><td>${tag(ETAPAS_ENT[e.etapa])}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Nenhum entregável.</td></tr>'}</tbody></table></div>`
   : `<div class="card-p">${CANAIS.filter(k=>L.some(e=>e.canal===k)).map(k=>`<h3 style="margin:6px 0 10px">${k}</h3><div class="grade g3" style="margin-bottom:16px">${L.filter(e=>e.canal===k).map(e=>`<div class="card card-p" style="cursor:pointer" data-act="abrirEnt" data-id="${c.id}" data-e="${e.id}"><div style="display:flex;justify-content:space-between;gap:6px"><b>${h(e.nome)}${tagMarca(e)}</b>${tag(ETAPAS_ENT[e.etapa])}</div><div class="small muted" style="margin:6px 0">${e.paises.map(p=>pais(p)).join(', ')} · ${h(e.formato)}</div><div class="small">Prazo ${fd(e.prazo)} · Conteúdo: ${h(nomeU(e.respConteudo))} · Design: ${h(nomeU(e.respDesign))}</div></div>`).join('')}</div>`).join('') || '<div class="vazio">Nenhum entregável.</div>'}</div>`}</div>`;
@@ -2076,6 +2131,23 @@ const ACT = {
     c.metaVinculos = [...(c.metaVinculos||[]), {conta:(v.conta||'').trim(), contaNome:(v.contaNome||'').trim(), campanhaId:v.campanhaId.trim(), campanhaNome:(v.campanhaNome||'').trim(), marca:v.marca||null, canal:v.canal, pais:v.pais}];
     registrar(`Campanha do Meta vinculada em “${c.nome}”: ${v.campanhaId}`); fecharModal(); render(); toast('Vinculada. Clique em “Atualizar agora” para buscar os dados.'); },
   desvincularMeta: el => { const c = camp(el.dataset.id); c.metaVinculos = (c.metaVinculos||[]).filter((_,i)=>i!=el.dataset.i); fecharModal(); render(); },
+  ntMais: el => { UI.ntAberto = UI.ntAberto||{}; UI.ntAberto[el.dataset.t] = !UI.ntAberto[el.dataset.t]; render(); },
+  sincNotion: async el => { const c = camp(el.dataset.id); el.disabled = true; toast('Buscando as peças no Notion…');
+    try { const { data, error } = await sb.functions.invoke('notion-sync', { body: { campanha: c.id } }); if (error) throw error;
+      const falhas = (data.resultado||[]).filter(x=>!x.ok); const { data: rn } = await sb.from('resultados_notion').select('*').eq('campanha_id', c.id); NOTION[c.id] = rn||[];
+      render(); toast(falhas.length ? 'Erro do Notion: '+falhas[0].erro : 'Peças atualizadas.'); }
+    catch (e) { let msg = e.message||String(e); try { const b = await e.context.json(); msg = b.erro || msg; } catch(_){} toast('Não foi possível atualizar: '+msg); el.disabled = false; } },
+  vincularNotion: el => { const c = camp(el.dataset.id), vs = c.notionVinculos||[];
+    abrirModal('Banco do Notion com os entregáveis', `<p class="small muted" style="margin-top:0">Cole o link do banco de dados do Notion. As peças passam a aparecer na aba Entregáveis desta campanha, no lugar da lista da plataforma, e são atualizadas a cada hora.</p>
+      <div class="tabela-wrap"><table class="tab"><thead><tr><th>Banco</th><th></th></tr></thead><tbody>${vs.map((v,i)=>`<tr><td>${h(v.titulo||'—')}<div class="small muted">${h(v.url||v.db)}</div></td><td><button class="icone-btn" data-act="desvincularNotion" data-id="${c.id}" data-i="${i}" title="Remover"><i data-lucide="trash-2"></i></button></td></tr>`).join('')||'<tr><td colspan="2" class="vazio">Nenhum banco vinculado.</td></tr>'}</tbody></table></div>
+      <form id="f-nt" class="form-g" style="margin-top:12px"><label class="campo tudo">Link do banco no Notion *<input name="url" placeholder="https://www.notion.so/…"></label><label class="campo tudo">Nome (opcional)<input name="titulo" placeholder="Green Friday PTxT"></label></form>`,
+      `<button class="btn" data-act="fechar">Fechar</button><button class="btn btn-p" data-act="salvarNotion" data-id="${c.id}"><i data-lucide="link"></i>Vincular</button>`, true); },
+  salvarNotion: el => { const c = camp(el.dataset.id), v = ler($('#f-nt')), url = (v.url||'').trim(), seg = (url.split(/[?#]/)[0].replace(/\/+$/,'').split('/').pop()||'').replace(/-/g,''), m = seg.slice(-32).match(/^([0-9a-f]{32})$/i);
+    if (!m) return toast('Não reconheci o link. Copie o link do banco no Notion (… → Copiar link).');
+    const db = m[1].toLowerCase(); if ((c.notionVinculos||[]).some(x=>x.db===db)) return toast('Esse banco já está vinculado.');
+    c.notionVinculos = [...(c.notionVinculos||[]), {db, url, titulo:(v.titulo||'').trim()}];
+    registrar(`Banco do Notion vinculado em “${c.nome}”: ${v.titulo||db}`); fecharModal(); render(); toast('Vinculado. Clique em “Atualizar” para trazer as peças.'); },
+  desvincularNotion: el => { const c = camp(el.dataset.id); c.notionVinculos = (c.notionVinculos||[]).filter((_,i)=>i!=el.dataset.i); fecharModal(); render(); },
   verCancel: el => { const c = camp(el.dataset.id); toast(el.dataset.m+': '+txtCancel(c, el.dataset.m)); },
   cancelarMarca: el => { UI.menuCamp = false; const c = camp(el.dataset.id), m = el.dataset.m;
     abrirModal('Cancelar marca: '+h(m), `<p style="margin-top:0">A campanha continua para as outras marcas. O budget de <b>${h(m)}</b> sai dos totais, as peças dela ficam como canceladas e tudo fica guardado para consulta.</p><form id="f-cm" class="form-g"><label class="campo tudo">Motivo (opcional)<input name="motivo" placeholder="Ex.: cliente cancelou a verba"></label></form>`,
