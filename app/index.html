@@ -303,6 +303,12 @@ function statusCampanha(c){
   if (c.iniciadaEm) return 'Em veiculação';
   if (c.crono && c.crono.tarefas.some(t=>t.status!=='Não iniciada' && t.status!=='Cancelada')) return 'Em andamento';
   return 'Não iniciada'; }
+/* idioma-base: com um único idioma entre os países, é ele; senão, o já definido ou o padrão da região do primeiro país */
+function idiomaBaseDe(paises, atual){
+  const ls = [...new Set(paises.map(p=>p.idioma||PAISES[p.cod].i))];
+  if (ls.length===1) return ls[0];
+  return atual || (paises[0] ? S.baseRegiao[PAISES[paises[0].cod].r] : '') || 'EN'; }
+const MARCAS = ['PTx Trimble','Precision Planting','Collab','PTx Trimble + Precision Planting (separadas)'];
 const OBJETIVOS = ['Geração de leads','Awareness'];
 const RESPONSAVEIS = ['Karen','Tamiris','Jéssica','Giovanna'];
 const ST_ACAO = ['Não iniciada','Em andamento','Aguardando cliente','Aguardando equipe','Em revisão','Concluída','Bloqueada','Cancelada'];
@@ -854,6 +860,9 @@ function migrarLancamento(){ CTX = null; let mudou = false;
     const novos = c.canais.filter(k=>k in CANAL_P_ENTREG).map(k=>CANAL_P_ENTREG[k]);
     c.entregaveisTipos = [...new Set([...(c.entregaveisTipos||[]), ...novos])];
     c.canais = c.canais.filter(k=>!(k in CANAL_P_ENTREG)); mudou = true; }
+  if (ehEquipe()) for (const c of S.campanhas) { if (!c.crono || !c.paises.length) continue; const ls = [...new Set(c.paises.map(p=>p.idioma||PAISES[p.cod].i))];
+    if (ls.length===1 && c.idiomaBase!==ls[0]) { c.idiomaBase = ls[0];
+      try { aplicarCronograma(c, calcularCronograma(c, {fixos:fixosDe(c.crono.tarefas), naoAntesDe:hojeUtil()}), `Idioma-base corrigido para ${IDIOMAS[ls[0]]||ls[0]}: sem etapas de tradução`); mudou = true; } catch(e){ console.error(e); } } }
   for (const c of S.campanhas) if (!c.etapasNovas && c.modelo) {
     const mapa = m => FASE_POR_ID[m.id] || FASE_ANTIGA[m.fase] || m.fase;
     for (const m of c.modelo) m.fase = mapa(m);
@@ -1169,6 +1178,7 @@ function abaVisao(c){
    <div class="grade g2" style="margin-top:16px;align-items:start">
     <div class="card"><div class="card-cab"><h3 class="h-ic"><i data-lucide="clipboard-list"></i>Dados da campanha</h3>${ehEquipe()?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Ver detalhes →</a>`:''}</div><div class="card-p"><dl class="def">
       <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
+      <dt>Marca</dt><dd>${c.marca?`<span class="tag t-pet">${h(c.marca)}</span>`:'—'}</dd>
       <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
       <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd><dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
       <div class="sep-h"></div><dl class="def">
@@ -1675,6 +1685,7 @@ function formCampanha(c){
     <label class="campo">Nome da campanha *<input name="nome" required value="${h(d.nome||'')}"></label>
     <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
     <label class="campo">Nome da apresentação<input name="nomePlanejamento" value="${h(d.nomePlanejamento||'')}" placeholder="Ex.: PTx Trimble EMEA | Planning and Concept"></label>
+    <div class="campo tudo">Marca *<div class="chips">${MARCAS.map(k=>`<label class="chip ${d.marca===k?'on':''}"><input type="radio" name="marca" value="${k}" ${d.marca===k?'checked':''} style="display:none" onchange="this.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.contains(this)))">${k}</label>`).join('')}</div></div>
     <div class="campo tudo">Objetivo da campanha *<div class="chips">${OBJETIVOS.map(k=>`<label class="chip ${(d.objetivos||[]).includes(k)?'on':''}"><input type="checkbox" name="objetivo" value="${k}" ${(d.objetivos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <label class="campo">Data prevista de lançamento *<input type="date" name="lancamento" required value="${d.lancamento||''}" data-chg="lancForm"></label>
     <label class="campo">Fim da veiculação *<input type="date" name="fimVeiculacao" required value="${d.fimVeiculacao||''}"></label>
@@ -1688,12 +1699,12 @@ function formCampanha(c){
 function lerFormCampanha(){
   const fm = $('#form-camp'), v = ler(fm);
   const canais = [...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value);
-  const d = Object.assign({}, rascunho, {clienteId:v.clienteId, nome:(v.nome||'').trim(), descricao:v.descricao, objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),
+  const d = Object.assign({}, rascunho, {clienteId:v.clienteId, nome:(v.nome||'').trim(), descricao:v.descricao, marca:(fm.querySelector('input[name=marca]:checked')||{}).value||'', objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),
     lancamento:v.lancamento, fimVeiculacao:v.fimVeiculacao, moeda:rascunho.moeda || 'BRL', canais, entregaveisTipos:[...fm.querySelectorAll('input[name=entregavelTipo]:checked')].map(x=>x.value),
     urlPlanejamento:v.urlPlanejamento, nomePlanejamento:(v.nomePlanejamento||'').trim(), urlRelatorio:v.urlRelatorio});
   d.canaisCfg = lerCanaisCfg(fm, canais);
   consolidarCanais(d);
-  d.idiomaBase = rascunho.idiomaBase || (d.paises[0] ? S.baseRegiao[PAISES[d.paises[0].cod].r] : '') || 'EN';
+  d.idiomaBase = idiomaBaseDe(d.paises, rascunho._baseOrig);
   return d;
 }
 function validarCampanha(d){
@@ -1706,6 +1717,7 @@ function validarCampanha(d){
     if (!cf.paises.length) err.push(`Selecione os países de ${k}.`);
     if (!(cf.orcamento>0)) err.push(`Informe o budget total de ${k}.`);
     if (cf.divisao==='pct' && cf.paises.length) { const sp = cf.paises.reduce((s,p)=>s+(+p.pct||0),0); if (Math.abs(sp-100) > 0.01) err.push(`${k}: a divisão por país soma ${+sp.toFixed(2)}%. Ajuste para 100%.`); } }
+  if (!d.marca) err.push('Escolha a marca da campanha.');
   if (!(d.objetivos||[]).length) err.push('Escolha o objetivo da campanha (geração de leads e/ou awareness).');
 
   const dts = [d.lancamento, ...d.paises.map(p=>p.lancamento)].filter(Boolean);
@@ -1797,6 +1809,7 @@ function abrirFormCampanha(c, clienteId){
       const cf = {orcamento:orc, divisao: iguais || !somaP ? 'igual' : 'pct', paises: rascunho.paises.map(p=>({cod:p.cod, pct: iguais||!somaP ? null : Math.round((+p.budget||0)/somaP*1e8)/1e6}))};
       if (cf.divisao==='pct' && cf.paises.length) { const resto = cf.paises.slice(1).reduce((s,p)=>s+p.pct,0); cf.paises[0].pct = Math.round((100-resto)*1e6)/1e6; }
       rascunho.canaisCfg[k] = cf; } }
+  rascunho._baseOrig = c && c.id && new Set(c.paises.map(p=>p.idioma)).size>1 ? c.idiomaBase : null;
   const editar = !!(c && c.id);
   setTimeout(atualizarDivisao, 0);
   abrirModal(editar?'Editar campanha':'Nova campanha', formCampanha(rascunho), `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="${editar?'salvarEdicaoCamp':'previaCamp'}">${editar?'Salvar':'Calcular prévia do cronograma'}<i data-lucide="arrow-right"></i></button>`, true);
@@ -1872,7 +1885,7 @@ const ACT = {
     if (err.length) { $('#aviso-lanc').innerHTML = `<div class="alerta verm"><i data-lucide="alert-circle"></i><div>${err.map(h).join('<br>')}</div></div>`; icones(); return; }
     const mudouDatas = d.lancamento!==c.lancamento || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
     if (mudouDatas) { rascunho = d; return ACT.compararRecalc(null, d, 'Edição da campanha (datas, países ou idiomas)'); }
-    Object.assign(c, d); sincronizarBudgetCanais(c); registrar('Campanha editada: '+c.nome); fecharModal(); render(); toast('Campanha salva.'); },
+    delete d._baseOrig; Object.assign(c, d); sincronizarBudgetCanais(c); registrar('Campanha editada: '+c.nome); fecharModal(); render(); toast('Campanha salva.'); },
   alterarLanc: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
     abrirModal('Alterar data de lançamento', `<form id="f-lanc" class="form-g"><label class="campo">Nova data de lançamento (todos os países)<input type="date" name="lanc" value="${c.lancamento}"></label><div></div><label class="campo tudo">Motivo da alteração<input name="motivo" placeholder="Ex.: cliente adiou o lançamento"></label></form>
       <div class="small muted" style="margin-top:10px">Etapas concluídas e em andamento são mantidas. As demais são recalculadas de trás para frente a partir do lançamento; as que já deveriam ter começado ficam como atrasadas.</div><div id="aviso-lanc" style="margin-top:10px"></div>`,
@@ -1895,7 +1908,7 @@ const ACT = {
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="aplicarRecalc" ${mud||rem.length||d.lancamento!==c.lancamento?'':'disabled'}><i data-lucide="check"></i>Aplicar nova versão</button>`, true); },
   aplicarRecalc: () => { const {d, r, motivo} = UI.pend, c = camp(d.id);
     const novosPaises = d.paises.filter(p=>!c.paises.some(x=>x.cod===p.cod));
-    const fixosNovos = d._fixos || {}, novoItem = d._novo; delete d._fixos; delete d._novo;
+    const fixosNovos = d._fixos || {}, novoItem = d._novo; delete d._fixos; delete d._novo; delete d._baseOrig;
     Object.assign(c, d.nome!==undefined ? d : {}, {paises:d.paises, lancamento:d.lancamento, idiomaBase:d.idiomaBase}); if (d.nome!==undefined) sincronizarBudgetCanais(c);
     for (const t of r.tarefas) { if (fixosNovos[t.id]) { t.manual = true; t.dur = uteisEntre(t.ES, t.EF, t.cal, ctx()) + 1; } if (novoItem && t.tid===novoItem.tid) Object.assign(t, JSON.parse(JSON.stringify(novoItem.campos))); }
     for (const p of novosPaises) if (!c.traducoes[p.cod]) c.traducoes[p.cod] = {texto:'',status:p.idioma===c.idiomaBase?'N/A':(c.master.status==='Aprovado'?'Aguardando tradução':'Aguardando aprovação do master'),resp:'u4',validador:p.respLocal||VALID_PAIS[p.cod]||'',prazo:null,versaoMaster:0,coment:[],hist:[],aprovadoEm:null};
@@ -2229,7 +2242,6 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
   if (k==='canalCamp') return reabrirFormCamp(lerFormCampanha());
   if (k==='paisCanal') { const d = lerFormCampanha(), cf = d.canaisCfg[el.dataset.c], cod = el.value; if (!cf) return;
     cf.paises = el.checked ? [...cf.paises, {cod, pct:null}] : cf.paises.filter(p=>p.cod!==cod);
-    if (!d.id && !rascunho.idiomaBase && el.checked) d.idiomaBase = S.baseRegiao[PAISES[cod].r] || d.idiomaBase;
     return reabrirFormCamp(consolidarCanais(d)); }
   if (k==='msel') { const [o,p] = el.dataset.k.split('.'), arr = UI[o][p] || (UI[o][p] = []), i = arr.indexOf(el.value); if (el.checked && i<0) arr.push(el.value); if (!el.checked && i>=0) arr.splice(i,1); return render(); }
   if (k==='cliArq') { UI.cliArq = v; return render(); }
