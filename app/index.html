@@ -1121,7 +1121,7 @@ function alertasCampanha(c){
   let s = '';
   const inv = c.crono.inviaveis||[], atr = c.crono.tarefas.filter(t=>statusExib(t)==='Atrasada');
   const nomesAtr = [...new Set(atr.map(t=>t.nome))];
-  if (atr.length || inv.length) s += `<div class="alerta verm"><i data-lucide="octagon-alert"></i><div><b>O cronograma precisa ser ajustado.</b> O lançamento continua em <b>${fds(c.lancamento)}</b> para todos os países, mas ${nomesAtr.length===1?'1 etapa já deveria ter começado e está atrasada':nomesAtr.length+' etapas já deveriam ter começado e estão atrasadas'}${nomesAtr.length?` (${nomesAtr.slice(0,3).map(h).join(', ')}${nomesAtr.length>3?'…':''})`:''}. Arraste as barras no Gantt para redistribuir o tempo: mova etapas ou puxe a ponta direita para encurtá-las.</div></div>`;
+  if (atr.length || inv.length) s += `<div class="alerta verm"><i data-lucide="octagon-alert"></i><div><b>Ações atrasadas – ajustar cronograma</b></div></div>`;
   const ini = inicioPlan(c);
   if (atr.length || inv.length) {}
   else if (naoIniciada(c) && ini < HOJE) s += `<div class="alerta verm"><i data-lucide="alarm-clock-off"></i><div><b>O briefing deveria ter sido recebido em ${fds(ini)}.</b> Nenhuma etapa foi iniciada. Use “Recalcular a partir de hoje” na aba Cronograma para ver se ainda é possível lançar em ${fd(c.lancamento)}.</div></div>`;
