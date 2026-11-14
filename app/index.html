@@ -152,6 +152,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .nt-av{display:inline-flex;width:26px;height:26px;border-radius:50%;background:#e6f1fb;color:#185fa5;font-size:.7rem;font-weight:700;align-items:center;justify-content:center;margin-right:-6px;border:2px solid #fff}.nt-av.nt-sem{background:#eef1f2;color:#9aa9ae}
 .nt-mais{grid-template-columns:1fr;font-size:.82rem}.nt-mais a{color:var(--tx2)}
 @media (max-width:800px){.nt-lin{grid-template-columns:minmax(0,1fr) 130px 36px}.nt-lin>div:nth-child(3),.nt-lin>div:nth-child(4){display:none}}
+.fase-datas{display:grid;grid-template-columns:repeat(2,minmax(0,220px));gap:12px}
 .fase-form{border:1px solid var(--borda);border-radius:12px;padding:14px 16px;display:grid;gap:12px;background:#fbfcfc}
 .fase-tit{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--pet-900);font-size:.98rem}.fase-num{width:24px;height:24px;border-radius:50%;background:var(--pet-700);color:#fff;font-size:.8rem;display:inline-flex;align-items:center;justify-content:center}
 .fase-bloco{margin-bottom:22px}.fase-bloco>.fase-tit{margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--borda)}
@@ -371,6 +372,10 @@ const marcaSeparada = c => MARCAS_SEP.every(m=>marcasDe(c).includes(m));
 const FASES_CAMP = ['Awareness','Lead gen'];
 const faseada = d => !!d.faseada;
 const canaisDaFase = (d, f) => ((d.canaisFase||{})[f]) || [];
+/* período de cada fase; sem data informada, a 1ª começa no lançamento e a última termina no fim da veiculação */
+const periodoFase = (d, f) => { const x = (d.fasesDatas||{})[f] || {}, i = FASES_CAMP.indexOf(f);
+  return {ini: x.ini || (i===0 ? d.lancamento : null), fim: x.fim || (i===FASES_CAMP.length-1 ? d.fimVeiculacao : null)}; };
+const txtPeriodo = (d, f) => { const p = periodoFase(d, f); return p.ini||p.fim ? `${p.ini?fdm(p.ini):'?'} → ${p.fim?fdm(p.fim):'?'}` : 'datas a definir'; };
 const chavesCfg = d => { const base = (canais, fase) => marcaSeparada(d) ? MARCAS_SEP.flatMap(mk=>canais.map(k=>({key:k+'|'+mk+(fase?'@'+fase:''), canal:k, marca:mk, fase}))) : canais.map(k=>({key:k+(fase?'@'+fase:''), canal:k, marca:null, fase}));
   return faseada(d) ? FASES_CAMP.flatMap(f=>base(canaisDaFase(d,f), f)) : base(d.canais||[], null); };
 const mesmaLinha = (b, ch) => (b.marca||null)===(ch.marca||null) && (b.fase||null)===(ch.fase||null);
@@ -1276,7 +1281,7 @@ function abaVisao(c){
       <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
       <dt>Marca</dt><dd>${marcasDe(c).length ? marcasDe(c).map(m=>`<span class="tag t-pet">${h(m)}</span>`).join(' ') : '—'}</dd>
       <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-pet">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
-      <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd>${faseada(c) ? FASES_CAMP.map((f,i)=>`<dt>Fase ${i+1} · ${f}</dt><dd>${canaisDaFase(c,f).map(nomeCanal).join(', ')||'—'}</dd>`).join('') : `<dt>Canais</dt><dd>${c.canais.map(nomeCanal).join(', ')||'—'}</dd>`}<dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
+      <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd>${faseada(c) ? FASES_CAMP.map((f,i)=>`<dt>Fase ${i+1} · ${f}</dt><dd><b>${txtPeriodo(c,f)}</b> · ${canaisDaFase(c,f).map(nomeCanal).join(', ')||'—'}</dd>`).join('') : `<dt>Canais</dt><dd>${c.canais.map(nomeCanal).join(', ')||'—'}</dd>`}<dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
       <div class="sep-h"></div><dl class="def">
       ${c.canaisCfg && (c.canais||[]).length && marcaSeparada(c) && !faseada(c) ? `<dt>Budget por canal</dt><dd style="overflow-x:auto"><table class="mat-bud"><thead><tr><th></th>${c.canais.map(k=>`<th>${h(nomeCanal(k))}</th>`).join('')}</tr></thead><tbody>
         ${MARCAS_SEP.map(mk=>`<tr class="${marcaCancelada(c,mk)?'cancel':''}"><td>${h(mk)}${marcaCancelada(c,mk)?' <span class="small">· cancelada</span>':''}</td>${c.canais.map(k=>{ const cf = c.canaisCfg[k+'|'+mk]; return `<td class="num">${cf && +cf.orcamento ? `${moeda(+cf.orcamento, cf.moeda||c.moeda)} <span class="small muted">${(cf.paises||[]).map(p=>PAISES[p.cod].f).join(' ')}</span>` : '<span class="muted">—</span>'}</td>`; }).join('')}</tr>`).join('')}
@@ -1584,7 +1589,7 @@ function abaBudget(c){
   if (!faseada(c)) return porMarca(dados) + (sel ? detalhe : '');
   // campanha em fases: uma seção por fase, na ordem em que rodam
   return FASES_CAMP.map((f,i)=>{ const ds = dados.filter(d=>d.ch.fase===f), tot = moedaMulti(ds.reduce((o,d)=>{ o[d.m] = (o[d.m]||0) + d.orc; return o; }, {}));
-    return `<div class="fase-bloco"><div class="fase-tit"><span class="fase-num">${i+1}</span>Fase ${i+1} · ${f}<span class="small muted" style="font-weight:500;margin-left:auto">${ds.length?tot:''}</span></div>${ds.length ? porMarca(ds) : '<div class="small muted">Nenhum canal nesta fase.</div>'}${sel && sel.ch.fase===f ? detalhe : ''}</div>`; }).join('');
+    return `<div class="fase-bloco"><div class="fase-tit"><span class="fase-num">${i+1}</span>Fase ${i+1} · ${f}<span class="small muted" style="font-weight:500">${txtPeriodo(c,f)}</span><span class="small muted" style="font-weight:500;margin-left:auto">${ds.length?tot:''}</span></div>${ds.length ? porMarca(ds) : '<div class="small muted">Nenhum canal nesta fase.</div>'}${sel && sel.ch.fase===f ? detalhe : ''}</div>`; }).join('');
 }
 function abaBudgetAntiga(c){
   UI.fbm = UI.fbm || {}; const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], R = resumoBudget(c, m), ed = ehEquipe();
@@ -1632,7 +1637,9 @@ function dadosSaude(c){
     const cplMeta = custoLinha(b), leadsMeta = cplMeta>0 ? Math.round(bud/cplMeta) : null;
     const leads = +r.dados.leads||0, inv = +r.dados.investido||0;
     return {r, v, bud, cplMeta, leadsMeta, leads, inv, cpl: leads ? inv/leads : null, moeda: r.dados.moeda || cf.moeda || c.moeda || 'BRL', porDia: r.dados.porDia||[], atualizado: r.atualizado_em}; });
-  const ini = c.lancamento, fim = c.fimVeiculacao || c.lancamento, total = Math.max(1, difDias(ini, fim)+1);
+  let ini = c.lancamento, fim = c.fimVeiculacao || c.lancamento;
+  if (faseada(c) && linhas.length) { const fs = [...new Set(linhas.map(x=>x.v.fase||'Lead gen'))]; if (fs.length===1) { const pf = periodoFase(c, fs[0]); ini = pf.ini || ini; fim = pf.fim || fim; } }
+  const total = Math.max(1, difDias(ini, fim)+1);
   const decorridos = Math.max(0, Math.min(total, difDias(ini, HOJE)+1)), frac = decorridos/total, restam = Math.max(0, difDias(HOJE, fim));
   const comMeta = linhas.filter(x=>x.leadsMeta);
   let score = null, ritmo = null, cplRatio = null;
@@ -1988,6 +1995,7 @@ function formCampanha(c){
     <div class="tudo" id="aviso-lanc"></div>
     <div class="campo tudo">Entregáveis<div class="chips">${TIPOS_ENTREGAVEL.map(k=>`<label class="chip ${(d.entregaveisTipos||[]).includes(k)?'on':''}"><input type="checkbox" name="entregavelTipo" value="${k}" ${(d.entregaveisTipos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     ${faseada(d) ? FASES_CAMP.map((f,i)=>{ const cs = canaisDaFase(d,f); return `<div class="tudo fase-form"><div class="fase-tit"><span class="fase-num">${i+1}</span>Fase ${i+1} · ${f}</div>
+      <div class="fase-datas"><label class="campo">Início da fase *<input type="date" name="faseIni@${f}" value="${periodoFase(d,f).ini||''}"></label><label class="campo">Fim da fase *<input type="date" name="faseFim@${f}" value="${periodoFase(d,f).fim||''}"></label></div>
       <div class="campo tudo">Canais da fase ${f}<div class="chips">${[...CANAIS, ...cs.filter(k=>!CANAIS.includes(k))].map(k=>`<label class="chip ${cs.includes(k)?'on':''}"><input type="checkbox" name="canal@${f}" data-chg="canalCamp" value="${k}" ${cs.includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${h(nomeCanal(k))}</label>`).join('')}</div></div>
       ${secoesCanais(d, f)}</div>`; }).join('')
     : `<div class="campo tudo">Canais<div class="chips">${[...CANAIS, ...(d.canais||[]).filter(k=>!CANAIS.includes(k))].map(k=>`<label class="chip ${(d.canais||[]).includes(k)?'on':''}"><input type="checkbox" name="canal" data-chg="canalCamp" value="${k}" ${(d.canais||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${h(nomeCanal(k))}</label>`).join('')}</div></div>
@@ -2002,8 +2010,10 @@ function lerFormCampanha(){
   let canais = fm.querySelector('input[name=canal]') ? [...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value) : (rascunho.canais||[]);
   if (ehFases && !FASES_CAMP.some(f=>canaisFase[f].length) && canais.length) canaisFase[FASES_CAMP[0]] = [...canais];   // ao ligar as fases, os canais vão para a 1ª fase
   if (ehFases) canais = [...new Set(FASES_CAMP.flatMap(f=>canaisFase[f]))];
+  const fasesDatas = {}; for (const f of FASES_CAMP) { const i = fm.querySelector(`input[name="faseIni@${f}"]`), e = fm.querySelector(`input[name="faseFim@${f}"]`);
+    fasesDatas[f] = i ? {ini:i.value||null, fim:e.value||null} : ((rascunho.fasesDatas||{})[f] || {}); }
   const objetivosLidos = fm.querySelector('input[name=objetivo]') ? [...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value) : (rascunho.objetivos||[]);
-  const d = Object.assign({}, rascunho, {faseada: ehFases, canaisFase: ehFases ? canaisFase : undefined, clienteId:v.clienteId, nome:(v.nome||'').trim(), descricao:v.descricao, marcas:[...fm.querySelectorAll('input[name=marca]:checked')].map(x=>x.value), marca:[...fm.querySelectorAll('input[name=marca]:checked')].map(x=>x.value).join(' + '), objetivos: ehFases ? ['Awareness','Geração de leads'] : objetivosLidos,
+  const d = Object.assign({}, rascunho, {faseada: ehFases, canaisFase: ehFases ? canaisFase : undefined, fasesDatas: ehFases ? fasesDatas : undefined, clienteId:v.clienteId, nome:(v.nome||'').trim(), descricao:v.descricao, marcas:[...fm.querySelectorAll('input[name=marca]:checked')].map(x=>x.value), marca:[...fm.querySelectorAll('input[name=marca]:checked')].map(x=>x.value).join(' + '), objetivos: ehFases ? ['Awareness','Geração de leads'] : objetivosLidos,
     lancamento:v.lancamento, fimVeiculacao:v.fimVeiculacao, moeda:rascunho.moeda || 'BRL', canais, entregaveisTipos:[...fm.querySelectorAll('input[name=entregavelTipo]:checked')].map(x=>x.value),
     urlPlanejamento:v.urlPlanejamento, nomePlanejamento:(v.nomePlanejamento||'').trim(), urlRelatorio:v.urlRelatorio});
   d.canaisCfg = lerCanaisCfg(fm, d);
@@ -2016,7 +2026,13 @@ function validarCampanha(d){
   if (!d.clienteId) err.push('Escolha o cliente.'); if (!d.nome) err.push('Informe o nome da campanha.');
   if (!d.lancamento) err.push('Informe a data de lançamento.'); if (!d.fimVeiculacao) err.push('Informe o fim da veiculação.');
   if (d.lancamento && d.fimVeiculacao && d.fimVeiculacao < d.lancamento) err.push('O fim da veiculação não pode ser antes do lançamento.');
-  if (faseada(d)) { for (const f of FASES_CAMP) if (!canaisDaFase(d,f).length) err.push(`Marque pelo menos um canal na fase ${f}.`); }
+  if (faseada(d)) { let fimAnt = null;
+    for (const f of FASES_CAMP) { if (!canaisDaFase(d,f).length) err.push(`Marque pelo menos um canal na fase ${f}.`);
+      const pf = periodoFase(d,f); if (!pf.ini || !pf.fim) { err.push(`Informe o início e o fim da fase ${f}.`); continue; }
+      if (pf.fim < pf.ini) err.push(`A fase ${f} termina antes de começar.`);
+      if ((d.lancamento && pf.ini < d.lancamento) || (d.fimVeiculacao && pf.fim > d.fimVeiculacao)) err.push(`A fase ${f} precisa ficar dentro da veiculação (${fd(d.lancamento)} a ${fd(d.fimVeiculacao)}).`);
+      if (fimAnt && pf.ini < fimAnt) err.push(`A fase ${f} começa antes do fim da fase anterior.`);
+      fimAnt = pf.fim; } }
   else if (!(d.canais||[]).length) err.push('Marque pelo menos um canal.');
   for (const ch of chavesCfg(d)) { const cf = (d.canaisCfg||{})[ch.key] || cfgVazio(), k = rotuloCfg(ch);
     if (!cf.paises.length) err.push(`Selecione os países de ${k}.`);
