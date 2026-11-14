@@ -335,16 +335,16 @@ const MODELO_PADRAO = [
  {id:'F1-07',fase:3,nome:'Aprovar KV da campanha',area:'Cliente',dur:1,escopo:'global',deps:[['F1-04','FS']]},
  {id:'F1-05',fase:4,nome:'Criar conteúdo da landing page',area:'Conteúdo',dur:2,escopo:'global',deps:[['F1-03','FS']]},
  {id:'F1-06',fase:4,nome:'Aprovar conteúdo da LP',area:'Cliente',dur:1,escopo:'global',deps:[['F1-05','FS']]},
- {id:'F1-10',fase:4,nome:'Criar layout da LP (em paralelo com a tradução)',area:'Design',dur:1,escopo:'global',deps:[['F1-06','FS'],['F1-07','FS']]},
- {id:'F1-08',fase:4,nome:'Traduzir conteúdo da LP (em paralelo com a criação do layout)',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F1-06','FS']]},
- {id:'F1-11',fase:4,nome:'Validar layout da LP (em paralelo com a validação do conteúdo traduzido)',area:'Cliente',dur:1,escopo:'global',deps:[['F1-10','FS']]},
- {id:'F1-09',fase:4,nome:'Validar conteúdo traduzido da LP (em paralelo com a validação do layout)',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F1-08','FS']]},
+ {id:'F1-10',fase:4,nome:'Criar layout da LP',area:'Design',dur:1,escopo:'global',deps:[['F1-06','FS'],['F1-07','FS']]},
+ {id:'F1-08',fase:4,nome:'Traduzir conteúdo da LP',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F1-06','FS']]},
+ {id:'F1-11',fase:4,nome:'Validar layout da LP',area:'Cliente',dur:1,escopo:'global',deps:[['F1-10','FS']]},
+ {id:'F1-09',fase:4,nome:'Validar conteúdo traduzido da LP',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F1-08','FS']]},
  {id:'F1-12',fase:4,nome:'Enviar LP para programação em todas as línguas',area:'Atendimento',dur:1,escopo:'global',deps:[['F1-11','FS'],['F1-09','FS']]},
- {id:'F1-14',fase:5,nome:'Configuração LP Sales Force (30 dias corridos)',area:'Digital',dur:30,corridos:true,escopo:'global',deps:[['F1-12','FS']]},
+ {id:'F1-14',fase:5,nome:'Configuração LP Sales Force',area:'Digital',dur:30,corridos:true,escopo:'global',deps:[['F1-12','FS']]},
  {id:'F2-01',fase:6,nome:'Criar textos em {base}',area:'Conteúdo',dur:3,escopo:'global',deps:[['F1-03','FS']]},
  {id:'F2-02',fase:6,nome:'Validar conteúdos em {base}',area:'Cliente',dur:2,escopo:'global',deps:[['F2-01','FS']]},
- {id:'F2-03',fase:6,nome:'Traduzir conteúdos (em paralelo com a criação dos assets)',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F2-02','FS']]},
- {id:'F2-05',fase:6,nome:'Validar traduções (não depende da aprovação dos assets)',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F2-03','FS']]},
+ {id:'F2-03',fase:6,nome:'Traduzir conteúdos',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F2-02','FS']]},
+ {id:'F2-05',fase:6,nome:'Validar traduções',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F2-03','FS']]},
  {id:'F2-04',fase:6,nome:'Criar assets em {base} + Canva template',area:'Design',dur:4,escopo:'global',deps:[['F2-03','SS']]},
  {id:'F2-06',fase:8,nome:'Aprovar assets em {base}',area:'Cliente',dur:2,escopo:'global',deps:[['F2-04','FS']]},
  {id:'F2-07',fase:8,nome:'Janela para ajustar os assets em {base}',area:'Design',dur:1,escopo:'global',deps:[['F2-06','FS']]},
@@ -360,6 +360,7 @@ const MODELO_PADRAO = [
  {id:'F3-03',fase:9,nome:'Programar a campanha no gerenciador e lançar',area:'Digital',dur:2,escopo:'pais',fimNoLanc:true,deps:[['F3-02','FS'],['F2-12','FS'],['F2-13','FS']]}
 ];
 const VERSAO_MODELO_PLANILHA = 'planilha-2026-11';
+const NOMES_SEM_PARENTESES = {"Criar layout da LP (em paralelo com a tradução)": "Criar layout da LP", "Traduzir conteúdo da LP (em paralelo com a criação do layout)": "Traduzir conteúdo da LP", "Validar layout da LP (em paralelo com a validação do conteúdo traduzido)": "Validar layout da LP", "Validar conteúdo traduzido da LP (em paralelo com a validação do layout)": "Validar conteúdo traduzido da LP", "Configuração LP Sales Force (30 dias corridos)": "Configuração LP Sales Force", "Traduzir conteúdos (em paralelo com a criação dos assets)": "Traduzir conteúdos", "Validar traduções (não depende da aprovação dos assets)": "Validar traduções", "Programação da LP (fornecedor)": "Programação da LP"};
 /* etapa nova de cada código antigo (para campanhas criadas antes desta organização) */
 const FASE_POR_ID = Object.fromEntries(MODELO_PADRAO.map(m=>[m.id, m.fase]));
 const FASE_ANTIGA = {1:4, 2:6, 3:9};
@@ -859,6 +860,9 @@ function migrarAcoes(c){
   recalcFolgas(c);
 }
 function migrarLancamento(){ CTX = null; let mudou = false;
+  { const tira = o => { if (o && NOMES_SEM_PARENTESES[o.nome]) { o.nome = NOMES_SEM_PARENTESES[o.nome]; mudou = true; } };
+    if (S.modelo) (S.modelo.tarefas||[]).forEach(tira);
+    for (const c of S.campanhas) { (c.modelo||[]).forEach(tira); if (c.crono) c.crono.tarefas.forEach(tira); } }
   if (S.modelo && S.modelo.origem!==VERSAO_MODELO_PLANILHA && ehEquipe()) {
     S.modeloHist.unshift({versao:S.modelo.versao, data:S.modelo.data, tarefas:S.modelo.tarefas});
     S.modelo = {versao:S.modelo.versao+1, data:HOJE, origem:VERSAO_MODELO_PLANILHA, tarefas:JSON.parse(JSON.stringify(MODELO_PADRAO))}; mudou = true; }
@@ -1350,13 +1354,13 @@ function listaAcoes(c, L, ed){
   const linha = (t, sub) => { const st = statusExib(t);
     return `<tr class="${sub?'a-pais':''} ${st==='Atrasada'?'atrasada':''}"><td style="white-space:nowrap">${selStatus(`data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}"`, t, farolDe(t), false, t.status)}${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td><td>${sub?pais(t.pais):`<a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">${h(t.nome)}</a>`}${sub?` <a href="javascript:void 0" class="small" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">abrir</a>`:''}${(t.coment||[]).length?` <span class="small muted">· ${t.coment.length} coment.</span>`:''}${t.manual?' <span class="small muted" title="Datas ajustadas à mão">· ajustada</span>':''}</td>
       <td>${selResp(`data-chg="pessoaTarefa" data-id="${c.id}" data-t="${t.id}"`, t.pessoa)}</td>
-      <td class="num">${fd(t.ES)}</td><td class="num">${fd(t.EF)}</td><td>${h(t.prioridade||'Média')}</td>
+      <td class="num">${fd(t.ES)}</td><td class="num">${fd(t.EF)}</td>
       <td style="white-space:nowrap">${ed?`<button class="icone-btn" title="Editar" data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><i data-lucide="pencil"></i></button>${t.marco?'':`<button class="icone-btn" title="Excluir" data-act="excluirEtapa" data-id="${c.id}" data-t="${t.id}"><i data-lucide="trash-2"></i></button>`}`:''}</td></tr>`; };
   let corpo = '';
   for (const fase of ORDEM_FASES) {
     const daFase = L.filter(t=>t.fase===fase); if (!daFase.length) continue;
     const conc = daFase.filter(t=>t.status==='Concluída').length;
-    corpo += `<tr class="a-fase"><td colspan="7"><button class="icone-btn" data-act="aFase" data-f="${fase}"><i data-lucide="${ff[fase]?'chevron-right':'chevron-down'}"></i></button>${FASES[fase]} <span class="small muted" style="font-weight:500;margin-left:8px">${conc}/${daFase.length} concluída(s)</span></td></tr>`;
+    corpo += `<tr class="a-fase"><td colspan="6"><button class="icone-btn" data-act="aFase" data-f="${fase}"><i data-lucide="${ff[fase]?'chevron-right':'chevron-down'}"></i></button>${FASES[fase]} <span class="small muted" style="font-weight:500;margin-left:8px">${conc}/${daFase.length} concluída(s)</span></td></tr>`;
     if (ff[fase]) continue;
     const vistos = new Set();
     for (const tpl of c.modelo.filter(m=>m.fase===fase)) {
@@ -1366,14 +1370,14 @@ function listaAcoes(c, L, ed){
       const pessoas = [...new Set(ins.map(t=>t.pessoa||''))], sts = [...new Set(ins.map(t=>t.status))], atrasada = ins.some(t=>statusExib(t)==='Atrasada');
       corpo += `<tr class="a-grupo ${atrasada?'atrasada':''}"><td style="white-space:nowrap">${selStatus(`data-chg="statusGrupo" data-id="${c.id}" data-t="${tpl.id}"`, null, farolGrupo(ins), sts.length>1, sts[0])}${atrasada?' <span class="tag t-verm">Atrasada</span>':''}</td><td><button class="icone-btn" data-act="aAbrir" data-t="${tpl.id}" title="Ver por país"><i data-lucide="${ab[tpl.id]?'chevron-down':'chevron-right'}"></i></button><a href="javascript:void 0" data-act="aAbrir" data-t="${tpl.id}">${h(ins[0].nome)}</a> <span class="tag t-pet">${ins.length} país${ins.length>1?'es':''}</span></td>
         <td>${selResp(`data-chg="pessoaGrupo" data-id="${c.id}" data-t="${tpl.id}"`, pessoas[0], pessoas.length>1)}</td>
-        <td class="num">${fd(ES)}</td><td class="num">${fd(EF)}</td><td></td>
+        <td class="num">${fd(ES)}</td><td class="num">${fd(EF)}</td>
         <td></td></tr>`;
       if (ab[tpl.id]) ins.forEach(t=>corpo += linha(t,true));
     }
     daFase.filter(t=>!vistos.has(t.id)).forEach(t=>corpo += linha(t,false));
   }
-  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th>Prioridade</th><th></th></tr></thead><tbody>
-    ${corpo || '<tr><td colspan="7" class="vazio">Nenhuma ação com esses filtros.</td></tr>'}</tbody></table></div>
+  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th></th></tr></thead><tbody>
+    ${corpo || '<tr><td colspan="6" class="vazio">Nenhuma ação com esses filtros.</td></tr>'}</tbody></table></div>
     <div class="legenda-farol"><span><i style="background:#2e9d55"></i>Concluída</span><span><i style="background:#2f80b8"></i>Em andamento</span><span><i style="background:#e0a100"></i>Aguardando / em revisão</span><span><i style="background:#d0443a"></i>Atrasada ou bloqueada</span><span><i style="background:#9aa9ae"></i>Não iniciada / cancelada</span></div>`;
 }
 /* seleção múltipla: botão que abre uma lista de caixas de marcar */
