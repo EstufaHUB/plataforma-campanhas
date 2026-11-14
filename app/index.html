@@ -302,7 +302,7 @@ const COR_ST_CAMP = {'Não iniciada':'#9aa9ae','Em andamento':'#2f80b8','Em veic
 function statusCampanha(c){
   if (c.urlRelatorio) return 'Concluída';
   if (c.finalizadaEm || (c.iniciadaEm && c.fimVeiculacao && c.fimVeiculacao < HOJE)) return 'Finalizada – relatório pendente';
-  if (c.iniciadaEm) return 'Em veiculação';
+  if (c.iniciadaEm || (c.crono && c.crono.tarefas.some(t=>t.tid==='F4-01' && t.status==='Concluída'))) return 'Em veiculação';
   if (c.crono && c.crono.tarefas.some(t=>t.status!=='Não iniciada' && t.status!=='Cancelada')) return 'Em andamento';
   return 'Não iniciada'; }
 /* idioma-base: com um único idioma entre os países, é ele; senão, o já definido ou o padrão da região do primeiro país */
@@ -324,8 +324,8 @@ const ST_TRAD = ['Não iniciada','Aguardando conteúdo original','Aguardando apr
 const ST_POST = ['Ideia','Em planejamento','Em redação','Aguardando aprovação','Aprovado','Em design','Pronto para publicação','Publicado'];
 const ETAPAS_ENT = {briefing:'Briefing',aprov_conteudo:'Aprovação do conteúdo',ajuste_conteudo:'Ajustes no conteúdo',producao:'Produção',aprov_asset:'Aprovação do asset',ajuste_asset:'Ajustes no asset',concluido:'Concluído'};
 /* etapas (agrupamento) do cronograma — mesma organização da planilha de atividades macro */
-const FASES = {1:'📥 Briefing',2:'🧠 Estratégia & Conceito',3:'🎨 Criação & Direção de Arte (KV)',4:'🛬 Landing Page',5:'🔧 Configuração Sales Force',6:'✍️ Conteúdo (Copy & Texto)',7:'⚙️ Organização',8:'🖼️ Produção de Assets',9:'🔍 Pré-Lançamento'};
-const ORDEM_FASES = [1,2,3,4,5,6,8,9,7];   // Organização por último
+const FASES = {1:'📥 Briefing',2:'🧠 Estratégia & Conceito',3:'🎨 Criação & Direção de Arte (KV)',4:'🛬 Landing Page',5:'🔧 Configuração Sales Force',6:'✍️ Conteúdo (Copy & Texto)',7:'⚙️ Organização',8:'🖼️ Produção de Assets',9:'🔍 Pré-Lançamento',10:'🚀 Lançamento'};
+const ORDEM_FASES = [1,2,3,4,5,6,8,9,10,7];   // Organização por último
 /* modelo padrão. dur em dias úteis (corridos:true = dias corridos). escopo pais = uma etapa por país; trad = só países com idioma diferente do base */
 const MODELO_PADRAO = [
  {id:'F1-01',fase:1,nome:'Recebimento do briefing',area:'Atendimento',dur:1,escopo:'global',deps:[]},
@@ -357,9 +357,10 @@ const MODELO_PADRAO = [
  {id:'F2-13',fase:7,nome:'Subir assets da campanha para os dealers',area:'Atendimento',dur:1,escopo:'pais',deps:[['F2-12','FS']]},
  {id:'F3-02',fase:9,nome:'Revisar as LPs recebidas — layout, textos, traduções e formulário',area:'Design + Conteúdo',dur:1,escopo:'pais',deps:[['F3-01','FS']]},
  {id:'F3-04',fase:7,nome:'Subir LP no linktree',area:'Digital',dur:1,escopo:'global',deps:[['F3-02','FS']]},
+ {id:'F4-01',fase:10,nome:'Iniciar campanha',area:'Digital',dur:1,escopo:'global',fimNoLanc:true,deps:[]},
  {id:'F3-03',fase:9,nome:'Programar a campanha no gerenciador e lançar',area:'Digital',dur:2,escopo:'pais',fimNoLanc:true,deps:[['F3-02','FS'],['F2-12','FS'],['F2-13','FS']]}
 ];
-const VERSAO_MODELO_PLANILHA = 'planilha-2026-11b';
+const VERSAO_MODELO_PLANILHA = 'planilha-2026-11c';
 const NOMES_SEM_PARENTESES = {"Criar layout da LP (em paralelo com a tradução)": "Criar layout da LP", "Traduzir conteúdo da LP (em paralelo com a criação do layout)": "Traduzir conteúdo da LP", "Validar layout da LP (em paralelo com a validação do conteúdo traduzido)": "Validar layout da LP", "Validar conteúdo traduzido da LP (em paralelo com a validação do layout)": "Validar conteúdo traduzido da LP", "Configuração LP Sales Force (30 dias corridos)": "Configuração LP Sales Force", "Traduzir conteúdos (em paralelo com a criação dos assets)": "Traduzir conteúdos", "Validar traduções (não depende da aprovação dos assets)": "Validar traduções", "Programação da LP (fornecedor)": "Programação da LP"};
 /* etapa nova de cada código antigo (para campanhas criadas antes desta organização) */
 const FASE_POR_ID = Object.fromEntries(MODELO_PADRAO.map(m=>[m.id, m.fase]));
@@ -1848,9 +1849,9 @@ function resumoCalc(r, lanc){
 }
 
 const ACT = {
-  iniciarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.iniciadaEm = HOJE; delete c.finalizadaEm; registrar(`Campanha iniciada: “${c.nome}” (em veiculação)`); render(); toast('Campanha em veiculação.'); },
+  iniciarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.iniciadaEm = HOJE; delete c.finalizadaEm; (c.crono.tarefas||[]).filter(t=>t.tid==='F4-01').forEach(t=>{ if (t.status!=='Concluída') { (t.hist=t.hist||[]).push({q:HOJE,o:`Status: ${t.status} → Concluída`}); t.status = 'Concluída'; } }); registrar(`Campanha iniciada: “${c.nome}” (em veiculação)`); render(); toast('Campanha em veiculação.'); },
   finalizarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.finalizadaEm = HOJE; registrar(`Campanha finalizada: “${c.nome}” (relatório pendente)`); render(); toast('Campanha finalizada. Falta o relatório.'); },
-  desfazerInicio: el => { UI.menuCamp = false; const c = camp(el.dataset.id); if (c.finalizadaEm) delete c.finalizadaEm; else delete c.iniciadaEm; registrar(`Status de “${c.nome}” voltou uma etapa`); render(); },
+  desfazerInicio: el => { UI.menuCamp = false; const c = camp(el.dataset.id); if (c.finalizadaEm) delete c.finalizadaEm; else { delete c.iniciadaEm; (c.crono.tarefas||[]).filter(t=>t.tid==='F4-01' && t.status==='Concluída').forEach(t=>t.status='Não iniciada'); } registrar(`Status de “${c.nome}” voltou uma etapa`); render(); },
   formRelatorio: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
     abrirModal('Relatório da campanha', `<form id="f-rel" class="form-g"><label class="campo tudo">Link do relatório *<input type="url" name="url" required placeholder="https://…" value="${h(c.urlRelatorio||'')}"></label></form><p class="small muted" style="margin-bottom:0">Com o relatório, a campanha passa para “Concluída”.</p>`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarRelatorio" data-id="${c.id}">Salvar e concluir</button>`); setTimeout(()=>{ const i = $('#f-rel input'); if (i) i.focus(); }, 30); },
