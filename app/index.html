@@ -51,7 +51,7 @@ body.menu-oculto .lateral{transform:translateX(-100%)}body.menu-oculto .principa
 .card-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid var(--borda);flex-wrap:wrap}
 .grade{display:grid;gap:16px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--borda-f);background:var(--sup);color:var(--tx);padding:8px 13px;border-radius:8px;font:inherit;font-weight:500;cursor:pointer;white-space:nowrap;text-decoration:none}
-.btn:hover{background:var(--fundo)}.btn-p{background:var(--pet-700);border-color:var(--pet-700);color:#fff}.btn-p:hover{background:var(--pet-800)}
+.btn:hover{background:var(--fundo)}.btn-p{background:var(--pet-700);border-color:var(--pet-700);color:#fff}.btn-p:hover{background:var(--pet-800)}.btn-ativo{background:#eaf4f6;border-color:var(--pet-700);color:var(--pet-800)}
 .btn-s{padding:5px 9px;font-size:.82rem}.btn-g{border-color:transparent;background:transparent}.btn-g:hover{background:var(--cinza-f)}
 .btn-perigo{color:var(--verm);border-color:#eac3c0}.btn:disabled{opacity:.45;cursor:not-allowed}
 .icone-btn{border:0;background:transparent;padding:5px;border-radius:6px;cursor:pointer;color:var(--tx2);display:inline-grid;place-items:center}.icone-btn:hover{background:var(--cinza-f);color:var(--tx)}
@@ -72,6 +72,13 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .farol:disabled{opacity:1}
 .tab tr.a-fase td{background:#f4f7f8;font-weight:700;color:var(--pet-900)}.tab tr.a-pais td:nth-child(2){padding-left:42px}
 .tab tr.a-grupo td:nth-child(2),.tab tr.a-fase td:first-child{white-space:nowrap}
+.tab.com-sel tr.a-pais td:nth-child(3){padding-left:42px}.tab.com-sel tr.a-pais td:nth-child(2){padding-left:8px}
+.tab td.c-sel,.tab th.c-sel{width:34px;padding-right:0}.tab td.c-sel input,.tab th.c-sel input{width:16px;height:16px;accent-color:var(--pet-700);cursor:pointer;vertical-align:middle}
+.tab tr.sel td{background:#eaf4f6}
+.lote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--pet-900);color:#fff;border-radius:10px;margin:0 16px 12px}
+.lote b{font-weight:600}.lote select{padding:5px 8px;font-size:.85rem;border-radius:8px;border:0;color:#1b2a2f;background:#fff;width:auto;min-width:170px}
+.lote .btn{background:rgba(255,255,255,.12);color:#fff;border-color:transparent}.lote .btn:hover{background:rgba(255,255,255,.22)}
+.lote .btn-perigo{background:#d0443a}.lote .sep{flex:1}
 .sel-resp{padding:3px 6px;font-size:.8rem;min-width:118px}
 .menu-barra{position:fixed;z-index:120;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:10px;min-width:230px;max-width:320px}
 .chave-dep{gap:8px}.chave{width:28px;height:16px;border-radius:999px;background:#c9d1d4;position:relative;display:inline-block;transition:background .15s}
@@ -975,7 +982,7 @@ function abrirModal(titulo, corpo, rodape='', largo=false){
   icones();
 }
 const fecharModal = () => { $('#modal-raiz').innerHTML=''; };
-const icones = () => { if (window.lucide) lucide.createIcons(); };
+const icones = () => { if (window.lucide) lucide.createIcons(); document.querySelectorAll('input[data-parcial]').forEach(i=>i.indeterminate=true); };
 const opts = (lista, sel, vazio) => (vazio!==undefined?`<option value="">${vazio}</option>`:'') + lista.map(o=>{ const [v,t] = Array.isArray(o)?o:[o,o]; return `<option value="${h(v)}" ${String(v)===String(sel)?'selected':''}>${h(t)}</option>`; }).join('');
 const optsUsu = (sel, area) => opts(S.usuarios.filter(u=>!area||u.area===area||u.area==='Administrador').map(u=>[u.id,u.nome+' — '+u.area]), sel, 'Selecione');
 const ler = form => Object.fromEntries(new FormData(form).entries());
@@ -1385,13 +1392,22 @@ function farolDe(t){ const st = statusExib(t);
 function farolGrupo(ins){ const f = ins.map(farolDe);
   if (f.includes('f-verm')) return 'f-verm'; if (f.every(x=>x==='f-verde')) return 'f-verde'; if (f.includes('f-amar')) return 'f-amar';
   if (f.includes('f-azul') || f.includes('f-verde')) return 'f-azul'; return 'f-cinza'; }
+/* edição em massa das ações selecionadas */
+function aplicarLote(c, campo, v){ const ids = new Set(UI.aSel||[]), alvo = c.crono.tarefas.filter(t=>ids.has(t.id)); if (!alvo.length) return;
+  let n = 0; for (const t of alvo) { if ((t[campo]||'')===v) continue; (t.hist = t.hist||[]).push({q:HOJE,o:`${campo==='status'?'Status':'Responsável'}: ${t[campo]||'—'} → ${v}`}); t[campo] = v; n++; }
+  registrar(`${campo==='status'?'Status':'Responsável'} de ${alvo.length} ação(ões) em “${c.nome}”: ${v}`);
+  render(); toast(n ? `${n} ação(ões) atualizada(s): ${v}.` : 'Nada mudou: as ações já estavam assim.'); }
 function listaAcoes(c, L, ed){
   const ab = UI.aAberto || (UI.aAberto = {}), ff = UI.aFase || (UI.aFase = {});
   const vis = new Set(L.map(t=>t.id));
+  const modoSel = ed && UI.fac.sel, sel = new Set((UI.aSel||[]).filter(id=>vis.has(id))); UI.aSel = [...sel];
+  const caixa = (ids, extra='') => { if (!modoSel) return ''; const n = ids.filter(id=>sel.has(id)).length;
+    return `<td class="c-sel"><input type="checkbox" data-chg="aSel" data-ids="${ids.join(',')}" ${ids.length&&n===ids.length?'checked':''} ${n&&n<ids.length?'data-parcial="1"':''} ${extra}></td>`; };
+  const nCol = modoSel ? 7 : 6;
   const selResp = (attrs, val, misto) => ed ? `<select class="sel-resp" ${attrs}>${misto?'<option value="" selected>Vários</option>':''}${opts(optsResp(val), misto?'__':val||'', 'Selecione')}</select>` : h(val||'—');
   const selStatus = (attrs, t, cls, misto, val) => `<select class="farol ${cls}" ${attrs} ${ed?'':'disabled'}>${misto?'<option value="" selected>Vários</option>':''}${opts(ST_ACAO, misto?'__':val)}</select>`;
   const linha = (t, sub) => { const st = statusExib(t);
-    return `<tr class="${sub?'a-pais':''} ${st==='Atrasada'?'atrasada':''}"><td style="white-space:nowrap">${selStatus(`data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}"`, t, farolDe(t), false, t.status)}${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td><td>${sub?pais(t.pais):`<a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">${h(t.nome)}</a>`}${sub?` <a href="javascript:void 0" class="small" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">abrir</a>`:''}${(t.coment||[]).length?` <span class="small muted">· ${t.coment.length} coment.</span>`:''}${t.manual?' <span class="small muted" title="Datas ajustadas à mão">· ajustada</span>':''}</td>
+    return `<tr class="${sub?'a-pais':''} ${st==='Atrasada'?'atrasada':''} ${sel.has(t.id)?'sel':''}">${caixa([t.id])}<td style="white-space:nowrap">${selStatus(`data-chg="statusTarefa" data-id="${c.id}" data-t="${t.id}"`, t, farolDe(t), false, t.status)}${st==='Atrasada'?' <span class="tag t-verm">Atrasada</span>':''}</td><td>${sub?pais(t.pais):`<a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">${h(t.nome)}</a>`}${sub?` <a href="javascript:void 0" class="small" data-act="formAcao" data-id="${c.id}" data-a="${t.id}">abrir</a>`:''}${(t.coment||[]).length?` <span class="small muted">· ${t.coment.length} coment.</span>`:''}${t.manual?' <span class="small muted" title="Datas ajustadas à mão">· ajustada</span>':''}</td>
       <td>${selResp(`data-chg="pessoaTarefa" data-id="${c.id}" data-t="${t.id}"`, t.pessoa)}</td>
       <td class="num">${fd(t.ES)}</td><td class="num">${fd(t.EF)}</td>
       <td style="white-space:nowrap">${ed?`<button class="icone-btn" title="Editar" data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><i data-lucide="pencil"></i></button>${t.marco?'':`<button class="icone-btn" title="Excluir" data-act="excluirEtapa" data-id="${c.id}" data-t="${t.id}"><i data-lucide="trash-2"></i></button>`}`:''}</td></tr>`; };
@@ -1399,7 +1415,7 @@ function listaAcoes(c, L, ed){
   for (const fase of ORDEM_FASES) {
     const daFase = L.filter(t=>t.fase===fase); if (!daFase.length) continue;
     const conc = daFase.filter(t=>t.status==='Concluída').length;
-    corpo += `<tr class="a-fase"><td colspan="6"><button class="icone-btn" data-act="aFase" data-f="${fase}"><i data-lucide="${ff[fase]?'chevron-right':'chevron-down'}"></i></button>${FASES[fase]} <span class="small muted" style="font-weight:500;margin-left:8px">${conc}/${daFase.length} concluída(s)</span></td></tr>`;
+    corpo += `<tr class="a-fase">${caixa(daFase.map(t=>t.id))}<td colspan="${modoSel?6:6}"><button class="icone-btn" data-act="aFase" data-f="${fase}"><i data-lucide="${ff[fase]?'chevron-right':'chevron-down'}"></i></button>${FASES[fase]} <span class="small muted" style="font-weight:500;margin-left:8px">${conc}/${daFase.length} concluída(s)</span></td></tr>`;
     if (ff[fase]) continue;
     const vistos = new Set();
     for (const tpl of c.modelo.filter(m=>m.fase===fase)) {
@@ -1407,7 +1423,7 @@ function listaAcoes(c, L, ed){
       if (tpl.escopo==='global' || !ins[0].pais) { ins.forEach(t=>corpo += linha(t,false)); continue; }
       const ES = ins.reduce((m,t)=>t.ES<m?t.ES:m, ins[0].ES), EF = ins.reduce((m,t)=>t.EF>m?t.EF:m, ins[0].EF);
       const pessoas = [...new Set(ins.map(t=>t.pessoa||''))], sts = [...new Set(ins.map(t=>t.status))], atrasada = ins.some(t=>statusExib(t)==='Atrasada');
-      corpo += `<tr class="a-grupo ${atrasada?'atrasada':''}"><td style="white-space:nowrap">${selStatus(`data-chg="statusGrupo" data-id="${c.id}" data-t="${tpl.id}"`, null, farolGrupo(ins), sts.length>1, sts[0])}${atrasada?' <span class="tag t-verm">Atrasada</span>':''}</td><td><button class="icone-btn" data-act="aAbrir" data-t="${tpl.id}" title="Ver por país"><i data-lucide="${ab[tpl.id]?'chevron-down':'chevron-right'}"></i></button><a href="javascript:void 0" data-act="aAbrir" data-t="${tpl.id}">${h(ins[0].nome)}</a> <span class="tag t-pet">${ins.length} país${ins.length>1?'es':''}</span></td>
+      corpo += `<tr class="a-grupo ${atrasada?'atrasada':''} ${ins.every(t=>sel.has(t.id))&&modoSel?'sel':''}">${caixa(ins.map(t=>t.id))}<td style="white-space:nowrap">${selStatus(`data-chg="statusGrupo" data-id="${c.id}" data-t="${tpl.id}"`, null, farolGrupo(ins), sts.length>1, sts[0])}${atrasada?' <span class="tag t-verm">Atrasada</span>':''}</td><td><button class="icone-btn" data-act="aAbrir" data-t="${tpl.id}" title="Ver por país"><i data-lucide="${ab[tpl.id]?'chevron-down':'chevron-right'}"></i></button><a href="javascript:void 0" data-act="aAbrir" data-t="${tpl.id}">${h(ins[0].nome)}</a> <span class="tag t-pet">${ins.length} país${ins.length>1?'es':''}</span></td>
         <td>${selResp(`data-chg="pessoaGrupo" data-id="${c.id}" data-t="${tpl.id}"`, pessoas[0], pessoas.length>1)}</td>
         <td class="num">${fd(ES)}</td><td class="num">${fd(EF)}</td>
         <td></td></tr>`;
@@ -1415,8 +1431,16 @@ function listaAcoes(c, L, ed){
     }
     daFase.filter(t=>!vistos.has(t.id)).forEach(t=>corpo += linha(t,false));
   }
-  return `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th></th></tr></thead><tbody>
-    ${corpo || '<tr><td colspan="6" class="vazio">Nenhuma ação com esses filtros.</td></tr>'}</tbody></table></div>
+  const loteBar = modoSel ? `<div class="lote">${sel.size?`<b>${sel.size} ação(ões) selecionada(s)</b>
+      <select data-chg="loteStatus" data-id="${c.id}"><option value="">Mudar status…</option>${opts(ST_ACAO,'__')}</select>
+      <select data-chg="lotePessoa" data-id="${c.id}"><option value="">Mudar responsável…</option>${opts(RESPONSAVEIS,'__')}</select>
+      <button class="btn btn-s" data-act="loteConcluir" data-id="${c.id}"><i data-lucide="check"></i>Concluir</button>
+      <button class="btn btn-s btn-perigo" data-act="loteExcluir" data-id="${c.id}"><i data-lucide="trash-2"></i>Excluir</button>
+      <span class="sep"></span><button class="btn btn-s" data-act="loteLimpar">Limpar seleção</button>`
+      : `<span>Marque as ações na lista (ou a caixa da etapa para pegar todas dela) para mudar várias de uma vez.</span><span class="sep"></span>`}
+      <button class="btn btn-s" data-act="loteSair"><i data-lucide="x"></i>Sair da seleção</button></div>` : '';
+  return `${loteBar}<div class="tabela-wrap"><table class="tab ${modoSel?'com-sel':''}"><thead><tr>${modoSel?`<th class="c-sel"><input type="checkbox" data-chg="aSel" data-ids="${L.map(t=>t.id).join(',')}" ${L.length&&sel.size===L.length?'checked':''} ${sel.size&&sel.size<L.length?'data-parcial="1"':''} title="Selecionar todas"></th>`:''}<th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th></th></tr></thead><tbody>
+    ${corpo || `<tr><td colspan="${nCol}" class="vazio">Nenhuma ação com esses filtros.</td></tr>`}</tbody></table></div>
     <div class="legenda-farol"><span><i style="background:#2e9d55"></i>Concluída</span><span><i style="background:#2f80b8"></i>Em andamento</span><span><i style="background:#e0a100"></i>Aguardando / em revisão</span><span><i style="background:#d0443a"></i>Atrasada ou bloqueada</span><span><i style="background:#9aa9ae"></i>Não iniciada / cancelada</span></div>`;
 }
 /* seleção múltipla: botão que abre uma lista de caixas de marcar */
@@ -1438,7 +1462,7 @@ function abaAcoes(c){
   return `<div class="alerta azul"><i data-lucide="info"></i><div>As ações são as <b>mesmas etapas do cronograma</b>. Mudar status, responsável, datas ou nome aqui muda o cronograma, e vice-versa. Para criar uma ação nova, use “Incluir item”.</div></div>
   <div class="card"><div class="card-cab"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="seg"><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="lista"><i data-lucide="list"></i>Lista</button><button class="${f.visao==='kanban'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="kanban"><i data-lucide="kanban"></i>Kanban</button></div>
    <div style="min-width:160px"><div class="small muted">${pc}% concluído · ${todas.filter(atr).length} atrasada(s)</div><div class="barra" style="margin-top:4px"><i style="width:${pc}%"></i></div></div></div>
-   <div class="filtros">${multiSel('fac.status', [...ST_ACAO,'Atrasada'].map(v=>[v,v]), f.status, 'Todos os status', 'status')}${multiSel('fac.pessoa', [...RESPONSAVEIS,'—'].map(v=>[v, v==='—'?'Sem responsável':v]), f.pessoa, 'Todos os responsáveis', 'responsáveis')}${multiSel('fac.area', AREAS.map(v=>[v,v]), f.area, 'Todas as áreas', 'áreas')}${multiSel('fac.pais', [['global','Itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].f+' '+PAISES[p.cod].n])], f.pais, 'Todos os países', 'países')}${(f.status.length||f.pessoa.length||f.area.length||f.pais.length)?`<button class="btn btn-s btn-g" data-act="limparFiltrosAcoes"><i data-lucide="x"></i>Limpar filtros</button>`:''}${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
+   <div class="filtros">${multiSel('fac.status', [...ST_ACAO,'Atrasada'].map(v=>[v,v]), f.status, 'Todos os status', 'status')}${multiSel('fac.pessoa', [...RESPONSAVEIS,'—'].map(v=>[v, v==='—'?'Sem responsável':v]), f.pessoa, 'Todos os responsáveis', 'responsáveis')}${multiSel('fac.area', AREAS.map(v=>[v,v]), f.area, 'Todas as áreas', 'áreas')}${multiSel('fac.pais', [['global','Itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].f+' '+PAISES[p.cod].n])], f.pais, 'Todos os países', 'países')}${(f.status.length||f.pessoa.length||f.area.length||f.pais.length)?`<button class="btn btn-s btn-g" data-act="limparFiltrosAcoes"><i data-lucide="x"></i>Limpar filtros</button>`:''}${ed&&f.visao==='lista'?`<button class="btn ${f.sel?'btn-ativo':''}" data-act="loteModo"><i data-lucide="list-checks"></i>Selecionar ações</button>`:''}${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
   ${f.visao==='lista' ? listaAcoes(c, L, ed) : ''}
   ${f.visao!=='lista' ? `<div class="card-p"><div class="kanban">${ST_ACAO.map(st=>{ const cs = L.filter(t=>t.status===st); return `<div class="kcol" data-drop="acao" data-s="${st}" data-id="${c.id}"><h4><span>${st}</span><span>${cs.length}</span></h4>${cs.map(t=>`<div class="kcard ${atr(t)?'atr':''}" ${ed?`draggable="true" data-drag="${t.id}"`:''} data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><div style="font-weight:500">${nomeT(t)}</div><div class="small muted" style="margin-top:4px">${h(respTarefa(c,t))}${t.pais?' · '+t.pais:''} · ${fdc(t.EF)}</div></div>`).join('')}</div>`; }).join('')}</div><div class="small muted">${ed?'Arraste os cartões entre as colunas para mudar o status.':''}</div></div>` : ''}
   </div>`;
@@ -2078,7 +2102,7 @@ const ACT = {
   excluirEtapaOk: () => { const m = UI.pendExcl; if (!m) return; const c = camp(m.cid);
     snapshotCrono(c); excluirEtapas(c, m.ids, m.chaves);
     Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo:'Etapa excluída: '+m.nome});
-    registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: etapa excluída (${m.nome})`); UI.pendExcl = null; fecharModal(); render(); toast('Etapa excluída.'); },
+    registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: ${m.lote?'ações excluídas ('+m.nome+')':'etapa excluída ('+m.nome+')'}`); if (m.lote) UI.aSel = []; UI.pendExcl = null; fecharModal(); render(); toast(m.lote?m.nome+' excluídas.':'Etapa excluída.'); },
   restaurarEtapa: el => { const c = camp(el.dataset.id), k = el.dataset.k, d = JSON.parse(JSON.stringify(c));
     d.excluidas = (d.excluidas||[]).filter(x=>x!==k); ACT.compararRecalc(null, d, 'Etapa restaurada: '+rotuloEtapa(c,k)); },
   editarEtapa: el => { const c = camp(el.dataset.id), id = el.dataset.t, grupo = !!el.dataset.grupo;
@@ -2145,6 +2169,17 @@ const ACT = {
     registrar(`${t==='objetivo'?'Objetivo':'Objetivo de mídia'} de ${el.dataset.k} em “${c.nome}”: ${cf[t]||'—'}`); render(); },
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
+  loteModo: () => { UI.fac.sel = !UI.fac.sel; UI.aSel = []; render(); },
+  loteSair: () => { UI.fac.sel = false; UI.aSel = []; render(); },
+  loteLimpar: () => { UI.aSel = []; render(); },
+  loteConcluir: el => aplicarLote(camp(el.dataset.id), 'status', 'Concluída'),
+  loteExcluir: el => { const c = camp(el.dataset.id), ids = new Set(UI.aSel||[]);
+    const alvo = c.crono.tarefas.filter(t=>ids.has(t.id) && !t.marco), marcos = c.crono.tarefas.filter(t=>ids.has(t.id) && t.marco).length;
+    if (!alvo.length) return toast('A etapa de lançamento não pode ser excluída.');
+    const chaves = [...new Set(alvo.map(t=> !t.pais || c.crono.tarefas.filter(x=>x.tid===t.tid).every(x=>ids.has(x.id)) ? t.tid : t.id))];
+    UI.pendExcl = {cid:c.id, ids:alvo.map(t=>t.id), chaves, nome:alvo.length+' ações', lote:true};
+    abrirModal('Excluir ações selecionadas', `<p style="margin-top:0">Excluir <b>${alvo.length} ação(ões)</b> do cronograma desta campanha?</p><ul class="small" style="padding-left:18px;margin:0 0 10px;max-height:180px;overflow:auto">${alvo.map(t=>`<li>${h(t.nome)}${t.pais?' ('+t.pais+')':''}</li>`).join('')}</ul>${marcos?`<p class="small muted">${marcos} etapa(s) de lançamento ficam de fora, porque não podem ser excluídas.</p>`:''}<ul class="small muted" style="padding-left:18px;margin:0"><li>As etapas que dependiam delas passam a depender das etapas anteriores.</li><li>A versão atual fica no histórico, e as etapas podem ser restauradas depois.</li></ul>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-perigo" data-act="excluirEtapaOk"><i data-lucide="trash-2"></i>Excluir ${alvo.length}</button>`); },
   aAbrir: el => { UI.aAberto = UI.aAberto||{}; UI.aAberto[el.dataset.t] = !UI.aAberto[el.dataset.t]; render(); },
   aFase: el => { UI.aFase = UI.aFase||{}; UI.aFase[el.dataset.f] = !UI.aFase[el.dataset.f]; render(); },
   alternarDep: () => { DEP_ATIVAS = !DEP_ATIVAS; try { localStorage.setItem('dep-off', DEP_ATIVAS?'':'1'); } catch(e){} render();
@@ -2411,6 +2446,8 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
     return reabrirFormCamp(consolidarCanais(d)); }
   if (k==='msel') { const [o,p] = el.dataset.k.split('.'), arr = UI[o][p] || (UI[o][p] = []), i = arr.indexOf(el.value); if (el.checked && i<0) arr.push(el.value); if (!el.checked && i>=0) arr.splice(i,1); return render(); }
   if (k==='cliArq') { UI.cliArq = v; return render(); }
+  if (k==='aSel') { const ids = el.dataset.ids ? el.dataset.ids.split(',') : [], set = new Set(UI.aSel||[]); ids.forEach(id=> el.checked ? set.add(id) : set.delete(id)); UI.aSel = [...set]; return render(); }
+  if (k==='loteStatus' || k==='lotePessoa') { if (!v) return; return aplicarLote(camp(el.dataset.id), k==='loteStatus'?'status':'pessoa', v); }
   if (k==='pessoaTarefa' || k==='pessoaGrupo' || k==='statusGrupo') { if (!v) return render(); const c = camp(el.dataset.id);
     const alvo = k==='pessoaTarefa' ? c.crono.tarefas.filter(t=>t.id===el.dataset.t) : c.crono.tarefas.filter(t=>t.tid===el.dataset.t);
     for (const t of alvo) { t.hist = t.hist||[];
