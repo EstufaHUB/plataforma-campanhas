@@ -1651,7 +1651,7 @@ function abaSaude(c){
   if (!S2.linhas.length) return fonte + `<div class="card card-p" style="margin-top:12px"><div class="vazio">Vincule a campanha do Gerenciador do Meta para acompanhar a saúde automaticamente.</div></div>`;
   const moe = S2.linhas[0].moeda, soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0);
   const leads = soma('leads'), inv = soma('inv'), bud = soma('bud'), leadsMeta = S2.linhas.every(x=>x.leadsMeta) ? soma('leadsMeta') : null;
-  const cpl = leads ? inv/leads : null, cplMeta = leadsMeta ? bud/leadsMeta : null;
+  const cpl = leads ? inv/leads : null, cplMeta = leadsMeta ? bud/S2.linhas.reduce((t,x)=>t+x.bud/x.cplMeta,0) : null;
   const porDiaT = {}; for (const x of S2.linhas) for (const d of x.porDia) { const o = porDiaT[d.data] || (porDiaT[d.data] = {inv:0, leads:0}); o.inv += +d.investido||0; o.leads += +d.leads||0; }
   const u7 = Object.keys(porDiaT).sort().slice(-7).map(k=>porDiaT[k]), cpl7 = u7.length>=5 && u7.reduce((t,d)=>t+d.leads,0) ? u7.reduce((t,d)=>t+d.inv,0)/u7.reduce((t,d)=>t+d.leads,0) : null;
   const pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
