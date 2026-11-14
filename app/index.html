@@ -325,7 +325,7 @@ const ST_POST = ['Ideia','Em planejamento','Em redação','Aguardando aprovaçã
 const ETAPAS_ENT = {briefing:'Briefing',aprov_conteudo:'Aprovação do conteúdo',ajuste_conteudo:'Ajustes no conteúdo',producao:'Produção',aprov_asset:'Aprovação do asset',ajuste_asset:'Ajustes no asset',concluido:'Concluído'};
 /* etapas (agrupamento) do cronograma — mesma organização da planilha de atividades macro */
 const FASES = {1:'📥 Briefing',2:'🧠 Estratégia & Conceito',3:'🎨 Criação & Direção de Arte (KV)',4:'🛬 Landing Page',5:'🔧 Configuração Sales Force',6:'✍️ Conteúdo (Copy & Texto)',7:'⚙️ Organização',8:'🖼️ Produção de Assets',9:'🔍 Pré-Lançamento',10:'🚀 Lançamento',11:'📦 Pós campanha'};
-const ORDEM_FASES = [1,2,3,4,5,6,8,9,10,11,7];   // Organização por último
+const ORDEM_FASES = [1,2,3,4,5,6,8,9,10,7,11];   // Pós campanha por último   // Organização por último
 /* modelo padrão. dur em dias úteis (corridos:true = dias corridos). escopo pais = uma etapa por país; trad = só países com idioma diferente do base */
 const MODELO_PADRAO = [
  {id:'F1-01',fase:1,nome:'Recebimento do briefing',area:'Atendimento',dur:1,escopo:'global',deps:[]},
