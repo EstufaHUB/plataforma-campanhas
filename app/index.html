@@ -107,6 +107,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .sep-h{height:1px;background:var(--borda);margin:14px 0}
 .tag.t-verde-c{background:#e3f4e8;color:#1f6b3a}
 .bud{display:grid;grid-template-columns:auto auto;gap:4px 22px;justify-content:start}
+.st-passo{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px}.st-passo .cc-pill{font-size:.9rem}
 .st-geral{display:flex;align-items:center;gap:0;position:relative;max-width:240px;margin-top:6px}.st-geral i{position:absolute;left:12px;width:9px;height:9px;border-radius:50%}.st-geral select{width:100%;padding:9px 10px 9px 28px;border-radius:8px}
 .linha-tempo{list-style:none;margin:0;padding:6px 0}.linha-tempo li{position:relative;display:flex;gap:12px;align-items:flex-start;padding:12px 18px 12px 44px;border-bottom:1px solid var(--borda)}.linha-tempo li:last-child{border-bottom:0}
 .linha-tempo li::before{content:"";position:absolute;left:25px;top:0;bottom:0;width:2px;background:#e3e6e8}.linha-tempo li:first-child::before{top:20px}.linha-tempo li:last-child::before{bottom:calc(100% - 20px)}
@@ -293,7 +294,15 @@ const CANAIS = ['Meta Ads','YouTube Ads','Google Display','Google Search','TikTo
 const TIPOS_ENTREGAVEL = ['KV','Landing page','Assets ADS','Assets orgânicos','Fluxo de email','Email marketing','Material rico','Materiais para dealers'];
 const temOrganico = c => (c.entregaveisTipos||[]).includes('Assets orgânicos') || (c.canais||[]).includes('Conteúdo orgânico / Social Media');
 const AREAS = ['Atendimento','Planejamento','Conteúdo','Design','Digital','Validadores locais','Cliente','Design + Conteúdo','Fornecedor'];
-const ST_CAMP = ['Planejamento','Em produção','Em aprovação','Em veiculação','Concluída'];
+const ST_CAMP = ['Não iniciada','Em andamento','Em veiculação','Finalizada – relatório pendente','Concluída'];
+const COR_ST_CAMP = {'Não iniciada':'#9aa9ae','Em andamento':'#2f80b8','Em veiculação':'#2e9d55','Finalizada – relatório pendente':'#e0a100','Concluída':'#1f6b3a'};
+/* status da campanha é automático: criada → cronograma iniciado → "Iniciar campanha" → fim da veiculação → relatório */
+function statusCampanha(c){
+  if (c.urlRelatorio) return 'Concluída';
+  if (c.finalizadaEm || (c.iniciadaEm && c.fimVeiculacao && c.fimVeiculacao < HOJE)) return 'Finalizada – relatório pendente';
+  if (c.iniciadaEm) return 'Em veiculação';
+  if (c.crono && c.crono.tarefas.some(t=>t.status!=='Não iniciada' && t.status!=='Cancelada')) return 'Em andamento';
+  return 'Não iniciada'; }
 const OBJETIVOS = ['Geração de leads','Awareness'];
 const RESPONSAVEIS = ['Karen','Tamiris','Jéssica','Giovanna'];
 const ST_ACAO = ['Não iniciada','Em andamento','Aguardando cliente','Aguardando equipe','Em revisão','Concluída','Bloqueada','Cancelada'];
@@ -609,7 +618,7 @@ function usuariosIniciais(){
 const VALID_PAIS = {DE:'u7',FR:'u8',IT:'u9',UK:'u10',ES:'u8',AR:'u11',CL:'u11',MX:'u12',CO:'u12',AU:'u13',NZ:'u13',US:'u10',CA:'u10',BR:'u1'};
 
 function novaCampanha(dados){
-  const camp = Object.assign({id:novoId('c'),status:'Planejamento',arquivada:false,obs:'',descricao:'',objetivo:'',urlPlanejamento:'',urlRelatorio:'',orcamento:0,moeda:'BRL',canais:[],regioes:[],
+  const camp = Object.assign({id:novoId('c'),status:'Não iniciada',arquivada:false,obs:'',descricao:'',objetivo:'',urlPlanejamento:'',urlRelatorio:'',orcamento:0,moeda:'BRL',canais:[],regioes:[],
     acoes:[],entregaveis:[],budgets:[],kpis:[],posts:[],cronoHist:[],master:{texto:'',status:'Rascunho',versao:1,aprovadoEm:null,hist:[]},traducoes:{}}, dados);
   camp.modelo = JSON.parse(JSON.stringify(S.modelo.tarefas)); camp.modeloVersao = S.modelo.versao; camp.etapasNovas = true;
   camp.paises = camp.paises.map(p=>Object.assign({respLocal:VALID_PAIS[p.cod]||'',obs:'',links:''},p));
@@ -891,13 +900,14 @@ function corStatus(s){
 const tag = s => `<span class="tag ${corStatus(s)}">${h(s)}</span>`;
 function saude(c){
   if (c.status==='Concluída') return {cor:'cinza',txt:'Encerrada'};
+  if (c.status==='Em veiculação' || c.status==='Finalizada – relatório pendente') return {cor:'', txt:''};
   const ts = c.crono.tarefas, atr = ts.filter(t=>statusExib(t)==='Atrasada');
   if ((c.crono.inviaveis && c.crono.inviaveis.length) || atr.length) return {cor:'verm',txt:'Ações atrasadas'};
   const prox = ts.filter(t=>t.status!=='Concluída' && t.folga<=0 && t.ES <= addDias(HOJE,7));
   if (prox.length) return {cor:'amar',txt:'Atenção'};
   return {cor:'verde',txt:'No prazo'};
 }
-const saudeHtml = c => { const s = saude(c); return `<span class="tag" style="gap:6px"><span class="ponto p-${s.cor}"></span>${s.txt}</span>`; };
+const saudeHtml = c => { const s = saude(c); if (!s.txt) return ''; return `<span class="tag" style="gap:6px"><span class="ponto p-${s.cor}"></span>${s.txt}</span>`; };
 const progresso = c => { const ts=c.crono.tarefas.filter(t=>t.status!=='Cancelada'); return ts.length ? Math.round(ts.filter(t=>t.status==='Concluída').length/ts.length*100) : 0; };
 const inicioPlan = c => c.crono.tarefas.reduce((m,t)=>!m||t.ES<m?t.ES:m,null);
 const naoIniciada = c => c.crono.tarefas.every(t=>t.status==='Não iniciada');
@@ -970,6 +980,7 @@ const UI = {};  // estado de tela (filtros, visões)
 function rota(){ const p = (location.hash||'#/dashboard').slice(2).split('?')[0].split('/'); return p; }
 function render(){
   if (!S) return;
+  let mudouSt = false; for (const c of S.campanhas) { const st = statusCampanha(c); if (c.status!==st) { c.status = st; mudouSt = true; } } if (mudouSt && ehEquipe()) salvar();
   fecharMenuBarra();
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida).length;
@@ -1010,7 +1021,7 @@ function pgDashboard(){
   const cs = ativas(), por = s => cs.filter(c=>c.status===s).length;
   const atrasadas = cs.filter(c=>saude(c).cor==='verm').length;
   const em30 = cs.filter(c=>naoIniciada(c) && inicioPlan(c)>=HOJE && difDias(HOJE,inicioPlan(c))<=30).length;
-  const tiles = [['Campanhas previstas',cs.length,'clientes'],['Em planejamento',por('Planejamento')],['Em produção',por('Em produção')],['Em aprovação',por('Em aprovação')],['Em veiculação',por('Em veiculação')],['Concluídas',por('Concluída')],['Com atraso ou inviáveis',atrasadas],['Começam em até 30 dias',em30]];
+  const tiles = [['Campanhas previstas',cs.length,'clientes'],['Não iniciadas',por('Não iniciada')],['Em andamento',por('Em andamento')],['Em veiculação',por('Em veiculação')],['Relatório pendente',por('Finalizada – relatório pendente')],['Concluídas',por('Concluída')],['Com atraso ou inviáveis',atrasadas],['Começam em até 30 dias',em30]];
   const prox = cs.filter(c=>naoIniciada(c) && c.status!=='Concluída').sort((a,b)=>inicioPlan(a)<inicioPlan(b)?-1:1);
   const tarefasAtr = cs.flatMap(c=>c.crono.tarefas.filter(t=>statusExib(t)==='Atrasada' && !naoIniciada(c)).map(t=>({c,t})));
   const aprov = cs.flatMap(c=>c.entregaveis.filter(e=>e.etapa==='aprov_conteudo'||e.etapa==='aprov_asset').map(e=>({c,e})));
@@ -1100,10 +1111,10 @@ function pgCampanha(r){
   migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,'#/clientes/'+c.clienteId],[c.nome]]);
   const abas = [['visao','info','Visão geral'],['cronograma','gantt-chart','Cronograma'],['acoes','list-checks','Gestão de ações'],['budget','wallet','Budgets e KPIs'],['entregaveis','package','Entregáveis'],['mercados','globe-2','Mercados e países']];
   const corpo = {visao:abaVisao,cronograma:abaCronograma,acoes:abaAcoes,budget:abaBudget,entregaveis:abaEntregaveis,mercados:abaMercados}[aba](c);
-  const cli = cliente(c.clienteId), ini = inicioPlan(c), corSt = {'Planejamento':'#7b5ea7','Em produção':'#2e9d55','Em aprovação':'#e0a100','Em veiculação':'#2f80b8','Concluída':'#9aa9ae'}[c.status]||'#9aa9ae';
+  const cli = cliente(c.clienteId), ini = inicioPlan(c), corSt = COR_ST_CAMP[c.status]||'#9aa9ae';
   return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>
      <div class="cc-meta"><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span>${saudeHtml(c)}<span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-days"></i>Início: ${fds(ini)}</span><span class="cc-sep"></span><span class="cc-band">${c.paises.map(p=>PAISES[p.cod].f).join(' ')}</span>${c.arquivada?' <span class="tag">Arquivada</span>':''}</div></div></div>
-   <div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop"><button data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'} campanha</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div></div>
+   <div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop">${c.status==='Não iniciada'||c.status==='Em andamento'?`<button data-act="iniciarCampanha" data-id="${c.id}"><i data-lucide="rocket"></i>Iniciar campanha</button>`:''}${c.status==='Em veiculação'?`<button data-act="finalizarCampanha" data-id="${c.id}"><i data-lucide="flag"></i>Finalizar campanha</button>`:''}${c.status==='Finalizada – relatório pendente'?`<button data-act="formRelatorio" data-id="${c.id}"><i data-lucide="file-plus"></i>Adicionar relatório</button>`:''}${c.iniciadaEm&&!c.urlRelatorio?`<button data-act="desfazerInicio" data-id="${c.id}"><i data-lucide="undo-2"></i>${c.finalizadaEm?'Voltar para “Em veiculação”':'Desfazer início da campanha'}</button>`:''}<button data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'} campanha</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div></div>
    <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`;
 }
 function alertasCampanha(c){
@@ -1138,12 +1149,17 @@ function cardApresentacao(c){ if (!c.urlPlanejamento) return '';
   return `<div class="card" style="margin-top:16px"><div class="card-cab"><h3>Planejamento estratégico</h3>${chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento')}</div>
     ${emb ? `<div class="apres"><iframe src="${h(emb)}" allowfullscreen loading="lazy" title="Apresentação do planejamento"></iframe></div><div class="small muted" style="padding:8px 18px 14px">Se a apresentação não aparecer, ela precisa estar compartilhada com quem tem o link (ou com a sua conta Google).</div>`
           : `<div class="card-p small muted">Este tipo de link não pode ser mostrado aqui. Use “Abrir em nova aba”.</div>`}</div>`; }
+function botaoPassoCamp(c){
+  if (c.status==='Não iniciada' || c.status==='Em andamento') return `<button class="btn btn-p btn-s" data-act="iniciarCampanha" data-id="${c.id}"><i data-lucide="rocket"></i>Iniciar campanha</button>`;
+  if (c.status==='Em veiculação') return `<button class="btn btn-s" data-act="finalizarCampanha" data-id="${c.id}"><i data-lucide="flag"></i>Finalizar campanha</button>`;
+  if (c.status==='Finalizada – relatório pendente') return `<button class="btn btn-p btn-s" data-act="formRelatorio" data-id="${c.id}"><i data-lucide="file-plus"></i>Adicionar relatório</button>`;
+  return ''; }
 function abaVisao(c){
   const ini = inicioPlan(c), ts = c.crono.tarefas, prog = progresso(c);
   const prox = ts.filter(t=>t.status!=='Concluída' && t.status!=='Cancelada').sort((a,b)=>a.ES<b.ES?-1:a.ES>b.ES?1:0).slice(0,5);
   const dataKpi = (ic, rot, d, sub) => `<div class="card kpi2"><div class="k-ic"><i data-lucide="${ic}"></i></div><div><div class="k-rot">${rot}</div><div class="k-val">${fd(d)}</div><div class="k-dia">(${d?DSEM[dow(d)].slice(0,3):''})</div>${sub?`<div class="k-sub">${sub}</div>`:''}</div></div>`;
   const R = 34, C = 2*Math.PI*R;
-  const corSt = {'Planejamento':'#7b5ea7','Em produção':'#2e9d55','Em aprovação':'#e0a100','Em veiculação':'#2f80b8','Concluída':'#9aa9ae'}[c.status]||'#9aa9ae';
+  const corSt = COR_ST_CAMP[c.status]||'#9aa9ae';
   const totalBud = c.paises.reduce((s,p)=>s+(+p.budget||0),0);
   return alertasCampanha(c) + `<div class="grade g3">
     ${dataKpi('rocket','Lançamento', c.lancamento, 'Mesma data em todos os países')}
@@ -1160,7 +1176,8 @@ function abaVisao(c){
       ${!(c.canaisCfg && (c.canais||[]).length) ? `<dt>Budget</dt><dd>${c.orcamento?moeda(c.orcamento,c.moeda):'—'} · <a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por canal</a></dd>` : ''}
       <dt>Relatório</dt><dd>${c.urlRelatorio?chipLink(c.urlRelatorio, 'Relatório'):'—'}</dd>
       <dt>Status geral</dt><dd></dd></dl>
-      <div class="st-geral"><i style="background:${corSt}"></i><select data-chg="statusCamp" data-id="${c.id}" ${ehEquipe()?'':'disabled'}>${opts(ST_CAMP,c.status)}</select></div></div></div>
+      <div class="st-passo"><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span>${ehEquipe()?botaoPassoCamp(c):''}</div>
+      <div class="small muted" style="margin-top:6px">${({'Não iniciada':'Muda para “Em andamento” quando a primeira etapa do cronograma for iniciada.','Em andamento':'Quando a campanha for ao ar, clique em “Iniciar campanha”.','Em veiculação':`Fica “Finalizada” ao clicar em “Finalizar campanha” ou depois do fim da veiculação (${fd(c.fimVeiculacao)}).`,'Finalizada – relatório pendente':'Adicione o link do relatório para concluir a campanha.','Concluída':'Relatório entregue.'})[c.status]||''}</div></div></div>
     <div class="card"><div class="card-cab"><h3 class="h-ic"><i data-lucide="list-checks"></i>Próximas etapas</h3><a href="#/campanha/${c.id}/cronograma" class="small">Ver cronograma →</a></div>
       <ul class="linha-tempo">${prox.map((t,i)=>{ const st = statusExib(t); return `<li class="${i===0?'atual':''}"><span class="lt-ponto"></span><div style="flex:1;min-width:0"><a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}" class="lt-nome">${h(t.nome)}${t.pais?' · '+t.pais:''}</a>
         <div class="small muted">${h(t.pessoa||t.area)}</div>${st==='Atrasada'?'<span class="tag t-verm" style="margin-top:4px">Atrasada</span>':t.status!=='Não iniciada'?`<span class="farol ${farolDe(t)}" style="display:inline-block;margin-top:4px;padding:1px 8px 1px 20px;background-position:7px center">${h(t.status)}</span>`:''}</div><span class="small num lt-data">${fdc(t.ES)} → ${fdc(t.EF)}</span></li>`; }).join('')||'<li class="muted" style="padding:14px 18px">Nenhuma etapa em aberto.</li>'}</ul></div>
@@ -1798,6 +1815,14 @@ function resumoCalc(r, lanc){
 }
 
 const ACT = {
+  iniciarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.iniciadaEm = HOJE; delete c.finalizadaEm; registrar(`Campanha iniciada: “${c.nome}” (em veiculação)`); render(); toast('Campanha em veiculação.'); },
+  finalizarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.finalizadaEm = HOJE; registrar(`Campanha finalizada: “${c.nome}” (relatório pendente)`); render(); toast('Campanha finalizada. Falta o relatório.'); },
+  desfazerInicio: el => { UI.menuCamp = false; const c = camp(el.dataset.id); if (c.finalizadaEm) delete c.finalizadaEm; else delete c.iniciadaEm; registrar(`Status de “${c.nome}” voltou uma etapa`); render(); },
+  formRelatorio: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
+    abrirModal('Relatório da campanha', `<form id="f-rel" class="form-g"><label class="campo tudo">Link do relatório *<input type="url" name="url" required placeholder="https://…" value="${h(c.urlRelatorio||'')}"></label></form><p class="small muted" style="margin-bottom:0">Com o relatório, a campanha passa para “Concluída”.</p>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarRelatorio" data-id="${c.id}">Salvar e concluir</button>`); setTimeout(()=>{ const i = $('#f-rel input'); if (i) i.focus(); }, 30); },
+  salvarRelatorio: el => { const c = camp(el.dataset.id), u = (ler($('#f-rel')).url||'').trim(); if (!/^https?:\/\//i.test(u)) return toast('Informe um link começando com https://');
+    c.urlRelatorio = u; registrar(`Relatório adicionado: “${c.nome}” (concluída)`); fecharModal(); render(); toast('Campanha concluída.'); },
   menuCamp: () => { UI.menuCamp = !UI.menuCamp; render(); },
   menu: () => { if (innerWidth <= 860) return document.body.classList.toggle('menu-aberto');
     const o = document.body.classList.toggle('menu-oculto'); try { localStorage.setItem('menu-oculto', o?'1':''); } catch(e){} setTimeout(render, 220); },
@@ -2208,7 +2233,6 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
     return reabrirFormCamp(consolidarCanais(d)); }
   if (k==='msel') { const [o,p] = el.dataset.k.split('.'), arr = UI[o][p] || (UI[o][p] = []), i = arr.indexOf(el.value); if (el.checked && i<0) arr.push(el.value); if (!el.checked && i>=0) arr.splice(i,1); return render(); }
   if (k==='cliArq') { UI.cliArq = v; return render(); }
-  if (k==='statusCamp') { const c = camp(el.dataset.id); c.status = v; registrar(`Status de “${c.nome}”: ${v}`); return render(); }
   if (k==='pessoaTarefa' || k==='pessoaGrupo' || k==='statusGrupo') { if (!v) return render(); const c = camp(el.dataset.id);
     const alvo = k==='pessoaTarefa' ? c.crono.tarefas.filter(t=>t.id===el.dataset.t) : c.crono.tarefas.filter(t=>t.tid===el.dataset.t);
     for (const t of alvo) { t.hist = t.hist||[];
