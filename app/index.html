@@ -1024,7 +1024,13 @@ function render(){
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
   icones(); posRender.forEach(f=>f()); posRender = [];
   capturarDesfazer(r);
+  verificarRelatorio(r);
 }
+/* quando a ação "Relatório" passa para Concluída, pede o link e conclui a campanha */
+function verificarRelatorio(r){ if (r[0]!=='campanha' || !ehEquipe()) return; const c = camp(r[1]); if (!c || !c.crono) return;
+  const t = c.crono.tarefas.find(x=>x.tid==='F5-02'); if (!t) return; UI.relSt = UI.relSt || {};
+  const ant = UI.relSt[c.id]; UI.relSt[c.id] = t.status;
+  if (ant!==undefined && ant!=='Concluída' && t.status==='Concluída' && !c.urlRelatorio && !$('#modal-raiz').innerHTML) setTimeout(()=>ACT.formRelatorio({dataset:{id:c.id, origem:'acao'}}), 50); }
 /* desfazer (Ctrl+Z) e refazer (Ctrl+Shift+Z ou Ctrl+Y): guarda o estado da campanha aberta a cada mudança */
 const DESF = {};
 let DEP_ATIVAS = true; try { DEP_ATIVAS = localStorage.getItem('dep-off')!=='1'; } catch(e){}   // por campanha: {pilha:[], refazer:[], atual:json}
@@ -1144,7 +1150,7 @@ function pgCampanha(r){
   const cli = cliente(c.clienteId), ini = inicioPlan(c), corSt = COR_ST_CAMP[c.status]||'#9aa9ae';
   return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>
      <div class="cc-meta"><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span>${saudeHtml(c)}<span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-days"></i>Início: ${fds(ini)}</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-check"></i>Fim da veiculação: ${fds(c.fimVeiculacao)}</span><span class="cc-sep"></span><span class="cc-band">${c.paises.map(p=>PAISES[p.cod].f).join(' ')}</span>${c.arquivada?' <span class="tag">Arquivada</span>':''}</div></div></div>
-   <div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop">${c.status==='Não iniciada'||c.status==='Em andamento'?`<button data-act="iniciarCampanha" data-id="${c.id}"><i data-lucide="rocket"></i>Iniciar campanha</button>`:''}${c.status==='Em veiculação'?`<button data-act="finalizarCampanha" data-id="${c.id}"><i data-lucide="flag"></i>Finalizar campanha</button>`:''}${c.status==='Finalizada – relatório pendente'?`<button data-act="formRelatorio" data-id="${c.id}"><i data-lucide="file-plus"></i>Adicionar relatório</button>`:''}${c.iniciadaEm&&!c.urlRelatorio?`<button data-act="desfazerInicio" data-id="${c.id}"><i data-lucide="undo-2"></i>${c.finalizadaEm?'Voltar para “Em veiculação”':'Desfazer início da campanha'}</button>`:''}<button data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'} campanha</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div></div>
+   <div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop">${c.status==='Não iniciada'||c.status==='Em andamento'?`<button data-act="iniciarCampanha" data-id="${c.id}"><i data-lucide="rocket"></i>Iniciar campanha</button>`:''}${c.status==='Finalizada – relatório pendente'?`<button data-act="formRelatorio" data-id="${c.id}"><i data-lucide="file-plus"></i>Adicionar relatório</button>`:''}${c.iniciadaEm&&!c.urlRelatorio?`<button data-act="desfazerInicio" data-id="${c.id}"><i data-lucide="undo-2"></i>${c.finalizadaEm?'Voltar para “Em veiculação”':'Desfazer início da campanha'}</button>`:''}<button data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'} campanha</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div></div>
    <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`;
 }
 function alertasCampanha(c){
@@ -1181,7 +1187,6 @@ function cardApresentacao(c){ if (!c.urlPlanejamento) return '';
           : `<div class="card-p small muted">Este tipo de link não pode ser mostrado aqui. Use “Abrir em nova aba”.</div>`}</div>`; }
 function botaoPassoCamp(c){
   if (c.status==='Não iniciada' || c.status==='Em andamento') return `<button class="btn btn-p btn-s" data-act="iniciarCampanha" data-id="${c.id}"><i data-lucide="rocket"></i>Iniciar campanha</button>`;
-  if (c.status==='Em veiculação') return `<button class="btn btn-s" data-act="finalizarCampanha" data-id="${c.id}"><i data-lucide="flag"></i>Finalizar campanha</button>`;
   if (c.status==='Finalizada – relatório pendente') return `<button class="btn btn-p btn-s" data-act="formRelatorio" data-id="${c.id}"><i data-lucide="file-plus"></i>Adicionar relatório</button>`;
   return ''; }
 function abaVisao(c){
@@ -1208,7 +1213,7 @@ function abaVisao(c){
       <dt>Relatório</dt><dd>${c.urlRelatorio?chipLink(c.urlRelatorio, 'Relatório'):'—'}</dd>
       <dt>Status geral</dt><dd></dd></dl>
       <div class="st-passo"><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span>${ehEquipe()?botaoPassoCamp(c):''}</div>
-      <div class="small muted" style="margin-top:6px">${({'Não iniciada':'Muda para “Em andamento” quando a primeira etapa do cronograma for iniciada.','Em andamento':'Quando a campanha for ao ar, clique em “Iniciar campanha”.','Em veiculação':`Fica “Finalizada” ao clicar em “Finalizar campanha” ou depois do fim da veiculação (${fd(c.fimVeiculacao)}).`,'Finalizada – relatório pendente':'Adicione o link do relatório para concluir a campanha.','Concluída':'Relatório entregue.'})[c.status]||''}</div></div></div>
+      <div class="small muted" style="margin-top:6px">${({'Não iniciada':'Muda para “Em andamento” quando a primeira etapa do cronograma for iniciada.','Em andamento':'Quando a campanha for ao ar, clique em “Iniciar campanha”.','Em veiculação':`Fica “Finalizada” depois do fim da veiculação (${fd(c.fimVeiculacao)}). Ao concluir a ação “Relatório”, cole o link e a campanha é concluída.`,'Finalizada – relatório pendente':'Conclua a ação “Relatório” (ou use o botão ao lado) e cole o link para concluir a campanha.','Concluída':'Relatório entregue.'})[c.status]||''}</div></div></div>
     <div class="card"><div class="card-cab"><h3 class="h-ic"><i data-lucide="list-checks"></i>Próximas etapas</h3><a href="#/campanha/${c.id}/cronograma" class="small">Ver cronograma →</a></div>
       <ul class="linha-tempo">${prox.map((t,i)=>{ const st = statusExib(t); return `<li class="${i===0?'atual':''}"><span class="lt-ponto"></span><div style="flex:1;min-width:0"><a href="javascript:void 0" data-act="formAcao" data-id="${c.id}" data-a="${t.id}" class="lt-nome">${h(t.nome)}${t.pais?' · '+t.pais:''}</a>
         <div class="small muted">${h(t.pessoa||t.area)}</div>${st==='Atrasada'?'<span class="tag t-verm" style="margin-top:4px">Atrasada</span>':t.status!=='Não iniciada'?`<span class="farol ${farolDe(t)}" style="display:inline-block;margin-top:4px;padding:1px 8px 1px 20px;background-position:7px center">${h(t.status)}</span>`:''}</div><span class="small num lt-data">${fdc(t.ES)} → ${fdc(t.EF)}</span></li>`; }).join('')||'<li class="muted" style="padding:14px 18px">Nenhuma etapa em aberto.</li>'}</ul></div>
@@ -1858,10 +1863,11 @@ const ACT = {
   finalizarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.finalizadaEm = HOJE; registrar(`Campanha finalizada: “${c.nome}” (relatório pendente)`); render(); toast('Campanha finalizada. Falta o relatório.'); },
   desfazerInicio: el => { UI.menuCamp = false; const c = camp(el.dataset.id); if (c.finalizadaEm) delete c.finalizadaEm; else { delete c.iniciadaEm; (c.crono.tarefas||[]).filter(t=>t.tid==='F4-01' && t.status==='Concluída').forEach(t=>t.status='Não iniciada'); } registrar(`Status de “${c.nome}” voltou uma etapa`); render(); },
   formRelatorio: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
-    abrirModal('Relatório da campanha', `<form id="f-rel" class="form-g"><label class="campo tudo">Link do relatório *<input type="url" name="url" required placeholder="https://…" value="${h(c.urlRelatorio||'')}"></label></form><p class="small muted" style="margin-bottom:0">Com o relatório, a campanha passa para “Concluída”.</p>`,
-      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarRelatorio" data-id="${c.id}">Salvar e concluir</button>`); setTimeout(()=>{ const i = $('#f-rel input'); if (i) i.focus(); }, 30); },
+    abrirModal(el.dataset.origem==='acao' ? 'Relatório concluído — cole o link' : 'Relatório da campanha', `<form id="f-rel" class="form-g"><label class="campo tudo">Link do relatório *<input type="url" name="url" required placeholder="https://…" value="${h(c.urlRelatorio||'')}"></label></form><p class="small muted" style="margin-bottom:0">Ao salvar, a campanha passa para “Concluída”.</p>`,
+      `<button class="btn" data-act="fechar">${el.dataset.origem==='acao'?'Agora não':'Cancelar'}</button><button class="btn btn-p" data-act="salvarRelatorio" data-id="${c.id}">Salvar e concluir</button>`); setTimeout(()=>{ const i = $('#f-rel input'); if (i) i.focus(); }, 30); },
   salvarRelatorio: el => { const c = camp(el.dataset.id), u = (ler($('#f-rel')).url||'').trim(); if (!/^https?:\/\//i.test(u)) return toast('Informe um link começando com https://');
-    c.urlRelatorio = u; registrar(`Relatório adicionado: “${c.nome}” (concluída)`); fecharModal(); render(); toast('Campanha concluída.'); },
+    c.urlRelatorio = u; (c.crono.tarefas||[]).filter(t=>t.tid==='F5-02' && t.status!=='Concluída').forEach(t=>{ (t.hist=t.hist||[]).push({q:HOJE,o:`Status: ${t.status} → Concluída`}); t.status = 'Concluída'; }); UI.relSt = UI.relSt||{}; UI.relSt[c.id] = 'Concluída';
+    registrar(`Relatório adicionado: “${c.nome}” (concluída)`); fecharModal(); render(); toast('Campanha concluída.'); },
   menuCamp: () => { UI.menuCamp = !UI.menuCamp; render(); },
   menu: () => { if (innerWidth <= 860) return document.body.classList.toggle('menu-aberto');
     const o = document.body.classList.toggle('menu-oculto'); try { localStorage.setItem('menu-oculto', o?'1':''); } catch(e){} setTimeout(render, 220); },
