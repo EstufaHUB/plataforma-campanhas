@@ -150,7 +150,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .sd-verm{background:#fdecea;color:#a3261c}.sd-amar{background:#fdf3d8;color:#8a5a00}.sd-verde{background:#e7f4e8;color:#2e6b31}.sd-cinza{background:#eef1f2;color:#5b6a6f}.sd-azul{background:#e6f1fb;color:#185fa5}
 .sd-pais{margin-top:10px;border-top:1px solid var(--borda);padding-top:6px;font-size:.78rem;color:var(--tx2)}.sd-pais div{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.sd-pais b{color:var(--tx);font-weight:600}
 .sd-farol{text-align:center}.sd-farol .sd-lb{justify-content:center}.sd-farol svg{max-width:150px!important}.sd-dias{border-top:1px solid var(--borda);margin-top:10px;padding-top:8px}.sd-dias b{font-size:1.35rem;color:var(--pet-950)}
-.sd-meio{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;margin-top:14px}.sd-meio>.card{padding:14px 16px!important}
+.sd-meio{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;margin-top:14px}.sd-meio>.card{padding:14px 16px!important}.sd-meio>.card:first-child{display:flex;flex-direction:column}.sd-graf{flex:1;min-height:200px;margin-top:8px;overflow:hidden}
 .sd-leg{display:flex;gap:14px;font-size:.78rem;color:var(--tx2)}.sd-leg i{display:inline-block;width:14px;height:0;border-top:3px solid #2f80b8;vertical-align:middle;margin-right:5px}.sd-leg i.m{border-top:2px dashed #7d8b90}.sd-leg i.p{border-top:2px dotted #2f80b8}
 .pts{list-style:none;margin:8px 0 0;padding:0;font-size:.88rem;line-height:1.45}.pts li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--borda)}.pts li:first-child{border-top:0}.pts li>i{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px}
 .pts .p-verm{background:#d0443a}.pts .p-amar{background:#e0a100}.pts .p-verde{background:#2e9d55}.pts .p-info{background:#2f80b8}
@@ -1001,7 +1001,7 @@ function abrirModal(titulo, corpo, rodape='', largo=false){
   icones();
 }
 const fecharModal = () => { $('#modal-raiz').innerHTML=''; };
-const icones = () => { if (window.lucide) lucide.createIcons(); document.querySelectorAll('input[data-parcial]').forEach(i=>i.indeterminate=true); };
+const icones = () => { if (window.lucide) lucide.createIcons(); ajustarGraficos(); document.querySelectorAll('input[data-parcial]').forEach(i=>i.indeterminate=true); };
 const opts = (lista, sel, vazio) => (vazio!==undefined?`<option value="">${vazio}</option>`:'') + lista.map(o=>{ const [v,t] = Array.isArray(o)?o:[o,o]; return `<option value="${h(v)}" ${String(v)===String(sel)?'selected':''}>${h(t)}</option>`; }).join('');
 const optsUsu = (sel, area) => opts(S.usuarios.filter(u=>!area||u.area===area||u.area==='Administrador').map(u=>[u.id,u.nome+' — '+u.area]), sel, 'Selecione');
 const ler = form => Object.fromEntries(new FormData(form).entries());
@@ -1643,9 +1643,13 @@ function pontosAtencao(c, S2){   // [{t, n}] n = verm | amar | verde | info
 const fdm = s => s ? s.slice(8,10)+'/'+s.slice(5,7) : '—';
 const moedaCurta = (v, m='BRL') => { const sim = (0).toLocaleString('pt-BR',{style:'currency',currency:m,maximumFractionDigits:0}).replace(/[\d\s.,]/g,'').trim();
   return v>=1e6 ? `${sim} ${(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})} mi` : v>=1e4 ? `${sim} ${(v/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})} mil` : Number(v).toLocaleString('pt-BR',{style:'currency',currency:m,maximumFractionDigits:0}); };
+/* o gráfico ocupa a altura do cartão (que acompanha os pontos de atenção) */
+function ajustarGraficos(){ document.querySelectorAll('.sd-graf').forEach(el=>{ const c = camp(el.dataset.c); if (!c) return;
+  el.innerHTML = ''; const w = Math.floor(el.clientWidth), hh = Math.max(200, Math.floor(el.clientHeight)); if (w>50) el.innerHTML = graficoRitmo(dadosSaude(c), w, hh); }); }
+window.addEventListener('resize', ()=>{ clearTimeout(window._tg); window._tg = setTimeout(ajustarGraficos, 120); });
 /* gráfico de leads acumulados × ritmo da meta */
-function graficoRitmo(S2){
-  const W = 640, H = 190, L = 40, R = 12, T = 14, B = 26, iw = W-L-R, ih = H-T-B;
+function graficoRitmo(S2, W = 640, H = 190){
+  const L = 40, R = 12, T = 14, B = 26, iw = W-L-R, ih = H-T-B;
   const porData = {}; for (const x of S2.linhas) for (const d of x.porDia) porData[d.data] = (porData[d.data]||0) + (+d.leads||0);
   const datas = Object.keys(porData).sort(); const ini = datas[0] && datas[0]<S2.ini ? datas[0] : S2.ini, fim = S2.fim;
   const nDias = Math.max(1, difDias(ini, fim)), meta = S2.linhas.reduce((s,x)=>s+(x.leadsMeta||0),0);
@@ -1655,7 +1659,7 @@ function graficoRitmo(S2){
   const hoje = Math.min(nDias, Math.max(0, difDias(ini, HOJE)));
   const grade = [0, .5, 1].map(f => { const v = Math.round((meta||acc)*f); return `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e3e9eb" stroke-width="1"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="#8a989c">${numero(v)}</text>`; }).join('');
   const ult = pts[pts.length-1];
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;margin-top:8px">${grade}
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block">${grade}
     ${meta?`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(nDias)}" y2="${Y(meta)}" stroke="#7d8b90" stroke-width="1.5" stroke-dasharray="5 5"/>`:''}
     <line x1="${X(hoje)}" x2="${X(hoje)}" y1="${T}" y2="${T+ih}" stroke="#c9d3d6" stroke-width="1"/><text x="${X(hoje)+5}" y="${T+11}" font-size="11" fill="#5b6a6f">hoje</text>
     <polyline points="${pts.map(([d,v])=>X(d).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}" fill="none" stroke="#2f80b8" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
@@ -1711,7 +1715,7 @@ function abaSaude(c){
   const pts = pontosAtencao(c, S2);
   return fonte + `<div class="sd-kpis">${cLeads}${cCpl}${cInv}</div>
   <div class="sd-meio">
-    <div class="card card-p"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="sd-lb"><i data-lucide="trending-up"></i>Leads acumulados</div><div class="sd-leg"><span><i></i>Real</span>${projL!=null?'<span><i class="p"></i>Projeção</span>':''}${leadsMeta?'<span><i class="m"></i>Meta</span>':''}</div></div>${graficoRitmo(S2)}</div>
+    <div class="card card-p"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="sd-lb"><i data-lucide="trending-up"></i>Leads acumulados</div><div class="sd-leg"><span><i></i>Real</span>${projL!=null?'<span><i class="p"></i>Projeção</span>':''}${leadsMeta?'<span><i class="m"></i>Meta</span>':''}</div></div><div class="sd-graf" data-c="${c.id}"></div></div>
     <div class="card card-p"><div class="sd-lb"><i data-lucide="alert-triangle"></i>Pontos de atenção</div>${pts.length?`<ul class="pts">${pts.map(x=>`<li><i class="p-${x.n}"></i><span>${h(x.t)}</span></li>`).join('')}</ul>`:'<div class="small muted" style="margin-top:8px">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta e das metas.</div></div>
   </div>`; }
 
