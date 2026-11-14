@@ -340,7 +340,8 @@ const MODELO_PADRAO = [
  {id:'F1-11',fase:4,nome:'Validar layout da LP',area:'Cliente',dur:1,escopo:'global',deps:[['F1-10','FS']]},
  {id:'F1-09',fase:4,nome:'Validar conteúdo traduzido da LP',area:'Validadores locais',dur:3,escopo:'pais',trad:true,deps:[['F1-08','FS']]},
  {id:'F1-12',fase:4,nome:'Enviar LP para programação em todas as línguas',area:'Atendimento',dur:1,escopo:'global',deps:[['F1-11','FS'],['F1-09','FS']]},
- {id:'F1-14',fase:5,nome:'Configuração LP Sales Force',area:'Digital',dur:30,corridos:true,escopo:'global',deps:[['F1-12','FS']]},
+ {id:'F1-14',fase:5,nome:'Solicitar programação LP Sales Force',area:'Digital',dur:1,escopo:'global',deps:[['F1-12','FS']]},
+ {id:'F3-01',fase:5,nome:'Receber LPs programadas',area:'Atendimento',dur:1,escopo:'global',deps:[['F1-14','FS',30]]},
  {id:'F2-01',fase:6,nome:'Criar textos em {base}',area:'Conteúdo',dur:3,escopo:'global',deps:[['F1-03','FS']]},
  {id:'F2-02',fase:6,nome:'Validar conteúdos em {base}',area:'Cliente',dur:2,escopo:'global',deps:[['F2-01','FS']]},
  {id:'F2-03',fase:6,nome:'Traduzir conteúdos',area:'Conteúdo',dur:1,escopo:'pais',trad:true,deps:[['F2-02','FS']]},
@@ -354,12 +355,11 @@ const MODELO_PADRAO = [
  {id:'F2-11',fase:8,nome:'Janela para ajustar os assets das demais línguas',area:'Design',dur:1,escopo:'pais',trad:true,deps:[['F2-10','FS']]},
  {id:'F2-12',fase:8,nome:'Aprovação final dos assets traduzidos',area:'Validadores locais',dur:2,escopo:'pais',trad:true,deps:[['F2-11','FS']]},
  {id:'F2-13',fase:7,nome:'Subir assets da campanha para os dealers',area:'Atendimento',dur:1,escopo:'pais',deps:[['F2-12','FS']]},
- {id:'F3-01',fase:9,nome:'Receber as landing pages programadas',area:'Atendimento',dur:1,escopo:'global',deps:[['F1-14','FS']]},
  {id:'F3-02',fase:9,nome:'Revisar as LPs recebidas — layout, textos, traduções e formulário',area:'Design + Conteúdo',dur:1,escopo:'pais',deps:[['F3-01','FS']]},
  {id:'F3-04',fase:7,nome:'Subir LP no linktree',area:'Digital',dur:1,escopo:'global',deps:[['F3-02','FS']]},
  {id:'F3-03',fase:9,nome:'Programar a campanha no gerenciador e lançar',area:'Digital',dur:2,escopo:'pais',fimNoLanc:true,deps:[['F3-02','FS'],['F2-12','FS'],['F2-13','FS']]}
 ];
-const VERSAO_MODELO_PLANILHA = 'planilha-2026-11';
+const VERSAO_MODELO_PLANILHA = 'planilha-2026-11b';
 const NOMES_SEM_PARENTESES = {"Criar layout da LP (em paralelo com a tradução)": "Criar layout da LP", "Traduzir conteúdo da LP (em paralelo com a criação do layout)": "Traduzir conteúdo da LP", "Validar layout da LP (em paralelo com a validação do conteúdo traduzido)": "Validar layout da LP", "Validar conteúdo traduzido da LP (em paralelo com a validação do layout)": "Validar conteúdo traduzido da LP", "Configuração LP Sales Force (30 dias corridos)": "Configuração LP Sales Force", "Traduzir conteúdos (em paralelo com a criação dos assets)": "Traduzir conteúdos", "Validar traduções (não depende da aprovação dos assets)": "Validar traduções", "Programação da LP (fornecedor)": "Programação da LP"};
 /* etapa nova de cada código antigo (para campanhas criadas antes desta organização) */
 const FASE_POR_ID = Object.fromEntries(MODELO_PADRAO.map(m=>[m.id, m.fase]));
@@ -421,6 +421,9 @@ const hojeUtil = (cal='AG') => paraFrente(HOJE,cal,ctx());
    ===================================================================== */
 function nomeTarefa(t, base){ return t.nome.replace('{base}', (IDIOMAS[base]||base).toLowerCase()); }
 
+/* dependência com defasagem: lag = dias corridos de espera depois da anterior */
+const iniApos = (p, d, cal, c) => d.tipo==='FS' ? (d.lag ? paraFrente(addDias(p.EF, d.lag), cal, c) : proxU(p.EF, cal, c)) : paraFrente(d.lag ? addDias(p.ES, d.lag) : p.ES, cal, c);
+const limAntes = (lsSucc, s, cal, c) => s.tipo==='FS' ? (s.lag ? paraTras(addDias(lsSucc, -s.lag), cal, c) : antU(lsSucc, cal, c)) : paraTras(s.lag ? addDias(lsSucc, -s.lag) : lsSucc, cal, c);
 function montarGrafo(camp, modelo){
   const base = camp.idiomaBase, porTpl = Object.fromEntries(modelo.map(t=>[t.id,t])), nos = {}, excl = new Set(camp.excluidas||[]);
   for (const t of modelo) {
@@ -429,11 +432,11 @@ function montarGrafo(camp, modelo){
   }
   for (const n of Object.values(nos)) {
     n.deps0 = [];
-    for (const [de,tipo] of n.t.deps) {
+    for (const [de,tipo,lag] of n.t.deps) {
       const pt = porTpl[de]; if (!pt) continue;
-      if (pt.escopo==='global') n.deps0.push({id:de,tipo});
-      else if (n.pais) n.deps0.push({id:de+'@'+n.pais,tipo});
-      else for (const p of camp.paises) n.deps0.push({id:de+'@'+p.cod,tipo});
+      if (pt.escopo==='global') n.deps0.push({id:de,tipo,lag:+lag||0});
+      else if (n.pais) n.deps0.push({id:de+'@'+n.pais,tipo,lag:+lag||0});
+      else for (const p of camp.paises) n.deps0.push({id:de+'@'+p.cod,tipo,lag:+lag||0});
     }
   }
   // tarefa que "não se aplica" (país no idioma-base) é atravessada: o sucessor herda as predecessoras dela
@@ -441,7 +444,7 @@ function montarGrafo(camp, modelo){
     const out = [];
     for (const d of lista) {
       const alvo = nos[d.id]; if (!alvo || vis.has(d.id)) continue;
-      if (alvo.skip) { const v2 = new Set(vis); v2.add(d.id); for (const r of resolver(alvo.deps0, v2)) out.push({id:r.id, tipo: d.tipo==='SS' ? 'SS' : r.tipo}); }
+      if (alvo.skip) { const v2 = new Set(vis); v2.add(d.id); for (const r of resolver(alvo.deps0, v2)) out.push({id:r.id, tipo: d.tipo==='SS' ? 'SS' : r.tipo, lag: Math.max(d.lag||0, r.lag||0)}); }
       else out.push(d);
     }
     return out;
@@ -449,13 +452,13 @@ function montarGrafo(camp, modelo){
   const lista = Object.values(nos).filter(n=>!n.skip);
   for (const n of lista) {
     const m = {};
-    for (const d of resolver(n.deps0, new Set())) if (!m[d.id] || d.tipo==='FS') m[d.id] = d.tipo;
-    n.deps = Object.entries(m).map(([id,tipo])=>({id,tipo}));
+    for (const d of resolver(n.deps0, new Set())) if (!m[d.id] || d.tipo==='FS') m[d.id] = d;
+    n.deps = Object.values(m).map(d=>d.lag ? {id:d.id, tipo:d.tipo, lag:d.lag} : {id:d.id, tipo:d.tipo});
     n.cal = n.t.corridos ? 'CORR' : (n.t.area==='Validadores locais' && n.pais) ? n.pais : 'AG';
     n.dur = Math.max(1, +n.t.dur||1); n.succ = [];
   }
   const porId = Object.fromEntries(lista.map(n=>[n.id,n]));
-  for (const n of lista) for (const d of n.deps) porId[d.id].succ.push({id:n.id,tipo:d.tipo});
+  for (const n of lista) for (const d of n.deps) porId[d.id].succ.push({id:n.id,tipo:d.tipo,lag:d.lag||0});
   // ordem topológica
   const grau = Object.fromEntries(lista.map(n=>[n.id,n.deps.length])), fila = lista.filter(n=>!n.deps.length), ordem = [];
   while (fila.length) { const n = fila.shift(); ordem.push(n); for (const s of n.succ) if (--grau[s.id]===0) fila.push(porId[s.id]); }
@@ -474,8 +477,8 @@ function calcularCronograma(camp, op = {}){
     if (!n.succ.length) lf = paraTras(n.pais ? lanc(n.pais) : camp.lancamento, n.cal, c);
     for (const s of n.succ) {
       const S2 = porId[s.id];
-      if (s.tipo==='FS') { const v = antU(S2.LS, n.cal, c); if (!lf || v<lf) lf = v; }
-      else { const v = paraTras(S2.LS, n.cal, c); if (!lsCap || v<lsCap) lsCap = v; }
+      if (s.tipo==='FS') { const v = limAntes(S2.LS, s, n.cal, c); if (!lf || v<lf) lf = v; }
+      else { const v = limAntes(S2.LS, s, n.cal, c); if (!lsCap || v<lsCap) lsCap = v; }
     }
     let ls = lf ? iniDe(lf, n.dur, n.cal, c) : null;
     if (lsCap && (!ls || lsCap<ls)) ls = lsCap;
@@ -488,7 +491,7 @@ function calcularCronograma(camp, op = {}){
     if (fx && fx.ini) es = fx.ini;
     else {
       es = n.deps.length ? null : inicio;
-      for (const d of n.deps) { const p = porId[d.id]; const v = d.tipo==='FS' ? proxU(p.EF, n.cal, c) : paraFrente(p.ES, n.cal, c); if (!es || v>es) es = v; }
+      for (const d of n.deps) { const p = porId[d.id]; const v = iniApos(p, d, n.cal, c); if (!es || v>es) es = v; }
       es = paraFrente(es, n.cal, c);
       if (op.naoAntesDe && es < op.naoAntesDe) es = paraFrente(op.naoAntesDe, n.cal, c);
       if (n.t.fimNoLanc && es < n.LS) es = n.LS;          // última etapa termina exatamente no lançamento
@@ -512,14 +515,14 @@ function calcularCronograma(camp, op = {}){
 /* recalcula folga, caminho crítico e viabilidade depois de um ajuste manual (datas planejadas ficam como estão) */
 function recalcFolgas(camp){
   const cx = ctx(), ts = camp.crono.tarefas, porId = Object.fromEntries(ts.map(t=>[t.id,t])), succ = {};
-  ts.forEach(t=>succ[t.id]=[]); ts.forEach(t=>t.deps.forEach(d=>{ if (succ[d.id]) succ[d.id].push(d.tipo==='FS'?{id:t.id,tipo:'FS'}:{id:t.id,tipo:'SS'}); }));
+  ts.forEach(t=>succ[t.id]=[]); ts.forEach(t=>t.deps.forEach(d=>{ if (succ[d.id]) succ[d.id].push({id:t.id, tipo:d.tipo==='FS'?'FS':'SS', lag:d.lag||0}); }));
   const lanc = cod => (camp.paises.find(p=>p.cod===cod)||{}).lancamento || camp.lancamento;
   for (const t of [...ts].reverse()) {
     let lf = null, lsCap = null;
     if (!succ[t.id].length) lf = paraTras(t.pais ? lanc(t.pais) : camp.lancamento, t.cal, cx);
     for (const s of succ[t.id]) { const S2 = porId[s.id];
-      if (s.tipo==='FS') { const v = antU(S2.LS, t.cal, cx); if (!lf || v<lf) lf = v; }
-      else { const v = paraTras(S2.LS, t.cal, cx); if (!lsCap || v<lsCap) lsCap = v; } }
+      if (s.tipo==='FS') { const v = limAntes(S2.LS, s, t.cal, cx); if (!lf || v<lf) lf = v; }
+      else { const v = limAntes(S2.LS, s, t.cal, cx); if (!lsCap || v<lsCap) lsCap = v; } }
     let ls = lf ? iniDe(lf, t.dur, t.cal, cx) : null; if (lsCap && (!ls || lsCap<ls)) ls = lsCap;
     t.LS = ls; t.LF = fimDe(ls, t.dur, t.cal, cx); t.folga = uteisEntre(t.ES, t.LS, t.cal, cx); t.critico = t.folga<=0;
   }
@@ -528,7 +531,7 @@ function recalcFolgas(camp){
 /* etapas seguintes que passam a começar antes do que a dependência permite */
 function conflitosMov(camp, t, ES, EF){
   const cx = ctx();
-  return camp.crono.tarefas.filter(s=>s.status!=='Concluída' && s.deps.some(d=>d.id===t.id && (d.tipo==='FS' ? proxU(EF,s.cal,cx) > s.ES : paraFrente(ES,s.cal,cx) > s.ES)));
+  return camp.crono.tarefas.filter(s=>s.status!=='Concluída' && s.deps.some(d=>d.id===t.id && iniApos({ES, EF}, d, s.cal, cx) > s.ES));
 }
 /* aplica o ajuste; com empurrar=true, as etapas que dependem dela (direta ou indiretamente) andam para frente mantendo a duração */
 function moverTarefa(camp, tid, ES, EF, empurrar){
@@ -538,7 +541,7 @@ function moverTarefa(camp, tid, ES, EF, empurrar){
   if (empurrar) { const afet = new Set([tid]);
     for (const s of ts) { if (s===t || s.status==='Concluída') continue;
       let es = null;
-      for (const d of s.deps) { if (!afet.has(d.id)) continue; const p = porId[d.id]; const v = d.tipo==='FS' ? proxU(p.EF, s.cal, cx) : paraFrente(p.ES, s.cal, cx); if (!es || v>es) es = v; }
+      for (const d of s.deps) { if (!afet.has(d.id)) continue; const p = porId[d.id]; const v = iniApos(p, d, s.cal, cx); if (!es || v>es) es = v; }
       if (es && es > s.LS) { es = s.LS > s.ES ? s.LS : s.ES; travadas.push(s); }   // não passa do limite: o lançamento fica fixo
       if (es && es > s.ES) { s.ES = es; s.EF = fimDe(es, s.dur, s.cal, cx); if (s.EF > s.LF && s.LF >= s.ES) s.EF = s.LF; afet.add(s.id); movidas.push(s); }
     } }
@@ -549,7 +552,7 @@ function moverTarefa(camp, tid, ES, EF, empurrar){
 function excluirEtapas(camp, ids, chaves){
   const ts = camp.crono.tarefas, rem = new Set(ids), por = Object.fromEntries(ts.map(t=>[t.id,t]));
   const herdar = (d, vis) => { if (!rem.has(d.id)) return [d]; if (vis.has(d.id)) return []; vis.add(d.id);
-    return por[d.id].deps.flatMap(e => herdar({id:e.id, tipo: d.tipo==='SS' ? 'SS' : e.tipo}, vis)); };
+    return por[d.id].deps.flatMap(e => herdar({id:e.id, tipo: d.tipo==='SS' ? 'SS' : e.tipo, lag: Math.max(d.lag||0, e.lag||0)}, vis)); };
   for (const t of ts) { if (rem.has(t.id)) continue; const m = {};
     for (const d of t.deps) for (const r of herdar(d, new Set())) if (!m[r.id] || r.tipo==='FS') m[r.id] = r.tipo;
     t.deps = Object.entries(m).map(([id,tipo])=>({id,tipo})); }
@@ -566,13 +569,13 @@ function moverConectado(camp, tid, ES, EF){
   const cx = ctx(), ts = camp.crono.tarefas, por = Object.fromEntries(ts.map(t=>[t.id,t])), t = por[tid], movidas = new Set(), travadas = [];
   t.ES = ES; t.EF = EF; t.dur = uteisEntre(ES, EF, t.cal, cx) + 1; t.manual = true;
   const puxar = x => { for (const d of x.deps) { const p = por[d.id]; if (!p || p.status!=='Não iniciada') continue;
-      if (d.tipo==='FS') { const lim = antU(x.ES, p.cal, cx); if (p.EF > lim) { p.EF = lim; p.ES = iniDe(lim, p.dur, p.cal, cx); p.manual = true; movidas.add(p.id); puxar(p); } }
+      if (d.tipo==='FS') { const lim = limAntes(x.ES, d, p.cal, cx); if (p.EF > lim) { p.EF = lim; p.ES = iniDe(lim, p.dur, p.cal, cx); p.manual = true; movidas.add(p.id); puxar(p); } }
       else if (p.ES > x.ES) { p.ES = paraTras(x.ES, p.cal, cx); p.EF = fimDe(p.ES, p.dur, p.cal, cx); p.manual = true; movidas.add(p.id); puxar(p); } } };
   puxar(t);
   const succ = {}; ts.forEach(x=>x.deps.forEach(d=>(succ[d.id] = succ[d.id]||[]).push(x.id)));
   const desc = new Set(), fila = [tid, ...movidas]; while (fila.length) for (const sid of succ[fila.shift()]||[]) if (!desc.has(sid)) { desc.add(sid); fila.push(sid); }
   for (const s of ts) { if (s===t || !desc.has(s.id) || s.status!=='Não iniciada' || s.marco) continue;
-    let es = null; for (const d of s.deps) { const p = por[d.id]; if (!p) continue; const v = d.tipo==='FS' ? proxU(p.EF, s.cal, cx) : paraFrente(p.ES, s.cal, cx); if (!es || v>es) es = v; }
+    let es = null; for (const d of s.deps) { const p = por[d.id]; if (!p) continue; const v = iniApos(p, d, s.cal, cx); if (!es || v>es) es = v; }
     if (!es) continue;
     if (es > s.LS) { es = s.LS; travadas.push(s); }   // não passa do limite: o lançamento fica fixo
     if (es!==s.ES) { s.ES = es; s.EF = fimDe(es, s.dur, s.cal, cx); if (s.manual) s.manual = true; movidas.add(s.id); } }
@@ -2216,10 +2219,11 @@ const ACT = {
   /* configurações */
   salvarModelo: () => { const fm = $('#form-modelo'), v = ler(fm), T = JSON.parse(JSON.stringify(S.modelo.tarefas)), ids = new Set(T.map(t=>t.id)), err = [];
     T.forEach((t,i)=>{ t.nome = v['nome_'+i]; t.area = v['area_'+i]; t.dur = Math.max(1, Math.round(+v['dur_'+i]||1));
-      t.deps = v['deps_'+i].split(',').map(s=>s.trim()).filter(Boolean).map(s=>{ const [id,tipo='FS'] = s.split(/\s+/); if (!ids.has(id)) err.push(`${t.id}: código ${id} não existe`); if (!['FS','SS'].includes(tipo.toUpperCase())) err.push(`${t.id}: tipo ${tipo} inválido (use FS ou SS)`); return [id,tipo.toUpperCase()]; }); });
+      t.deps = v['deps_'+i].split(',').map(s=>s.trim()).filter(Boolean).map(s=>{ const [id,tipo='FS',lag] = s.split(/\s+/); if (!ids.has(id)) err.push(`${t.id}: código ${id} não existe`); if (!['FS','SS'].includes(tipo.toUpperCase())) err.push(`${t.id}: tipo ${tipo} inválido (use FS ou SS)`); return +lag>0 ? [id,tipo.toUpperCase(),+lag] : [id,tipo.toUpperCase()]; }); });
+    T.forEach(t=>{ if (t.corridos && t.dur>1 && !/corridos/.test(t.nome)) {} });
     if (!err.length) { try { montarGrafo({idiomaBase:'EN',paises:[{cod:'DE',idioma:'DE'}]}, T); } catch(e) { err.push(e.message); } }
     if (err.length) return abrirModal('Não foi possível salvar', `<div class="alerta verm"><i data-lucide="alert-circle"></i><div>${err.map(h).join('<br>')}</div></div>`, `<button class="btn" data-act="fechar">Ok</button>`);
-    S.modeloHist.unshift({versao:S.modelo.versao,data:S.modelo.data,tarefas:S.modelo.tarefas}); S.modelo = {versao:S.modelo.versao+1,data:HOJE,tarefas:T};
+    S.modeloHist.unshift({versao:S.modelo.versao,data:S.modelo.data,tarefas:S.modelo.tarefas}); S.modelo = {versao:S.modelo.versao+1,data:HOJE,origem:S.modelo.origem,tarefas:T};
     registrar('Modelo de cronograma salvo — versão '+S.modelo.versao); render(); toast('Versão '+S.modelo.versao+' salva. Vale para novas campanhas.'); },
   formFeriado: el => { const f = S.feriados.find(x=>x.id===el.dataset.f) || {ativo:true,abrang:'Nacional',pais:'BR'};
     abrirModal(f.id?'Editar feriado':'Novo feriado', `<form id="f-fer" class="form-g"><label class="campo">Nome<input name="nome" value="${h(f.nome||'')}"></label><label class="campo">Data<input type="date" name="data" value="${f.data||''}"></label>
