@@ -308,6 +308,7 @@ function idiomaBaseDe(paises, atual){
   const ls = [...new Set(paises.map(p=>p.idioma||PAISES[p.cod].i))];
   if (ls.length===1) return ls[0];
   return atual || (paises[0] ? S.baseRegiao[PAISES[paises[0].cod].r] : '') || 'EN'; }
+const MARCA_SEP = 'PTx Trimble + Precision Planting (separadas)', MARCAS_SEP = ['PTx Trimble','Precision Planting'];
 const MARCAS = ['PTx Trimble','Precision Planting','Collab','PTx Trimble + Precision Planting (separadas)'];
 const OBJETIVOS = ['Geração de leads','Awareness'];
 const RESPONSAVEIS = ['Karen','Tamiris','Jéssica','Giovanna'];
@@ -1496,20 +1497,22 @@ function abaBudgetAntiga(c){
 
 /* ---------- Entregáveis ---------- */
 function abaEntregaveis(c){
-  const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:''});
-  const temOrg = temOrganico(c);
+  const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:'',marca:''});
+  const temOrg = temOrganico(c), sep = c.marca===MARCA_SEP;
   const sub = `<div class="seg" style="margin-bottom:14px"><button class="${f.sub==='pecas'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="pecas"><i data-lucide="package"></i>Peças</button><button class="${f.sub==='conteudos'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="conteudos"><i data-lucide="languages"></i>Conteúdos por país</button>${temOrg?`<button class="${f.sub==='editorial'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="editorial"><i data-lucide="calendar-days"></i>Calendário editorial</button>`:''}</div>`;
   if (f.sub==='conteudos') return sub + conteudosPorPais(c);
   if (f.sub==='editorial' && temOrg) return sub + calendarioEditorial([c], c.id);
-  const L = c.entregaveis.filter(e=>(!f.canal||e.canal===f.canal)&&(!f.pais||e.paises.includes(f.pais))&&(!f.etapa||e.etapa===f.etapa));
+  const L = c.entregaveis.filter(e=>(!f.canal||e.canal===f.canal)&&(!f.pais||e.paises.includes(f.pais))&&(!f.etapa||e.etapa===f.etapa)&&(!sep||!f.marca||e.marca===f.marca)).sort((a,b)=>sep ? (a.nome||'').localeCompare(b.nome||'') || MARCAS_SEP.indexOf(a.marca) - MARCAS_SEP.indexOf(b.marca) : 0);
+  const semMarca = sep ? c.entregaveis.filter(e=>!e.marca).length : 0;
+  const tagMarca = e => sep && e.marca ? ` <span class="tag ${e.marca==='PTx Trimble'?'t-verde-c':'t-pet'}">${h(e.marca)}</span>` : '';
   const stCont = e => { const a = e.aprovacoes.filter(x=>x.tipo==='Conteúdo').pop(); return a ? (a.resultado==='Aprovado'?'Aprovado':a.resultado) : (e.etapa==='aprov_conteudo'?'Aguardando aprovação':'Pendente'); };
   const stDes = e => ({briefing:'Não iniciado',aprov_conteudo:'Não iniciado',ajuste_conteudo:'Não iniciado',producao:'Em produção',aprov_asset:'Aguardando aprovação',ajuste_asset:'Em ajustes',concluido:'Aprovado'})[e.etapa];
   const stFin = e => e.etapa==='concluido' ? 'Aprovado' : 'Pendente';
-  return sub + `<div class="card"><div class="card-cab"><div class="seg"><button class="${f.visao==='tabela'?'ativo':''}" data-act="ui" data-k="fen.visao" data-v="tabela"><i data-lucide="table"></i>Tabela</button><button class="${f.visao==='cards'?'ativo':''}" data-act="ui" data-k="fen.visao" data-v="cards"><i data-lucide="layout-grid"></i>Cards</button></div>
-   <div class="filtros"><select data-chg="fen.canal">${opts(c.canais,f.canal,'Todos os canais')}</select><select data-chg="fen.pais">${opts(c.paises.map(p=>[p.cod,PAISES[p.cod].n]),f.pais,'Todos os países')}</select><select data-chg="fen.etapa">${opts(Object.entries(ETAPAS_ENT),f.etapa,'Todas as etapas')}</select><button class="btn btn-p" data-act="formEnt" data-id="${c.id}"><i data-lucide="plus"></i>Novo entregável</button></div></div>
+  return sub + (semMarca ? `<div class="alerta azul" style="margin-bottom:12px"><i data-lucide="copy"></i><div style="flex:1">Esta campanha é separada para PTx Trimble e Precision Planting. ${semMarca} peça(s) ainda não têm marca.</div><button class="btn btn-s" data-act="duplicarPorMarca" data-id="${c.id}">Duplicar por marca</button></div>` : '') + `<div class="card"><div class="card-cab"><div class="seg"><button class="${f.visao==='tabela'?'ativo':''}" data-act="ui" data-k="fen.visao" data-v="tabela"><i data-lucide="table"></i>Tabela</button><button class="${f.visao==='cards'?'ativo':''}" data-act="ui" data-k="fen.visao" data-v="cards"><i data-lucide="layout-grid"></i>Cards</button></div>
+   <div class="filtros"><select data-chg="fen.canal">${opts(c.canais,f.canal,'Todos os canais')}</select><select data-chg="fen.pais">${opts(c.paises.map(p=>[p.cod,PAISES[p.cod].n]),f.pais,'Todos os países')}</select><select data-chg="fen.etapa">${opts(Object.entries(ETAPAS_ENT),f.etapa,'Todas as etapas')}</select>${sep?`<select data-chg="fen.marca">${opts(MARCAS_SEP,f.marca,'Todas as marcas')}</select>`:''}<button class="btn btn-p" data-act="formEnt" data-id="${c.id}"><i data-lucide="plus"></i>Novo entregável</button></div></div>
   ${f.visao==='tabela' ? `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Entregável</th><th>Canal</th><th>País</th><th>Prazo</th><th>Conteúdo</th><th>Design</th><th>Aprovação final</th><th>Etapa atual</th></tr></thead><tbody>
-   ${L.map(e=>`<tr class="clic" data-act="abrirEnt" data-id="${c.id}" data-e="${e.id}"><td><b>${h(e.nome)}</b><div class="small muted">${h(e.formato)} · v${e.versoes.length||0}</div></td><td>${h(e.canal)}</td><td>${e.paises.map(p=>PAISES[p].f).join(' ')}${e.paises.length>1?` <span class="small muted">(compartilhado)</span>`:''}</td><td class="num">${fd(e.prazo)}</td><td>${tag(stCont(e))}</td><td>${tag(stDes(e))}</td><td>${tag(stFin(e))}</td><td>${tag(ETAPAS_ENT[e.etapa])}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Nenhum entregável.</td></tr>'}</tbody></table></div>`
-  : `<div class="card-p">${CANAIS.filter(k=>L.some(e=>e.canal===k)).map(k=>`<h3 style="margin:6px 0 10px">${k}</h3><div class="grade g3" style="margin-bottom:16px">${L.filter(e=>e.canal===k).map(e=>`<div class="card card-p" style="cursor:pointer" data-act="abrirEnt" data-id="${c.id}" data-e="${e.id}"><div style="display:flex;justify-content:space-between;gap:6px"><b>${h(e.nome)}</b>${tag(ETAPAS_ENT[e.etapa])}</div><div class="small muted" style="margin:6px 0">${e.paises.map(p=>pais(p)).join(', ')} · ${h(e.formato)}</div><div class="small">Prazo ${fd(e.prazo)} · Conteúdo: ${h(nomeU(e.respConteudo))} · Design: ${h(nomeU(e.respDesign))}</div></div>`).join('')}</div>`).join('') || '<div class="vazio">Nenhum entregável.</div>'}</div>`}</div>`;
+   ${L.map(e=>`<tr class="clic" data-act="abrirEnt" data-id="${c.id}" data-e="${e.id}"><td><b>${h(e.nome)}</b>${tagMarca(e)}<div class="small muted">${h(e.formato)} · v${e.versoes.length||0}</div></td><td>${h(e.canal)}</td><td>${e.paises.map(p=>PAISES[p].f).join(' ')}${e.paises.length>1?` <span class="small muted">(compartilhado)</span>`:''}</td><td class="num">${fd(e.prazo)}</td><td>${tag(stCont(e))}</td><td>${tag(stDes(e))}</td><td>${tag(stFin(e))}</td><td>${tag(ETAPAS_ENT[e.etapa])}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Nenhum entregável.</td></tr>'}</tbody></table></div>`
+  : `<div class="card-p">${CANAIS.filter(k=>L.some(e=>e.canal===k)).map(k=>`<h3 style="margin:6px 0 10px">${k}</h3><div class="grade g3" style="margin-bottom:16px">${L.filter(e=>e.canal===k).map(e=>`<div class="card card-p" style="cursor:pointer" data-act="abrirEnt" data-id="${c.id}" data-e="${e.id}"><div style="display:flex;justify-content:space-between;gap:6px"><b>${h(e.nome)}${tagMarca(e)}</b>${tag(ETAPAS_ENT[e.etapa])}</div><div class="small muted" style="margin:6px 0">${e.paises.map(p=>pais(p)).join(', ')} · ${h(e.formato)}</div><div class="small">Prazo ${fd(e.prazo)} · Conteúdo: ${h(nomeU(e.respConteudo))} · Design: ${h(nomeU(e.respDesign))}</div></div>`).join('')}</div>`).join('') || '<div class="vazio">Nenhum entregável.</div>'}</div>`}</div>`;
 }
 function conteudosPorPais(c){
   const m = c.master, base = IDIOMAS[c.idiomaBase];
@@ -2101,6 +2104,7 @@ const ACT = {
   /* entregáveis */
   formEnt: el => { const c = camp(el.dataset.id), e = c.entregaveis.find(x=>x.id===el.dataset.e) || {paises:[],briefing:{}};
     abrirModal(e.id?'Editar entregável':'Novo entregável — briefing', `<form id="f-ent" class="form-g"><label class="campo">Nome da peça *<input name="nome" value="${h(e.nome||'')}"></label><label class="campo">Canal<select name="canal">${opts(c.canais,e.canal)}</select></label>
+      ${c.marca===MARCA_SEP ? `<div class="campo tudo">Marca da peça<div class="chips">${(e.id?MARCAS_SEP:[...MARCAS_SEP,'Ambas (cria uma peça para cada marca)']).map(k=>`<label class="chip ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'on':''}"><input type="radio" name="marcaPeca" value="${k}" ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'checked':''} style="display:none" onchange="this.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.contains(this)))">${k}</label>`).join('')}</div></div>` : ''}
       <div class="campo tudo">Países (marque vários se o arquivo for o mesmo para todos)<div class="chips">${c.paises.map(p=>`<label class="chip ${e.paises.includes(p.cod)?'on':''}"><input type="checkbox" name="pais" value="${p.cod}" ${e.paises.includes(p.cod)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${pais(p.cod)}</label>`).join('')}</div></div>
       <label class="campo">Idioma<select name="idioma">${opts([...Object.entries(IDIOMAS),['Sem fala','Sem texto / sem fala']],e.idioma)}</select></label><label class="campo">Formato<input name="formato" value="${h(e.formato||'')}" placeholder="Ex.: 1080×1350"></label>
       <label class="campo">Objetivo<input name="objetivo" value="${h(e.objetivo||'')}"></label><label class="campo">Prazo<input type="date" name="prazo" value="${e.prazo||''}"></label>
@@ -2111,9 +2115,19 @@ const ACT = {
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarEnt" data-id="${c.id}" data-e="${e.id||''}">Salvar</button>`, true); },
   salvarEnt: el => { const c = camp(el.dataset.id), fm = $('#f-ent'), v = ler(fm); if (!v.nome.trim()) return toast('Informe o nome da peça.');
     const paises = [...fm.querySelectorAll('input[name=pais]:checked')].map(x=>x.value); if (!paises.length) return toast('Escolha pelo menos um país.');
-    let e = c.entregaveis.find(x=>x.id===el.dataset.e); if (!e) { e = {id:novoId('e'),etapa:'briefing',link:'',versoes:[],aprovacoes:[]}; c.entregaveis.push(e); }
+    const mp = v.marcaPeca; delete v.marcaPeca;
     const br = {}; for (const k in v) if (k.startsWith('b_')) { br[k.slice(2)] = v[k]; delete v[k]; } delete v.pais;
-    Object.assign(e, v, {paises, briefing:br}); registrar(`Entregável salvo em “${c.nome}”: ${e.nome}`); fecharModal(); render(); },
+    let e = c.entregaveis.find(x=>x.id===el.dataset.e);
+    if (!e && c.marca===MARCA_SEP && (!mp || mp.startsWith('Ambas'))) {
+      // uma peça para cada marca, com o mesmo briefing
+      for (const mk of MARCAS_SEP) c.entregaveis.push(Object.assign({id:novoId('e'),etapa:'briefing',link:'',versoes:[],aprovacoes:[]}, v, {paises, briefing:JSON.parse(JSON.stringify(br)), marca:mk}));
+      registrar(`Entregável salvo em “${c.nome}”: ${v.nome} (uma peça para cada marca)`); fecharModal(); render(); return toast('Criadas 2 peças: PTx Trimble e Precision Planting.'); }
+    if (!e) { e = {id:novoId('e'),etapa:'briefing',link:'',versoes:[],aprovacoes:[]}; c.entregaveis.push(e); }
+    Object.assign(e, v, {paises, briefing:br}); if (c.marca===MARCA_SEP && mp && !mp.startsWith('Ambas')) e.marca = mp;
+    registrar(`Entregável salvo em “${c.nome}”: ${e.nome}${e.marca?' ('+e.marca+')':''}`); fecharModal(); render(); },
+  duplicarPorMarca: el => { const c = camp(el.dataset.id), sem = c.entregaveis.filter(e=>!e.marca); if (!sem.length) return;
+    for (const e of sem) { const copia = JSON.parse(JSON.stringify(e)); e.marca = MARCAS_SEP[0]; Object.assign(copia, {id:novoId('e'), marca:MARCAS_SEP[1], etapa:'briefing', link:'', versoes:[], aprovacoes:[]}); c.entregaveis.push(copia); }
+    registrar(`Peças separadas por marca em “${c.nome}”: ${sem.length} peça(s) duplicada(s)`); render(); toast(`${sem.length} peça(s) duplicada(s): uma para PTx Trimble e outra para Precision Planting.`); },
   abrirEnt: el => { const c = camp(el.dataset.id), e = c.entregaveis.find(x=>x.id===el.dataset.e);
     const passos = ['briefing','aprov_conteudo','producao','aprov_asset','concluido'], at = passos.indexOf(e.etapa.replace('ajuste_conteudo','aprov_conteudo').replace('ajuste_asset','aprov_asset'));
     let acoes = '';
