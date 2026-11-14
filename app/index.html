@@ -157,6 +157,10 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .faixa-fim.ok{background:#e7f4e8;color:#1f5a23;border:1px solid #bfe0c2}.faixa-fim.nao{background:#fdf3d8;color:#7a4f00;border:1px solid #f1dc9f}.faixa-fim.neutra{background:#eef1f2;color:#4d5b60;border:1px solid #dde3e5}
 .tag-clic{cursor:pointer}.tag-clic:hover{filter:brightness(.95)}.tag-clic.on{background:var(--pet-700);color:#fff}
 .cc-per{display:flex;align-items:center;gap:5px;margin-top:4px}.cc-per svg{width:13px;height:13px}
+.st-resumo{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:0 0 12px;font-size:.88rem}.st-resumo i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.ponto-st{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}.st-nome{font-weight:600;color:var(--pet-900);text-decoration:none}.st-nome:hover{text-decoration:underline}
+.st-tab td{vertical-align:top}.st-obs textarea{width:100%;min-width:200px;border:1px solid var(--borda);border-radius:8px;padding:6px 8px;font:inherit;font-size:.84rem;resize:vertical}
+.st-tab tr.st-sub td{background:#fafcfc;font-size:.86rem}
 .saude-filtros{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.saude-filtros .seg-etapa{margin-bottom:0}.seg-marca button{padding:7px 12px}
 .sd-pais a.sd-clic{color:inherit;text-decoration:none;border-radius:5px;padding:1px 4px;margin:0 -4px}.sd-pais a.sd-clic:hover{background:#e6eef1;text-decoration:underline}.sd-pais a.sd-clic.on{background:var(--pet-700);color:#fff}
 .seg-etapa{margin-bottom:14px;display:inline-flex;flex-wrap:wrap}.seg-etapa button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px}.seg-etapa .fase-num{width:20px;height:20px;font-size:.72rem}.seg-etapa button:not(.ativo) .fase-num{background:#9aa9ae}
@@ -1129,11 +1133,11 @@ function render(){
   fecharMenuBarra();
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida).length;
-  const itens = [['dashboard','layout-dashboard','Dashboard'],['clientes','building-2','Clientes'],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','bell','Notificações',nN],['config','settings','Configurações']];
+  const itens = [['dashboard','layout-dashboard','Dashboard'],['clientes','building-2','Clientes'],['status','list-checks','Status pontual'],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','bell','Notificações',nN],['config','settings','Configurações']];
   const sec = r[0]==='campanha' ? 'clientes' : r[0];
   $('#menu').innerHTML = itens.map(([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`).join('');
   $('#hoje-txt').textContent = fd(HOJE);
-  const pg = {dashboard:pgDashboard,clientes:pgClientes,campanha:pgCampanha,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
+  const pg = {dashboard:pgDashboard,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
   try { $('#app').innerHTML = pg(r); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
@@ -2010,6 +2014,59 @@ function abaMercados(c){
 }
 
 /* =====================================================================
+   STATUS PONTUAL: todas as campanhas no ar numa tabela (meta × atual de custo e resultado)
+   ===================================================================== */
+/* números da Saúde de uma campanha numa fase/marca, sem mexer nos filtros da tela */
+function metricasStatus(c, etapa, marca){
+  const bkE = (UI.etapa||{})[c.id], bkM = (UI.sMarca||{})[c.id], bkP = (UI.sPais||{})[c.id];
+  UI.etapa = UI.etapa||{}; UI.sMarca = UI.sMarca||{}; UI.sPais = UI.sPais||{};
+  if (etapa) UI.etapa[c.id] = etapa; UI.sMarca[c.id] = marca||null; UI.sPais[c.id] = null;
+  let S2; try { S2 = dadosSaude(c); } finally { UI.etapa[c.id] = bkE; UI.sMarca[c.id] = bkM; UI.sPais[c.id] = bkP; }
+  const L = S2.linhas; if (!L.length) return {S2, vazio:true};
+  const soma = k => L.reduce((t,x)=>t+(+x[k]||0),0), moe = L[0].moeda, inv = soma('inv'), bud = soma('bud');
+  const aw = L.every(x=>x.objetivo==='Awareness');
+  if (aw) { const real = soma('engaj'), comM = L.filter(x=>x.custoAw>0), meta = comM.length===L.length ? comM.reduce((t,x)=>t+x.bud/x.custoAw,0) : null;
+    return {S2, aw, moe, inv, bud, rotRes:'engajamentos', rotCusto:'custo por engajamento', real, meta, custo: real ? inv/real : null, custoMeta: meta ? bud/meta : null}; }
+  const real = soma('leads'), meta = L.every(x=>x.leadsMeta) ? soma('leadsMeta') : null, lmx = L.every(x=>x.cplMeta>0) ? L.reduce((t,x)=>t+x.bud/x.cplMeta,0) : null;
+  return {S2, aw, moe, inv, bud, rotRes:'leads', rotCusto:'CPL', real, meta, custo: real ? inv/real : null, custoMeta: lmx ? bud/lmx : null}; }
+const campanhaNoAr = c => c.status!=='Concluída' && (c.status==='Em veiculação' || (c.lancamento && c.fimVeiculacao && c.lancamento<=HOJE && HOJE<=c.fimVeiculacao));
+/* fases que estão no ar hoje (ou a mais recente que já começou) */
+function fasesNoAr(c){ if (!faseada(c)) return [null];
+  const noAr = FASES_CAMP.filter(f=>{ const p = periodoFase(c,f); return p.ini && p.fim && p.ini<=HOJE && HOJE<=p.fim; });
+  if (noAr.length) return noAr; const ja = FASES_CAMP.filter(f=>{ const p = periodoFase(c,f); return p.ini && p.ini<=HOJE; }); return ja.length ? [ja[ja.length-1]] : [FASES_CAMP[0]]; }
+function pgStatus(){
+  migalha([['Status pontual']]);
+  const ab = UI.stAberto || (UI.stAberto = {}), ed = ehEquipe();
+  const pctTag = (v, inverso) => { if (v==null || !isFinite(v)) return '<span class="muted">—</span>';
+    const bom = inverso ? v<=1 : v>=1, perto = inverso ? v<=1.1 : v>=0.85; return `<span class="sd-pill sd-${bom?'verde':perto?'amar':'verm'}" style="margin:0">${Math.round(v*100)}%</span>`; };
+  const lin = [];
+  for (const c of ativas().filter(campanhaNoAr).sort((a,b)=>(a.fimVeiculacao||'').localeCompare(b.fimVeiculacao||''))) for (const f of fasesNoAr(c)) {
+    const m = metricasStatus(c, f), chave = c.id+'|'+(f||''), per = f ? periodoFase(c,f) : {ini:c.lancamento, fim:c.fimVeiculacao};
+    const marcas = [...new Set((RESULTADOS[c.id]||[]).filter(r=>!f || ((r.dados.vinculo||{}).fase||'Lead gen')===f).map(r=>(r.dados.vinculo||{}).marca).filter(Boolean))];
+    lin.push({c, f, m, chave, per, marcas, sub: marcas.length>1 ? marcas.map(mk=>({mk, m:metricasStatus(c, f, mk)})) : []}); }
+  const niv = m => m.vazio ? null : nivelSaude(m.S2.score);
+  const cont = {Saudável:0, Atenção:0, Crítica:0, sem:0}; for (const x of lin) { const n = niv(x.m); cont[n ? n.t : 'sem']++; }
+  const celulas = (m, f, ehSub) => m.vazio ? `<td colspan="6" class="muted small">Sem dados do Gerenciador do Meta vinculados${ehSub?'':' — vincule em Saúde da campanha'}.</td>` : `
+      <td class="dir num">${m.custoMeta?mcusto(m.custoMeta, m.moe):'<span class="muted">a definir</span>'}</td><td class="dir num">${m.custo!=null?mcusto(m.custo, m.moe):'—'}</td><td class="dir">${pctTag(m.custo&&m.custoMeta ? m.custo/m.custoMeta : null, true)}</td>
+      <td class="dir num">${m.meta?numCurto(m.meta):'<span class="muted">a definir</span>'}</td><td class="dir num">${numCurto(m.real)}</td><td class="dir">${(()=>{ if (!m.meta) return pctTag(null); const r = m.real/m.meta, esp = Math.min(1, m.S2.frac), rit = esp ? r/esp : r, cls = rit>=1?'verde':rit>=0.85?'amar':'verm';
+        return `<span class="sd-pill sd-${cls}" style="margin:0" title="${Math.round(rit*100)}% do ritmo esperado">${Math.round(r*100)}%</span>${esp<1?`<div class="small muted" style="margin-top:3px">esperado hoje: ${Math.round(esp*100)}%</div>`:''}`; })()}</td>`;
+  const corpo = lin.map(x=>{ const n = niv(x.m), obsK = x.f||'_', obs = ((x.c.statusObs||{})[obsK])||'';
+    return `<tr class="stp-lin"><td>${x.sub.length?`<button class="icone-btn" data-act="stAbrir" data-k="${h(x.chave)}" title="Ver por marca"><i data-lucide="${ab[x.chave]?'chevron-down':'chevron-right'}"></i></button>`:'<span style="display:inline-block;width:28px"></span>'}
+        <span class="ponto-st" style="background:${n?({Saudável:'#2e9d55',Atenção:'#e0a100',Crítica:'#d0443a'})[n.t]:'#c9d3d6'}" title="${n?n.t:'Sem farol (meta ou dados faltando)'}"></span>
+        <a href="#/campanha/${x.c.id}/saude" class="st-nome" ${x.f?`onclick="UI.etapa=UI.etapa||{};UI.etapa['${x.c.id}']='${x.f}'"`:''}>${h(x.c.nome)}</a>${x.f?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(x.f)+1} · ${x.f}</span>`:''}
+        <div class="small muted" style="margin-left:46px">${h(cliente(x.c.clienteId).nome)}${x.m.vazio?'':` · ${x.m.rotRes} · ${x.m.rotCusto}`}</div></td>
+      <td class="num" style="white-space:nowrap">${fdm(x.per.ini)} → ${fdm(x.per.fim)}<div class="small muted">${x.m.vazio?'':x.m.S2.frac>=1?'encerrada':x.m.S2.restam+' dias restantes'}</div></td>
+      ${celulas(x.m, x.f)}
+      <td class="st-obs">${ed?`<textarea rows="2" data-chg="statusObs" data-id="${x.c.id}" data-k="${h(obsK)}" placeholder="Observação…">${h(obs)}</textarea>`:h(obs)||'<span class="muted">—</span>'}</td></tr>`
+      + (ab[x.chave] ? x.sub.map(s2=>`<tr class="st-sub"><td><span style="display:inline-block;width:46px"></span>${h(s2.mk)}</td><td></td>${celulas(s2.m, x.f, true)}<td></td></tr>`).join('') : ''); }).join('');
+  return `<div class="cab"><div><h1>Status pontual</h1><p>Todas as campanhas no ar hoje (${fd(HOJE)}), com meta × atual de custo e de resultado, a partir dos dados do Gerenciador do Meta.</p></div></div>
+  <div class="st-resumo">${[['Saudável','#2e9d55'],['Atenção','#e0a100'],['Crítica','#d0443a'],['sem','#c9d3d6']].filter(([k])=>cont[k]).map(([k,cor])=>`<span><i style="background:${cor}"></i>${cont[k]} ${k==='sem'?'sem farol':k.toLowerCase()}</span>`).join('')}<span class="muted" style="margin-left:auto">${lin.length} linha(s)</span></div>
+  <div class="card"><div class="tabela-wrap"><table class="tab st-tab"><thead><tr><th>Campanha</th><th>Veiculação</th><th class="dir">Meta de custo</th><th class="dir">Custo atual</th><th class="dir">% custo</th><th class="dir">Meta de resultado</th><th class="dir">Resultado atual</th><th class="dir">% resultado</th><th>Observação</th></tr></thead>
+  <tbody>${corpo || '<tr><td colspan="9" class="vazio">Nenhuma campanha no ar hoje.</td></tr>'}</tbody></table></div>
+  <div class="small muted" style="padding:10px 18px">% custo = custo atual ÷ meta (até 100% é bom). % resultado = resultado atual ÷ meta da campanha ou da fase inteira; a cor compara com o esperado para hoje (verde = no ritmo ou acima). Leads em campanhas de lead; engajamentos em awareness.</div></div>`; }
+const mcusto = (v, m) => v!=null && v<0.1 ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:m||'BRL',minimumFractionDigits:4,maximumFractionDigits:4}) : moeda2(v, m);
+
+/* =====================================================================
    11. CRONOGRAMA ANUAL
    ===================================================================== */
 function pgAnual(){
@@ -2531,6 +2588,7 @@ const ACT = {
     registrar(`${t==='objetivo'?'Objetivo':'Objetivo de mídia'} de ${el.dataset.k} em “${c.nome}”: ${cf[t]||'—'}`); render(); },
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
+  stAbrir: el => { UI.stAberto = UI.stAberto||{}; UI.stAberto[el.dataset.k] = !UI.stAberto[el.dataset.k]; render(); },
   sPais: el => { UI.sPais = UI.sPais||{}; const p = el.dataset.p || null; UI.sPais[el.dataset.id] = UI.sPais[el.dataset.id]===p ? null : p; render(); },
   sMarca: el => { UI.sMarca = UI.sMarca||{}; const m = el.dataset.m || null; UI.sMarca[el.dataset.id] = UI.sMarca[el.dataset.id]===m ? null : m; render(); },
   selEtapa: el => { UI.etapa = UI.etapa||{}; UI.etapa[el.dataset.id] = el.dataset.v; UI.aSel = []; render(); },
@@ -2804,6 +2862,7 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
   if (k==='usoLinha') { const c = camp(el.dataset.id), b = c.budgets.find(x=>x.id===el.dataset.b); if (!b) return; const nv = Math.max(0, +el.value||0);
     if (nv!==(+b.utilizado||0)) { b.hist = b.hist||[]; b.hist.unshift({q:fd(HOJE), o:`utilizado ${+b.utilizado||0}→${nv}`}); b.utilizado = nv; registrar(`Utilizado em “${c.nome}”: ${b.canal} · ${PAISES[b.pais]?PAISES[b.pais].n:b.pais} = ${moeda(nv, moedaLinha(c,b))}`); }
     return render(); }
+  if (k==='statusObs') { const c = camp(el.dataset.id); c.statusObs = Object.assign({}, c.statusObs, {[el.dataset.k]: el.value}); registrar(`Observação do status pontual de “${c.nome}”`); return salvar(); }
   if (k==='saudeTxt') { const c = camp(el.dataset.id); c.saude = Object.assign({}, c.saude, {[el.dataset.k]: el.value}); return salvar(); }
   if (k==='canalCamp' || k==='marcaCamp' || k==='faseCamp') return reabrirFormCamp(lerFormCampanha());
   if (k==='paisCanal') { const d = lerFormCampanha(), cf = d.canaisCfg[el.dataset.c], cod = el.value; if (!cf) return;
