@@ -320,6 +320,7 @@ const MARCA_SEP = 'PTx Trimble + Precision Planting (separadas)', MARCAS_SEP = [
 /* marcas da campanha (várias); PTx Trimble + Precision Planting juntas = peças separadas por marca */
 const marcasDe = c => Array.isArray(c.marcas) ? c.marcas : c.marca===MARCA_SEP ? [...MARCAS_SEP] : c.marca ? [c.marca] : [];
 const marcaCancelada = (c, mk) => !!((c.marcasCanceladas||{})[mk]);
+const txtCancel = (c, m) => { const x = (c.marcasCanceladas||{})[m]; return x ? `Cancelada em ${fd(x.data)}${x.motivo ? ' — '+x.motivo : ''}` : ''; };
 const marcaSeparada = c => MARCAS_SEP.every(m=>marcasDe(c).includes(m));
 const chavesCfg = d => marcaSeparada(d) ? MARCAS_SEP.flatMap(mk=>(d.canais||[]).map(k=>({key:k+'|'+mk, canal:k, marca:mk}))) : (d.canais||[]).map(k=>({key:k, canal:k, marca:null}));
 const nomeCanal = k => String(k||'').replace(/\s+Ads$/i,'');   // exibição sem o "Ads"
@@ -1156,7 +1157,7 @@ function pgCampanha(r){
   const abas = [['visao','info','Visão geral'],['cronograma','gantt-chart','Cronograma'],['acoes','list-checks','Gestão de ações'],['budget','wallet','Budgets e KPIs'],['entregaveis','package','Entregáveis'],['mercados','globe-2','Mercados e países']];
   const corpo = {visao:abaVisao,cronograma:abaCronograma,acoes:abaAcoes,budget:abaBudget,entregaveis:abaEntregaveis,mercados:abaMercados}[aba](c);
   const cli = cliente(c.clienteId), ini = inicioPlan(c), corSt = COR_ST_CAMP[c.status]||'#9aa9ae';
-  return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>${marcasDe(c).length?`<div class="cc-marcas">${marcasDe(c).map(m=>marcaCancelada(c,m) ? `<span class="tag tag-cancel" title="Cancelada em ${fd(c.marcasCanceladas[m].data)}${c.marcasCanceladas[m].motivo?' — '+h(c.marcasCanceladas[m].motivo):''}"><s>${h(m)}</s> · cancelada</span>` : `<span class="tag t-pet">${h(m)}</span>`).join('')}</div>`:''}
+  return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>${marcasDe(c).length?`<div class="cc-marcas">${marcasDe(c).map(m=>marcaCancelada(c,m) ? `<span class="tag tag-cancel" style="cursor:pointer" data-act="verCancel" data-id="${c.id}" data-m="${h(m)}" title="${h(txtCancel(c,m))}"><s>${h(m)}</s> · cancelada</span>` : `<span class="tag t-pet">${h(m)}</span>`).join('')}</div>`:''}
      <div class="cc-meta"><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span>${saudeHtml(c)}<span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-days"></i>Início: ${fds(ini)}</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-check"></i>Fim da veiculação: ${fds(c.fimVeiculacao)}</span><span class="cc-sep"></span><span class="cc-band">${c.paises.map(p=>PAISES[p.cod].f).join(' ')}</span>${c.arquivada?' <span class="tag">Arquivada</span>':''}</div></div></div>
    <div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop">${c.status==='Não iniciada'||c.status==='Em andamento'?`<button data-act="iniciarCampanha" data-id="${c.id}"><i data-lucide="rocket"></i>Iniciar campanha</button>`:''}${c.status==='Finalizada – relatório pendente'?`<button data-act="formRelatorio" data-id="${c.id}"><i data-lucide="file-plus"></i>Adicionar relatório</button>`:''}${c.iniciadaEm&&!c.urlRelatorio?`<button data-act="desfazerInicio" data-id="${c.id}"><i data-lucide="undo-2"></i>${c.finalizadaEm?'Voltar para “Em veiculação”':'Desfazer início da campanha'}</button>`:''}${marcasDe(c).length>1 ? marcasDe(c).map(m=>marcaCancelada(c,m) ? `<button data-act="reativarMarca" data-id="${c.id}" data-m="${h(m)}"><i data-lucide="rotate-ccw"></i>Reativar marca: ${h(m)}</button>` : `<button data-act="cancelarMarca" data-id="${c.id}" data-m="${h(m)}"><i data-lucide="ban"></i>Cancelar marca: ${h(m)}</button>`).join('') : ''}<button data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'} campanha</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div></div>
    <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`;
@@ -1214,6 +1215,7 @@ function abaVisao(c){
       <dt>Status</dt><dd><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span></dd>
       <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
       <dt>Marca</dt><dd>${marcasDe(c).length ? marcasDe(c).map(m=>`<span class="tag t-pet">${h(m)}</span>`).join(' ') : '—'}</dd>
+      ${marcasDe(c).filter(m=>marcaCancelada(c,m)).map(m=>`<dt>Marca cancelada</dt><dd><b>${h(m)}</b> <span class="muted">· ${h(txtCancel(c,m))}</span></dd>`).join('')}
       <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-pet">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
       <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.map(nomeCanal).join(', ')||'—'}</dd><dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
       <div class="sep-h"></div><dl class="def">
@@ -1502,7 +1504,7 @@ function abaBudget(c){
   if (!marcaSeparada(c)) return cartoes(dados) + (sel ? detalhe : '');
   // duas marcas: uma seção para cada, com os cartões dos seus canais (o detalhe abre dentro da seção do cartão escolhido)
   return `<div class="marcas-lado">${MARCAS_SEP.map(mk=>{ const ds = dados.filter(d=>d.ch.marca===mk);
-    return `<div class="marca-col ${marcaCancelada(c,mk)?'cancelada':''}"><div class="sec-marca" style="margin:0 0 12px"><span class="sec-marca-tit">${h(mk)}</span>${marcaCancelada(c,mk)?` <span class="tag t-verm" style="margin-left:8px">Cancelada</span>`:''}</div>${ds.length ? cartoes(ds) : '<div class="small muted">Sem canais.</div>'}</div>`; }).join('')}</div>` + (sel ? detalhe : '');
+    return `<div class="marca-col ${marcaCancelada(c,mk)?'cancelada':''}"><div class="sec-marca" style="margin:0 0 12px"><span class="sec-marca-tit">${h(mk)}</span>${marcaCancelada(c,mk)?` <span class="tag t-verm" style="margin-left:8px">Cancelada</span><div class="small muted" style="margin-top:4px">${h(txtCancel(c,mk))}</div>`:''}</div>${ds.length ? cartoes(ds) : '<div class="small muted">Sem canais.</div>'}</div>`; }).join('')}</div>` + (sel ? detalhe : '');
 }
 function abaBudgetAntiga(c){
   UI.fbm = UI.fbm || {}; const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], R = resumoBudget(c, m), ed = ehEquipe();
@@ -1874,6 +1876,7 @@ function resumoCalc(r, lanc){
 }
 
 const ACT = {
+  verCancel: el => { const c = camp(el.dataset.id); toast(el.dataset.m+': '+txtCancel(c, el.dataset.m)); },
   cancelarMarca: el => { UI.menuCamp = false; const c = camp(el.dataset.id), m = el.dataset.m;
     abrirModal('Cancelar marca: '+h(m), `<p style="margin-top:0">A campanha continua para as outras marcas. O budget de <b>${h(m)}</b> sai dos totais, as peças dela ficam como canceladas e tudo fica guardado para consulta.</p><form id="f-cm" class="form-g"><label class="campo tudo">Motivo (opcional)<input name="motivo" placeholder="Ex.: cliente cancelou a verba"></label></form>`,
       `<button class="btn" data-act="fechar">Voltar</button><button class="btn btn-perigo" data-act="cancelarMarcaOk" data-id="${c.id}" data-m="${h(m)}"><i data-lucide="ban"></i>Cancelar ${h(m)}</button>`); },
