@@ -152,6 +152,8 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .nt-av{display:inline-flex;width:26px;height:26px;border-radius:50%;background:#e6f1fb;color:#185fa5;font-size:.7rem;font-weight:700;align-items:center;justify-content:center;margin-right:-6px;border:2px solid #fff}.nt-av.nt-sem{background:#eef1f2;color:#9aa9ae}
 .nt-mais{grid-template-columns:1fr;font-size:.82rem}.nt-mais a{color:var(--tx2)}
 @media (max-width:800px){.nt-lin{grid-template-columns:minmax(0,1fr) 130px 36px}.nt-lin>div:nth-child(3),.nt-lin>div:nth-child(4){display:none}}
+.mat-bud tr.grp td{background:#f4f7f8;font-weight:700;color:var(--pet-900);font-size:.82rem;padding-top:8px}.mat-bud tr.sub td:first-child{padding-left:16px}
+.seg-etapa{margin-bottom:14px;display:inline-flex;flex-wrap:wrap}.seg-etapa button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px}.seg-etapa .fase-num{width:20px;height:20px;font-size:.72rem}.seg-etapa button:not(.ativo) .fase-num{background:#9aa9ae}
 .fase-datas{display:grid;grid-template-columns:repeat(2,minmax(0,220px));gap:12px}
 .fase-form{border:1px solid var(--borda);border-radius:12px;padding:14px 16px;display:grid;gap:12px;background:#fbfcfc}
 .fase-tit{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--pet-900);font-size:.98rem}.fase-num{width:24px;height:24px;border-radius:50%;background:var(--pet-700);color:#fff;font-size:.8rem;display:inline-flex;align-items:center;justify-content:center}
@@ -354,7 +356,7 @@ const COR_ST_CAMP = {'Não iniciada':'#9aa9ae','Em andamento':'#2f80b8','Em veic
 function statusCampanha(c){
   if (c.urlRelatorio) return 'Concluída';
   if (c.finalizadaEm || (c.iniciadaEm && c.fimVeiculacao && c.fimVeiculacao < HOJE)) return 'Finalizada – relatório pendente';
-  if (c.iniciadaEm || (c.crono && c.crono.tarefas.some(t=>t.tid==='F4-01' && t.status==='Concluída'))) return 'Em veiculação';
+  if (c.iniciadaEm || (c.crono && c.crono.tarefas.some(t=>tidBase(t.tid)==='F4-01' && t.status==='Concluída'))) return 'Em veiculação';
   if (c.crono && c.crono.tarefas.some(t=>t.status!=='Não iniciada' && t.status!=='Cancelada')) return 'Em andamento';
   return 'Não iniciada'; }
 /* idioma-base: com um único idioma entre os países, é ele; senão, o já definido ou o padrão da região do primeiro país */
@@ -432,6 +434,22 @@ const NOMES_SEM_PARENTESES = {"Criar layout da LP (em paralelo com a tradução)
 /* etapa nova de cada código antigo (para campanhas criadas antes desta organização) */
 const FASE_POR_ID = Object.fromEntries(MODELO_PADRAO.map(m=>[m.id, m.fase]));
 const FASE_ANTIGA = {1:4, 2:6, 3:9};
+/* etapas de landing page (ficam de fora em campanhas/fases só de awareness) */
+const ETAPAS_LP = new Set(MODELO_PADRAO.filter(t=>t.fase===4 || t.fase===5).map(t=>t.id).concat(['F3-02','F3-04','F5-01']));
+const PREF_ETAPA = {'Awareness':'A~', 'Lead gen':'L~'};
+const tidBase = tid => String(tid||'').replace(/^[AL]~/, '');
+const soAwareness = c => !c.faseada && (c.objetivos||[]).length===1 && c.objetivos[0]==='Awareness';
+/* modelo de etapas da campanha: em fases, um conjunto de etapas para cada fase (ids com prefixo A~ / L~) */
+function modeloPara(c, base){
+  const copia = () => JSON.parse(JSON.stringify(base || S.modelo.tarefas));
+  const semLP = m => m.filter(t=>!ETAPAS_LP.has(tidBase(t.id)) || t.item);
+  if (!c.faseada) return soAwareness(c) ? semLP(copia()) : copia();
+  return FASES_CAMP.flatMap(f=>{ const pf = PREF_ETAPA[f], m = f==='Awareness' ? semLP(copia()) : copia();
+    return m.map(t=>Object.assign(t, {id:pf+tidBase(t.id), etapa:f, deps:(t.deps||[]).map(([d,...r])=>[pf+tidBase(d),...r])})); }); }
+const assinaturaModelo = m => (m||[]).map(t=>t.id).filter(id=>!/^[AL]~/.test(id) || true).join(',');
+/* datas-limite de cada etapa do cronograma: em fases, o lançamento e o fim são os da fase */
+const lancEtapa = (camp, etapa, cod) => etapa && camp.faseada ? (periodoFase(camp, etapa).ini || camp.lancamento) : ((camp.paises.find(p=>p.cod===cod)||{}).lancamento || camp.lancamento);
+const fimEtapa = (camp, etapa) => etapa && camp.faseada ? (periodoFase(camp, etapa).fim || camp.fimVeiculacao || camp.lancamento) : (camp.fimVeiculacao || camp.lancamento);
 
 /* =====================================================================
    2. DIAS ÚTEIS E FERIADOS
@@ -538,12 +556,12 @@ function montarGrafo(camp, modelo){
 function calcularCronograma(camp, op = {}){
   const c = op.ctx || ctx(), modelo = op.modelo || camp.modelo, fixos = op.fixos || {};
   const {ordem, porId} = montarGrafo(camp, modelo);
-  const lanc = cod => (camp.paises.find(p=>p.cod===cod)||{}).lancamento || camp.lancamento;
+  const lanc = (cod, etapa) => lancEtapa(camp, etapa, cod);
   // 1) passagem de trás para frente: data mais tarde possível (LS/LF)
   for (const n of [...ordem].reverse()) {
-    if (n.t.ancora==='fim') { n.LS = paraFrente(addDias(camp.fimVeiculacao || camp.lancamento, 1), n.cal, c); n.LF = fimDe(n.LS, n.dur, n.cal, c); continue; }   // pós-campanha: depois do fim da veiculação
+    if (n.t.ancora==='fim') { n.LS = paraFrente(addDias(fimEtapa(camp, n.t.etapa), 1), n.cal, c); n.LF = fimDe(n.LS, n.dur, n.cal, c); continue; }   // pós-campanha: depois do fim da veiculação (ou da fase)
     let lf = null, lsCap = null;
-    if (!n.succ.length) lf = paraTras(n.pais ? lanc(n.pais) : camp.lancamento, n.cal, c);
+    if (!n.succ.length) lf = paraTras(lanc(n.pais, n.t.etapa), n.cal, c);
     for (const s of n.succ) {
       const S2 = porId[s.id];
       if (s.tipo==='FS') { const v = limAntes(S2.LS, s, n.cal, c); if (!lf || v<lf) lf = v; }
@@ -576,28 +594,28 @@ function calcularCronograma(camp, op = {}){
   }
   const tarefas = ordem.map(n => ({
     id:n.id, tid:n.t.id, fase:n.t.fase, nome:(camp.renomeadas||{})[n.id] || nomeTarefa(n.t, camp.idiomaBase), area:n.t.area, pais:n.pais, dur:n.dur, cal:n.cal,
-    deps:n.deps, escopo:n.t.escopo, marco:!!n.t.fimNoLanc, ancora:n.t.ancora||null, ES:n.ES, EF:n.EF, LS:n.LS, LF:n.LF, folga:n.folga, critico:n.folga<=0, status:'Não iniciada'
+    deps:n.deps, escopo:n.t.escopo, etapa:n.t.etapa||null, marco:!!n.t.fimNoLanc, ancora:n.t.ancora||null, ES:n.ES, EF:n.EF, LS:n.LS, LF:n.LF, folga:n.folga, critico:n.folga<=0, status:'Não iniciada'
   }));
   const fim = tarefas.filter(t=>t.marco);
-  const inviaveis = fim.filter(t=>t.EF > lanc(t.pais)).map(t=>({pais:t.pais, fim:t.EF, lanc:lanc(t.pais), atraso:uteisEntre(lanc(t.pais),t.EF,'AG',c)}));
+  const inviaveis = fim.filter(t=>t.EF > lanc(t.pais, t.etapa)).map(t=>({pais:t.pais, etapa:t.etapa, fim:t.EF, lanc:lanc(t.pais, t.etapa), atraso:uteisEntre(lanc(t.pais, t.etapa),t.EF,'AG',c)}));
   return {tarefas, inicio, inviaveis};
 }
 /* recalcula folga, caminho crítico e viabilidade depois de um ajuste manual (datas planejadas ficam como estão) */
 function recalcFolgas(camp){
   const cx = ctx(), ts = camp.crono.tarefas, porId = Object.fromEntries(ts.map(t=>[t.id,t])), succ = {};
   ts.forEach(t=>succ[t.id]=[]); ts.forEach(t=>t.deps.forEach(d=>{ if (succ[d.id]) succ[d.id].push({id:t.id, tipo:d.tipo==='FS'?'FS':'SS', lag:d.lag||0}); }));
-  const lanc = cod => (camp.paises.find(p=>p.cod===cod)||{}).lancamento || camp.lancamento;
+  const lanc = (cod, etapa) => lancEtapa(camp, etapa, cod);
   for (const t of [...ts].reverse()) {
-    if (t.ancora==='fim') { t.LS = paraFrente(addDias(camp.fimVeiculacao || camp.lancamento, 1), t.cal, cx); t.LF = fimDe(t.LS, t.dur, t.cal, cx); t.folga = uteisEntre(t.ES, t.LS, t.cal, cx); t.critico = false; continue; }
+    if (t.ancora==='fim') { t.LS = paraFrente(addDias(fimEtapa(camp, t.etapa), 1), t.cal, cx); t.LF = fimDe(t.LS, t.dur, t.cal, cx); t.folga = uteisEntre(t.ES, t.LS, t.cal, cx); t.critico = false; continue; }
     let lf = null, lsCap = null;
-    if (!succ[t.id].length) lf = paraTras(t.pais ? lanc(t.pais) : camp.lancamento, t.cal, cx);
+    if (!succ[t.id].length) lf = paraTras(lanc(t.pais, t.etapa), t.cal, cx);
     for (const s of succ[t.id]) { const S2 = porId[s.id];
       if (s.tipo==='FS') { const v = limAntes(S2.LS, s, t.cal, cx); if (!lf || v<lf) lf = v; }
       else { const v = limAntes(S2.LS, s, t.cal, cx); if (!lsCap || v<lsCap) lsCap = v; } }
     let ls = lf ? iniDe(lf, t.dur, t.cal, cx) : null; if (lsCap && (!ls || lsCap<ls)) ls = lsCap;
     t.LS = ls; t.LF = fimDe(ls, t.dur, t.cal, cx); t.folga = uteisEntre(t.ES, t.LS, t.cal, cx); t.critico = t.folga<=0;
   }
-  camp.crono.inviaveis = ts.filter(t=>t.marco && t.EF > lanc(t.pais)).map(t=>({pais:t.pais, fim:t.EF, lanc:lanc(t.pais), atraso:uteisEntre(lanc(t.pais),t.EF,'AG',cx)}));
+  camp.crono.inviaveis = ts.filter(t=>t.marco && t.EF > lanc(t.pais, t.etapa)).map(t=>({pais:t.pais, etapa:t.etapa, fim:t.EF, lanc:lanc(t.pais, t.etapa), atraso:uteisEntre(lanc(t.pais, t.etapa),t.EF,'AG',cx)}));
 }
 /* etapas seguintes que passam a começar antes do que a dependência permite */
 function conflitosMov(camp, t, ES, EF){
@@ -709,7 +727,7 @@ const VALID_PAIS = {DE:'u7',FR:'u8',IT:'u9',UK:'u10',ES:'u8',AR:'u11',CL:'u11',M
 function novaCampanha(dados){
   const camp = Object.assign({id:novoId('c'),status:'Não iniciada',arquivada:false,obs:'',descricao:'',objetivo:'',urlPlanejamento:'',urlRelatorio:'',orcamento:0,moeda:'BRL',canais:[],regioes:[],
     acoes:[],entregaveis:[],budgets:[],kpis:[],posts:[],cronoHist:[],master:{texto:'',status:'Rascunho',versao:1,aprovadoEm:null,hist:[]},traducoes:{}}, dados);
-  camp.modelo = JSON.parse(JSON.stringify(S.modelo.tarefas)); camp.modeloVersao = S.modelo.versao; camp.etapasNovas = true;
+  camp.modelo = modeloPara(camp); camp.modeloVersao = S.modelo.versao; camp.etapasNovas = true;
   camp.paises = camp.paises.map(p=>Object.assign({respLocal:VALID_PAIS[p.cod]||'',obs:'',links:''},p));
   for (const p of camp.paises) camp.traducoes[p.cod] = {texto:'',status: p.idioma===camp.idiomaBase ? 'N/A' : 'Aguardando conteúdo original',resp:'u4',validador:p.respLocal,prazo:null,versaoMaster:0,coment:[],hist:[],aprovadoEm:null};
   return camp;
@@ -953,6 +971,8 @@ function migrarLancamento(){ CTX = null; let mudou = false;
   if (ehEquipe()) for (const c of S.campanhas) { if (!c.crono || !c.paises.length) continue; const ls = [...new Set(c.paises.map(p=>p.idioma||PAISES[p.cod].i))];
     if (ls.length===1 && c.idiomaBase!==ls[0]) { c.idiomaBase = ls[0];
       try { aplicarCronograma(c, calcularCronograma(c, {fixos:fixosDe(c.crono.tarefas), naoAntesDe:hojeUtil()}), `Idioma-base corrigido para ${IDIOMAS[ls[0]]||ls[0]}: sem etapas de tradução`); mudou = true; } catch(e){ console.error(e); } } }
+  for (const c of S.campanhas) if (c.crono && c.modelo && !!c.faseada !== c.modelo.some(m=>m.etapa)) {   // campanha em fases: um conjunto de etapas por fase
+    try { c.modelo = modeloPara(c); c.excluidas = []; aplicarCronograma(c, calcularCronograma(c, {naoAntesDe:hojeUtil()}), c.faseada ? 'Cronograma separado por fase' : 'Cronograma único (sem fases)'); mudou = true; } catch(e){ console.error(e); } }
   for (const c of S.campanhas) if (!c.etapasNovas && c.modelo) {
     const mapa = m => FASE_POR_ID[m.id] || FASE_ANTIGA[m.fase] || m.fase;
     for (const m of c.modelo) m.fase = mapa(m);
@@ -1102,7 +1122,7 @@ function render(){
 }
 /* quando a ação "Relatório" passa para Concluída, pede o link e conclui a campanha */
 function verificarRelatorio(r){ if (r[0]!=='campanha' || !ehEquipe()) return; const c = camp(r[1]); if (!c || !c.crono) return;
-  const t = c.crono.tarefas.find(x=>x.tid==='F5-02'); if (!t) return; UI.relSt = UI.relSt || {};
+  const t = c.crono.tarefas.filter(x=>tidBase(x.tid)==='F5-02').pop(); if (!t) return; UI.relSt = UI.relSt || {};   // em fases: o relatório da última fase
   const ant = UI.relSt[c.id]; UI.relSt[c.id] = t.status;
   if (ant!==undefined && ant!=='Concluída' && t.status==='Concluída' && !c.urlRelatorio && !$('#modal-raiz').innerHTML) setTimeout(()=>ACT.formRelatorio({dataset:{id:c.id, origem:'acao'}}), 50); }
 /* desfazer (Ctrl+Z) e refazer (Ctrl+Shift+Z ou Ctrl+Y): guarda o estado da campanha aberta a cada mudança */
@@ -1283,9 +1303,7 @@ function abaVisao(c){
       <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-pet">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
       <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd>${faseada(c) ? FASES_CAMP.map((f,i)=>`<dt>Fase ${i+1} · ${f}</dt><dd><b>${txtPeriodo(c,f)}</b> · ${canaisDaFase(c,f).map(nomeCanal).join(', ')||'—'}</dd>`).join('') : `<dt>Canais</dt><dd>${c.canais.map(nomeCanal).join(', ')||'—'}</dd>`}<dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
       <div class="sep-h"></div><dl class="def">
-      ${c.canaisCfg && (c.canais||[]).length && marcaSeparada(c) && !faseada(c) ? `<dt>Budget por canal</dt><dd style="overflow-x:auto"><table class="mat-bud"><thead><tr><th></th>${c.canais.map(k=>`<th>${h(nomeCanal(k))}</th>`).join('')}</tr></thead><tbody>
-        ${MARCAS_SEP.map(mk=>`<tr class="${marcaCancelada(c,mk)?'cancel':''}"><td>${h(mk)}${marcaCancelada(c,mk)?' <span class="small">· cancelada</span>':''}</td>${c.canais.map(k=>{ const cf = c.canaisCfg[k+'|'+mk]; return `<td class="num">${cf && +cf.orcamento ? `${moeda(+cf.orcamento, cf.moeda||c.moeda)} <span class="small muted">${(cf.paises||[]).map(p=>PAISES[p.cod].f).join(' ')}</span>` : '<span class="muted">—</span>'}</td>`; }).join('')}</tr>`).join('')}
-        <tr class="tot"><td>Total</td>${c.canais.map(k=>`<td class="num">${moedaMulti(MARCAS_SEP.reduce((o,mk)=>{ const cf = c.canaisCfg[k+'|'+mk]; if (cf && +cf.orcamento && !marcaCancelada(c,mk)) { const m = cf.moeda||c.moeda||'BRL'; o[m] = (o[m]||0) + (+cf.orcamento||0); } return o; }, {}))}</td>`).join('')}</tr></tbody></table></dd>` : c.canaisCfg && (c.canais||[]).length ? `<dt>Budget por canal</dt><dd><div class="bud">${chavesCfg(c).map(ch=>{ const cf = c.canaisCfg[ch.key]||{}; return `<span>${h(rotuloCfg(ch))}</span><span class="num">${moeda(+cf.orcamento||0, cf.moeda||c.moeda)} <span class="small muted">· ${(cf.paises||[]).map(p=>PAISES[p.cod].f).join(' ')}</span></span>`; }).join('')}<b>Total</b><b class="num">${moedaMulti(chavesCfg(c).reduce((o,ch)=>{ const cf = c.canaisCfg[ch.key]||{}, m = cf.moeda||c.moeda||'BRL'; o[m] = (o[m]||0) + (+cf.orcamento||0); return o; }, {}))}</b></div></dd>` : ''}
+      ${c.canaisCfg && (c.canais||[]).length && (marcaSeparada(c) || faseada(c)) ? `<dt>Budget por canal</dt><dd style="overflow-x:auto">${tabelaBudgetCanais(c)}</dd>` : c.canaisCfg && (c.canais||[]).length ? `<dt>Budget por canal</dt><dd><div class="bud">${chavesCfg(c).map(ch=>{ const cf = c.canaisCfg[ch.key]||{}; return `<span>${h(rotuloCfg(ch))}</span><span class="num">${moeda(+cf.orcamento||0, cf.moeda||c.moeda)} <span class="small muted">· ${(cf.paises||[]).map(p=>PAISES[p.cod].f).join(' ')}</span></span>`; }).join('')}<b>Total</b><b class="num">${moedaMulti(chavesCfg(c).reduce((o,ch)=>{ const cf = c.canaisCfg[ch.key]||{}, m = cf.moeda||c.moeda||'BRL'; o[m] = (o[m]||0) + (+cf.orcamento||0); return o; }, {}))}</b></div></dd>` : ''}
       ${!(c.canaisCfg && (c.canais||[]).length) ? `<dt>Budget</dt><dd>${c.orcamento?moeda(c.orcamento,c.moeda):'—'} · <a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">informar por canal</a></dd>` : ''}
       <dt>Relatório</dt><dd>${c.urlRelatorio?chipLink(c.urlRelatorio, 'Relatório'):'—'}</dd>
       <dt>Observações</dt><dd>${marcasDe(c).filter(m=>marcaCancelada(c,m)).map(m=>`<div>${h(m)} cancelada em ${fd(c.marcasCanceladas[m].data)}${c.marcasCanceladas[m].motivo?': '+h(c.marcasCanceladas[m].motivo):''}.</div>`).join('') || '—'}</dd>
@@ -1300,15 +1318,23 @@ function abaVisao(c){
 }
 
 /* ---------- Cronograma ---------- */
+/* campanha em fases: guia de cada fase no Cronograma e na Gestão de ações */
+function etapaSel(c){ if (!faseada(c)) return null; UI.etapa = UI.etapa || {};
+  if (!FASES_CAMP.includes(UI.etapa[c.id])) { const p2 = periodoFase(c, FASES_CAMP[1]); UI.etapa[c.id] = p2.ini && HOJE >= addDias(p2.ini, -21) ? FASES_CAMP[1] : FASES_CAMP[0]; }
+  return UI.etapa[c.id]; }
+const daEtapa = (c, t) => !faseada(c) || t.etapa===etapaSel(c);
+function seletorEtapa(c){ if (!faseada(c)) return ''; const sel = etapaSel(c);
+  return `<div class="seg seg-etapa">${FASES_CAMP.map((f,i)=>{ const n = c.crono.tarefas.filter(t=>t.etapa===f), atr = n.filter(t=>statusExib(t)==='Atrasada').length;
+    return `<button class="${f===sel?'ativo':''}" data-act="selEtapa" data-id="${c.id}" data-v="${f}"><span class="fase-num">${i+1}</span>Fase ${i+1} · ${f}<span class="small muted" style="font-weight:500">${txtPeriodo(c,f)}</span>${atr?`<span class="tag t-verm" style="margin-left:4px">${atr}</span>`:''}</button>`; }).join('')}</div>`; }
 function abaCronograma(c){
   const f = UI.fcr || (UI.fcr = {visao:'gantt',area:'',pais:'',fase:'',status:''});
-  const ts = c.crono.tarefas.filter(t=>(!f.area||t.area===f.area)&&(!f.pais||t.pais===f.pais||(f.pais==='global'&&!t.pais))&&(!f.fase||String(t.fase)===f.fase)&&(!f.status||statusExib(t)===f.status));
+  const ts = c.crono.tarefas.filter(t=>daEtapa(c,t) && (!f.area||t.area===f.area)&&(!f.pais||t.pais===f.pais||(f.pais==='global'&&!t.pais))&&(!f.fase||String(t.fase)===f.fase)&&(!f.status||statusExib(t)===f.status));
   const hist = c.cronoHist.length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Histórico de versões do cronograma (${c.cronoHist.length})</summary><ul class="lista-simples">${c.cronoHist.map(v=>`<li><b>Versão ${v.versao}</b><span class="small muted">${fd(v.data)} · ${h(v.motivo)} · lançamento ${fd(v.lancamento)}</span><button class="btn btn-s" style="margin-left:auto" data-act="verVersao" data-id="${c.id}" data-v="${v.versao}">Ver</button></li>`).join('')}</ul></details>` : '';
-  return alertasCampanha(c) + `<div class="card"><div class="card-cab nao-imprimir"><div class="seg"><button class="${f.visao==='gantt'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="gantt"><i data-lucide="gantt-chart"></i>Gantt</button><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="lista"><i data-lucide="list"></i>Lista</button></div>
+  return alertasCampanha(c) + seletorEtapa(c) + `<div class="card"><div class="card-cab nao-imprimir"><div class="seg"><button class="${f.visao==='gantt'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="gantt"><i data-lucide="gantt-chart"></i>Gantt</button><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fcr.visao" data-v="lista"><i data-lucide="list"></i>Lista</button></div>
     <div class="filtros"><select data-chg="fcr.area">${opts(AREAS,f.area,'Todos os responsáveis')}</select><select data-chg="fcr.pais">${opts([['global','Só etapas globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].n])],f.pais,'Todos os países')}</select><select data-chg="fcr.fase">${opts(ORDEM_FASES.map(k=>[k,FASES[k]]),f.fase,'Todas as etapas')}</select><select data-chg="fcr.status">${opts(['Não iniciada','Em andamento','Concluída','Atrasada'],f.status,'Todos os status')}</select>
     ${ehEquipe()?`<button class="btn btn-s chave-dep ${DEP_ATIVAS?'on':''}" data-act="alternarDep" title="${DEP_ATIVAS?'Ligadas: ao mover uma barra, as etapas ligadas que ainda não começaram vão junto':'Desligadas: cada barra se move sozinha'}"><span class="chave"><i></i></span>Dependências ${DEP_ATIVAS?'ativadas':'desativadas'}</button><button class="btn btn-s" data-act="desfazer" title="Desfazer (Ctrl+Z)" disabled><i data-lucide="undo-2"></i>Desfazer</button><button class="btn btn-s" data-act="refazer" title="Refazer (Ctrl+Shift+Z)" disabled><i data-lucide="redo-2"></i></button><button class="btn btn-p btn-s" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}<button class="btn btn-s" data-act="recalcHoje" data-id="${c.id}" title="Recalcula as etapas futuras a partir de hoje, mantendo as concluídas"><i data-lucide="refresh-cw"></i>Recalcular a partir de hoje</button><button class="btn btn-s" data-act="exportCsv" data-id="${c.id}"><i data-lucide="file-spreadsheet"></i>Excel</button><button class="btn btn-s" data-act="imprimir"><i data-lucide="printer"></i>PDF</button></div></div>
     ${ehEquipe() && (c.modeloVersao||0) < S.modelo.versao ? `<div class="alerta azul" style="margin:12px 18px 0"><i data-lucide="list-plus"></i><div style="flex:1">O modelo padrão de etapas mudou (versão ${S.modelo.versao}). Esta campanha usa a versão ${c.modeloVersao||1}.</div><button class="btn btn-s" data-act="atualizarModelo" data-id="${c.id}">Ver o que muda</button></div>` : ''}
-    <div class="small muted" style="padding:10px 18px 0">Versão ${c.crono.versao} do cronograma · calculada em ${fd(c.crono.calculadoEm)} · ${h(c.crono.motivo)} · ${c.crono.tarefas.length} etapas (${c.crono.tarefas.filter(t=>!t.pais).length} globais e ${c.crono.tarefas.filter(t=>t.pais).length} por país)</div>
+    <div class="small muted" style="padding:10px 18px 0">Versão ${c.crono.versao} do cronograma · calculada em ${fd(c.crono.calculadoEm)} · ${h(c.crono.motivo)} · ${c.crono.tarefas.filter(t=>daEtapa(c,t)).length} etapas (${c.crono.tarefas.filter(t=>daEtapa(c,t)&&!t.pais).length} globais e ${c.crono.tarefas.filter(t=>daEtapa(c,t)&&t.pais).length} por país)</div>
     ${f.visao==='gantt' ? gantt(c, ts) : listaCrono(c, ts)}</div>${(c.excluidas||[]).length ? `<details style="margin-top:16px" class="card card-p"><summary style="cursor:pointer;font-weight:600">Etapas excluídas desta campanha (${c.excluidas.length})</summary><ul class="lista-simples">${c.excluidas.map(k=>`<li>${h(rotuloEtapa(c,k))}${ehEquipe()?`<button class="btn btn-s" style="margin-left:auto" data-act="restaurarEtapa" data-id="${c.id}" data-k="${h(k)}"><i data-lucide="undo-2"></i>Restaurar</button>`:''}</li>`).join('')}</ul></details>` : ''}${hist}`;
 }
 function listaCrono(c, ts){
@@ -1496,7 +1522,7 @@ function multiSel(chave, opcoes, sel, todos, plural){
 function abaAcoes(c){
   const f = UI.fac || (UI.fac = {visao:'lista'});
   for (const k of ['area','pessoa','pais','status']) if (!Array.isArray(f[k])) f[k] = [];
-  const todas = c.crono.tarefas;
+  const todas = c.crono.tarefas.filter(t=>daEtapa(c,t));
   const L = [...todas].sort((a,b)=> a.ES<b.ES?-1:a.ES>b.ES?1:0).filter(t=>
     (!f.area.length || f.area.includes(t.area)) &&
     (!f.pessoa.length || f.pessoa.includes(t.pessoa||'—')) &&
@@ -1505,7 +1531,7 @@ function abaAcoes(c){
   const validas = todas.filter(t=>t.status!=='Cancelada'), pc = validas.length ? Math.round(validas.filter(t=>t.status==='Concluída').length/validas.length*100) : 0;
   const atr = t => statusExib(t)==='Atrasada';
   const ed = ehEquipe(), nomeT = t => h(t.nome);
-  return `<div class="alerta azul"><i data-lucide="info"></i><div>As ações são as <b>mesmas etapas do cronograma</b>. Mudar status, responsável, datas ou nome aqui muda o cronograma, e vice-versa. Para criar uma ação nova, use “Incluir item”.</div></div>
+  return seletorEtapa(c) + `<div class="alerta azul"><i data-lucide="info"></i><div>As ações são as <b>mesmas etapas do cronograma</b>. Mudar status, responsável, datas ou nome aqui muda o cronograma, e vice-versa. Para criar uma ação nova, use “Incluir item”.</div></div>
   <div class="card"><div class="card-cab"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="seg"><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="lista"><i data-lucide="list"></i>Lista</button><button class="${f.visao==='kanban'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="kanban"><i data-lucide="kanban"></i>Kanban</button></div>
    <div style="min-width:160px"><div class="small muted">${pc}% concluído · ${todas.filter(atr).length} atrasada(s)</div><div class="barra" style="margin-top:4px"><i style="width:${pc}%"></i></div></div></div>
    <div class="filtros">${multiSel('fac.status', [...ST_ACAO,'Atrasada'].map(v=>[v,v]), f.status, 'Todos os status', 'status')}${multiSel('fac.pessoa', [...RESPONSAVEIS,'—'].map(v=>[v, v==='—'?'Sem responsável':v]), f.pessoa, 'Todos os responsáveis', 'responsáveis')}${multiSel('fac.area', AREAS.map(v=>[v,v]), f.area, 'Todas as áreas', 'áreas')}${multiSel('fac.pais', [['global','Itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].f+' '+PAISES[p.cod].n])], f.pais, 'Todos os países', 'países')}${(f.status.length||f.pessoa.length||f.area.length||f.pais.length)?`<button class="btn btn-s btn-g" data-act="limparFiltrosAcoes"><i data-lucide="x"></i>Limpar filtros</button>`:''}${ed&&f.visao==='lista'?`<button class="btn ${f.sel?'btn-ativo':''}" data-act="loteModo"><i data-lucide="list-checks"></i>Selecionar ações</button>`:''}${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
@@ -1557,6 +1583,21 @@ const OBJ_MIDIA = ['Conversão','Alcance','Engajamento','Visita','Tráfego'];
 /* objetivo do canal (o escolhido no canal ou, se não houver, o da campanha) */
 const objCanal = (c, cf) => cf.objetivo || ((c.objetivos||[])[0]==='Awareness' ? 'Awareness' : (c.objetivos||[]).length ? 'Leads' : null);
 const custoLinha = b => !b || !b.kpis ? null : (b.kpis.custo ?? b.kpis.CPL ?? b.kpis.CPM ?? null);
+/* tabela de budget: canais nas colunas; marcas (e fases) nas linhas; total soma só moedas iguais e ignora marcas canceladas */
+function tabelaBudgetCanais(c){
+  const canais = c.canais||[], marcas = marcaSeparada(c) ? MARCAS_SEP : [null], fases = faseada(c) ? FASES_CAMP : [null];
+  const chave = (k, mk, f) => k + (mk?'|'+mk:'') + (f?'@'+f:'');
+  const cel = cf => `<td class="num">${cf && +cf.orcamento ? `${moeda(+cf.orcamento, cf.moeda||c.moeda)} <span class="small muted">${(cf.paises||[]).map(p=>PAISES[p.cod].f).join(' ')}</span>` : '<span class="muted">—</span>'}</td>`;
+  const soma = (lista) => moedaMulti(lista.reduce((o,cf)=>{ if (cf && +cf.orcamento) { const m = cf.moeda||c.moeda||'BRL'; o[m] = (o[m]||0) + (+cf.orcamento||0); } return o; }, {}));
+  let corpo = '';
+  for (const f of fases) {
+    if (f && marcas[0]) corpo += `<tr class="grp"><td colspan="${canais.length+1}">Fase ${FASES_CAMP.indexOf(f)+1} · ${f} <span class="small muted">${txtPeriodo(c,f)}</span></td></tr>`;
+    for (const mk of marcas) { const canc = mk && marcaCancelada(c,mk), cfs = canais.map(k=>c.canaisCfg[chave(k,mk,f)]);
+      const rot = mk ? h(mk) + (canc?' <span class="small">· cancelada</span>':'') : `Fase ${FASES_CAMP.indexOf(f)+1} · ${f} <div class="small muted">${txtPeriodo(c,f)}</div>`;
+      corpo += `<tr class="${canc?'cancel':''} ${f&&mk?'sub':''}"><td>${rot}</td>${cfs.map(cf=>cel(cf)).join('')}</tr>`; } }
+  const tot = canais.map(k=>soma(fases.flatMap(f=>marcas.filter(mk=>!(mk && marcaCancelada(c,mk))).map(mk=>c.canaisCfg[chave(k,mk,f)]))));
+  const geral = soma(fases.flatMap(f=>marcas.filter(mk=>!(mk && marcaCancelada(c,mk))).flatMap(mk=>canais.map(k=>c.canaisCfg[chave(k,mk,f)]))));
+  return `<table class="mat-bud"><thead><tr><th></th>${canais.map(k=>`<th>${h(nomeCanal(k))}</th>`).join('')}</tr></thead><tbody>${corpo}<tr class="tot"><td>Total</td>${tot.map(x=>`<td class="num">${x}</td>`).join('')}</tr></tbody></table>${canais.length>1?`<div class="small muted" style="margin-top:6px">Total geral: <b>${geral}</b></div>`:''}`; }
 function abaBudget(c){
   if (!c.canaisCfg || !(c.canais||[]).length) return abaBudgetAntiga(c);
   const ed = ehEquipe();
@@ -2198,14 +2239,14 @@ const ACT = {
     registrar(`Marca cancelada em “${c.nome}”: ${m}${motivo?' — '+motivo:''}`); fecharModal(); render(); toast(m+' cancelada nesta campanha.'); },
   reativarMarca: el => { UI.menuCamp = false; const c = camp(el.dataset.id), m = el.dataset.m; const mc = Object.assign({}, c.marcasCanceladas); delete mc[m]; c.marcasCanceladas = mc;
     registrar(`Marca reativada em “${c.nome}”: ${m}`); render(); toast(m+' reativada.'); },
-  iniciarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.iniciadaEm = HOJE; delete c.finalizadaEm; (c.crono.tarefas||[]).filter(t=>t.tid==='F4-01').forEach(t=>{ if (t.status!=='Concluída') { (t.hist=t.hist||[]).push({q:HOJE,o:`Status: ${t.status} → Concluída`}); t.status = 'Concluída'; } }); registrar(`Campanha iniciada: “${c.nome}” (em veiculação)`); render(); toast('Campanha em veiculação.'); },
+  iniciarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.iniciadaEm = HOJE; delete c.finalizadaEm; (c.crono.tarefas||[]).filter(t=>tidBase(t.tid)==='F4-01' && (!t.etapa || t.etapa===FASES_CAMP[0])).forEach(t=>{ if (t.status!=='Concluída') { (t.hist=t.hist||[]).push({q:HOJE,o:`Status: ${t.status} → Concluída`}); t.status = 'Concluída'; } }); registrar(`Campanha iniciada: “${c.nome}” (em veiculação)`); render(); toast('Campanha em veiculação.'); },
   finalizarCampanha: el => { UI.menuCamp = false; const c = camp(el.dataset.id); c.finalizadaEm = HOJE; registrar(`Campanha finalizada: “${c.nome}” (relatório pendente)`); render(); toast('Campanha finalizada. Falta o relatório.'); },
-  desfazerInicio: el => { UI.menuCamp = false; const c = camp(el.dataset.id); if (c.finalizadaEm) delete c.finalizadaEm; else { delete c.iniciadaEm; (c.crono.tarefas||[]).filter(t=>t.tid==='F4-01' && t.status==='Concluída').forEach(t=>t.status='Não iniciada'); } registrar(`Status de “${c.nome}” voltou uma etapa`); render(); },
+  desfazerInicio: el => { UI.menuCamp = false; const c = camp(el.dataset.id); if (c.finalizadaEm) delete c.finalizadaEm; else { delete c.iniciadaEm; (c.crono.tarefas||[]).filter(t=>tidBase(t.tid)==='F4-01' && t.status==='Concluída').forEach(t=>t.status='Não iniciada'); } registrar(`Status de “${c.nome}” voltou uma etapa`); render(); },
   formRelatorio: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
     abrirModal(el.dataset.origem==='acao' ? 'Relatório concluído — cole o link' : 'Relatório da campanha', `<form id="f-rel" class="form-g"><label class="campo tudo">Link do relatório *<input type="url" name="url" required placeholder="https://…" value="${h(c.urlRelatorio||'')}"></label></form><p class="small muted" style="margin-bottom:0">Ao salvar, a campanha passa para “Concluída”.</p>`,
       `<button class="btn" data-act="fechar">${el.dataset.origem==='acao'?'Agora não':'Cancelar'}</button><button class="btn btn-p" data-act="salvarRelatorio" data-id="${c.id}">Salvar e concluir</button>`); setTimeout(()=>{ const i = $('#f-rel input'); if (i) i.focus(); }, 30); },
   salvarRelatorio: el => { const c = camp(el.dataset.id), u = (ler($('#f-rel')).url||'').trim(); if (!/^https?:\/\//i.test(u)) return toast('Informe um link começando com https://');
-    c.urlRelatorio = u; (c.crono.tarefas||[]).filter(t=>t.tid==='F5-02' && t.status!=='Concluída').forEach(t=>{ (t.hist=t.hist||[]).push({q:HOJE,o:`Status: ${t.status} → Concluída`}); t.status = 'Concluída'; }); UI.relSt = UI.relSt||{}; UI.relSt[c.id] = 'Concluída';
+    c.urlRelatorio = u; (c.crono.tarefas||[]).filter(t=>tidBase(t.tid)==='F5-02' && t.status!=='Concluída').forEach(t=>{ (t.hist=t.hist||[]).push({q:HOJE,o:`Status: ${t.status} → Concluída`}); t.status = 'Concluída'; }); UI.relSt = UI.relSt||{}; UI.relSt[c.id] = 'Concluída';
     registrar(`Relatório adicionado: “${c.nome}” (concluída)`); fecharModal(); render(); toast('Campanha concluída.'); },
   menuCamp: () => { UI.menuCamp = !UI.menuCamp; render(); },
   menu: () => { if (innerWidth <= 860) return document.body.classList.toggle('menu-aberto');
@@ -2254,7 +2295,9 @@ const ACT = {
     S.campanhas.push(c); registrar('Campanha criada: '+c.nome+' (lançamento '+fd(c.lancamento)+')'); fecharModal(); location.hash = '#/campanha/'+c.id+'/cronograma'; toast('Campanha criada.'); },
   salvarEdicaoCamp: () => { const d = lerFormCampanha(), c = camp(d.id), err = validarCampanha(d);
     if (err.length) { $('#aviso-lanc').innerHTML = `<div class="alerta verm"><i data-lucide="alert-circle"></i><div>${err.map(h).join('<br>')}</div></div>`; icones(); return; }
-    const mudouDatas = d.lancamento!==c.lancamento || d.fimVeiculacao!==c.fimVeiculacao || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
+    const novoMod = modeloPara(d), mudouMod = !!d.faseada!==!!c.faseada || soAwareness(d)!==soAwareness(c);   // só muda as etapas quando liga/desliga as fases ou vira campanha só de awareness
+    if (mudouMod) { const itens = c.modelo.filter(m=>m.item); d.modelo = [...novoMod, ...(d.faseada ? [] : itens)]; for (const m of d.modelo) { const ant = c.modelo.find(x=>x.id===m.id); if (ant && (c.renomeadas||{})[m.id]) m.nome = ant.nome; } }
+    const mudouDatas = mudouMod || JSON.stringify(d.fasesDatas||null)!==JSON.stringify(c.fasesDatas||null) || !!d.faseada!==!!c.faseada || d.lancamento!==c.lancamento || d.fimVeiculacao!==c.fimVeiculacao || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
     if (mudouDatas) { rascunho = d; return ACT.compararRecalc(null, d, 'Edição da campanha (datas, países ou idiomas)'); }
     delete d._baseOrig; Object.assign(c, d); sincronizarBudgetCanais(c); registrar('Campanha editada: '+c.nome); fecharModal(); render(); toast('Campanha salva.'); },
   alterarLanc: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
@@ -2269,7 +2312,7 @@ const ACT = {
     ACT.compararRecalc(null, d, v.motivo || 'Data de lançamento alterada para '+fd(d.lancamento)); },
   recalcHoje: el => { const c = camp(el.dataset.id); ACT.compararRecalc(null, JSON.parse(JSON.stringify(c)), 'Recalculado a partir de hoje'); },
   compararRecalc: (el, d, motivo) => { const c = camp(d.id);
-    const base = Object.assign({}, c, {paises:d.paises.map(p=>Object.assign({},p)), lancamento:d.lancamento, idiomaBase:d.idiomaBase, excluidas:d.excluidas||c.excluidas||[], renomeadas:d.renomeadas||c.renomeadas||{}, modelo:d.modelo||c.modelo});
+    const base = Object.assign({}, c, {paises:d.paises.map(p=>Object.assign({},p)), lancamento:d.lancamento, fimVeiculacao:d.fimVeiculacao||c.fimVeiculacao, faseada:d.faseada!==undefined?d.faseada:c.faseada, fasesDatas:d.fasesDatas!==undefined?d.fasesDatas:c.fasesDatas, idiomaBase:d.idiomaBase, excluidas:d.excluidas||c.excluidas||[], renomeadas:d.renomeadas||c.renomeadas||{}, modelo:d.modelo||c.modelo});
     let r; try { r = calcularCronograma(base, {fixos:Object.assign(fixosDe(c.crono.tarefas), d._fixos||{}), naoAntesDe:hojeUtil()}); } catch(e) { return toast(e.message); }
     const ant = Object.fromEntries(c.crono.tarefas.map(t=>[t.id,t]));
     const mud = r.tarefas.filter(t=>!ant[t.id] || ant[t.id].ES!==t.ES || ant[t.id].EF!==t.EF).length;
@@ -2317,7 +2360,7 @@ const ACT = {
     for (const t of c.crono.tarefas) if (porPais ? t.id===t0.id : t.tid===t0.tid) t.nome = nome;
     registrar(`Etapa renomeada em “${c.nome}”: “${antigo}” → “${nome}”${porPais?' ('+t0.pais+')':''}`); fecharModal(); render(); toast('Nome da etapa salvo.'); },
   incluirItem: el => { const c = camp(el.dataset.id);
-    const etapas = c.modelo.map(m=>[m.id, (FASES[m.fase]||'')+' · '+nomeTarefa(m, c.idiomaBase)+(m.escopo==='pais'?' (por país)':'')]);
+    const etapas = c.modelo.filter(m=>!faseada(c) || m.etapa===etapaSel(c)).map(m=>[m.id, (FASES[m.fase]||'')+' · '+nomeTarefa(m, c.idiomaBase)+(m.escopo==='pais'?' (por país)':'')]);
     abrirModal('Incluir item no cronograma', `<form id="f-item" class="form-g">
       <label class="campo tudo">Nome *<input name="nome" required maxlength="160" placeholder="Ex.: Reunião de alinhamento com o México"></label>
       <label class="campo">Etapa<select name="fase">${opts(ORDEM_FASES.map(k=>[k,FASES[k]]),'1')}</select></label>
@@ -2338,13 +2381,13 @@ const ACT = {
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="incluirItemOk" data-id="${c.id}"><i data-lucide="plus"></i>Incluir</button>`, true); },
   incluirItemOk: el => { const c = camp(el.dataset.id), f = $('#f-item'), v = ler(f), nome = (v.nome||'').trim();
     if (!nome) return toast('Informe o nome do item.');
-    const tid = 'X'+Date.now().toString(36), d = JSON.parse(JSON.stringify(c));
+    const et = etapaSel(c), tid = (et ? PREF_ETAPA[et] : '')+'X'+Date.now().toString(36), d = JSON.parse(JSON.stringify(c));
     const paisesSel = c.paises.filter(p=>f.querySelector(`[name="pais_${p.cod}"]`).checked).map(p=>p.cod);
     if (v.escopo==='pais' && !paisesSel.length) return toast('Escolha pelo menos um país.');
     let dur = Math.max(1, Math.min(200, +v.dur||1)), deps = [];
     if (v.modo==='datas') { if (!v.ini || !v.fim || v.fim < v.ini) return toast('Confira as datas: o fim não pode ser antes do início.'); }
     else if (v.depois) deps = [[v.depois, v.tipo==='SS'?'SS':'FS']];
-    const tpl = {id:tid, fase:+v.fase||1, nome, area:v.area, dur, escopo:v.escopo==='pais'?'pais':'global', deps, item:true};
+    const tpl = {id:tid, fase:+v.fase||1, nome, area:v.area, dur, escopo:v.escopo==='pais'?'pais':'global', deps, item:true, ...(et ? {etapa:et} : {})};
     // posição no Gantt: logo depois da etapa anterior (se for da mesma fase), senão no fim da fase
     const iDep = v.modo==='dep' && v.depois ? d.modelo.findIndex(m=>m.id===v.depois) : -1;
     let pos = iDep>=0 && d.modelo[iDep].fase===tpl.fase ? iDep+1 : (()=>{ let k = -1; d.modelo.forEach((m,i)=>{ if (ORDEM_FASES.indexOf(m.fase)<=ORDEM_FASES.indexOf(tpl.fase)) k = i; }); return k+1; })();
@@ -2363,6 +2406,7 @@ const ACT = {
     registrar(`${t==='objetivo'?'Objetivo':'Objetivo de mídia'} de ${el.dataset.k} em “${c.nome}”: ${cf[t]||'—'}`); render(); },
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
+  selEtapa: el => { UI.etapa = UI.etapa||{}; UI.etapa[el.dataset.id] = el.dataset.v; UI.aSel = []; render(); },
   loteModo: () => { UI.fac.sel = !UI.fac.sel; UI.aSel = []; render(); },
   loteSair: () => { UI.fac.sel = false; UI.aSel = []; render(); },
   loteLimpar: () => { UI.aSel = []; render(); },
@@ -2387,7 +2431,7 @@ const ACT = {
     recalcFolgas(c); Object.assign(c.crono, {versao:c.crono.versao+1, calculadoEm:HOJE, motivo:'Datas restauradas da versão '+v.versao});
     registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: datas restauradas da versão ${v.versao} (${n} etapa(s))`); fecharModal(); render(); toast(n+' etapa(s) voltaram às datas da versão '+v.versao+'.'); },
   atualizarModelo: el => { const c = camp(el.dataset.id), d = JSON.parse(JSON.stringify(c));
-    const novo = JSON.parse(JSON.stringify(S.modelo.tarefas)), ids = new Set(novo.map(m=>m.id));
+    const novo = modeloPara(c), ids = new Set(novo.map(m=>m.id));
     // mantém os nomes que você editou e os itens incluídos nesta campanha
     for (const m of novo) { const ant = c.modelo.find(x=>x.id===m.id); if (ant && (c.renomeadas||{})[m.id]) m.nome = ant.nome; }
     for (const m of c.modelo) if (m.item && !ids.has(m.id)) { const k = novo.map(x=>ORDEM_FASES.indexOf(x.fase)).lastIndexOf(ORDEM_FASES.indexOf(m.fase)); novo.splice(k<0?novo.length:k+1, 0, JSON.parse(JSON.stringify(m))); }
