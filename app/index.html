@@ -157,7 +157,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .faixa-fim.ok{background:#e7f4e8;color:#1f5a23;border:1px solid #bfe0c2}.faixa-fim.nao{background:#fdf3d8;color:#7a4f00;border:1px solid #f1dc9f}.faixa-fim.neutra{background:#eef1f2;color:#4d5b60;border:1px solid #dde3e5}
 .tag-clic{cursor:pointer}.tag-clic:hover{filter:brightness(.95)}.tag-clic.on{background:var(--pet-700);color:#fff}
 .saude-filtros{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.saude-filtros .seg-etapa{margin-bottom:0}.seg-marca button{padding:7px 12px}
-.sd-pais .sd-clic{cursor:pointer;border-radius:6px;margin:0 -6px;padding:2px 6px}.sd-pais .sd-clic:hover{background:#eef4f6}.sd-pais .sd-clic:hover span{text-decoration:underline}
+.sd-pais a.sd-clic{color:inherit;text-decoration:none;border-radius:5px;padding:1px 4px;margin:0 -4px}.sd-pais a.sd-clic:hover{background:#e6eef1;text-decoration:underline}.sd-pais a.sd-clic.on{background:var(--pet-700);color:#fff}
 .seg-etapa{margin-bottom:14px;display:inline-flex;flex-wrap:wrap}.seg-etapa button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px}.seg-etapa .fase-num{width:20px;height:20px;font-size:.72rem}.seg-etapa button:not(.ativo) .fase-num{background:#9aa9ae}
 .fase-datas{display:grid;grid-template-columns:repeat(2,minmax(0,220px));gap:12px}
 .fase-form{border:1px solid var(--borda);border-radius:12px;padding:14px 16px;display:grid;gap:12px;background:#fbfcfc}
@@ -1050,7 +1050,7 @@ function saude(c){
 function nivelSaude(score){ return score==null ? null : score>=0.9 ? {t:'Saudável', cls:'sd-verde'} : score>=0.7 ? {t:'Atenção', cls:'sd-amar'} : {t:'Crítica', cls:'sd-verm'}; }
 function farolCab(c){ if (!(RESULTADOS[c.id]||[]).length) return ''; const S2 = dadosSaude(c), n = nivelSaude(S2.score); if (!n) return '';
   const aw = S2.tipoScore==='engajamento', pr = `${aw?'engajamento':'leads'} ${Math.round(S2.ritmo*100)}% do ritmo, ${aw?'custo por engajamento':'CPL'} ${S2.cplRatio>=1?Math.round((1-1/S2.cplRatio)*100)+'% melhor':Math.round((1/S2.cplRatio-1)*100)+'% acima'} que a meta`;
-  return `<a href="#/campanha/${c.id}/saude" class="sd-pill ${n.cls} cc-farol" title="Saúde da campanha, a partir dos dados do Meta"><i data-lucide="gauge"></i>${marcaFiltro(c)?h(marcaFiltro(c))+': ':''}${n.t} · ${pr}</a>`; }
+  return `<a href="#/campanha/${c.id}/saude" class="sd-pill ${n.cls} cc-farol" title="Saúde da campanha, a partir dos dados do Meta"><i data-lucide="gauge"></i>${filtroTxt(c)?h(filtroTxt(c))+': ':''}${n.t} · ${pr}</a>`; }
 const saudeHtml = c => { const s = saude(c); if (!s.txt) return ''; return `<span class="tag" style="gap:6px"><span class="ponto p-${s.cor}"></span>${s.txt}</span>`; };
 const progresso = c => { const ts=c.crono.tarefas.filter(t=>t.status!=='Cancelada'); return ts.length ? Math.round(ts.filter(t=>t.status==='Concluída').length/ts.length*100) : 0; };
 const inicioPlan = c => c.crono.tarefas.reduce((m,t)=>!m||t.ES<m?t.ES:m,null);
@@ -1692,7 +1692,7 @@ function medidorSaude(pos, cor){   // pos 0 (crítico) .. 1 (ótimo); null = sem
   const a = Math.PI * (pos==null ? 0.5 : Math.max(0.02, Math.min(0.98, pos))), [px,py] = ponto(a, 66), [b1x,b1y] = ponto(a+Math.PI/2, 7), [b2x,b2y] = ponto(a-Math.PI/2, 7);
   return `<svg viewBox="0 0 220 120" width="100%" style="max-width:260px">${arcos}${pos==null?'':`<path d="M${b1x} ${b1y} L${px} ${py} L${b2x} ${b2y} Z" fill="#2b3437"/><circle cx="${cx}" cy="${cy}" r="9" fill="#2b3437"/><circle cx="${cx}" cy="${cy}" r="3.5" fill="#fff"/>`}</svg>`; }
 function dadosSaude(c){
-  const mf = marcaFiltro(c), linhas = resultadosDaFase(c).filter(r=>!mf || (r.dados.vinculo||{}).marca===mf).map(r=>{ const v = r.dados.vinculo || {}, chv = {canal:v.canal, marca: v.marca && marcaSeparada(c) ? v.marca : null, fase: faseada(c) ? (v.fase || 'Lead gen') : null}, key = v.canal + (chv.marca?'|'+chv.marca:'') + (chv.fase?'@'+chv.fase:''), cf = (c.canaisCfg||{})[key] || {};
+  const mf = marcaFiltro(c), pf = paisFiltro(c), linhas = resultadosDaFase(c).filter(r=>(!mf || (r.dados.vinculo||{}).marca===mf) && (!pf || (r.dados.vinculo||{}).pais===pf)).map(r=>{ const v = r.dados.vinculo || {}, chv = {canal:v.canal, marca: v.marca && marcaSeparada(c) ? v.marca : null, fase: faseada(c) ? (v.fase || 'Lead gen') : null}, key = v.canal + (chv.marca?'|'+chv.marca:'') + (chv.fase?'@'+chv.fase:''), cf = (c.canaisCfg||{})[key] || {};
     const pc = (cf.paises||[]).find(p=>p.cod===v.pais), bud = pc ? +pc.budget||0 : +cf.orcamento||0;
     const b = c.budgets.find(x=>x.canal===v.canal && x.pais===v.pais && mesmaLinha(x, chv));
     const cplMeta = cf.objetivo==='Awareness' ? null : custoLinha(b), leadsMeta = cplMeta>0 ? Math.round(bud/cplMeta) : null;   // em awareness o custo não é CPL
@@ -1770,7 +1770,17 @@ const marcasDaSaude = c => [...new Set(resultadosDaFase(c).map(r=>(r.dados.vincu
 function marcaFiltro(c){ const m = (UI.sMarca||{})[c.id]; return m && marcasDaSaude(c).includes(m) ? m : null; }
 function filtroMarcas(c){ const ms = marcasDaSaude(c); if (ms.length<2) return ''; const at = marcaFiltro(c);
   return `<div class="seg seg-marca">${[[null,'Todas as marcas'], ...ms.map(m=>[m,m])].map(([m,l])=>`<button class="${(m||null)===at?'ativo':''}" data-act="sMarca" data-id="${c.id}" data-m="${h(m||'')}">${h(l)}</button>`).join('')}</div>`; }
-const linhaMarca = (c, marca, conteudo) => marca && marcasDaSaude(c).length>1 ? `<div data-act="sMarca" data-id="${c.id}" data-m="${h(marca)}" class="sd-clic" title="Ver só ${h(marca)}">${conteudo}</div>` : `<div>${conteudo}</div>`;
+const paisesDaSaude = c => [...new Set(resultadosDaFase(c).map(r=>(r.dados.vinculo||{}).pais).filter(Boolean))];
+function paisFiltro(c){ const p = (UI.sPais||{})[c.id]; return p && paisesDaSaude(c).includes(p) ? p : null; }
+function filtroPaises(c){ const ps = paisesDaSaude(c); if (ps.length<2) return ''; const at = paisFiltro(c);
+  return `<div class="seg seg-marca">${[[null,'Todos os países'], ...ps.map(p=>[p, (PAISES[p]?PAISES[p].f+' ':'')+p])].map(([p,l])=>`<button class="${(p||null)===at?'ativo':''}" data-act="sPais" data-id="${c.id}" data-p="${p||''}">${h(l)}</button>`).join('')}</div>`; }
+/* linha de detalhe dos cartões: a marca e o país são clicáveis (filtram a Saúde) */
+function linhaSaude(c, marca, pais, valor){
+  const mk = marca ? (marcasDaSaude(c).length>1 ? `<a href="javascript:void 0" class="sd-clic ${marcaFiltro(c)===marca?'on':''}" data-act="sMarca" data-id="${c.id}" data-m="${h(marca)}" title="Ver só ${h(marca)}">${h(marca)}</a>` : h(marca)) : '';
+  const rp = pais ? (PAISES[pais] ? PAISES[pais].f+' ' : '') + (PAISES[pais] && !marca ? PAISES[pais].n : pais) : '';
+  const ps = pais ? (paisesDaSaude(c).length>1 ? `<a href="javascript:void 0" class="sd-clic ${paisFiltro(c)===pais?'on':''}" data-act="sPais" data-id="${c.id}" data-p="${pais}" title="Ver só ${h(PAISES[pais]?PAISES[pais].n:pais)}">${rp}</a>` : rp) : '';
+  return `<div><span>${[mk, ps].filter(Boolean).join(' · ') || 'Campanha'}</span>${valor}</div>`; }
+const filtroTxt = c => [marcaFiltro(c), paisFiltro(c) && (PAISES[paisFiltro(c)] ? PAISES[paisFiltro(c)].n : paisFiltro(c))].filter(Boolean).join(' · ');
 /* faixa quando a campanha (ou a fase) terminou: diz se a meta foi batida */
 function faixaFim(c, S2, o){   // o = {real, meta, rotulo, custoReal, custoMeta, rotCusto, fmt}
   if (S2.frac < 1) return '';
@@ -1788,7 +1798,7 @@ function saudeAwareness(c, S2){
   const pill = (cls, t) => `<span class="sd-pill sd-${cls}">${t}</span>`;
   const cartao = (ic, rot, big, peq, barra, sub, pil, rod) => `<div class="card card-p"><div class="sd-lb"><i data-lucide="${ic}"></i>${rot}</div><div class="sd-big">${big}${peq?` <small>${peq}</small>`:''}</div>${barra}<div class="sd-sub">${sub}</div>${pil}<div class="sd-rod">${rod}</div></div>`;
   const barra = (frac, cor, marca, tit) => `<div class="sd-bar"><i style="width:${pct(frac)}%;background:${cor}"></i>${marca!=null?`<b style="left:${pct(marca)}%" title="${tit}"></b>`:''}</div>`;
-  const porMarca = k => { const m = {}; for (const x of S2.linhas) { const n = [x.v.marca, x.v.pais].filter(Boolean).join(' · ') || 'Campanha'; (m[n] = m[n] || {v:0, mk:x.v.marca}).v += (+x[k]||0); } const e = Object.entries(m); return e.length>1 ? `<div class="sd-pais">${e.map(([n,o])=>linhaMarca(c, o.mk, `<span>${h(n)}</span><b>${k==='inv'?moedaCurta(o.v,moe):numCurto(o.v)}</b>`)).join('')}</div>` : ''; };
+  const porMarca = k => { const m = {}; for (const x of S2.linhas) { const n = [x.v.marca, x.v.pais].filter(Boolean).join(' · ') || 'Campanha'; (m[n] = m[n] || {v:0, mk:x.v.marca, pais:x.v.pais}).v += (+x[k]||0); } const e = Object.entries(m); return e.length>1 ? `<div class="sd-pais">${e.map(([n,o])=>linhaSaude(c, o.mk, o.pais, `<b>${k==='inv'?moedaCurta(o.v,moe):numCurto(o.v)}</b>`)).join('')}</div>` : ''; };
   const cAlc = cartao('radio-tower', 'Alcance', numCurto(alc), 'pessoas', barra(Math.min(1, (freq||0)/4), '#2f80b8', null), `Impressões: ${numCurto(imp)} · frequência ${freq?freq.toLocaleString('pt-BR',{maximumFractionDigits:2}):'—'}`,
     freq==null ? pill('cinza','Sem dados') : freq>3.5 ? pill('amar','Frequência alta') : pill('verde','Frequência saudável'), `CPM: <b>${moeda2(cpm, moe)}</b>`) .replace('</div></div>', porMarca('alcance')+'</div></div>');
   const comMeta = S2.linhas.filter(x=>x.custoAw>0 && (x.objMidia||'Engajamento')==='Engajamento'), engMeta = comMeta.length===S2.linhas.length ? comMeta.reduce((s,x)=>s+x.bud/x.custoAw,0) : null, cpeMeta = engMeta ? bud/engMeta : null;
@@ -1826,7 +1836,7 @@ function abaSaude(c){
   const detalhe = nv.map(v=>`${v.contaNome||v.conta} — ${v.campanhaNome||v.campanhaId}`).join('\n') + (atual ? '\nAtualizado em '+new Date(atual).toLocaleString('pt-BR') : '');
   const fonte = `<div class="saude-fonte ${velho?'velho':''}" style="margin-bottom:${faseada(c)?'10px':'0'}"><i data-lucide="${velho?'alert-circle':'database'}"></i><span title="${h(detalhe)}">${nv.length ? `${[...new Set(nv.map(v=>v.canal||'Meta Ads'))].join(', ')} · atualizado ${ha}${velho?' — dados desatualizados':''}` : 'Nenhuma campanha do Gerenciador do Meta vinculada.'}</span>
     ${ed?`<span style="margin-left:auto;display:flex;gap:8px">${nv.length?`<button class="btn btn-s" data-act="sincMeta" data-id="${c.id}"><i data-lucide="refresh-cw"></i>Atualizar</button>`:''}<button class="btn btn-s" data-act="vincularMeta" data-id="${c.id}"><i data-lucide="link"></i>${nv.length?'Vínculos':'Vincular campanha do Meta'}</button></span>`:''}</div>`;
-  const sel = (faseada(c) || marcasDaSaude(c).length>1) ? `<div class="saude-filtros">${seletorEtapa(c, false)}${filtroMarcas(c)}</div>` : '';
+  const sel = (faseada(c) || marcasDaSaude(c).length>1 || paisesDaSaude(c).length>1) ? `<div class="saude-filtros">${seletorEtapa(c, false)}${filtroMarcas(c)}${filtroPaises(c)}</div>` : '';
   if (!S2.linhas.length) return fonte + sel + `<div class="card card-p" style="margin-top:12px"><div class="vazio">Vincule a campanha do Gerenciador do Meta para acompanhar a saúde automaticamente.</div></div>`;
   if (faseada(c) ? etapaSel(c)==='Awareness' : S2.linhas.every(x=>x.objetivo==='Awareness')) return fonte + sel + saudeAwareness(c, S2);
   const moe = S2.linhas[0].moeda, soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0);
@@ -1840,7 +1850,7 @@ function abaSaude(c){
   const variasMarcas = new Set(S2.linhas.map(x=>x.v.marca||'')).size>1;
   const porPais = {}; for (const x of S2.linhas) { const k = (variasMarcas && x.v.marca ? x.v.marca+' · ' : '') + (x.v.pais||'—'), o = porPais[k] || (porPais[k] = {leads:0, leadsMeta:0, lmx:0, inv:0, bud:0}); o.leads += x.leads; o.inv += x.inv; o.bud += x.bud; o.leadsMeta += x.leadsMeta||0; if (x.cplMeta>0) o.lmx += x.bud/x.cplMeta; }
   const paisesK = Object.keys(porPais).sort(), multi = paisesK.length>1, rotP = k => { const ps = k.split(' · '), cod = ps.pop(); return (ps.length ? h(ps.join(' · '))+' · ' : '') + (PAISES[cod] ? PAISES[cod].f+' '+cod : h(cod)); };
-  const subPais = f => multi ? `<div class="sd-pais">${paisesK.map(k=>linhaMarca(c, k.split(' · ').slice(0,-1).join(' · '), `<span>${rotP(k)}</span>${f(porPais[k])}`)).join('')}</div>` : '';
+  const subPais = f => multi ? `<div class="sd-pais">${paisesK.map(k=>{ const ps = k.split(' · '), cod = ps.pop(); return linhaSaude(c, ps.join(' · ') || null, cod==='—'?null:cod, f(porPais[k])); }).join('')}</div>` : '';
   const emCurso = S2.frac>0 && S2.frac<1, projL = emCurso ? Math.round(leads/S2.frac) : null, projI = emCurso ? inv/S2.frac : null;
   const cartao = (ic, rot, big, peq, barra, sub, pil, rod, extra) => `<div class="card card-p"><div class="sd-lb"><i data-lucide="${ic}"></i>${rot}</div><div class="sd-big">${big}${peq?` <small>${peq}</small>`:''}</div>${barra}<div class="sd-sub">${sub}</div>${pil}${extra||''}<div class="sd-rod">${rod}</div></div>`;
   const barra = (frac, cor, marca, tit) => `<div class="sd-bar"><i style="width:${pct(frac)}%;background:${cor}"></i>${marca!=null?`<b style="left:${pct(marca)}%" title="${tit}"></b>`:''}</div>`;
@@ -2504,6 +2514,7 @@ const ACT = {
     registrar(`${t==='objetivo'?'Objetivo':'Objetivo de mídia'} de ${el.dataset.k} em “${c.nome}”: ${cf[t]||'—'}`); render(); },
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
+  sPais: el => { UI.sPais = UI.sPais||{}; const p = el.dataset.p || null; UI.sPais[el.dataset.id] = UI.sPais[el.dataset.id]===p ? null : p; render(); },
   sMarca: el => { UI.sMarca = UI.sMarca||{}; const m = el.dataset.m || null; UI.sMarca[el.dataset.id] = UI.sMarca[el.dataset.id]===m ? null : m; render(); },
   selEtapa: el => { UI.etapa = UI.etapa||{}; UI.etapa[el.dataset.id] = el.dataset.v; UI.aSel = []; render(); },
   loteModo: () => { UI.fac.sel = !UI.fac.sel; UI.aSel = []; render(); },
