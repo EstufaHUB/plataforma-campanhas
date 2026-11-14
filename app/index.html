@@ -892,7 +892,7 @@ const tag = s => `<span class="tag ${corStatus(s)}">${h(s)}</span>`;
 function saude(c){
   if (c.status==='Concluída') return {cor:'cinza',txt:'Encerrada'};
   const ts = c.crono.tarefas, atr = ts.filter(t=>statusExib(t)==='Atrasada');
-  if ((c.crono.inviaveis && c.crono.inviaveis.length) || atr.length) return {cor:'verm',txt:'Ajustar cronograma'};
+  if ((c.crono.inviaveis && c.crono.inviaveis.length) || atr.length) return {cor:'verm',txt:'Ações atrasadas'};
   const prox = ts.filter(t=>t.status!=='Concluída' && t.folga<=0 && t.ES <= addDias(HOJE,7));
   if (prox.length) return {cor:'amar',txt:'Atenção'};
   return {cor:'verde',txt:'No prazo'};
