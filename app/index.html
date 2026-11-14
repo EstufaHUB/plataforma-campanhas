@@ -324,8 +324,8 @@ const ST_TRAD = ['Não iniciada','Aguardando conteúdo original','Aguardando apr
 const ST_POST = ['Ideia','Em planejamento','Em redação','Aguardando aprovação','Aprovado','Em design','Pronto para publicação','Publicado'];
 const ETAPAS_ENT = {briefing:'Briefing',aprov_conteudo:'Aprovação do conteúdo',ajuste_conteudo:'Ajustes no conteúdo',producao:'Produção',aprov_asset:'Aprovação do asset',ajuste_asset:'Ajustes no asset',concluido:'Concluído'};
 /* etapas (agrupamento) do cronograma — mesma organização da planilha de atividades macro */
-const FASES = {1:'📥 Briefing',2:'🧠 Estratégia & Conceito',3:'🎨 Criação & Direção de Arte (KV)',4:'🛬 Landing Page',5:'🔧 Configuração Sales Force',6:'✍️ Conteúdo (Copy & Texto)',7:'⚙️ Organização',8:'🖼️ Produção de Assets',9:'🔍 Pré-Lançamento',10:'🚀 Lançamento'};
-const ORDEM_FASES = [1,2,3,4,5,6,8,9,10,7];   // Organização por último
+const FASES = {1:'📥 Briefing',2:'🧠 Estratégia & Conceito',3:'🎨 Criação & Direção de Arte (KV)',4:'🛬 Landing Page',5:'🔧 Configuração Sales Force',6:'✍️ Conteúdo (Copy & Texto)',7:'⚙️ Organização',8:'🖼️ Produção de Assets',9:'🔍 Pré-Lançamento',10:'🚀 Lançamento',11:'📦 Pós campanha'};
+const ORDEM_FASES = [1,2,3,4,5,6,8,9,10,11,7];   // Organização por último
 /* modelo padrão. dur em dias úteis (corridos:true = dias corridos). escopo pais = uma etapa por país; trad = só países com idioma diferente do base */
 const MODELO_PADRAO = [
  {id:'F1-01',fase:1,nome:'Recebimento do briefing',area:'Atendimento',dur:1,escopo:'global',deps:[]},
@@ -358,9 +358,11 @@ const MODELO_PADRAO = [
  {id:'F3-02',fase:9,nome:'Revisar as LPs recebidas — layout, textos, traduções e formulário',area:'Design + Conteúdo',dur:1,escopo:'pais',deps:[['F3-01','FS']]},
  {id:'F3-04',fase:7,nome:'Subir LP no linktree',area:'Digital',dur:1,escopo:'global',deps:[['F3-02','FS']]},
  {id:'F4-01',fase:10,nome:'Iniciar campanha',area:'Digital',dur:1,escopo:'global',fimNoLanc:true,deps:[]},
+ {id:'F5-01',fase:11,nome:'Retirar LP do linktree e destaques após campanha',area:'Digital',dur:1,escopo:'global',ancora:'fim',deps:[]},
+ {id:'F5-02',fase:11,nome:'Relatório',area:'Planejamento',dur:5,escopo:'global',ancora:'fim',deps:[]},
  {id:'F3-03',fase:9,nome:'Programar a campanha no gerenciador e lançar',area:'Digital',dur:2,escopo:'pais',fimNoLanc:true,deps:[['F3-02','FS'],['F2-12','FS'],['F2-13','FS']]}
 ];
-const VERSAO_MODELO_PLANILHA = 'planilha-2026-11c';
+const VERSAO_MODELO_PLANILHA = 'planilha-2026-11d';
 const NOMES_SEM_PARENTESES = {"Criar layout da LP (em paralelo com a tradução)": "Criar layout da LP", "Traduzir conteúdo da LP (em paralelo com a criação do layout)": "Traduzir conteúdo da LP", "Validar layout da LP (em paralelo com a validação do conteúdo traduzido)": "Validar layout da LP", "Validar conteúdo traduzido da LP (em paralelo com a validação do layout)": "Validar conteúdo traduzido da LP", "Configuração LP Sales Force (30 dias corridos)": "Configuração LP Sales Force", "Traduzir conteúdos (em paralelo com a criação dos assets)": "Traduzir conteúdos", "Validar traduções (não depende da aprovação dos assets)": "Validar traduções", "Programação da LP (fornecedor)": "Programação da LP"};
 /* etapa nova de cada código antigo (para campanhas criadas antes desta organização) */
 const FASE_POR_ID = Object.fromEntries(MODELO_PADRAO.map(m=>[m.id, m.fase]));
@@ -474,6 +476,7 @@ function calcularCronograma(camp, op = {}){
   const lanc = cod => (camp.paises.find(p=>p.cod===cod)||{}).lancamento || camp.lancamento;
   // 1) passagem de trás para frente: data mais tarde possível (LS/LF)
   for (const n of [...ordem].reverse()) {
+    if (n.t.ancora==='fim') { n.LS = paraFrente(addDias(camp.fimVeiculacao || camp.lancamento, 1), n.cal, c); n.LF = fimDe(n.LS, n.dur, n.cal, c); continue; }   // pós-campanha: depois do fim da veiculação
     let lf = null, lsCap = null;
     if (!n.succ.length) lf = paraTras(n.pais ? lanc(n.pais) : camp.lancamento, n.cal, c);
     for (const s of n.succ) {
@@ -485,7 +488,7 @@ function calcularCronograma(camp, op = {}){
     if (lsCap && (!ls || lsCap<ls)) ls = lsCap;
     n.LS = ls; n.LF = fimDe(ls, n.dur, n.cal, c);
   }
-  const inicio = ordem.reduce((m,n)=> !m||n.LS<m ? n.LS : m, null);
+  const inicio = ordem.filter(n=>!n.t.ancora).reduce((m,n)=> !m||n.LS<m ? n.LS : m, null);
   // 2) passagem para frente a partir do início calculado: datas planejadas (ES/EF)
   for (const n of ordem) {
     const fx = fixos[n.id]; let es;
@@ -496,6 +499,7 @@ function calcularCronograma(camp, op = {}){
       es = paraFrente(es, n.cal, c);
       if (op.naoAntesDe && es < op.naoAntesDe) es = paraFrente(op.naoAntesDe, n.cal, c);
       if (n.t.fimNoLanc && es < n.LS) es = n.LS;          // última etapa termina exatamente no lançamento
+      if (n.t.ancora==='fim') es = n.LS;
       if (es > n.LS) es = n.LS;                            // prazo curto: o lançamento é mantido e a etapa fica no passado (atrasada)
     }
     let ef = (fx && fx.fim) || fimDe(es, n.dur, n.cal, c);
@@ -507,7 +511,7 @@ function calcularCronograma(camp, op = {}){
   }
   const tarefas = ordem.map(n => ({
     id:n.id, tid:n.t.id, fase:n.t.fase, nome:(camp.renomeadas||{})[n.id] || nomeTarefa(n.t, camp.idiomaBase), area:n.t.area, pais:n.pais, dur:n.dur, cal:n.cal,
-    deps:n.deps, escopo:n.t.escopo, marco:!!n.t.fimNoLanc, ES:n.ES, EF:n.EF, LS:n.LS, LF:n.LF, folga:n.folga, critico:n.folga<=0, status:'Não iniciada'
+    deps:n.deps, escopo:n.t.escopo, marco:!!n.t.fimNoLanc, ancora:n.t.ancora||null, ES:n.ES, EF:n.EF, LS:n.LS, LF:n.LF, folga:n.folga, critico:n.folga<=0, status:'Não iniciada'
   }));
   const fim = tarefas.filter(t=>t.marco);
   const inviaveis = fim.filter(t=>t.EF > lanc(t.pais)).map(t=>({pais:t.pais, fim:t.EF, lanc:lanc(t.pais), atraso:uteisEntre(lanc(t.pais),t.EF,'AG',c)}));
@@ -519,6 +523,7 @@ function recalcFolgas(camp){
   ts.forEach(t=>succ[t.id]=[]); ts.forEach(t=>t.deps.forEach(d=>{ if (succ[d.id]) succ[d.id].push({id:t.id, tipo:d.tipo==='FS'?'FS':'SS', lag:d.lag||0}); }));
   const lanc = cod => (camp.paises.find(p=>p.cod===cod)||{}).lancamento || camp.lancamento;
   for (const t of [...ts].reverse()) {
+    if (t.ancora==='fim') { t.LS = paraFrente(addDias(camp.fimVeiculacao || camp.lancamento, 1), t.cal, cx); t.LF = fimDe(t.LS, t.dur, t.cal, cx); t.folga = uteisEntre(t.ES, t.LS, t.cal, cx); t.critico = false; continue; }
     let lf = null, lsCap = null;
     if (!succ[t.id].length) lf = paraTras(t.pais ? lanc(t.pais) : camp.lancamento, t.cal, cx);
     for (const s of succ[t.id]) { const S2 = porId[s.id];
@@ -1904,7 +1909,7 @@ const ACT = {
     S.campanhas.push(c); registrar('Campanha criada: '+c.nome+' (lançamento '+fd(c.lancamento)+')'); fecharModal(); location.hash = '#/campanha/'+c.id+'/cronograma'; toast('Campanha criada.'); },
   salvarEdicaoCamp: () => { const d = lerFormCampanha(), c = camp(d.id), err = validarCampanha(d);
     if (err.length) { $('#aviso-lanc').innerHTML = `<div class="alerta verm"><i data-lucide="alert-circle"></i><div>${err.map(h).join('<br>')}</div></div>`; icones(); return; }
-    const mudouDatas = d.lancamento!==c.lancamento || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
+    const mudouDatas = d.lancamento!==c.lancamento || d.fimVeiculacao!==c.fimVeiculacao || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
     if (mudouDatas) { rascunho = d; return ACT.compararRecalc(null, d, 'Edição da campanha (datas, países ou idiomas)'); }
     delete d._baseOrig; Object.assign(c, d); sincronizarBudgetCanais(c); registrar('Campanha editada: '+c.nome); fecharModal(); render(); toast('Campanha salva.'); },
   alterarLanc: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
