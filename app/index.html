@@ -134,19 +134,19 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .obj-canal{display:grid;grid-template-columns:auto 1fr;gap:16px 32px;padding:14px 18px;border-bottom:1px solid var(--borda)}@media (max-width:760px){.obj-canal{grid-template-columns:1fr}}
 .canal-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .saude-fonte{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.84rem;color:var(--tx2);background:var(--sup);border:1px solid var(--borda);border-radius:10px;padding:10px 14px}.saude-fonte svg{width:16px;height:16px;color:var(--pet-600)}
-.saude-pts{margin-top:16px!important;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px}@media (max-width:700px){.saude-pts{grid-template-columns:1fr}}
+
 .contagem{display:flex;align-items:baseline;gap:10px;margin:14px 0}.contagem b{font-size:3.4rem;line-height:1;color:var(--pet-950)}.contagem span{font-size:1.2rem;color:var(--tx2);font-style:italic}
 .barra.grossa{height:14px;border-radius:8px}.barra.grossa i{border-radius:8px}
-.sd-kpis{display:grid;grid-template-columns:minmax(0,1.15fr) repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}.sd-kpis>.card,.sd-meio>.card{margin:0!important}
+.sd-kpis{display:grid;grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}.sd-kpis>.card{padding:14px 16px!important}.sd-hero .sd-big{font-size:2.6rem}.sd-kpis>.card,.sd-meio>.card{margin:0!important}
 .sd-lb{display:flex;align-items:center;gap:7px;font-size:.84rem;font-weight:600;color:var(--tx2)}.sd-lb svg{width:16px;height:16px;color:var(--pet-600)}
-.sd-big{font-size:1.75rem;font-weight:700;color:var(--pet-950);line-height:1.15;margin-top:8px}.sd-big small{font-size:.85rem;font-weight:500;color:var(--tx2)}
+.sd-big{font-size:1.75rem;font-weight:700;color:var(--pet-950);line-height:1.15;margin-top:8px}.sd-big small{font-size:.85rem;font-weight:500;color:var(--tx2);white-space:nowrap}
 .sd-bar{position:relative;height:9px;background:#e8eef0;border-radius:5px;margin:12px 0 5px}.sd-bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;max-width:100%}
 .sd-bar>b{position:absolute;top:-4px;bottom:-4px;width:2px;background:#2b3437;border-radius:1px}
 .sd-pill{display:inline-block;margin-top:10px;font-size:.76rem;font-weight:600;padding:3px 10px;border-radius:999px}
 .sd-verm{background:#fdecea;color:#a3261c}.sd-amar{background:#fdf3d8;color:#8a5a00}.sd-verde{background:#e7f4e8;color:#2e6b31}.sd-cinza{background:#eef1f2;color:#5b6a6f}.sd-azul{background:#e6f1fb;color:#185fa5}
 .sd-pais{margin-top:10px;border-top:1px solid var(--borda);padding-top:6px;font-size:.78rem;color:var(--tx2)}.sd-pais div{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.sd-pais b{color:var(--tx);font-weight:600}
-.sd-farol{text-align:center}.sd-farol .sd-lb{justify-content:center}.sd-dias{border-top:1px solid var(--borda);margin-top:10px;padding-top:10px;text-align:left}.sd-dias b{font-size:1.35rem;color:var(--pet-950)}
-.sd-meio{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;margin-top:16px}.sd-meio>.card:last-child{display:flex;flex-direction:column}.sd-meio>.card:last-child .saude-txt{flex:1}
+.sd-farol{text-align:center}.sd-farol .sd-lb{justify-content:center}.sd-farol svg{max-width:150px!important}.sd-dias{border-top:1px solid var(--borda);margin-top:10px;padding-top:8px}.sd-dias b{font-size:1.35rem;color:var(--pet-950)}
+.sd-meio{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;margin-top:14px}.sd-meio>.card{padding:14px 16px!important}
 .sd-leg{display:flex;gap:14px;font-size:.78rem;color:var(--tx2)}.sd-leg i{display:inline-block;width:14px;height:0;border-top:3px solid #2f80b8;vertical-align:middle;margin-right:5px}.sd-leg i.m{border-top:2px dashed #7d8b90}
 .pts{list-style:none;margin:8px 0 0;padding:0;font-size:.88rem;line-height:1.45}.pts li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--borda)}.pts li:first-child{border-top:0}.pts li>i{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px}
 .pts .p-verm{background:#d0443a}.pts .p-amar{background:#e0a100}.pts .p-verde{background:#2e9d55}.pts .p-info{background:#2f80b8}
@@ -1627,7 +1627,7 @@ const moedaCurta = (v, m='BRL') => { const sim = (0).toLocaleString('pt-BR',{sty
   return v>=1e6 ? `${sim} ${(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})} mi` : v>=1e4 ? `${sim} ${(v/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})} mil` : moeda2(v,m); };
 /* gráfico de leads acumulados × ritmo da meta */
 function graficoRitmo(S2){
-  const W = 640, H = 200, L = 40, R = 12, T = 14, B = 26, iw = W-L-R, ih = H-T-B;
+  const W = 640, H = 190, L = 40, R = 12, T = 14, B = 26, iw = W-L-R, ih = H-T-B;
   const porData = {}; for (const x of S2.linhas) for (const d of x.porDia) porData[d.data] = (porData[d.data]||0) + (+d.leads||0);
   const datas = Object.keys(porData).sort(); const ini = datas[0] && datas[0]<S2.ini ? datas[0] : S2.ini, fim = S2.fim;
   const nDias = Math.max(1, difDias(ini, fim)), meta = S2.linhas.reduce((s,x)=>s+(x.leadsMeta||0),0);
@@ -1655,13 +1655,14 @@ function abaSaude(c){
   const porDiaT = {}; for (const x of S2.linhas) for (const d of x.porDia) { const o = porDiaT[d.data] || (porDiaT[d.data] = {inv:0, leads:0}); o.inv += +d.investido||0; o.leads += +d.leads||0; }
   const u7 = Object.keys(porDiaT).sort().slice(-7).map(k=>porDiaT[k]), cpl7 = u7.length>=5 && u7.reduce((t,d)=>t+d.leads,0) ? u7.reduce((t,d)=>t+d.inv,0)/u7.reduce((t,d)=>t+d.leads,0) : null;
   const pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
+  const dias = `<div class="sd-dias"><div class="small muted"><b style="font-size:1.1rem;color:var(--pet-950)">${S2.restam}</b> ${S2.restam===1?'dia restante':'dias restantes'} · ${fdm(S2.ini)} → ${fdm(S2.fim)}</div><div class="sd-bar" style="margin:6px 0 0;height:6px"><i style="width:${pct(S2.frac)}%;background:#7d8b90"></i></div></div>`;
   const pill = (cls, t) => `<span class="sd-pill sd-${cls}">${t}</span>`;
   const porPais = {}; for (const x of S2.linhas) { const k = x.v.pais||'—', o = porPais[k] || (porPais[k] = {leads:0, leadsMeta:0, inv:0, bud:0}); o.leads += x.leads; o.inv += x.inv; o.bud += x.bud; o.leadsMeta += x.leadsMeta||0; }
   const paisesK = Object.keys(porPais), multi = paisesK.length>1, rotP = k => PAISES[k] ? PAISES[k].f+' '+k : k;
   const subPais = f => multi ? `<div class="sd-pais">${paisesK.map(k=>`<div><span>${rotP(k)}</span>${f(porPais[k])}</div>`).join('')}</div>` : '';
   // leads
   const espL = leadsMeta ? leadsMeta*S2.frac : null, dL = espL ? leads/espL-1 : null;
-  const cLeads = `<div class="card card-p"><div class="sd-lb"><i data-lucide="users"></i>Leads</div><div class="sd-big">${numero(leads)}${leadsMeta?` <small>de ${numero(leadsMeta)}</small>`:''}</div>
+  const cLeads = `<div class="card card-p sd-hero"><div class="sd-lb"><i data-lucide="users"></i>Leads</div><div class="sd-big">${numero(leads)}${leadsMeta?` <small>de ${numero(leadsMeta)}</small>`:''}</div>
     ${leadsMeta?`<div class="sd-bar"><i style="width:${pct(leads/leadsMeta)}%;background:${dL<-0.1?'#e0a100':'#2e9d55'}"></i><b style="left:${pct(S2.frac)}%" title="Esperado hoje"></b></div><div class="small muted">Esperado hoje: ${numero(Math.round(espL))}</div>
     ${pill(dL<-0.25?'verm':dL<-0.1?'amar':'verde', Math.abs(dL)<0.03?'No ritmo':`${Math.round(Math.abs(dL)*100)}% ${dL>0?'acima':'abaixo'} do ritmo`)}`:`<div class="small muted" style="margin-top:12px">Sem meta de leads</div>${pill('cinza','Meta a definir')}`}
     ${subPais(o=>`<b>${numero(o.leads)}${o.leadsMeta?' / '+numero(o.leadsMeta):''}</b>`)}</div>`;
@@ -1676,18 +1677,14 @@ function abaSaude(c){
   const cInv = `<div class="card card-p"><div class="sd-lb"><i data-lucide="wallet"></i>Investimento</div><div class="sd-big">${moedaCurta(inv,moe)}${bud?` <small>de ${moedaCurta(bud,moe)}</small>`:''}</div>
     ${bud?`<div class="sd-bar"><i style="width:${pct(inv/bud)}%;background:#2f80b8"></i><b style="left:${pct(S2.frac)}%" title="Ideal hoje"></b></div><div class="small muted">Ideal hoje: ${moedaCurta(bud*S2.frac,moe)}</div>
     ${pill(Math.abs(dI)<=0.1?'verde':'amar', Math.abs(dI)<=0.1?'Dentro do ritmo':dI>0?'Gasto adiantado':'Gasto atrasado')}`:pill('cinza','Sem budget')}
-    ${subPais(o=>`<b>${moedaCurta(o.inv,moe)}${o.bud?' / '+moedaCurta(o.bud,moe):''}</b>`)}</div>`;
-  const cFarol = `<div class="card card-p sd-farol"><div class="sd-lb"><i data-lucide="gauge"></i>Saúde da campanha</div><div style="margin-top:4px">${medidorSaude(S2.score==null?null:Math.min(1, S2.score/1.25))}</div>
-      <div style="font-weight:700;font-size:1.05rem;color:${nivel?nivel[1]:'var(--tx2)'}">${nivel?nivel[0]:'Meta a definir'}</div>
-      <div class="sd-dias"><div class="small muted"><b>${S2.restam}</b> ${S2.restam===1?'dia restante':'dias restantes'}</div><div class="sd-bar" style="margin:6px 0 4px"><i style="width:${pct(S2.frac)}%;background:#7d8b90"></i></div><div class="small muted">${fdm(S2.ini)} → ${fdm(S2.fim)} · ${pct(S2.frac)}% do período</div></div></div>`;
-  const pts = pontosAtencao(c, S2), notas = c.saude || {};
-  return fonte + `<div class="sd-kpis">${cFarol}${cLeads}${cCpl}${cInv}</div>
+    ${subPais(o=>`<b>${moedaCurta(o.inv,moe)}${o.bud?' / '+moedaCurta(o.bud,moe):''}</b>`)}${dias}</div>`;
+  const cFarol = `<div class="card card-p sd-farol"><div class="sd-lb"><i data-lucide="gauge"></i>Saúde da campanha</div><div style="margin-top:6px">${medidorSaude(S2.score==null?null:Math.min(1, S2.score/1.25))}</div>
+      <div style="font-weight:700;font-size:1.05rem;color:${nivel?nivel[1]:'var(--tx2)'}">${nivel?nivel[0]:'Meta a definir'}</div></div>`;
+  const pts = pontosAtencao(c, S2);
+  return fonte + `<div class="sd-kpis">${cLeads}${cCpl}${cInv}${cFarol}</div>
   <div class="sd-meio">
     <div class="card card-p"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="sd-lb"><i data-lucide="trending-up"></i>Leads acumulados × ritmo da meta</div><div class="sd-leg"><span><i></i>Real</span>${leadsMeta?'<span><i class="m"></i>Meta</span>':''}</div></div>${graficoRitmo(S2)}</div>
-    <div class="card card-p"><div class="sd-lb"><i data-lucide="message-square"></i>Comentários</div><textarea class="saude-txt" data-chg="saudeTxt" data-id="${c.id}" data-k="comentarios" placeholder="Leitura da campanha…" ${ed?'':'disabled'}>${h(notas.comentarios||'')}</textarea></div>
-  </div>
-  <div class="card card-p saude-pts"><div><div class="sd-lb"><i data-lucide="alert-triangle"></i>Pontos de atenção</div>${pts.length?`<ul class="pts">${pts.map(x=>`<li><i class="p-${x.n}"></i><span>${h(x.t)}</span></li>`).join('')}</ul>`:'<div class="small muted" style="margin-top:8px">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta e das metas.</div></div>
-    <div style="display:flex;flex-direction:column"><div class="sd-lb"><i data-lucide="list-checks"></i>Ações</div><textarea class="saude-txt" style="flex:1" data-chg="saudeTxt" data-id="${c.id}" data-k="acoes" placeholder="O que vamos fazer…" ${ed?'':'disabled'}>${h(notas.acoes||'')}</textarea></div>
+    <div class="card card-p"><div class="sd-lb"><i data-lucide="alert-triangle"></i>Pontos de atenção</div>${pts.length?`<ul class="pts">${pts.map(x=>`<li><i class="p-${x.n}"></i><span>${h(x.t)}</span></li>`).join('')}</ul>`:'<div class="small muted" style="margin-top:8px">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta e das metas.</div></div>
   </div>`; }
 
 /* ---------- Entregáveis ---------- */
