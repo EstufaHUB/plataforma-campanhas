@@ -14,10 +14,13 @@ const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { sta
 
 // leads = maior entre os tipos de lead que o Meta informa (formulário, pixel, agrupado)
 const TIPOS_LEAD = ["lead", "offsite_conversion.fb_pixel_lead", "onsite_conversion.lead_grouped"];
-function leadsDe(actions: { action_type: string; value: string }[] | undefined) {
+// acaoResultado: tipo de ação usado como resultado quando não é lead (ex.: offsite_conversion.custom.123 = download do ebook)
+function leadsDe(actions: { action_type: string; value: string }[] | undefined, acaoResultado?: string) {
   if (!actions) return 0;
-  return Math.max(0, ...actions.filter((a) => TIPOS_LEAD.includes(a.action_type)).map((a) => +a.value || 0));
+  const tipos = acaoResultado ? [acaoResultado] : TIPOS_LEAD;
+  return Math.max(0, ...actions.filter((a) => tipos.includes(a.action_type)).map((a) => +a.value || 0));
 }
+const acaoDe = (actions: { action_type: string; value: string }[] | undefined, tipo: string) => +((actions || []).find((a) => a.action_type === tipo)?.value || 0);
 
 async function insights(campanhaId: string, token: string, extra: Record<string, string>) {
   const u = new URL(`${GRAPH}/${campanhaId}/insights`);
@@ -55,7 +58,7 @@ Deno.serve(async (req) => {
 
   const feito: unknown[] = [];
   for (const c of campanhas || []) {
-    const vinculos = (c.dados?.metaVinculos || []) as { campanhaId: string; [k: string]: unknown }[];
+    const vinculos = (c.dados?.metaVinculos || []) as { campanhaId: string; acaoResultado?: string; [k: string]: unknown }[];
     for (const v of vinculos) {
       try {
         const total = (await insights(v.campanhaId, token, { date_preset: "maximum" }))[0] || {};
@@ -67,8 +70,9 @@ Deno.serve(async (req) => {
           impressoes: +(total.impressions as string) || 0,
           cliques: +(total.clicks as string) || 0,
           alcance: +(total.reach as string) || 0,
-          leads: leadsDe(total.actions as never),
-          porDia: dias.map((d) => ({ data: d.date_start, investido: +(d.spend as string) || 0, leads: leadsDe(d.actions as never), impressoes: +(d.impressions as string) || 0 })),
+          leads: leadsDe(total.actions as never, v.acaoResultado),
+          engajamentos: acaoDe(total.actions as never, "post_engagement"),
+          porDia: dias.map((d) => ({ data: d.date_start, investido: +(d.spend as string) || 0, leads: leadsDe(d.actions as never, v.acaoResultado), impressoes: +(d.impressions as string) || 0, engajamentos: acaoDe(d.actions as never, "post_engagement") })),
           fonte: "Meta Graph API",
         };
         await admin.from("resultados_meta").upsert({ campanha_id: c.id, meta_campanha: v.campanhaId, dados, atualizado_em: new Date().toISOString() });
