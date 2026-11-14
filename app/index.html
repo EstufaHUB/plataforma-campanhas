@@ -153,6 +153,8 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .nt-mais{grid-template-columns:1fr;font-size:.82rem}.nt-mais a{color:var(--tx2)}
 @media (max-width:800px){.nt-lin{grid-template-columns:minmax(0,1fr) 130px 36px}.nt-lin>div:nth-child(3),.nt-lin>div:nth-child(4){display:none}}
 .mat-bud tr.grp td{background:#f4f7f8;font-weight:700;color:var(--pet-900);font-size:.82rem;padding-top:8px}.mat-bud tr.sub td:first-child{padding-left:16px}
+.faixa-fim{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-radius:10px;margin:0 0 14px;font-size:.9rem;line-height:1.45}.faixa-fim svg{width:22px;height:22px;flex:none;margin-top:1px}.faixa-fim span{display:block;font-size:.84rem;opacity:.9}
+.faixa-fim.ok{background:#e7f4e8;color:#1f5a23;border:1px solid #bfe0c2}.faixa-fim.nao{background:#fdf3d8;color:#7a4f00;border:1px solid #f1dc9f}.faixa-fim.neutra{background:#eef1f2;color:#4d5b60;border:1px solid #dde3e5}
 .seg-etapa{margin-bottom:14px;display:inline-flex;flex-wrap:wrap}.seg-etapa button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px}.seg-etapa .fase-num{width:20px;height:20px;font-size:.72rem}.seg-etapa button:not(.ativo) .fase-num{background:#9aa9ae}
 .fase-datas{display:grid;grid-template-columns:repeat(2,minmax(0,220px));gap:12px}
 .fase-form{border:1px solid var(--borda);border-radius:12px;padding:14px 16px;display:grid;gap:12px;background:#fbfcfc}
@@ -1759,6 +1761,14 @@ function graficoRitmo(S2, W = 640, H = 190, campo = 'leads'){
     ${proj?`<line x1="${X(ult[0])}" y1="${Y(ult[1])}" x2="${X(nDias)}" y2="${Y(proj)}" stroke="#2f80b8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round"/><circle cx="${X(nDias)}" cy="${Y(proj)}" r="4" fill="#fff" stroke="#2f80b8" stroke-width="1.5"/><text x="${X(nDias)-8}" y="${Y(proj)-8}" text-anchor="end" font-size="11" font-weight="600" fill="#2f80b8">~${numCurto(proj)}</text>`:''}
     <circle cx="${X(ult[0])}" cy="${Y(ult[1])}" r="4.5" fill="#2f80b8"/>
     <text x="${L}" y="${H-6}" font-size="11" fill="#8a989c">${fdm(ini)}</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="11" fill="#8a989c">${fdm(fim)}</text></svg>`; }
+/* faixa quando a campanha (ou a fase) terminou: diz se a meta foi batida */
+function faixaFim(c, S2, o){   // o = {real, meta, rotulo, custoReal, custoMeta, rotCusto, fmt}
+  if (S2.frac < 1) return '';
+  const nomeF = faseada(c) ? `Fase ${FASES_CAMP.indexOf(etapaSel(c))+1} · ${etapaSel(c)}` : 'Campanha';
+  if (!o.meta) return `<div class="faixa-fim neutra"><i data-lucide="flag"></i><div><b>${nomeF} finalizada em ${fd(S2.fim)}.</b> Sem meta cadastrada para comparar o resultado.</div></div>`;
+  const r = o.real/o.meta, bateu = r>=1, dc = o.custoReal && o.custoMeta ? o.custoReal/o.custoMeta-1 : null;
+  return `<div class="faixa-fim ${bateu?'ok':'nao'}"><i data-lucide="${bateu?'trophy':'flag'}"></i><div><b>${nomeF} finalizada em ${fd(S2.fim)} — ${bateu?'meta batida':'meta não atingida'}: ${Math.round(r*100)}% da meta de ${o.rotulo}.</b>
+    <span>${o.fmt(o.real)} de ${o.fmt(o.meta)} previstos${dc!=null?` · ${o.rotCusto} ${Math.round(Math.abs(dc)*100)}% ${dc>0?'acima':'abaixo'} da meta`:''}.</span></div></div>`; }
 /* saúde de campanha (ou fase) de awareness: alcance, engajamento e investimento */
 function saudeAwareness(c, S2){
   const moe = S2.linhas[0].moeda, mc = v => v!=null && v<0.1 ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:moe,minimumFractionDigits:4,maximumFractionDigits:4}) : moeda2(v, moe), soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0), pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
@@ -1778,7 +1788,7 @@ function saudeAwareness(c, S2){
     `Custo por engajamento: ${cpe!=null?mc(cpe):'—'}${cpeMeta?` · meta ${mc(cpeMeta)}`:''}`,
     engMeta ? pill(dE<-0.25||dC>0.15?'verm':dE<-0.1||dC>0.05?'amar':'verde', `${Math.round(eng/engMeta*100)}% da meta${dC!=null?` · custo ${Math.round(Math.abs(dC)*100)}% ${dC>0?'acima':'abaixo'}`:''}`)
       : taxa==null ? pill('cinza','Sem dados') : pill('cinza','Meta a definir'),
-    `${(taxa*100||0).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões · cliques: <b>${numCurto(cli)}</b>`);
+    `${(taxa*100||0).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões · cliques: <b>${numCurto(cli)}</b>`).replace('</div></div>', porMarca('engaj')+'</div></div>');
   const dI = bud ? inv/bud - S2.frac : null;
   const cInv = cartao('wallet', 'Investimento', moedaCurta(inv,moe), bud?'de '+moedaCurta(bud,moe):'', bud ? barra(inv/bud, '#2f80b8', Math.min(1,S2.frac), 'Ideal hoje') : barra(0,'#ccc',null),
     bud ? (encerrada ? `Fase encerrada · ${Math.round(inv/bud*100)}% do budget investido` : `Ideal hoje: ${moedaCurta(bud*S2.frac,moe)}${projI!=null?` · projeção ${moedaCurta(projI,moe)}`:''}`) : 'Sem budget',
@@ -1793,7 +1803,7 @@ function saudeAwareness(c, S2){
   if (engMeta) { const r = eng/engMeta; pts.push({n: r>=1?'verde':r>=0.85?'amar':'verm', t:`${encerrada?'A fase fechou com':'Até agora,'} ${numCurto(eng)} engajamentos de ${numCurto(engMeta)} previstos (${Math.round(r*100)}%), a ${mc(cpe)} cada (meta ${mc(cpeMeta)}).`}); }
   else if (taxa!=null) pts.push({n: taxa>=0.3?'verde':'amar', t:`${(taxa*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões geraram engajamento (custo de ${mc(cpe)} por interação).`});
   const ordem = {verm:0, amar:1, verde:2, info:3}; pts.sort((a,b)=>ordem[a.n]-ordem[b.n]);
-  return `<div class="sd-kpis">${cAlc}${cEng}${cInv}</div>
+  return faixaFim(c, S2, {real:eng, meta:engMeta, rotulo:'engajamento', custoReal:cpe, custoMeta:cpeMeta, rotCusto:'custo por engajamento', fmt:numCurto}) + `<div class="sd-kpis">${cAlc}${cEng}${cInv}</div>
   <div class="sd-meio">
     <div class="card card-p"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="sd-lb"><i data-lucide="trending-up"></i>Impressões acumuladas</div><div class="sd-leg"><span><i></i>Real</span>${emCurso?'<span><i class="p"></i>Projeção</span>':''}</div></div><div class="sd-graf" data-c="${c.id}" data-campo="impressoes"></div></div>
     <div class="card card-p"><div class="sd-lb"><i data-lucide="alert-triangle"></i>Pontos de atenção</div>${pts.length?`<ul class="pts">${pts.map(x=>`<li><i class="p-${x.n}"></i><span>${h(x.t)}</span></li>`).join('')}</ul>`:'<div class="small muted" style="margin-top:8px">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta.</div></div>
@@ -1816,8 +1826,10 @@ function abaSaude(c){
   const u7 = Object.keys(porDiaT).sort().slice(-7).map(k=>porDiaT[k]), cpl7 = u7.length>=5 && u7.reduce((t,d)=>t+d.leads,0) ? u7.reduce((t,d)=>t+d.inv,0)/u7.reduce((t,d)=>t+d.leads,0) : null;
   const pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
   const pill = (cls, t) => `<span class="sd-pill sd-${cls}">${t}</span>`;
-  const porPais = {}; for (const x of S2.linhas) { const k = x.v.pais||'—', o = porPais[k] || (porPais[k] = {leads:0, leadsMeta:0, inv:0, bud:0}); o.leads += x.leads; o.inv += x.inv; o.bud += x.bud; o.leadsMeta += x.leadsMeta||0; }
-  const paisesK = Object.keys(porPais), multi = paisesK.length>1, rotP = k => PAISES[k] ? PAISES[k].f+' '+k : k;
+  // divisão por marca e país (quando há mais de uma marca, cada uma aparece separada)
+  const variasMarcas = new Set(S2.linhas.map(x=>x.v.marca||'')).size>1;
+  const porPais = {}; for (const x of S2.linhas) { const k = (variasMarcas && x.v.marca ? x.v.marca+' · ' : '') + (x.v.pais||'—'), o = porPais[k] || (porPais[k] = {leads:0, leadsMeta:0, lmx:0, inv:0, bud:0}); o.leads += x.leads; o.inv += x.inv; o.bud += x.bud; o.leadsMeta += x.leadsMeta||0; if (x.cplMeta>0) o.lmx += x.bud/x.cplMeta; }
+  const paisesK = Object.keys(porPais).sort(), multi = paisesK.length>1, rotP = k => { const ps = k.split(' · '), cod = ps.pop(); return (ps.length ? h(ps.join(' · '))+' · ' : '') + (PAISES[cod] ? PAISES[cod].f+' '+cod : h(cod)); };
   const subPais = f => multi ? `<div class="sd-pais">${paisesK.map(k=>`<div><span>${rotP(k)}</span>${f(porPais[k])}</div>`).join('')}</div>` : '';
   const emCurso = S2.frac>0 && S2.frac<1, projL = emCurso ? Math.round(leads/S2.frac) : null, projI = emCurso ? inv/S2.frac : null;
   const cartao = (ic, rot, big, peq, barra, sub, pil, rod, extra) => `<div class="card card-p"><div class="sd-lb"><i data-lucide="${ic}"></i>${rot}</div><div class="sd-big">${big}${peq?` <small>${peq}</small>`:''}</div>${barra}<div class="sd-sub">${sub}</div>${pil}${extra||''}<div class="sd-rod">${rod}</div></div>`;
@@ -1837,7 +1849,7 @@ function abaSaude(c){
     `Meta: ${cplMeta?moeda2(cplMeta,moe):'a definir'}`,
     dC==null?pill('cinza','Meta a definir'):pill(dC>0.15?'verm':dC>0.05?'amar':'verde', Math.abs(dC)<0.05?'Na meta':`${Math.round(Math.abs(dC)*100)}% ${dC>0?'acima':'abaixo'} da meta`),
     cpl7 ? `Últimos 7 dias: <b>${moeda2(cpl7,moe)}</b>` : 'Últimos 7 dias: —',
-    subPais(o=>`<b>${o.leads?moeda2(o.inv/o.leads,moe):'—'}</b>`));
+    subPais(o=>`<b>${o.leads?moeda2(o.inv/o.leads,moe):'—'}${o.lmx?` <span class="muted" style="font-weight:500">/ ${moeda2(o.bud/o.lmx,moe)}</span>`:''}</b>`));
   // investimento
   const dI = bud ? inv/bud - S2.frac : null;
   const cInv = cartao('wallet', 'Investimento', moedaCurta(inv,moe), bud?'de '+moedaCurta(bud,moe):'',
@@ -1847,7 +1859,7 @@ function abaSaude(c){
     `<b>${S2.restam}</b> ${S2.restam===1?'dia restante':'dias restantes'} · ${fdm(S2.ini)} → ${fdm(S2.fim)}`,
     subPais(o=>`<b>${moedaCurta(o.inv,moe)}${o.bud?' / '+moedaCurta(o.bud,moe):''}</b>`));
   const pts = pontosAtencao(c, S2);
-  return fonte + sel + `<div class="sd-kpis">${cLeads}${cCpl}${cInv}</div>
+  return fonte + sel + faixaFim(c, S2, {real:leads, meta:leadsMeta, rotulo:'leads', custoReal:cpl, custoMeta:cplMeta, rotCusto:'CPL', fmt:numero}) + `<div class="sd-kpis">${cLeads}${cCpl}${cInv}</div>
   <div class="sd-meio">
     <div class="card card-p"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="sd-lb"><i data-lucide="trending-up"></i>Leads acumulados</div><div class="sd-leg"><span><i></i>Real</span>${projL!=null?'<span><i class="p"></i>Projeção</span>':''}${leadsMeta?'<span><i class="m"></i>Meta</span>':''}</div></div><div class="sd-graf" data-c="${c.id}" data-campo="leads"></div></div>
     <div class="card card-p"><div class="sd-lb"><i data-lucide="alert-triangle"></i>Pontos de atenção</div>${pts.length?`<ul class="pts">${pts.map(x=>`<li><i class="p-${x.n}"></i><span>${h(x.t)}</span></li>`).join('')}</ul>`:'<div class="small muted" style="margin-top:8px">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta e das metas.</div></div>
