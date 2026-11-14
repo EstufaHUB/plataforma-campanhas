@@ -309,7 +309,10 @@ function idiomaBaseDe(paises, atual){
   if (ls.length===1) return ls[0];
   return atual || (paises[0] ? S.baseRegiao[PAISES[paises[0].cod].r] : '') || 'EN'; }
 const MARCA_SEP = 'PTx Trimble + Precision Planting (separadas)', MARCAS_SEP = ['PTx Trimble','Precision Planting'];
-const MARCAS = ['PTx Trimble','Precision Planting','Collab','PTx Trimble + Precision Planting (separadas)'];
+/* marcas da campanha (várias); PTx Trimble + Precision Planting juntas = peças separadas por marca */
+const marcasDe = c => Array.isArray(c.marcas) ? c.marcas : c.marca===MARCA_SEP ? [...MARCAS_SEP] : c.marca ? [c.marca] : [];
+const marcaSeparada = c => MARCAS_SEP.every(m=>marcasDe(c).includes(m));
+const MARCAS = ['PTx Trimble','Precision Planting','Collab'];
 const OBJETIVOS = ['Geração de leads','Awareness'];
 const RESPONSAVEIS = ['Karen','Tamiris','Jéssica','Giovanna'];
 const ST_ACAO = ['Não iniciada','Em andamento','Aguardando cliente','Aguardando equipe','Em revisão','Concluída','Bloqueada','Cancelada'];
@@ -1179,7 +1182,7 @@ function abaVisao(c){
    <div class="grade g2" style="margin-top:16px;align-items:start">
     <div class="card"><div class="card-cab"><h3 class="h-ic"><i data-lucide="clipboard-list"></i>Dados da campanha</h3>${ehEquipe()?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Ver detalhes →</a>`:''}</div><div class="card-p"><dl class="def">
       <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
-      <dt>Marca</dt><dd>${c.marca?`<span class="tag t-pet">${h(c.marca)}</span>`:'—'}</dd>
+      <dt>Marca</dt><dd>${marcasDe(c).length ? marcasDe(c).map(m=>`<span class="tag t-pet">${h(m)}</span>`).join(' ') : '—'}</dd>
       <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
       <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.join(', ')||'—'}</dd><dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
       <div class="sep-h"></div><dl class="def">
@@ -1498,7 +1501,7 @@ function abaBudgetAntiga(c){
 /* ---------- Entregáveis ---------- */
 function abaEntregaveis(c){
   const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:'',marca:''});
-  const temOrg = temOrganico(c), sep = c.marca===MARCA_SEP;
+  const temOrg = temOrganico(c), sep = marcaSeparada(c);
   const sub = `<div class="seg" style="margin-bottom:14px"><button class="${f.sub==='pecas'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="pecas"><i data-lucide="package"></i>Peças</button><button class="${f.sub==='conteudos'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="conteudos"><i data-lucide="languages"></i>Conteúdos por país</button>${temOrg?`<button class="${f.sub==='editorial'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="editorial"><i data-lucide="calendar-days"></i>Calendário editorial</button>`:''}</div>`;
   if (f.sub==='conteudos') return sub + conteudosPorPais(c);
   if (f.sub==='editorial' && temOrg) return sub + calendarioEditorial([c], c.id);
@@ -1688,7 +1691,7 @@ function formCampanha(c){
     <label class="campo">Nome da campanha *<input name="nome" required value="${h(d.nome||'')}"></label>
     <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
     <label class="campo">Nome da apresentação<input name="nomePlanejamento" value="${h(d.nomePlanejamento||'')}" placeholder="Ex.: PTx Trimble EMEA | Planning and Concept"></label>
-    <div class="campo tudo">Marca *<div class="chips">${MARCAS.map(k=>`<label class="chip ${d.marca===k?'on':''}"><input type="radio" name="marca" value="${k}" ${d.marca===k?'checked':''} style="display:none" onchange="this.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.contains(this)))">${k}</label>`).join('')}</div></div>
+    <div class="campo tudo">Marca *<div class="chips">${MARCAS.map(k=>`<label class="chip ${marcasDe(d).includes(k)?'on':''}"><input type="checkbox" name="marca" value="${k}" ${marcasDe(d).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div><div class="small muted" style="margin-top:6px">Marque PTx Trimble e Precision Planting juntas quando as peças forem separadas por marca.</div></div>
     <div class="campo tudo">Objetivo da campanha *<div class="chips">${OBJETIVOS.map(k=>`<label class="chip ${(d.objetivos||[]).includes(k)?'on':''}"><input type="checkbox" name="objetivo" value="${k}" ${(d.objetivos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     <label class="campo">Data prevista de lançamento *<input type="date" name="lancamento" required value="${d.lancamento||''}" data-chg="lancForm"></label>
     <label class="campo">Fim da veiculação *<input type="date" name="fimVeiculacao" required value="${d.fimVeiculacao||''}"></label>
@@ -1702,7 +1705,7 @@ function formCampanha(c){
 function lerFormCampanha(){
   const fm = $('#form-camp'), v = ler(fm);
   const canais = [...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value);
-  const d = Object.assign({}, rascunho, {clienteId:v.clienteId, nome:(v.nome||'').trim(), descricao:v.descricao, marca:(fm.querySelector('input[name=marca]:checked')||{}).value||'', objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),
+  const d = Object.assign({}, rascunho, {clienteId:v.clienteId, nome:(v.nome||'').trim(), descricao:v.descricao, marcas:[...fm.querySelectorAll('input[name=marca]:checked')].map(x=>x.value), marca:[...fm.querySelectorAll('input[name=marca]:checked')].map(x=>x.value).join(' + '), objetivos:[...fm.querySelectorAll('input[name=objetivo]:checked')].map(x=>x.value),
     lancamento:v.lancamento, fimVeiculacao:v.fimVeiculacao, moeda:rascunho.moeda || 'BRL', canais, entregaveisTipos:[...fm.querySelectorAll('input[name=entregavelTipo]:checked')].map(x=>x.value),
     urlPlanejamento:v.urlPlanejamento, nomePlanejamento:(v.nomePlanejamento||'').trim(), urlRelatorio:v.urlRelatorio});
   d.canaisCfg = lerCanaisCfg(fm, canais);
@@ -1720,7 +1723,7 @@ function validarCampanha(d){
     if (!cf.paises.length) err.push(`Selecione os países de ${k}.`);
     if (!(cf.orcamento>0)) err.push(`Informe o budget total de ${k}.`);
     if (cf.divisao==='pct' && cf.paises.length) { const sp = cf.paises.reduce((s,p)=>s+(+p.pct||0),0); if (Math.abs(sp-100) > 0.01) err.push(`${k}: a divisão por país soma ${+sp.toFixed(2)}%. Ajuste para 100%.`); } }
-  if (!d.marca) err.push('Escolha a marca da campanha.');
+  if (!(d.marcas||[]).length) err.push('Escolha a marca da campanha.');
   if (!(d.objetivos||[]).length) err.push('Escolha o objetivo da campanha (geração de leads e/ou awareness).');
 
   const dts = [d.lancamento, ...d.paises.map(p=>p.lancamento)].filter(Boolean);
@@ -2104,7 +2107,7 @@ const ACT = {
   /* entregáveis */
   formEnt: el => { const c = camp(el.dataset.id), e = c.entregaveis.find(x=>x.id===el.dataset.e) || {paises:[],briefing:{}};
     abrirModal(e.id?'Editar entregável':'Novo entregável — briefing', `<form id="f-ent" class="form-g"><label class="campo">Nome da peça *<input name="nome" value="${h(e.nome||'')}"></label><label class="campo">Canal<select name="canal">${opts(c.canais,e.canal)}</select></label>
-      ${c.marca===MARCA_SEP ? `<div class="campo tudo">Marca da peça<div class="chips">${(e.id?MARCAS_SEP:[...MARCAS_SEP,'Ambas (cria uma peça para cada marca)']).map(k=>`<label class="chip ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'on':''}"><input type="radio" name="marcaPeca" value="${k}" ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'checked':''} style="display:none" onchange="this.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.contains(this)))">${k}</label>`).join('')}</div></div>` : ''}
+      ${marcaSeparada(c) ? `<div class="campo tudo">Marca da peça<div class="chips">${(e.id?MARCAS_SEP:[...MARCAS_SEP,'Ambas (cria uma peça para cada marca)']).map(k=>`<label class="chip ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'on':''}"><input type="radio" name="marcaPeca" value="${k}" ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'checked':''} style="display:none" onchange="this.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.contains(this)))">${k}</label>`).join('')}</div></div>` : ''}
       <div class="campo tudo">Países (marque vários se o arquivo for o mesmo para todos)<div class="chips">${c.paises.map(p=>`<label class="chip ${e.paises.includes(p.cod)?'on':''}"><input type="checkbox" name="pais" value="${p.cod}" ${e.paises.includes(p.cod)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${pais(p.cod)}</label>`).join('')}</div></div>
       <label class="campo">Idioma<select name="idioma">${opts([...Object.entries(IDIOMAS),['Sem fala','Sem texto / sem fala']],e.idioma)}</select></label><label class="campo">Formato<input name="formato" value="${h(e.formato||'')}" placeholder="Ex.: 1080×1350"></label>
       <label class="campo">Objetivo<input name="objetivo" value="${h(e.objetivo||'')}"></label><label class="campo">Prazo<input type="date" name="prazo" value="${e.prazo||''}"></label>
@@ -2118,12 +2121,12 @@ const ACT = {
     const mp = v.marcaPeca; delete v.marcaPeca;
     const br = {}; for (const k in v) if (k.startsWith('b_')) { br[k.slice(2)] = v[k]; delete v[k]; } delete v.pais;
     let e = c.entregaveis.find(x=>x.id===el.dataset.e);
-    if (!e && c.marca===MARCA_SEP && (!mp || mp.startsWith('Ambas'))) {
+    if (!e && marcaSeparada(c) && (!mp || mp.startsWith('Ambas'))) {
       // uma peça para cada marca, com o mesmo briefing
       for (const mk of MARCAS_SEP) c.entregaveis.push(Object.assign({id:novoId('e'),etapa:'briefing',link:'',versoes:[],aprovacoes:[]}, v, {paises, briefing:JSON.parse(JSON.stringify(br)), marca:mk}));
       registrar(`Entregável salvo em “${c.nome}”: ${v.nome} (uma peça para cada marca)`); fecharModal(); render(); return toast('Criadas 2 peças: PTx Trimble e Precision Planting.'); }
     if (!e) { e = {id:novoId('e'),etapa:'briefing',link:'',versoes:[],aprovacoes:[]}; c.entregaveis.push(e); }
-    Object.assign(e, v, {paises, briefing:br}); if (c.marca===MARCA_SEP && mp && !mp.startsWith('Ambas')) e.marca = mp;
+    Object.assign(e, v, {paises, briefing:br}); if (marcaSeparada(c) && mp && !mp.startsWith('Ambas')) e.marca = mp;
     registrar(`Entregável salvo em “${c.nome}”: ${e.nome}${e.marca?' ('+e.marca+')':''}`); fecharModal(); render(); },
   duplicarPorMarca: el => { const c = camp(el.dataset.id), sem = c.entregaveis.filter(e=>!e.marca); if (!sem.length) return;
     for (const e of sem) { const copia = JSON.parse(JSON.stringify(e)); e.marca = MARCAS_SEP[0]; Object.assign(copia, {id:novoId('e'), marca:MARCAS_SEP[1], etapa:'briefing', link:'', versoes:[], aprovacoes:[]}); c.entregaveis.push(copia); }
