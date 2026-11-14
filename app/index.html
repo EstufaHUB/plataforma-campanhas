@@ -126,7 +126,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .mk-inp{display:inline-flex;flex-direction:column;gap:2px;font-size:.72rem;color:var(--tx2)}
 .obj-canal{display:grid;grid-template-columns:auto 1fr;gap:16px 32px;padding:14px 18px;border-bottom:1px solid var(--borda)}@media (max-width:760px){.obj-canal{grid-template-columns:1fr}}
 .canal-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-.canal-grade{align-items:stretch;grid-auto-rows:1fr}.canal-card{display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:18px;text-decoration:none;color:var(--tx);border:1px solid var(--borda);transition:border-color .12s,box-shadow .12s}.canal-card:hover{border-color:var(--pet-600)}
+.canal-grade{align-items:stretch;grid-auto-rows:1fr}.canal-grade>.card{margin:0!important}.canal-card{display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:18px;text-decoration:none;color:var(--tx);border:1px solid var(--borda);transition:border-color .12s,box-shadow .12s}.canal-card:hover{border-color:var(--pet-600)}
 .canal-card.sel{border-color:var(--pet-600);box-shadow:0 0 0 2px #d4eef0}
 .cc-top{display:flex;justify-content:space-between;align-items:center}.cc-nome{font-weight:600;margin-top:12px;color:var(--tx2)}.cc-valor{font-size:1.5rem;font-weight:700;color:var(--pet-950);margin-top:2px}
 .inp-uso{width:130px;text-align:right;padding:5px 8px;border:1px solid var(--borda-f);border-radius:6px;font:inherit;font-size:.86rem}
@@ -1151,7 +1151,7 @@ function pgCampanha(r){
   const abas = [['visao','info','Visão geral'],['cronograma','gantt-chart','Cronograma'],['acoes','list-checks','Gestão de ações'],['budget','wallet','Budgets e KPIs'],['entregaveis','package','Entregáveis'],['mercados','globe-2','Mercados e países']];
   const corpo = {visao:abaVisao,cronograma:abaCronograma,acoes:abaAcoes,budget:abaBudget,entregaveis:abaEntregaveis,mercados:abaMercados}[aba](c);
   const cli = cliente(c.clienteId), ini = inicioPlan(c), corSt = COR_ST_CAMP[c.status]||'#9aa9ae';
-  return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>${marcasDe(c).length?`<div class="cc-marcas">${marcasDe(c).map(m=>`<span class="tag ${m==='PTx Trimble'?'t-verde-c':m==='Precision Planting'?'t-pet':'t-roxo'}">${h(m)}</span>`).join('')}</div>`:''}
+  return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>${marcasDe(c).length?`<div class="cc-marcas">${marcasDe(c).map(m=>`<span class="tag t-pet">${h(m)}</span>`).join('')}</div>`:''}
      <div class="cc-meta"><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span>${saudeHtml(c)}<span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-days"></i>Início: ${fds(ini)}</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-check"></i>Fim da veiculação: ${fds(c.fimVeiculacao)}</span><span class="cc-sep"></span><span class="cc-band">${c.paises.map(p=>PAISES[p.cod].f).join(' ')}</span>${c.arquivada?' <span class="tag">Arquivada</span>':''}</div></div></div>
    <div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop">${c.status==='Não iniciada'||c.status==='Em andamento'?`<button data-act="iniciarCampanha" data-id="${c.id}"><i data-lucide="rocket"></i>Iniciar campanha</button>`:''}${c.status==='Finalizada – relatório pendente'?`<button data-act="formRelatorio" data-id="${c.id}"><i data-lucide="file-plus"></i>Adicionar relatório</button>`:''}${c.iniciadaEm&&!c.urlRelatorio?`<button data-act="desfazerInicio" data-id="${c.id}"><i data-lucide="undo-2"></i>${c.finalizadaEm?'Voltar para “Em veiculação”':'Desfazer início da campanha'}</button>`:''}<button data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'} campanha</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div></div>
    <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`;
@@ -1209,7 +1209,7 @@ function abaVisao(c){
       <dt>Status</dt><dd><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span></dd>
       <dt>Planejamento estratégico</dt><dd>${c.urlPlanejamento?chipLink(c.urlPlanejamento, c.nomePlanejamento||'Apresentação do planejamento'):'—'}</dd>
       <dt>Marca</dt><dd>${marcasDe(c).length ? marcasDe(c).map(m=>`<span class="tag t-pet">${h(m)}</span>`).join(' ') : '—'}</dd>
-      <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
+      <dt>Objetivo</dt><dd>${(c.objetivos||[]).length ? c.objetivos.map(o=>`<span class="tag t-pet">${h(o)}</span>`).join(' ') : h(c.objetivo)||'—'}</dd>
       <dt>Regiões</dt><dd>${c.regioes.map(x=>REGIOES[x]).join(', ')}</dd><dt>Canais</dt><dd>${c.canais.map(nomeCanal).join(', ')||'—'}</dd><dt>Entregáveis</dt><dd>${(c.entregaveisTipos||[]).length ? c.entregaveisTipos.map(e=>`<span class="tag t-pet">${h(e)}</span>`).join(' ') : '—'}</dd></dl>
       <div class="sep-h"></div><dl class="def">
       ${c.canaisCfg && (c.canais||[]).length && marcaSeparada(c) ? `<dt>Budget por canal</dt><dd style="overflow-x:auto"><table class="mat-bud"><thead><tr><th></th>${c.canais.map(k=>`<th>${h(nomeCanal(k))}</th>`).join('')}</tr></thead><tbody>
@@ -1453,7 +1453,7 @@ function secaoKpis(c){
   const ed = ehEquipe();
   const kp = k => k.real==null||k.real==='' ? null : (/^CP|CPL|CPC|CPM|CPV/.test(k.nome) ? k.meta/k.real : k.real/k.meta);
   const sugest = (c.objetivos||[]).flatMap(o=>KPI_OBJETIVO[o]||[]).filter(([n])=>!c.kpis.some(k=>k.nome===n));
-  return `  <div class="card" style="margin-top:16px"><div class="card-cab"><h3>KPIs — planejado × realizado</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${(c.objetivos||[]).map(o=>`<span class="tag t-verde-c">${h(o)}</span>`).join('')}${ed?`<button class="btn btn-p btn-s" data-act="formKpi" data-id="${c.id}"><i data-lucide="plus"></i>Adicionar KPI</button>`:''}</div></div>
+  return `  <div class="card" style="margin-top:16px"><div class="card-cab"><h3>KPIs — planejado × realizado</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${(c.objetivos||[]).map(o=>`<span class="tag t-pet">${h(o)}</span>`).join('')}${ed?`<button class="btn btn-p btn-s" data-act="formKpi" data-id="${c.id}"><i data-lucide="plus"></i>Adicionar KPI</button>`:''}</div></div>
    ${ed && sugest.length ? `<div class="sug-kpi"><span class="small muted">Sugeridos pelo objetivo:</span>${sugest.map(([n,u])=>`<button class="btn btn-s" data-act="formKpi" data-id="${c.id}" data-nome="${h(n)}" data-un="${h(u==='R$'?c.moeda:u)}"><i data-lucide="plus"></i>${h(n)}</button>`).join('')}</div>` : ''}
    ${!(c.objetivos||[]).length ? `<div class="small muted" style="padding:10px 18px 0">Defina o objetivo em Dados da campanha para ver KPIs sugeridos.</div>` : ''}
    <div class="tabela-wrap"><table class="tab"><thead><tr><th>Indicador</th><th>Canal</th><th>País</th><th>Período</th><th class="dir">Meta</th><th class="dir">Realizado</th><th style="min-width:150px">Atingimento</th><th></th></tr></thead><tbody>
@@ -1481,10 +1481,10 @@ function abaBudget(c){
   const sel = dados.find(d=>d.k===UI.bCanal);
   const custoMedio = d => d.tot.res>0 ? d.tot.bRes/d.tot.res*d.fator : null;
   const rotCusto = d => d.fator===1000 ? 'Custo por mil' : 'Custo por resultado';
-  const cards = `<div class="canal-grade">${dados.map(d=>`<a href="javascript:void 0" class="card canal-card ${d.k===UI.bCanal?'sel':''}" data-act="bCanal" data-k="${h(d.k)}">
+  const cartoes = lista => `<div class="canal-grade">${lista.map(d=>`<a href="javascript:void 0" class="card canal-card ${d.k===UI.bCanal?'sel':''}" data-act="bCanal" data-k="${h(d.k)}">
       <div class="cc-top"><div class="k-ic"><i data-lucide="megaphone"></i></div><span class="small muted">${[...new Set(d.ps.map(x=>x.cod))].map(cod=>PAISES[cod].f).join(' ')}</span></div>
       <div class="cc-nome">${h(nomeCanal(d.ch.canal))}</div><div class="cc-valor">${moeda(d.orc, d.m)}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${d.ch.marca?`<span class="tag ${d.ch.marca==='PTx Trimble'?'t-verde-c':'t-roxo'}">${h(d.ch.marca)}</span>`:''}${d.obj?`<span class="tag t-pet">${h(d.obj)}</span>`:''}${d.midia?`<span class="tag t-pet">${h(d.midia)}</span>`:''}<span class="tag ${d.definida?'t-verde-c':'t-amar'}">${d.definida?'Meta definida':'Meta a definir'}</span></div></a>`).join('')}</div>`;
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${d.obj?`<span class="tag t-pet">${h(d.obj)}</span>`:''}${d.midia?`<span class="tag t-pet">${h(d.midia)}</span>`:''}<span class="tag t-pet">${d.definida?'Meta definida':'Meta a definir'}</span></div></a>`).join('')}</div>`;
   let detalhe = '';
   if (sel) { const m = sel.m, k = sel.k;
     const chips = (tipo, lista, atual) => `<div class="chips">${lista.map(v=>`<span class="chip ${atual===v?'on':''}" ${ed?`data-act="objCanal" data-k="${h(k)}" data-tipo="${tipo}" data-v="${h(v)}"`:''}>${h(v)}</span>`).join('')}</div>`;
@@ -1494,7 +1494,10 @@ function abaBudget(c){
       ${sel.ps.map(x=>`<tr><td>${pais(x.cod)}</td><td class="dir num">${moeda(x.bud,m)}</td><td class="dir num"><b>${numero(x.res)}</b></td><td class="dir">${ed && x.b ? `<input type="number" min="0" step="0.01" class="inp-uso" value="${x.cu??''}" placeholder="0,00" data-chg="kpiLinha" data-id="${c.id}" data-b="${x.b.id}" data-kpi="custo">` : `<span class="num">${moeda2(x.cu, m)}</span>`}</td></tr>`).join('')}
       <tr style="font-weight:700"><td>Total</td><td class="dir num">${moeda(sel.tot.budget,m)}</td><td class="dir num">${numero(sel.tot.res)}</td><td class="dir num">${moeda2(custoMedio(sel), m)}</td></tr></tbody></table></div>
       <div class="small muted" style="padding:10px 18px">Digite o custo de cada país; o resultado é calculado a partir do budget (budget ÷ custo${sel.fator===1000?' × 1.000, porque em Alcance o custo é por mil':''}).</div></div>`; }
-  return cards + (sel ? detalhe : `<div class="small muted" style="margin-top:12px">Clique em um canal para escolher o objetivo e definir a meta.</div>`);
+  if (!marcaSeparada(c)) return cartoes(dados) + (sel ? detalhe : '');
+  // duas marcas: uma seção para cada, com os cartões dos seus canais (o detalhe abre dentro da seção do cartão escolhido)
+  return MARCAS_SEP.map(mk=>{ const ds = dados.filter(d=>d.ch.marca===mk); if (!ds.length) return '';
+    return `<div class="sec-marca" style="margin:${mk===MARCAS_SEP[0]?'0':'24px'} 0 12px"><span class="sec-marca-tit">${h(mk)}</span></div>` + cartoes(ds) + (sel && sel.ch.marca===mk ? detalhe : ''); }).join('');
 }
 function abaBudgetAntiga(c){
   UI.fbm = UI.fbm || {}; const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], R = resumoBudget(c, m), ed = ehEquipe();
@@ -1535,7 +1538,7 @@ function abaEntregaveis(c){
   if (f.sub==='editorial' && temOrg) return sub + calendarioEditorial([c], c.id);
   const L = c.entregaveis.filter(e=>(!f.canal||e.canal===f.canal)&&(!f.pais||e.paises.includes(f.pais))&&(!f.etapa||e.etapa===f.etapa)&&(!sep||!f.marca||e.marca===f.marca)).sort((a,b)=>sep ? (a.nome||'').localeCompare(b.nome||'') || MARCAS_SEP.indexOf(a.marca) - MARCAS_SEP.indexOf(b.marca) : 0);
   const semMarca = sep ? c.entregaveis.filter(e=>!e.marca).length : 0;
-  const tagMarca = e => sep && e.marca ? ` <span class="tag ${e.marca==='PTx Trimble'?'t-verde-c':'t-pet'}">${h(e.marca)}</span>` : '';
+  const tagMarca = e => sep && e.marca ? ` <span class="tag t-pet">${h(e.marca)}</span>` : '';
   const stCont = e => { const a = e.aprovacoes.filter(x=>x.tipo==='Conteúdo').pop(); return a ? (a.resultado==='Aprovado'?'Aprovado':a.resultado) : (e.etapa==='aprov_conteudo'?'Aguardando aprovação':'Pendente'); };
   const stDes = e => ({briefing:'Não iniciado',aprov_conteudo:'Não iniciado',ajuste_conteudo:'Não iniciado',producao:'Em produção',aprov_asset:'Aguardando aprovação',ajuste_asset:'Em ajustes',concluido:'Aprovado'})[e.etapa];
   const stFin = e => e.etapa==='concluido' ? 'Aprovado' : 'Pendente';
