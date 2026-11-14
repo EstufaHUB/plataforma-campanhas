@@ -1637,13 +1637,15 @@ function abaBudget(c){
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${d.obj?`<span class="tag t-pet">${h(d.obj)}</span>`:''}${d.midia?`<span class="tag t-pet">${h(d.midia)}</span>`:''}<span class="tag ${d.definida?'t-verde-c':'t-verm'}">${d.definida?'Meta definida':'Meta a definir'}</span></div></a>`).join('')}</div>`;
   let detalhe = '';
   if (sel) { const m = sel.m, k = sel.k, ed = ehEquipe() && !(sel.ch.marca && marcaCancelada(c, sel.ch.marca));
+    // budget diário: budget ÷ dias de veiculação (da fase, quando a campanha é em fases)
+    const per = sel.ch.fase ? periodoFase(c, sel.ch.fase) : {ini:c.lancamento, fim:c.fimVeiculacao}, nDias = per.ini && per.fim ? difDias(per.ini, per.fim)+1 : null, dia = v => nDias>0 ? moeda2(v/nDias, m) : '—';
     const chips = (tipo, lista, atual) => `<div class="chips">${lista.map(v=>`<span class="chip ${atual===v?'on':''}" ${ed?`data-act="objCanal" data-k="${h(k)}" data-tipo="${tipo}" data-v="${h(v)}"`:''}>${h(v)}</span>`).join('')}</div>`;
     detalhe = `<div class="card" style="margin-top:16px"><div class="card-cab"><h3 class="h-ic"><i data-lucide="megaphone"></i>${h(rotuloCfg(sel.ch))}</h3><div style="display:flex;gap:10px;align-items:center">${ed?`<a href="javascript:void 0" class="small" data-act="editarCampanha" data-id="${c.id}">Alterar budget →</a>`:''}<button class="icone-btn" data-act="bCanal" data-k="${h(k)}" title="Fechar"><i data-lucide="x"></i></button></div></div>
       <div class="obj-canal"><div><div class="small muted" style="margin-bottom:8px">Objetivo da campanha</div>${chips('objetivo', OBJ_CANAL, sel.obj)}</div><div><div class="small muted" style="margin-bottom:8px">Objetivo de mídia</div>${chips('objMidia', OBJ_MIDIA, sel.midia)}</div></div>
-      <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th class="dir">Budget</th><th class="dir">Resultado <span class="muted" style="text-transform:none;font-weight:400">(calculado)</span></th><th class="dir">${rotCusto(sel)}</th></tr></thead><tbody>
-      ${sel.ps.map(x=>x.canc ? `<tr class="linha-canc"><td>${pais(x.cod)} <span class="tag tag-cancel" title="${h(txtPaisCanc(c, sel.ch.marca, x.cod))}">cancelada</span></td><td class="dir num"><s>${moeda(x.bud,m)}</s></td><td class="dir num">—</td><td class="dir small muted">fora do total</td></tr>` : `<tr><td>${pais(x.cod)}</td><td class="dir num">${moeda(x.bud,m)}</td><td class="dir num"><b>${numero(x.res)}</b></td><td class="dir">${ed && x.b ? `<input type="number" min="0" step="0.01" class="inp-uso" value="${x.cu??''}" placeholder="0,00" data-chg="kpiLinha" data-id="${c.id}" data-b="${x.b.id}" data-kpi="custo">` : `<span class="num">${moeda2(x.cu, m)}</span>`}</td></tr>`).join('')}
-      <tr style="font-weight:700"><td>Total</td><td class="dir num">${moeda(sel.tot.budget,m)}</td><td class="dir num">${numero(sel.tot.res)}</td><td class="dir num">${moeda2(custoMedio(sel), m)}</td></tr></tbody></table></div>
-      <div class="small muted" style="padding:10px 18px">Digite o custo de cada país; o resultado é calculado a partir do budget (budget ÷ custo${sel.fator===1000?' × 1.000, porque em Alcance o custo é por mil':''}).</div></div>`; }
+      <div class="tabela-wrap"><table class="tab"><thead><tr><th>País</th><th class="dir">Budget</th><th class="dir">Budget diário${nDias?` <span class="muted" style="text-transform:none;font-weight:400">(${nDias} dias)</span>`:''}</th><th class="dir">Resultado <span class="muted" style="text-transform:none;font-weight:400">(calculado)</span></th><th class="dir">${rotCusto(sel)}</th></tr></thead><tbody>
+      ${sel.ps.map(x=>x.canc ? `<tr class="linha-canc"><td>${pais(x.cod)} <span class="tag tag-cancel" title="${h(txtPaisCanc(c, sel.ch.marca, x.cod))}">cancelada</span></td><td class="dir num"><s>${moeda(x.bud,m)}</s></td><td class="dir num"><s>${dia(x.bud)}</s></td><td class="dir num">—</td><td class="dir small muted">fora do total</td></tr>` : `<tr><td>${pais(x.cod)}</td><td class="dir num">${moeda(x.bud,m)}</td><td class="dir num">${dia(x.bud)}</td><td class="dir num"><b>${numero(x.res)}</b></td><td class="dir">${ed && x.b ? `<input type="number" min="0" step="0.01" class="inp-uso" value="${x.cu??''}" placeholder="0,00" data-chg="kpiLinha" data-id="${c.id}" data-b="${x.b.id}" data-kpi="custo">` : `<span class="num">${moeda2(x.cu, m)}</span>`}</td></tr>`).join('')}
+      <tr style="font-weight:700"><td>Total</td><td class="dir num">${moeda(sel.tot.budget,m)}</td><td class="dir num">${dia(sel.tot.budget)}</td><td class="dir num">${numero(sel.tot.res)}</td><td class="dir num">${moeda2(custoMedio(sel), m)}</td></tr></tbody></table></div>
+      <div class="small muted" style="padding:10px 18px">Digite o custo de cada país; o resultado é calculado a partir do budget (budget ÷ custo${sel.fator===1000?' × 1.000, porque em Alcance o custo é por mil':''}).${nDias?` Budget diário = budget ÷ ${nDias} dias de veiculação${sel.ch.fase?' da fase':''} (${fd(per.ini)} a ${fd(per.fim)}).`:''}</div></div>`; }
   // duas marcas: uma seção para cada, com os cartões dos seus canais (o detalhe abre embaixo)
   const porMarca = lista => !marcaSeparada(c) ? cartoes(lista) : `<div class="marcas-lado">${MARCAS_SEP.map(mk=>{ const ds = lista.filter(d=>d.ch.marca===mk);
     return `<div class="marca-col ${marcaCancelada(c,mk)?'cancelada':''}"><div class="sec-marca" style="margin:0 0 12px"><span class="sec-marca-tit">${h(mk)}</span>${marcaCancelada(c,mk)?` <span class="tag t-verm" style="margin-left:8px">Cancelada</span><div class="small muted" style="margin-top:4px">${h(txtCancel(c,mk))}</div>`:''}</div>${ds.length ? cartoes(ds) : '<div class="small muted">Sem canais.</div>'}</div>`; }).join('')}</div>`;
@@ -1723,10 +1725,11 @@ function pontosAtencao(c, S2){   // [{t, n}] n = verm | amar | verde | info
     const projL = S2.frac>0 ? Math.round(x.leads/S2.frac) : null, projI = S2.frac>0 ? x.inv/S2.frac : null;
     if (x.leadsMeta && projL!=null && S2.frac<1) { const d = projL - x.leadsMeta;
       add(d>=0?'verde':projL>=x.leadsMeta*0.85?'amar':'verm', `${onde}No ritmo atual, fecha com ~${numero(projL)} leads, ${d>=0?numero(d)+' acima':numero(-d)+' abaixo'} da meta.`); }
-    if (x.bud && projI!=null && S2.frac<1) { const sobra = x.bud - projI;
-      if (sobra < -x.bud*0.03) { const porDia = x.inv/dec, diasAte = Math.floor((x.bud - x.inv)/porDia), quando = addDias(HOJE, Math.max(0, diasAte));
-        add('verm', `${onde}No ritmo de gasto atual, o budget acaba por volta de ${fdm(quando)}, antes do fim em ${fdm(S2.fim)}.`); }
-      else if (sobra > x.bud*0.03) add('amar', `${onde}Projeção de gasto ${moedaCurta(projI,x.moeda)}: devem sobrar ~${moedaCurta(sobra,x.moeda)} do budget.`); }
+    if (x.bud && S2.frac<1) { const g = gastoDiario(S2, [x]), md = v => moeda2(v, x.moeda);
+      if (g.r!=null && g.r < 0.85) add(g.r<0.5?'verm':'amar', `${onde}Investindo ${md(g.real)}/dia (média de ${g.dias} dias), ${Math.round((1-g.r)*100)}% abaixo dos ${md(g.plano)}/dia planejados.${g.precisa!=null?` Para usar o budget até ${fdm(S2.fim)}: ${md(g.precisa)}/dia.`:''}`);
+      else if (g.r!=null && g.r > 1.15) { const quando = g.real>0 ? addDias(HOJE, Math.max(0, Math.floor((x.bud - x.inv)/g.real))) : null;
+        add(quando && quando < S2.fim ? 'verm' : 'amar', `${onde}Investindo ${md(g.real)}/dia, ${Math.round((g.r-1)*100)}% acima dos ${md(g.plano)}/dia planejados.${quando && quando < S2.fim ? ` Nesse ritmo, o budget acaba por volta de ${fdm(quando)}.` : ''}`); }
+      else if (g.r!=null) add('verde', `${onde}Gasto diário dentro do planejado: ${md(g.real)}/dia (planejado ${md(g.plano)}).`); }
     const ult = x.porDia.slice(-7), ant = x.porDia.slice(-14,-7);
     if (ult.length>=5 && ant.length>=5) { const a = ult.reduce((s,d)=>s+d.leads,0), b = ant.reduce((s,d)=>s+d.leads,0); if (b && Math.abs(a/b-1)>=0.2) add(a>b?'verde':'amar', `${onde}Leads dos últimos 7 dias ${a>b?'subiram':'caíram'} ${Math.round(Math.abs(a/b-1)*100)}% em relação aos 7 anteriores.`); }
     // sugestões
@@ -1781,6 +1784,15 @@ function linhaSaude(c, marca, pais, valor){
   const ps = pais ? (paisesDaSaude(c).length>1 ? `<a href="javascript:void 0" class="sd-clic ${paisFiltro(c)===pais?'on':''}" data-act="sPais" data-id="${c.id}" data-p="${pais}" title="Ver só ${h(PAISES[pais]?PAISES[pais].n:pais)}">${rp}</a>` : rp) : '';
   return `<div><span>${[mk, ps].filter(Boolean).join(' · ') || 'Campanha'}</span>${valor}</div>`; }
 const filtroTxt = c => [marcaFiltro(c), paisFiltro(c) && (PAISES[paisFiltro(c)] ? PAISES[paisFiltro(c)].n : paisFiltro(c))].filter(Boolean).join(' · ');
+/* gasto diário: média real dos últimos 7 dias × budget diário planejado (budget ÷ dias do período) × o que falta por dia */
+function gastoDiario(S2, linhas){
+  const bud = linhas.reduce((t,x)=>t+(+x.bud||0),0), inv = linhas.reduce((t,x)=>t+(+x.inv||0),0), plano = S2.total ? bud/S2.total : null;
+  const porData = {}; for (const x of linhas) for (const d of x.porDia) if (d.data<=HOJE) porData[d.data] = (porData[d.data]||0) + (+d.investido||0);
+  const ult = Object.keys(porData).sort().pop(), dias = [];
+  if (ult) for (let i=0;i<7;i++) { const d = addDias(ult, -i); if (d < S2.ini) break; dias.push(porData[d]||0); }
+  const real = dias.length ? dias.reduce((a,b)=>a+b,0)/dias.length : null;
+  const precisa = S2.frac<1 && S2.restam>0 ? Math.max(0, (bud-inv)/S2.restam) : null;
+  return {plano, real, precisa, r: real!=null && plano ? real/plano : null, dias: dias.length}; }
 /* faixa quando a campanha (ou a fase) terminou: diz se a meta foi batida */
 function faixaFim(c, S2, o){   // o = {real, meta, rotulo, custoReal, custoMeta, rotCusto, fmt}
   if (S2.frac < 1) return '';
@@ -1811,12 +1823,16 @@ function saudeAwareness(c, S2){
     `${(taxa*100||0).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões · cliques: <b>${numCurto(cli)}</b>`).replace('</div></div>', porMarca('engaj')+'</div></div>');
   const dI = bud ? inv/bud - S2.frac : null;
   const cInv = cartao('wallet', 'Investimento', moedaCurta(inv,moe), bud?'de '+moedaCurta(bud,moe):'', bud ? barra(inv/bud, '#2f80b8', Math.min(1,S2.frac), 'Ideal hoje') : barra(0,'#ccc',null),
-    bud ? (encerrada ? `Fase encerrada · ${Math.round(inv/bud*100)}% do budget investido` : `Ideal hoje: ${moedaCurta(bud*S2.frac,moe)}${projI!=null?` · projeção ${moedaCurta(projI,moe)}`:''}`) : 'Sem budget',
+    bud ? (encerrada ? `Fase encerrada · ${Math.round(inv/bud*100)}% do budget investido · média de ${moeda2(inv/S2.total,moe)}/dia (planejado ${moeda2(bud/S2.total,moe)})` : `Ideal hoje: ${moedaCurta(bud*S2.frac,moe)}${projI!=null?` · projeção ${moedaCurta(projI,moe)}`:''}${(g=>g.real!=null?`<br>Diário: <b>${moeda2(g.real,moe)}</b> (7 dias) · planejado ${moeda2(g.plano,moe)}`:'')(gastoDiario(S2, S2.linhas))}`) : 'Sem budget',
     bud ? pill(Math.abs(dI)<=0.1?'verde':'amar', Math.abs(dI)<=0.1?'Dentro do ritmo':dI>0?'Gasto adiantado':(encerrada?'Budget não usado':'Gasto atrasado')) : pill('cinza','Sem budget'),
     encerrada ? `<b>Encerrada</b> · ${fdm(S2.ini)} → ${fdm(S2.fim)}` : `<b>${S2.restam}</b> ${S2.restam===1?'dia restante':'dias restantes'} · ${fdm(S2.ini)} → ${fdm(S2.fim)}`).replace('</div></div>', porMarca('inv')+'</div></div>');
   const pts = [];
   if (bud) { const g = inv/bud; if (encerrada) pts.push({n: g<0.9||g>1.03?'amar':'verde', t:`A fase terminou com ${moedaCurta(inv,moe)} investidos de ${moedaCurta(bud,moe)} (${Math.round(g*100)}%).${g<0.9?` Sobraram ~${moedaCurta(bud-inv,moe)}.`:g>1.03?` Passou ~${moedaCurta(inv-bud,moe)} do budget.`:''}`});
     else if (Math.abs(g-S2.frac)>0.1) pts.push({n:'amar', t:`${pct(g)}% do budget investido com ${pct(S2.frac)}% da fase: ${g>S2.frac?'gasto adiantado':'gasto atrasado'}.`}); }
+  if (!encerrada) for (const x of S2.linhas) { const g = gastoDiario(S2, [x]), nm = [x.v.marca, x.v.pais].filter(Boolean).join(' · ');
+    if (g.r!=null && (g.r<0.85 || g.r>1.15)) pts.push({n: g.r<0.5||g.r>1.3?'verm':'amar', t:`${nm}: investindo ${moeda2(g.real,moe)}/dia, ${Math.round(Math.abs(g.r-1)*100)}% ${g.r<1?'abaixo':'acima'} dos ${moeda2(g.plano,moe)}/dia planejados.${g.precisa!=null?` Para fechar no budget: ${moeda2(g.precisa,moe)}/dia.`:''}`}); }
+  else { const dl = S2.linhas.map(x=>({nm:[x.v.marca, x.v.pais].filter(Boolean).join(' · '), r: x.bud ? x.inv/x.bud : null})).filter(x=>x.r!=null && Math.abs(x.r-1)>0.1);
+    for (const x of dl) pts.push({n:'amar', t:`${x.nm}: usou ${Math.round(x.r*100)}% do budget da fase (gasto diário médio ${x.r>1?'acima':'abaixo'} do planejado).`}); }
   if (freq!=null) pts.push(freq>3.5 ? {n:'amar', t:`Frequência de ${freq.toLocaleString('pt-BR',{maximumFractionDigits:1})}: o mesmo público está vendo muitas vezes. Vale renovar criativos ou ampliar o público.`} : {n:'verde', t:`Frequência de ${freq.toLocaleString('pt-BR',{maximumFractionDigits:1})}: alcance bem distribuído.`});
   const cpms = S2.linhas.filter(x=>x.impressoes).map(x=>({n:[x.v.marca,x.v.pais].filter(Boolean).join(' · '), cpm:x.inv/x.impressoes*1000})).sort((a,b)=>a.cpm-b.cpm);
   if (cpms.length>1) pts.push({n:'info', t:`CPM mais baixo: ${cpms[0].n} (${moeda2(cpms[0].cpm,moe)}); mais alto: ${cpms[cpms.length-1].n} (${moeda2(cpms[cpms.length-1].cpm,moe)}).`});
@@ -1874,7 +1890,7 @@ function abaSaude(c){
   const dI = bud ? inv/bud - S2.frac : null;
   const cInv = cartao('wallet', 'Investimento', moedaCurta(inv,moe), bud?'de '+moedaCurta(bud,moe):'',
     bud ? barra(inv/bud, '#2f80b8', S2.frac, 'Ideal hoje') : barra(0,'#ccc',null),
-    bud ? `Ideal hoje: ${moedaCurta(bud*S2.frac,moe)}${projI!=null?` · projeção ${moedaCurta(projI,moe)}`:''}` : 'Sem budget',
+    bud ? `Ideal hoje: ${moedaCurta(bud*S2.frac,moe)}${projI!=null?` · projeção ${moedaCurta(projI,moe)}`:''}${(g=>g.real!=null&&emCurso?`<br>Diário: <b>${moeda2(g.real,moe)}</b> (7 dias) · planejado ${moeda2(g.plano,moe)}`:'')(gastoDiario(S2, S2.linhas))}` : 'Sem budget',
     bud ? pill(Math.abs(dI)<=0.1?'verde':'amar', Math.abs(dI)<=0.1?'Dentro do ritmo':dI>0?'Gasto adiantado':'Gasto atrasado') : pill('cinza','Sem budget'),
     `<b>${S2.restam}</b> ${S2.restam===1?'dia restante':'dias restantes'} · ${fdm(S2.ini)} → ${fdm(S2.fim)}`,
     subPais(o=>`<b>${moedaCurta(o.inv,moe)}${o.bud?' / '+moedaCurta(o.bud,moe):''}</b>`));
