@@ -134,8 +134,10 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .obj-canal{display:grid;grid-template-columns:auto 1fr;gap:16px 32px;padding:14px 18px;border-bottom:1px solid var(--borda)}@media (max-width:760px){.obj-canal{grid-template-columns:1fr}}
 .canal-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .saude-fonte{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.84rem;color:var(--tx2);background:var(--sup);border:1px solid var(--borda);border-radius:10px;padding:10px 14px}.saude-fonte svg{width:16px;height:16px;color:var(--pet-600)}
-.saude-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}.saude-grade .saude-kpis{grid-row:span 2}
-@media (max-width:1100px){.saude-grade{grid-template-columns:1fr 1fr}}@media (max-width:700px){.saude-grade{grid-template-columns:1fr}}
+.saude-grade{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-top:16px;align-items:stretch}
+.saude-col{display:flex;flex-direction:column;gap:16px;min-width:0}.saude-col>.card{margin:0!important}.saude-col>.card.cresce{flex:1;display:flex;flex-direction:column}.saude-col>.card.cresce .saude-txt{flex:1}
+.saude-pts{margin-top:16px!important;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px}
+@media (max-width:1100px){.saude-grade{grid-template-columns:1fr 1fr}.saude-grade>.saude-col:last-child{grid-column:1/-1}}@media (max-width:700px){.saude-grade,.saude-pts{grid-template-columns:1fr}}
 .contagem{display:flex;align-items:baseline;gap:10px;margin:14px 0}.contagem b{font-size:3.4rem;line-height:1;color:var(--pet-950)}.contagem span{font-size:1.2rem;color:var(--tx2);font-style:italic}
 .barra.grossa{height:14px;border-radius:8px}.barra.grossa i{border-radius:8px}
 .kpi-tab{width:100%;border-collapse:collapse;margin-top:12px;font-size:.88rem;text-align:center}.kpi-tab th{padding:6px;border:1px solid #fff}.kpi-tab thead tr:first-child th{background:#3a4447;color:#fff}.kpi-tab thead tr:nth-child(2) th{background:var(--pet-600);color:#fff}
@@ -1625,17 +1627,23 @@ function abaSaude(c){
   const pts = pontosAtencao(c, S2), notas = c.saude || {};
   const dias = S2.linhas.flatMap(x=>x.porDia).reduce((o,d)=>{ o[d.data] = (o[d.data]||0) + (+d.leads||0); return o; }, {}), dk = Object.keys(dias).sort(), mx = Math.max(1, ...Object.values(dias));
   return fonte + `<div class="saude-grade">
+    <div class="saude-col">
     <div class="card card-p"><h3 class="h-ic"><i data-lucide="gauge"></i>Saúde da campanha</h3><div style="text-align:center;margin-top:8px">${medidorSaude(S2.score==null?null:Math.min(1, S2.score/1.25))}
       <div style="font-weight:700;font-size:1.1rem;color:${nivel?nivel[1]:'var(--tx2)'}">${nivel?nivel[0]:'Meta a definir'}</div>
       ${S2.score!=null?`<div class="small muted">Ritmo de leads ${Math.round(S2.ritmo*100)}% do esperado · CPL ${Math.round(S2.cplRatio*100)}% da eficiência da meta</div>`:''}</div></div>
     <div class="card card-p"><h3 class="h-ic"><i data-lucide="hourglass"></i>A campanha termina em</h3><div class="contagem"><b>${S2.restam}</b> <span>${S2.restam===1?'dia':'dias'}</span></div>
       <div class="barra grossa"><i style="width:${Math.round(S2.frac*100)}%"></i></div><div class="small muted" style="margin-top:6px">${fd(S2.ini)} → ${fd(S2.fim)} · ${S2.decorridos} de ${S2.total} dias (${Math.round(S2.frac*100)}%)</div></div>
-    <div class="card card-p saude-kpis"><h3 class="h-ic"><i data-lucide="target"></i>Acompanhamento de KPIs</h3>${tabela('Leads', tLeads)}${tabela('CPL', tCpl)}
+    </div>
+    <div class="saude-col">
+    <div class="card card-p saude-kpis cresce"><h3 class="h-ic"><i data-lucide="target"></i>Acompanhamento de KPIs</h3>${tabela('Leads', tLeads)}${tabela('CPL', tCpl)}
       <div class="small muted" style="margin-top:8px">Investido: ${S2.linhas.map(x=>moeda(x.inv,x.moeda)).join(' + ')} de ${S2.linhas.map(x=>moeda(x.bud,x.moeda)).join(' + ')}</div>
       ${dk.length?`<div class="mini-bars" title="Leads por dia">${dk.map(d=>`<i style="height:${Math.max(3,Math.round(dias[d]/mx*100))}%" title="${fd(d)}: ${dias[d]} leads"></i>`).join('')}</div><div class="small muted">Leads por dia</div>`:''}</div>
-    <div class="card card-p"><h3 class="h-ic"><i data-lucide="alert-triangle"></i>Pontos de atenção</h3>${pts.length?`<ul class="pts">${pts.map(t=>`<li>${h(t)}</li>`).join('')}</ul>`:'<div class="small muted">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta e das metas.</div></div>
-    <div class="card card-p"><h3 class="h-ic"><i data-lucide="list-checks"></i>Ações</h3><textarea class="saude-txt" data-chg="saudeTxt" data-id="${c.id}" data-k="acoes" placeholder="O que vamos fazer…" ${ed?'':'disabled'}>${h(notas.acoes||'')}</textarea></div>
-    <div class="card card-p"><h3 class="h-ic"><i data-lucide="message-square"></i>Comentários</h3><textarea class="saude-txt" data-chg="saudeTxt" data-id="${c.id}" data-k="comentarios" placeholder="Leitura da campanha…" ${ed?'':'disabled'}>${h(notas.comentarios||'')}</textarea></div>
+    </div>
+    <div class="saude-col">
+    <div class="card card-p cresce"><h3 class="h-ic"><i data-lucide="message-square"></i>Comentários</h3><textarea class="saude-txt" data-chg="saudeTxt" data-id="${c.id}" data-k="comentarios" placeholder="Leitura da campanha…" ${ed?'':'disabled'}>${h(notas.comentarios||'')}</textarea></div>
+    </div>
+  </div>
+  <div class="card card-p saude-pts"><div><h3 class="h-ic"><i data-lucide="alert-triangle"></i>Pontos de atenção</h3>${pts.length?`<ul class="pts">${pts.map(t=>`<li>${h(t)}</li>`).join('')}</ul>`:'<div class="small muted">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta e das metas.</div></div><div><h3 class="h-ic"><i data-lucide="list-checks"></i>Ações</h3><textarea class="saude-txt" data-chg="saudeTxt" data-id="${c.id}" data-k="acoes" placeholder="O que vamos fazer…" ${ed?'':'disabled'}>${h(notas.acoes||'')}</textarea></div>
   </div>`; }
 
 /* ---------- Entregáveis ---------- */
