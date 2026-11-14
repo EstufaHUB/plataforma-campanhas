@@ -1034,7 +1034,7 @@ function notificacoes(){
     if (c.cronoHist.length && c.crono.calculadoEm>=addDias(HOJE,-7) && c.crono.motivo!=='Cálculo inicial') add('alt-'+c.id+'-'+c.crono.versao, {tipo:'azul',ic:'calendar-range',t:`Prazos alterados em “${c.nome}” (versão ${c.crono.versao})`,d:c.crono.motivo,link:`#/campanha/${c.id}/cronograma`});
     const dl = difDias(HOJE, c.lancamento);
     if (dl>=0 && dl<=14) add('lanc-'+c.id, {tipo:'pet',ic:'rocket',t:`“${c.nome}” lança em ${dl} dias (${fd(c.lancamento)})`,d:cl,link:`#/campanha/${c.id}/visao`});
-    riscosPais(c).forEach(r=>add('risco-'+c.id+r.cod, {tipo:'verm',ic:'flag',t:`${pais(r.cod)} com risco de atraso em “${c.nome}”`,d:r.motivo,link:`#/campanha/${c.id}/mercados`}));
+    riscosPais(c).forEach(r=>add('risco-'+c.id+r.cod, {tipo:'verm',ic:'flag',t:`${pais(r.cod)} com risco de atraso em “${c.nome}”`,d:r.motivo,link:`#/campanha/${c.id}/cronograma`}));
   }
   return [...N.values()];
 }
@@ -1124,7 +1124,7 @@ function pgDashboard(){
   <div class="grade g3">
    ${pend('Tarefas atrasadas','alert-triangle',tarefasAtr,x=>`<li><a href="#/campanha/${x.c.id}/cronograma">${h(x.t.nome)}${x.t.pais?' · '+x.t.pais:''}</a><span class="small muted" style="margin-left:auto">${fdc(x.t.EF)}</span></li>`)}
    ${pend('Aprovações pendentes','user-check',aprov,x=>`<li><a href="#/campanha/${x.c.id}/entregaveis">${h(x.e.nome)}</a><span class="small muted" style="margin-left:auto">${ETAPAS_ENT[x.e.etapa]}</span></li>`)}
-   ${pend('Países com risco de atraso','flag',riscos,x=>`<li><a href="#/campanha/${x.c.id}/mercados">${pais(x.r.cod)}</a><span class="small muted" style="margin-left:auto;text-align:right">${h(x.c.nome)}</span></li>`)}
+   ${pend('Países com risco de atraso','flag',riscos,x=>`<li><a href="#/campanha/${x.c.id}/cronograma">${pais(x.r.cod)}</a><span class="small muted" style="margin-left:auto;text-align:right">${h(x.c.nome)}</span></li>`)}
    ${pend('Landing pages pendentes (próx. 7 dias)','layout-template',lps,x=>`<li><a href="#/campanha/${x.c.id}/cronograma">${h(x.t.nome)}${x.t.pais?' · '+x.t.pais:''}</a><span class="small muted" style="margin-left:auto">${fdc(x.t.EF)}</span></li>`)}
    ${pend('Assets aguardando aprovação','image',aprov.filter(x=>x.e.etapa==='aprov_asset'),x=>`<li><a href="#/campanha/${x.c.id}/entregaveis">${h(x.e.nome)}</a><span class="small muted" style="margin-left:auto">${h(x.c.nome)}</span></li>`)}
   </div>
@@ -1190,10 +1190,10 @@ function pgCliente(id){
    ===================================================================== */
 function pgCampanha(r){
   const c = camp(r[1]); if (!c) return '<div class="vazio">Campanha não encontrada.</div>';
-  const aba = r[2] || 'visao';
+  const aba = !r[2] || r[2]==='mercados' ? 'visao' : r[2];
   migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,'#/clientes/'+c.clienteId],[c.nome]]);
-  const abas = [['visao','info','Visão geral'],['cronograma','gantt-chart','Cronograma'],['acoes','list-checks','Gestão de ações'],['budget','wallet','Budgets e KPIs'],['entregaveis','package','Entregáveis'],['mercados','globe-2','Mercados e países'],['saude','activity','Saúde da campanha']];
-  const corpo = {visao:abaVisao,cronograma:abaCronograma,acoes:abaAcoes,budget:abaBudget,entregaveis:abaEntregaveis,mercados:abaMercados,saude:abaSaude}[aba](c);
+  const abas = [['visao','info','Visão geral'],['cronograma','gantt-chart','Cronograma'],['acoes','list-checks','Gestão de ações'],['budget','wallet','Budgets e KPIs'],['entregaveis','package','Entregáveis'],['saude','activity','Saúde da campanha']];
+  const corpo = {visao:abaVisao,cronograma:abaCronograma,acoes:abaAcoes,budget:abaBudget,entregaveis:abaEntregaveis,saude:abaSaude}[aba](c);
   const cli = cliente(c.clienteId), ini = inicioPlan(c), corSt = COR_ST_CAMP[c.status]||'#9aa9ae';
   return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>${marcasDe(c).length?`<div class="cc-marcas">${marcasDe(c).map(m=>marcaCancelada(c,m) ? `<span class="tag tag-cancel" style="cursor:pointer" data-act="verCancel" data-id="${c.id}" data-m="${h(m)}" title="${h(txtCancel(c,m))}"><s>${h(m)}</s> · cancelada</span>` : `<span class="tag t-pet">${h(m)}</span>`).join('')}</div>`:''}
      <div class="cc-meta"><span class="cc-pill"><i style="background:${corSt}"></i>${h(c.status)}</span>${saudeHtml(c)}<span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-range"></i>Veiculação: ${fdm(c.lancamento)} → ${fdm(c.fimVeiculacao||c.lancamento)}</span>${c.arquivada?' <span class="tag">Arquivada</span>':''}</div>${farolCab(c)?`<div style="margin-top:8px">${farolCab(c)}</div>`:''}</div></div>
