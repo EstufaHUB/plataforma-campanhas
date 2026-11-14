@@ -126,6 +126,9 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .mk-inp{display:inline-flex;flex-direction:column;gap:2px;font-size:.72rem;color:var(--tx2)}
 .obj-canal{display:grid;grid-template-columns:auto 1fr;gap:16px 32px;padding:14px 18px;border-bottom:1px solid var(--borda)}@media (max-width:760px){.obj-canal{grid-template-columns:1fr}}
 .canal-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.marcas-lado{display:grid;grid-template-columns:1fr 1fr;gap:0}.marca-col{padding:0 24px 0 0;min-width:0}.marca-col+.marca-col{padding:0 0 0 24px;border-left:1px solid var(--borda)}
+.marcas-lado .canal-grade{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+@media (max-width:860px){.marcas-lado{grid-template-columns:1fr}.marca-col{padding:0}.marca-col+.marca-col{padding:20px 0 0;margin-top:20px;border-left:0;border-top:1px solid var(--borda)}}
 .canal-grade{align-items:stretch;grid-auto-rows:1fr}.canal-grade>.card{margin:0!important}.canal-card{display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding:18px;text-decoration:none;color:var(--tx);border:1px solid var(--borda);transition:border-color .12s,box-shadow .12s}.canal-card:hover{border-color:var(--pet-600)}
 .canal-card.sel{border-color:var(--pet-600);box-shadow:0 0 0 2px #d4eef0}
 .cc-top{display:flex;justify-content:space-between;align-items:center}.cc-nome{font-weight:600;margin-top:12px;color:var(--tx2)}.cc-valor{font-size:1.5rem;font-weight:700;color:var(--pet-950);margin-top:2px}
@@ -1484,7 +1487,7 @@ function abaBudget(c){
   const cartoes = lista => `<div class="canal-grade">${lista.map(d=>`<a href="javascript:void 0" class="card canal-card ${d.k===UI.bCanal?'sel':''}" data-act="bCanal" data-k="${h(d.k)}">
       <div class="cc-top"><div class="k-ic"><i data-lucide="megaphone"></i></div><span class="small muted">${[...new Set(d.ps.map(x=>x.cod))].map(cod=>PAISES[cod].f).join(' ')}</span></div>
       <div class="cc-nome">${h(nomeCanal(d.ch.canal))}</div><div class="cc-valor">${moeda(d.orc, d.m)}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${d.obj?`<span class="tag t-pet">${h(d.obj)}</span>`:''}${d.midia?`<span class="tag t-pet">${h(d.midia)}</span>`:''}<span class="tag t-pet">${d.definida?'Meta definida':'Meta a definir'}</span></div></a>`).join('')}</div>`;
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${d.obj?`<span class="tag t-pet">${h(d.obj)}</span>`:''}${d.midia?`<span class="tag t-pet">${h(d.midia)}</span>`:''}<span class="tag ${d.definida?'t-verde-c':'t-verm'}">${d.definida?'Meta definida':'Meta a definir'}</span></div></a>`).join('')}</div>`;
   let detalhe = '';
   if (sel) { const m = sel.m, k = sel.k;
     const chips = (tipo, lista, atual) => `<div class="chips">${lista.map(v=>`<span class="chip ${atual===v?'on':''}" ${ed?`data-act="objCanal" data-k="${h(k)}" data-tipo="${tipo}" data-v="${h(v)}"`:''}>${h(v)}</span>`).join('')}</div>`;
@@ -1496,8 +1499,8 @@ function abaBudget(c){
       <div class="small muted" style="padding:10px 18px">Digite o custo de cada país; o resultado é calculado a partir do budget (budget ÷ custo${sel.fator===1000?' × 1.000, porque em Alcance o custo é por mil':''}).</div></div>`; }
   if (!marcaSeparada(c)) return cartoes(dados) + (sel ? detalhe : '');
   // duas marcas: uma seção para cada, com os cartões dos seus canais (o detalhe abre dentro da seção do cartão escolhido)
-  return MARCAS_SEP.map(mk=>{ const ds = dados.filter(d=>d.ch.marca===mk); if (!ds.length) return '';
-    return `<div class="sec-marca" style="margin:${mk===MARCAS_SEP[0]?'0':'24px'} 0 12px"><span class="sec-marca-tit">${h(mk)}</span></div>` + cartoes(ds) + (sel && sel.ch.marca===mk ? detalhe : ''); }).join('');
+  return `<div class="marcas-lado">${MARCAS_SEP.map(mk=>{ const ds = dados.filter(d=>d.ch.marca===mk);
+    return `<div class="marca-col"><div class="sec-marca" style="margin:0 0 12px"><span class="sec-marca-tit">${h(mk)}</span></div>${ds.length ? cartoes(ds) : '<div class="small muted">Sem canais.</div>'}</div>`; }).join('')}</div>` + (sel ? detalhe : '');
 }
 function abaBudgetAntiga(c){
   UI.fbm = UI.fbm || {}; const moedas = moedasCamp(c), m = moedas.includes(UI.fbm.v) ? UI.fbm.v : moedas[0], R = resumoBudget(c, m), ed = ehEquipe();
