@@ -1951,7 +1951,7 @@ function entregaveisNotion(c){
   const horas = atual ? (Date.now()-new Date(atual).getTime())/36e5 : null, velho = horas!=null && horas>24;
   const ha = horas==null ? 'ainda não sincronizado' : 'atualizado ' + (horas<1/60 ? 'agora' : horas<1 ? `há ${Math.max(1,Math.round(horas*60))} min` : horas<48 ? `há ${Math.round(horas)} h` : `há ${Math.round(horas/24)} dias`);
   const fonte = `<div class="saude-fonte ${velho?'velho':''}" style="margin-bottom:12px"><i data-lucide="${velho?'alert-circle':'book-open'}"></i><span>Notion · ${h(vs.map(v=>v.titulo||'banco vinculado').join(', '))} · ${ha}${velho?' — dados desatualizados':''}</span>
-    <span style="margin-left:auto;display:flex;gap:8px">${vs[0]&&vs[0].url?`<a class="btn btn-s" href="${h(vs[0].url)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Abrir no Notion</a>`:''}${ed?`<button class="btn btn-s" data-act="sincNotion" data-id="${c.id}"><i data-lucide="refresh-cw"></i>Atualizar</button><button class="btn btn-s" data-act="vincularNotion" data-id="${c.id}"><i data-lucide="link"></i>Vínculo</button>`:''}</span></div>`;
+    <span style="margin-left:auto;display:flex;gap:8px">${vs[0]&&vs[0].url?`<a class="btn btn-s" href="${h(vs[0].url)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Abrir no Notion</a>`:''}${ed?`<button class="btn btn-s" data-act="sincNotion" data-id="${c.id}"><i data-lucide="refresh-cw"></i>Atualizar</button><button class="btn btn-s" data-act="vincularNotion" data-id="${c.id}"><i data-lucide="link"></i>Vínculo</button><button class="btn btn-s btn-p" data-act="importarNotion" data-id="${c.id}"><i data-lucide="download"></i>Trazer para o sistema</button>`:''}</span></div>`;
   const itens = rs.flatMap(r=>(r.dados&&r.dados.itens)||[]).filter(x=>(x.material||'').trim() && ((x.topicos||[]).length || x.link || (x.status && x.status!=='Not started')));   // ignora rascunhos vazios
   if (!itens.length) return fonte + `<div class="card card-p"><div class="vazio">${rs.length?'O banco do Notion está vazio.':'Clique em “Atualizar” para trazer as peças do Notion.'}</div></div>`;
   const grp = x => (ST_NOTION[x.status]||[x.status||'—','cinza','and'])[2];
@@ -2009,7 +2009,7 @@ const ST_ENT_COR = {briefing:'cinza', aprov_conteudo:'amar', ajuste_conteudo:'ve
 function cartaoEnt(c, e){ const dom = e.link ? (e.link.replace(/^https?:\/\//,'').split('/')[0]) : '';
   return `<a href="javascript:void 0" class="ent-card st-${ST_ENT_COR[e.etapa]||'cinza'}" data-act="abrirEnt" data-id="${c.id}" data-e="${e.id}"><b>${h(e.nome)}</b>
     <span class="sd-pill sd-${ST_ENT_COR[e.etapa]==='cinza'?'cinza':ST_ENT_COR[e.etapa]}">${h(ETAPAS_ENT[e.etapa]||e.etapa)}</span>
-    ${dom?`<span class="ent-link">${h(dom)}</span>`:''}${e.prazo?`<span class="small muted">prazo ${fdm(e.prazo)}</span>`:''}${(e.aprovacoes||[]).length?`<span class="small muted"><i data-lucide="message-square"></i> ${e.aprovacoes.length}</span>`:''}</a>`; }
+    ${dom?`<span class="ent-link">${h(dom)}</span>`:''}${e.briefing&&e.briefing.obs&&e.origem==='notion'?`<span class="small" style="color:#8a5a00">${h(e.briefing.obs)}</span>`:''}${e.prazo?`<span class="small muted">prazo ${fdm(e.prazo)}</span>`:''}${(e.aprovacoes||[]).length?`<span class="small muted"><i data-lucide="message-square"></i> ${e.aprovacoes.length}</span>`:''}</a>`; }
 function entregaveisSecoes(c){
   const fase = etapaSel(c);   // campanha em fases: uma guia por fase (KV e materiais gerais aparecem nas duas)
   const ed = ehEquipe(), vis = e => !(e.marca && marcaCancelada(c, e.marca)) && !(e.paises||[]).every(p=>paisCancelado(c, e.marca, p)) && (!fase || !e.fase || e.fase===fase);
@@ -2021,7 +2021,7 @@ function entregaveisSecoes(c){
   const secaoColunas = (nome, canal, filtro) => { const cols = colunasCanal(c, canal, fase), varias = new Set(cols.map(x=>x.mk)).size>1;
     const daSec = L.filter(filtro); daSec.forEach(e=>usados.add(e.id));
     return faixa(nome, daSec) + `<div class="ent-cols" style="grid-template-columns:repeat(${Math.max(1,cols.length)}, minmax(220px,1fr))">${cols.map(x=>{ const da = daSec.filter(e=>(e.paises||[]).includes(x.p) && (!varias || !x.mk || e.marca===x.mk || !e.marca));
-      return `<div class="ent-col"><div class="ent-col-tit">${rotCol(x, varias)}<span>${da.length}</span></div>${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(nome, canal, x, true)}</div>`; }).join('')}</div>`; };
+      return `<div class="ent-col ${cols.length===1?'uno':''}"><div class="ent-col-tit">${rotCol(x, varias)}<span>${da.length}</span></div>${cols.length===1?'<div class="ent-grade">':''}${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(nome, canal, x, true)}${cols.length===1?'</div>':''}</div>`; }).join('')}</div>`; };
   const tipos = c.entregaveisTipos||[], comum = fase ? ' <span class="ent-comum">comum às duas fases</span>' : ''; let html = '';
   if (tipos.includes('KV')) { const da = L.filter(e=>e.secao==='KV' || e.auto==='kv'); da.forEach(e=>usados.add(e.id)); html += faixa('KV', da).replace('</span>', '</span>'+comum) + `<div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn('KV','',null)}</div>`; }
   if (tipos.includes('Landing page') && fase!=='Awareness') html += secaoColunas('Landing page', null, e=>e.secao==='Landing page');
@@ -2710,6 +2710,28 @@ const ACT = {
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
   stAbrir: el => { UI.stAberto = UI.stAberto||{}; UI.stAberto[el.dataset.k] = !UI.stAberto[el.dataset.k]; render(); },
   filtroStatusCli: el => { UI.fc = UI.fc||{}; UI.fc.status = UI.fc.status===el.dataset.v ? '' : el.dataset.v; render(); },
+  importarNotion: el => { const c = camp(el.dataset.id), n = (NOTION[c.id]||[]).flatMap(r=>(r.dados&&r.dados.itens)||[]).filter(x=>(x.material||'').trim() && x.status!=='Canceled' && ((x.topicos||[]).length || x.link || x.status!=='Not started')).length;
+    abrirModal('Trazer as peças do Notion para o sistema', `<p style="margin-top:0">As <b>${n} peças</b> do banco do Notion viram peças da plataforma, com status, link e observação. Depois disso o Notion é desvinculado desta campanha e as peças passam a ser editadas só aqui, nas seções da aba Entregáveis.</p>
+      <ul class="small muted" style="padding-left:18px;margin:0"><li>Status: Posted, Approved e Ready to post → Concluído · Adjust → Ajustes no asset · Asset approval → Aprovação do asset · Text approval → Aprovação do conteúdo · em andamento → Produção · Not started → Briefing.</li><li>O banco no Notion não é alterado nem apagado.</li></ul>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="importarNotionOk" data-id="${c.id}"><i data-lucide="download"></i>Trazer ${n} peças</button>`); },
+  importarNotionOk: el => { const c = camp(el.dataset.id);
+    const ETAPA = {'Posted':'concluido','Approved':'concluido','Ready to post':'concluido','Schedule':'concluido','Adjust':'ajuste_asset','Asset approval':'aprov_asset','Text approval':'aprov_conteudo','Internal review':'producao','In progress':'producao','Design in progress':'producao','Not started':'briefing','On hold':'briefing'};
+    const CANAL = {'META ADS':'Meta Ads','YOUTUBE ADS':'YouTube Ads','GOOGLE ADS':'Google Display'}, PAIS = {'Brasil':'BR','Argentina':'AR','Latam':null};
+    const mk = marcasDe(c).find(m=>!marcaCancelada(c,m)) || null, itens = (NOTION[c.id]||[]).flatMap(r=>(r.dados&&r.dados.itens)||[]);
+    let n = 0; c.entregaveis = c.entregaveis || [];
+    for (const x of itens) { if (!(x.material||'').trim() || x.status==='Canceled' || !((x.topicos||[]).length || x.link || x.status!=='Not started')) continue;
+      const top = (x.topicos||[])[0] || '', canal = CANAL[top] || '', secao = canal || (top==='LANDING PAGE' ? 'Landing page' : top==='EMAIL' ? 'Email marketing' : '');
+      const pa = PAIS[x.regiao] || (c.paises[0] && c.paises[0].cod), aprov = [];
+      if (x.aprovTexto || x.aprovCopy) aprov.push({tipo:'Conteúdo', resultado:'Aprovado', coment:'Importado do Notion', data:HOJE, quem:'Notion'});
+      if (x.aprovAsset) aprov.push({tipo:'Asset', resultado:'Aprovado', coment:'Importado do Notion', data:HOJE, quem:'Notion'});
+      c.entregaveis.push({id:novoId('e'), nome:x.material.replace(/\\\./g,'.'), secao: secao||undefined, canal, paises: pa?[pa]:c.paises.map(p=>p.cod), ...(mk&&marcaSeparada(c)?{marca:mk}:{}), etapa: ETAPA[x.status]||'briefing', link:x.link||'',
+        versoes: x.link ? [{n:1, link:x.link, data:HOJE, obs:'Importado do Notion'}] : [], aprovacoes: aprov, briefing: x.obs ? {obs:x.obs} : {}, idioma:'', formato:'', objetivo:'', prazo: x.data||null, origem:'notion', notionUrl:x.url||''}); n++; }
+    // as peças reais substituem o kit padrão onde já existem (não cria Vídeo 1, LP etc. em duplicidade)
+    const ign = new Set(c.entAutoIgnorar||[]);
+    for (const e of c.entregaveis.filter(e=>e.origem==='notion')) for (const p of e.paises) { if (e.secao==='Landing page') ign.add(`lp|${e.marca||''}|${p}`); if (KIT_CANAL[e.canal]) for (const [k] of KIT_CANAL[e.canal]) ign.add(`${e.canal}|${e.marca||''}|${p}|${k}`); }
+    c.entAutoIgnorar = [...ign]; c.entregaveis = c.entregaveis.filter(e=>!(e.auto && ign.has(e.auto) && e.etapa==='briefing' && !(e.versoes||[]).length));
+    c.notionVinculos = []; c.entAutoFeito = false; UI.fen = Object.assign(UI.fen||{}, {visaoP:'secoes', sub:'pecas'});
+    registrar(`Peças do Notion trazidas para “${c.nome}”: ${n} (Notion desvinculado)`); fecharModal(); render(); toast(`${n} peças trazidas do Notion. O Notion foi desvinculado.`); },
   gerarEntregaveis: el => { const c = camp(el.dataset.id), n = sincronizarEntregaveis(c); registrar(`Peças padrão criadas em “${c.nome}”: ${n}`); render(); toast(`${n} peça(s) criada(s) a partir da ficha.`); },
   sPais: el => { UI.sPais = UI.sPais||{}; const p = el.dataset.p || null; UI.sPais[el.dataset.id] = UI.sPais[el.dataset.id]===p ? null : p; render(); },
   sMarca: el => { UI.sMarca = UI.sMarca||{}; const m = el.dataset.m || null; UI.sMarca[el.dataset.id] = UI.sMarca[el.dataset.id]===m ? null : m; render(); },
