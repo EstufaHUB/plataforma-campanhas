@@ -1251,7 +1251,7 @@ function pgCliente(id){
   L.sort((a,b)=> (ORD_ST[a.status]??9) - (ORD_ST[b.status]??9) || (f.ordem==='desc'?-1:1) * (a.lancamento<b.lancamento?-1:1));   // no ar primeiro
   // resumo por status (clicar filtra a lista)
   const todasCl = S.campanhas.filter(c=>c.clienteId===id && !c.arquivada);
-  const resumo = [['Em veiculação','radio','no ar agora'],['Em andamento','loader','em produção'],['Não iniciada','circle-dashed','não iniciadas'],['Finalizada – relatório pendente','file-clock','relatório pendente'],['Concluída','check-circle-2','concluídas']]
+  const resumo = [['Em veiculação','radio','em veiculação'],['Em andamento','loader','em produção'],['Não iniciada','circle-dashed','não iniciadas'],['Finalizada – relatório pendente','file-clock','relatório pendente'],['Concluída','check-circle-2','concluídas']]
     .map(([st,ic,rot])=>({st,ic,rot,n:todasCl.filter(c=>c.status===st).length})).filter((x,i)=>i<2 || x.n);
   const corSt = {'Em veiculação':'#2e9d55','Em andamento':'#2f80b8','Não iniciada':'#9aa9ae','Finalizada – relatório pendente':'#e0a100','Concluída':'#1f5f6e'};
   const resumoHtml = resumo.map(x=>`<a href="javascript:void 0" class="cc-pill cli-st ${f.status===x.st?'on':''}" data-act="filtroStatusCli" data-v="${h(x.st)}" title="${f.status===x.st?'Mostrar todas':'Filtrar a lista'}"><i style="background:${corSt[x.st]}"></i>${x.n} ${x.rot}</a>`).join('<span class="cc-sep"></span>');
