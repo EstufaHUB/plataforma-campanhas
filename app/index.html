@@ -165,6 +165,9 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .stp-fr .p-verm{background:#d0443a}.stp-fr .p-amar{background:#e0a100}.stp-fr .p-verde{background:#2e9d55}.stp-fr .p-info{background:#2f80b8}.st-tab tr.st-pais.critica td:first-child{box-shadow:inset 3px 0 0 #d0443a}.st-tab tr.st-marca td{background:var(--pet-900);color:#fff;font-weight:700;font-size:.95rem;padding:9px 16px;letter-spacing:.01em}.st-tab tr.st-marca td span{font-weight:500;opacity:.75;font-size:.8rem;margin-left:8px}
 .st-tab tr.st-camp td{background:#f4f7f8;padding-top:10px;padding-bottom:8px;border-top:1px solid var(--borda)}.st-tab{table-layout:fixed;width:100%}.st-tab tr.st-pais td:first-child{padding-left:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.st-tab tr.st-camp td{overflow:visible}.st-tab tr.st-camp td{white-space:nowrap}.st-col-pais{white-space:nowrap}.stb-top{flex-wrap:nowrap!important;white-space:nowrap}.stb-cel{min-width:0;padding-right:22px!important}.stb-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:.86rem}.stb-top .sd-pill{margin:0 0 0 auto;font-size:.72rem;padding:2px 8px}.sd-bar.stb{height:7px;margin:7px 0 2px}.ponto-st.peq{width:8px;height:8px}.st-sub td:first-child{padding-left:38px;font-size:.86rem}.st-obs{min-width:280px;max-width:420px}.st-pts{list-style:none;margin:0;padding:0;font-size:.8rem;line-height:1.4}.st-pts li{display:flex;gap:7px;padding:2px 0}.st-pts li>i{flex:none;width:8px;height:8px;border-radius:50%;margin-top:5px}.st-pts .p-verm{background:#d0443a}.st-pts .p-amar{background:#e0a100}.st-pts .p-verde{background:#2e9d55}.st-pts .p-info{background:#2f80b8}
 .st-tab tr.st-sub td{background:#fafcfc;font-size:.86rem}
+.cli-logo-g{width:52px!important;height:52px!important}.cli-resumo{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 16px}.cli-res{display:flex;align-items:center;gap:12px;padding:12px 18px!important;margin:0!important;text-decoration:none;color:inherit;min-width:170px;border:1px solid var(--borda)}
+.cli-res svg{width:22px;height:22px;color:var(--pet-600)}.cli-res b{display:block;font-size:1.5rem;line-height:1.1;color:var(--pet-950)}.cli-res span{font-size:.8rem;color:var(--tx2)}.cli-res.destaque b{color:#1f6b3a}.cli-res.destaque svg{color:#2e9d55}.cli-res.on{border-color:var(--pet-700);box-shadow:0 0 0 2px rgba(31,95,110,.15)}
+.cli-per{height:4px;background:#e8eef0;border-radius:3px;margin-top:5px;width:120px}.cli-per i{display:block;height:100%;background:var(--pet-600);border-radius:3px}.cli-farol{max-width:260px;white-space:normal}
 .saude-filtros{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.saude-filtros .seg-etapa{margin-bottom:0}.seg-marca button{padding:7px 12px}
 .sd-pais a.sd-clic{color:inherit;text-decoration:none;border-radius:5px;padding:1px 4px;margin:0 -4px}.sd-pais a.sd-clic:hover{background:#e6eef1;text-decoration:underline}.sd-pais a.sd-clic.on{background:var(--pet-700);color:#fff}
 .seg-etapa{margin-bottom:14px;display:inline-flex;flex-wrap:wrap}.seg-etapa button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px}.seg-etapa .fase-num{width:20px;height:20px;font-size:.72rem}.seg-etapa button:not(.ativo) .fase-num{background:#9aa9ae}
@@ -1057,9 +1060,9 @@ function saude(c){
 }
 /* farol da campanha no cabeçalho (dados do Meta × metas) */
 function nivelSaude(score){ return score==null ? null : score>=0.9 ? {t:'Saudável', cls:'sd-verde'} : score>=0.7 ? {t:'Atenção', cls:'sd-amar'} : {t:'Crítica', cls:'sd-verm'}; }
-function farolCab(c){ if (!(RESULTADOS[c.id]||[]).length) return ''; const S2 = dadosSaude(c), n = nivelSaude(S2.score); if (!n) return '';
+function farolCab(c, curto){ if (!(RESULTADOS[c.id]||[]).length) return ''; const S2 = dadosSaude(c), n = nivelSaude(S2.score); if (!n) return '';
   const aw = S2.tipoScore==='engajamento', pr = `${aw?'engajamento':'leads'} ${Math.round(S2.ritmo*100)}% do ritmo, ${aw?'custo por engajamento':'CPL'} ${S2.cplRatio>=1?Math.round((1-1/S2.cplRatio)*100)+'% melhor':Math.round((1/S2.cplRatio-1)*100)+'% acima'} que a meta`;
-  return `<a href="#/campanha/${c.id}/saude" class="sd-pill ${n.cls} cc-farol" title="Saúde da campanha, a partir dos dados do Meta"><i data-lucide="gauge"></i>${filtroTxt(c)?h(filtroTxt(c))+': ':''}${n.t} · ${pr}</a>`; }
+  return `<a href="#/campanha/${c.id}/saude" class="sd-pill ${n.cls} cc-farol" title="${curto?h(n.t+' · '+pr):'Saúde da campanha, a partir dos dados do Meta'}"><i data-lucide="gauge"></i>${curto?n.t:`${filtroTxt(c)?h(filtroTxt(c))+': ':''}${n.t} · ${pr}`}</a>`; }
 const saudeHtml = c => { const s = saude(c); if (!s.txt) return ''; return `<span class="tag" style="gap:6px"><span class="ponto p-${s.cor}"></span>${s.txt}</span>`; };
 const progresso = c => { const ts=c.crono.tarefas.filter(t=>t.status!=='Cancelada'); return ts.length ? Math.round(ts.filter(t=>t.status==='Concluída').length/ts.length*100) : 0; };
 const inicioPlan = c => c.crono.tarefas.reduce((m,t)=>!m||t.ES<m?t.ES:m,null);
@@ -1244,20 +1247,31 @@ function pgCliente(id){
   if (f.regiao) L = L.filter(c=>c.regioes.includes(f.regiao));
   if (f.status) L = L.filter(c=>c.status===f.status);
   if (f.resp) L = L.filter(c=>c.respAtendimento===f.resp);
-  L.sort((a,b)=> (f.ordem==='desc'?-1:1) * (a.lancamento<b.lancamento?-1:1));
-  return `<div class="cab"><div><h1>${h(cl.nome)}</h1><p>${h(cl.segmento)}${cl.contato?' · '+h(cl.contato):''}</p></div><div class="filtros"><button class="btn" data-act="formCliente" data-id="${id}"><i data-lucide="pencil"></i>Editar</button><button class="btn" data-act="arquivarCliente" data-id="${id}"><i data-lucide="archive"></i>${cl.arquivado?'Desarquivar':'Arquivar'}</button><button class="btn btn-p" data-act="novaCampanha" data-cliente="${id}"><i data-lucide="plus"></i>Nova campanha</button></div></div>
+  const ORD_ST = {'Em veiculação':0,'Em andamento':1,'Não iniciada':2,'Finalizada – relatório pendente':3,'Concluída':4};
+  L.sort((a,b)=> (ORD_ST[a.status]??9) - (ORD_ST[b.status]??9) || (f.ordem==='desc'?-1:1) * (a.lancamento<b.lancamento?-1:1));   // no ar primeiro
+  // resumo por status (clicar filtra a lista)
+  const todasCl = S.campanhas.filter(c=>c.clienteId===id && !c.arquivada);
+  const resumo = [['Em veiculação','radio','no ar agora'],['Em andamento','loader','em produção'],['Não iniciada','circle-dashed','não iniciadas'],['Finalizada – relatório pendente','file-clock','relatório pendente'],['Concluída','check-circle-2','concluídas']]
+    .map(([st,ic,rot])=>({st,ic,rot,n:todasCl.filter(c=>c.status===st).length})).filter((x,i)=>i<2 || x.n);
+  const resumoHtml = `<div class="cli-resumo">${resumo.map(x=>`<a href="javascript:void 0" class="card cli-res ${f.status===x.st?'on':''} ${x.st==='Em veiculação'?'destaque':''}" data-act="filtroStatusCli" data-v="${h(x.st)}"><i data-lucide="${x.ic}"></i><div><b>${x.n}</b><span>${x.rot}</span></div></a>`).join('')}</div>`;
+  return `<div class="cab"><div style="display:flex;gap:14px;align-items:center">${logoCliente(cl,'cli-logo cli-logo-g')}<div><h1>${h(cl.nome)}</h1><p>${h(cl.segmento)}${cl.contato?' · '+h(cl.contato):''}</p></div></div><div class="filtros"><button class="btn" data-act="formCliente" data-id="${id}"><i data-lucide="pencil"></i>Editar</button><button class="btn" data-act="arquivarCliente" data-id="${id}"><i data-lucide="archive"></i>${cl.arquivado?'Desarquivar':'Arquivar'}</button><button class="btn btn-p" data-act="novaCampanha" data-cliente="${id}"><i data-lucide="plus"></i>Nova campanha</button></div></div>
+  ${resumoHtml}
   <div class="card"><div class="card-cab"><div class="filtros">
     <input placeholder="Buscar campanha" value="${h(f.busca)}" data-chg="fc.busca" style="width:180px">
     <select data-chg="fc.ano">${opts(['2026','2027'],f.ano,'Todos os anos')}</select>
     <select data-chg="fc.regiao">${opts(Object.entries(REGIOES),f.regiao,'Todas as regiões')}</select>
     <select data-chg="fc.pais">${opts(Object.entries(PAISES).map(([k,p])=>[k,p.n]),f.pais,'Todos os países')}</select>
     <select data-chg="fc.status">${opts(ST_CAMP,f.status,'Todos os status')}</select>
-    <select data-chg="fc.resp">${opts(S.usuarios.filter(u=>u.area==='Atendimento').map(u=>[u.id,u.nome]),f.resp,'Todos os responsáveis')}</select>
     <select data-chg="fc.ordem">${opts([['asc','Lançamento: mais próximo'],['desc','Lançamento: mais distante']],f.ordem)}</select>
     <label class="small"><input type="checkbox" ${f.arq?'checked':''} data-chg="fc.arq"> Arquivadas</label></div></div>
-  <div class="tabela-wrap"><table class="tab"><thead><tr><th>Campanha</th><th>Veiculação</th><th>Lançamento</th><th>Status</th><th>Atendimento</th><th>Países</th><th>Saúde</th><th>Links</th></tr></thead><tbody>
-  ${L.map(c=>`<tr class="clic" onclick="location.hash='#/campanha/${c.id}/visao'"><td><b>${h(c.nome)}</b>${c.arquivada?' <span class="tag">Arquivada</span>':''}</td><td class="small">${fdc(c.lancamento)} → ${fd(c.fimVeiculacao)}</td><td>${fds(c.lancamento)}</td><td>${tag(c.status)}</td><td>${h(nomeU(c.respAtendimento))}</td><td>${c.paises.map(p=>`<span title="${PAISES[p.cod].n}">${PAISES[p.cod].f}</span>`).join(' ')}</td><td>${saudeHtml(c)}</td>
-   <td onclick="event.stopPropagation()">${c.urlPlanejamento?`<a href="${h(c.urlPlanejamento)}" target="_blank" rel="noopener" title="Planejamento">Plan.</a>`:'<span class="muted small">—</span>'} ${c.urlRelatorio?` · <a href="${h(c.urlRelatorio)}" target="_blank" rel="noopener" title="Relatório">Relat.</a>`:''}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Nenhuma campanha com esses filtros.</td></tr>'}
+  <div class="tabela-wrap"><table class="tab"><thead><tr><th>Status</th><th>Campanha</th><th>Marcas</th><th>Veiculação</th><th>Países</th><th>Saúde</th></tr></thead><tbody>
+  ${L.map(c=>{ const fc = farolCab(c, true), pv = c.lancamento && c.fimVeiculacao ? Math.max(0, Math.min(1, (difDias(c.lancamento, HOJE)+1)/(difDias(c.lancamento, c.fimVeiculacao)+1))) : 0, noAr = c.status==='Em veiculação';
+    return `<tr class="clic" onclick="location.hash='#/campanha/${c.id}/${noAr&&fc?'saude':'visao'}'"><td>${tag(c.status)}</td>
+   <td><b>${h(c.nome)}</b>${c.arquivada?' <span class="tag">Arquivada</span>':''}${faseada(c)?` <span class="small muted">· em fases</span>`:''}</td>
+   <td>${marcasDe(c).map(m=>marcaCancelada(c,m)?`<span class="tag tag-cancel" title="${h(txtCancel(c,m))}"><s>${h(m)}</s></span>`:`<span class="tag t-pet">${h(m)}</span>`).join(' ')||'<span class="muted small">—</span>'}</td>
+   <td style="white-space:nowrap">${fdm(c.lancamento)} → ${fd(c.fimVeiculacao)}${noAr?`<div class="cli-per"><i style="width:${Math.round(pv*100)}%"></i></div>`:''}</td>
+   <td>${c.paises.map(p=>`<span title="${PAISES[p.cod].n}">${PAISES[p.cod].f}</span>`).join(' ')}</td>
+   <td>${noAr && fc ? fc.replace('cc-farol','cc-farol cli-farol') : saudeHtml(c) || '<span class="muted small">—</span>'}</td></tr>`; }).join('') || '<tr><td colspan="6" class="vazio">Nenhuma campanha com esses filtros.</td></tr>'}
   </tbody></table></div></div>`;
 }
 
@@ -2627,6 +2641,7 @@ const ACT = {
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
   stAbrir: el => { UI.stAberto = UI.stAberto||{}; UI.stAberto[el.dataset.k] = !UI.stAberto[el.dataset.k]; render(); },
+  filtroStatusCli: el => { UI.fc = UI.fc||{}; UI.fc.status = UI.fc.status===el.dataset.v ? '' : el.dataset.v; render(); },
   sPais: el => { UI.sPais = UI.sPais||{}; const p = el.dataset.p || null; UI.sPais[el.dataset.id] = UI.sPais[el.dataset.id]===p ? null : p; render(); },
   sMarca: el => { UI.sMarca = UI.sMarca||{}; const m = el.dataset.m || null; UI.sMarca[el.dataset.id] = UI.sMarca[el.dataset.id]===m ? null : m; render(); },
   selEtapa: el => { UI.etapa = UI.etapa||{}; UI.etapa[el.dataset.id] = el.dataset.v; UI.aSel = []; render(); },
