@@ -885,6 +885,8 @@ async function carregar(){
   for (const c of S.campanhas) SNAP.camp[c.id] = JSON.stringify(c);
   for (const r of cf) SNAP.cfg[r.chave] = JSON.stringify(r.valor);   // chaves que faltam são gravadas na primeira sincronização (padrões)
   CTX = null; migrarLancamento();
+  // o Notion não é mais usado: campanhas ainda vinculadas trazem as peças para a plataforma automaticamente
+  if (ehEquipe()) for (const c of S.campanhas) if ((c.notionVinculos||[]).length && (NOTION[c.id]||[]).length) { const n = importarNotion(c); registrar(`Peças do Notion trazidas para “${c.nome}”: ${n} (Notion desvinculado)`); }
   if (vincRecup.length && ehEquipe()) { vincRecup.forEach(id=>{ SNAP.camp[id] = ''; }); salvar(); }   // grava os vínculos recuperados
 }
 let sincronizando = false, sincPendente = false;
@@ -1978,6 +1980,25 @@ function entregaveisNotion(c){
   return fonte + resumo + `<div class="card" style="overflow:hidden"><div class="nt-lin nt-cab"><div>Material</div><div>Status</div><div title="Texto · Copy · Asset">Aprovações</div><div>Resp.</div><div></div></div>${grupos}</div>
     <div class="small muted" style="margin-top:8px">As peças são editadas no Notion. Aqui é só visualização.</div>`; }
 
+/* traz as peças de um banco do Notion vinculado para a plataforma e desvincula o Notion */
+function importarNotion(c){
+    const ETAPA = {'Posted':'concluido','Approved':'concluido','Ready to post':'concluido','Schedule':'concluido','Adjust':'ajuste_asset','Asset approval':'aprov_asset','Text approval':'aprov_conteudo','Internal review':'producao','In progress':'producao','Design in progress':'producao','Not started':'briefing','On hold':'briefing'};
+    const CANAL = {'META ADS':'Meta Ads','YOUTUBE ADS':'YouTube Ads','GOOGLE ADS':'Google Display'}, PAIS = {'Brasil':'BR','Argentina':'AR','Latam':null};
+    const mk = marcasDe(c).find(m=>!marcaCancelada(c,m)) || null, itens = (NOTION[c.id]||[]).flatMap(r=>(r.dados&&r.dados.itens)||[]);
+    let n = 0; c.entregaveis = c.entregaveis || [];
+    for (const x of itens) { if (!(x.material||'').trim() || x.status==='Canceled' || !((x.topicos||[]).length || x.link || x.status!=='Not started')) continue;
+      const top = (x.topicos||[])[0] || '', canal = CANAL[top] || '', secao = canal || (top==='LANDING PAGE' ? 'Landing page' : top==='EMAIL' ? 'Email marketing' : '');
+      const pa = PAIS[x.regiao] || (c.paises[0] && c.paises[0].cod), aprov = [];
+      if (x.aprovTexto || x.aprovCopy) aprov.push({tipo:'Conteúdo', resultado:'Aprovado', coment:'Importado do Notion', data:HOJE, quem:'Notion'});
+      if (x.aprovAsset) aprov.push({tipo:'Asset', resultado:'Aprovado', coment:'Importado do Notion', data:HOJE, quem:'Notion'});
+      c.entregaveis.push({id:novoId('e'), nome:x.material.replace(/\\\./g,'.'), secao: secao||undefined, canal, paises: pa?[pa]:c.paises.map(p=>p.cod), ...(mk&&marcaSeparada(c)?{marca:mk}:{}), etapa: ETAPA[x.status]||'briefing', link:x.link||'',
+        versoes: x.link ? [{n:1, link:x.link, data:HOJE, obs:'Importado do Notion'}] : [], aprovacoes: aprov, briefing: x.obs ? {obs:x.obs} : {}, idioma:'', formato:'', objetivo:'', prazo: x.data||null, origem:'notion', notionUrl:x.url||''}); n++; }
+    // as peças reais substituem o kit padrão onde já existem (não cria Vídeo 1, LP etc. em duplicidade)
+    const ign = new Set(c.entAutoIgnorar||[]);
+    for (const e of c.entregaveis.filter(e=>e.origem==='notion')) for (const p of e.paises) { if (e.secao==='Landing page') ign.add(`lp|${e.marca||''}|${p}`); if (KIT_CANAL[e.canal]) for (const [k] of KIT_CANAL[e.canal]) ign.add(`${e.canal}|${e.marca||''}|${p}|${k}`); }
+    c.entAutoIgnorar = [...ign]; c.entregaveis = c.entregaveis.filter(e=>!(e.auto && ign.has(e.auto) && e.etapa==='briefing' && !(e.versoes||[]).length));
+    c.notionVinculos = []; c.entAutoFeito = false; 
+    return n; }
 /* ---------- entregáveis em seções, conforme a ficha da campanha ----------
    KV: um para a campanha toda · Landing page: uma por país (e marca) · canais: uma coluna por país, com o kit padrão
    (Meta Ads: 2 vídeos + 2 estáticos) · demais tipos marcados na ficha: uma peça cada */
@@ -2714,24 +2735,7 @@ const ACT = {
     abrirModal('Trazer as peças do Notion para o sistema', `<p style="margin-top:0">As <b>${n} peças</b> do banco do Notion viram peças da plataforma, com status, link e observação. Depois disso o Notion é desvinculado desta campanha e as peças passam a ser editadas só aqui, nas seções da aba Entregáveis.</p>
       <ul class="small muted" style="padding-left:18px;margin:0"><li>Status: Posted, Approved e Ready to post → Concluído · Adjust → Ajustes no asset · Asset approval → Aprovação do asset · Text approval → Aprovação do conteúdo · em andamento → Produção · Not started → Briefing.</li><li>O banco no Notion não é alterado nem apagado.</li></ul>`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="importarNotionOk" data-id="${c.id}"><i data-lucide="download"></i>Trazer ${n} peças</button>`); },
-  importarNotionOk: el => { const c = camp(el.dataset.id);
-    const ETAPA = {'Posted':'concluido','Approved':'concluido','Ready to post':'concluido','Schedule':'concluido','Adjust':'ajuste_asset','Asset approval':'aprov_asset','Text approval':'aprov_conteudo','Internal review':'producao','In progress':'producao','Design in progress':'producao','Not started':'briefing','On hold':'briefing'};
-    const CANAL = {'META ADS':'Meta Ads','YOUTUBE ADS':'YouTube Ads','GOOGLE ADS':'Google Display'}, PAIS = {'Brasil':'BR','Argentina':'AR','Latam':null};
-    const mk = marcasDe(c).find(m=>!marcaCancelada(c,m)) || null, itens = (NOTION[c.id]||[]).flatMap(r=>(r.dados&&r.dados.itens)||[]);
-    let n = 0; c.entregaveis = c.entregaveis || [];
-    for (const x of itens) { if (!(x.material||'').trim() || x.status==='Canceled' || !((x.topicos||[]).length || x.link || x.status!=='Not started')) continue;
-      const top = (x.topicos||[])[0] || '', canal = CANAL[top] || '', secao = canal || (top==='LANDING PAGE' ? 'Landing page' : top==='EMAIL' ? 'Email marketing' : '');
-      const pa = PAIS[x.regiao] || (c.paises[0] && c.paises[0].cod), aprov = [];
-      if (x.aprovTexto || x.aprovCopy) aprov.push({tipo:'Conteúdo', resultado:'Aprovado', coment:'Importado do Notion', data:HOJE, quem:'Notion'});
-      if (x.aprovAsset) aprov.push({tipo:'Asset', resultado:'Aprovado', coment:'Importado do Notion', data:HOJE, quem:'Notion'});
-      c.entregaveis.push({id:novoId('e'), nome:x.material.replace(/\\\./g,'.'), secao: secao||undefined, canal, paises: pa?[pa]:c.paises.map(p=>p.cod), ...(mk&&marcaSeparada(c)?{marca:mk}:{}), etapa: ETAPA[x.status]||'briefing', link:x.link||'',
-        versoes: x.link ? [{n:1, link:x.link, data:HOJE, obs:'Importado do Notion'}] : [], aprovacoes: aprov, briefing: x.obs ? {obs:x.obs} : {}, idioma:'', formato:'', objetivo:'', prazo: x.data||null, origem:'notion', notionUrl:x.url||''}); n++; }
-    // as peças reais substituem o kit padrão onde já existem (não cria Vídeo 1, LP etc. em duplicidade)
-    const ign = new Set(c.entAutoIgnorar||[]);
-    for (const e of c.entregaveis.filter(e=>e.origem==='notion')) for (const p of e.paises) { if (e.secao==='Landing page') ign.add(`lp|${e.marca||''}|${p}`); if (KIT_CANAL[e.canal]) for (const [k] of KIT_CANAL[e.canal]) ign.add(`${e.canal}|${e.marca||''}|${p}|${k}`); }
-    c.entAutoIgnorar = [...ign]; c.entregaveis = c.entregaveis.filter(e=>!(e.auto && ign.has(e.auto) && e.etapa==='briefing' && !(e.versoes||[]).length));
-    c.notionVinculos = []; c.entAutoFeito = false; UI.fen = Object.assign(UI.fen||{}, {visaoP:'secoes', sub:'pecas'});
-    registrar(`Peças do Notion trazidas para “${c.nome}”: ${n} (Notion desvinculado)`); fecharModal(); render(); toast(`${n} peças trazidas do Notion. O Notion foi desvinculado.`); },
+  importarNotionOk: el => { const c = camp(el.dataset.id), n = importarNotion(c); registrar(`Peças do Notion trazidas para “${c.nome}”: ${n} (Notion desvinculado)`); fecharModal(); render(); toast(`${n} peças trazidas do Notion. O Notion foi desvinculado.`); },
   gerarEntregaveis: el => { const c = camp(el.dataset.id), n = sincronizarEntregaveis(c); registrar(`Peças padrão criadas em “${c.nome}”: ${n}`); render(); toast(`${n} peça(s) criada(s) a partir da ficha.`); },
   sPais: el => { UI.sPais = UI.sPais||{}; const p = el.dataset.p || null; UI.sPais[el.dataset.id] = UI.sPais[el.dataset.id]===p ? null : p; render(); },
   sMarca: el => { UI.sMarca = UI.sMarca||{}; const m = el.dataset.m || null; UI.sMarca[el.dataset.id] = UI.sMarca[el.dataset.id]===m ? null : m; render(); },
