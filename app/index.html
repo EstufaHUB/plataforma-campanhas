@@ -1263,12 +1263,12 @@ function pgCliente(id){
     <select data-chg="fc.ano">${opts(['2026','2027'],f.ano,'Todos os anos')}</select>
     <select data-chg="fc.regiao">${opts(Object.entries(REGIOES),f.regiao,'Todas as regiões')}</select>
     <select data-chg="fc.pais">${opts(Object.entries(PAISES).map(([k,p])=>[k,p.n]),f.pais,'Todos os países')}</select>
-    <select data-chg="fc.status">${opts(ST_CAMP,f.status,'Todos os status')}</select>
+    <select data-chg="fc.status">${opts(ST_CAMP.map(x=>[x, x==='Em andamento'?'Em produção':x]),f.status,'Todos os status')}</select>
     <select data-chg="fc.ordem">${opts([['asc','Lançamento: mais próximo'],['desc','Lançamento: mais distante']],f.ordem)}</select>
     <label class="small"><input type="checkbox" ${f.arq?'checked':''} data-chg="fc.arq"> Arquivadas</label></div></div>
   <div class="tabela-wrap"><table class="tab"><thead><tr><th>Status</th><th>Campanha</th><th>Marcas</th><th>Veiculação</th><th>Países</th><th>Saúde</th></tr></thead><tbody>
   ${L.map(c=>{ const fc = farolCab(c, true), pv = c.lancamento && c.fimVeiculacao ? Math.max(0, Math.min(1, (difDias(c.lancamento, HOJE)+1)/(difDias(c.lancamento, c.fimVeiculacao)+1))) : 0, noAr = c.status==='Em veiculação';
-    return `<tr class="clic" onclick="location.hash='#/campanha/${c.id}/${noAr&&fc?'saude':'visao'}'"><td>${tag(c.status)}</td>
+    return `<tr class="clic" onclick="location.hash='#/campanha/${c.id}/${noAr&&fc?'saude':'visao'}'"><td>${tag(c.status==='Em andamento'?'Em produção':c.status)}</td>
    <td><b>${h(c.nome)}</b>${c.arquivada?' <span class="tag">Arquivada</span>':''}${faseada(c)?` <span class="small muted">· em fases</span>`:''}</td>
    <td>${marcasDe(c).map(m=>marcaCancelada(c,m)?`<span class="tag tag-cancel" title="${h(txtCancel(c,m))}"><s>${h(m)}</s></span>`:`<span class="tag t-pet">${h(m)}</span>`).join(' ')||'<span class="muted small">—</span>'}</td>
    <td style="white-space:nowrap">${fdm(c.lancamento)} → ${fd(c.fimVeiculacao)}${noAr?`<div class="cli-per"><i style="width:${Math.round(pv*100)}%"></i></div>`:''}</td>
