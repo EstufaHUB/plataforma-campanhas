@@ -168,6 +168,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .cli-st{text-decoration:none;cursor:pointer;padding:3px 10px;border-radius:999px;font-weight:600}.cli-st:hover{background:#eef4f6}.cli-st.on{background:var(--pet-700);color:#fff}.cli-resumo{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 16px}.cli-res{display:flex;align-items:center;gap:12px;padding:12px 18px!important;margin:0!important;text-decoration:none;color:inherit;min-width:170px;border:1px solid var(--borda)}
 .cli-res svg{width:22px;height:22px;color:var(--pet-600)}.cli-res b{display:block;font-size:1.5rem;line-height:1.1;color:var(--pet-950)}.cli-res span{font-size:.8rem;color:var(--tx2)}.cli-res.destaque b{color:#1f6b3a}.cli-res.destaque svg{color:#2e9d55}.cli-res.on{border-color:var(--pet-700);box-shadow:0 0 0 2px rgba(31,95,110,.15)}
 .cli-per{height:4px;background:#e8eef0;border-radius:3px;margin-top:5px;width:120px}.cli-per i{display:block;height:100%;background:var(--pet-600);border-radius:3px}.cli-farol{max-width:260px;white-space:normal}
+.ent-comum{font-size:.72rem;font-weight:500;background:rgba(255,255,255,.15);padding:2px 8px;border-radius:999px;opacity:1!important}
 .ent-topo{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap}
 .ent-faixa{display:flex;align-items:center;gap:10px;background:var(--pet-900);color:#fff;font-weight:700;padding:9px 16px;border-radius:10px;margin:18px 0 10px;font-size:.92rem}.ent-faixa svg{width:17px;height:17px}.ent-faixa span{font-weight:500;opacity:.75;font-size:.8rem}
 .ent-prog{margin-left:auto;width:140px;height:5px;background:rgba(255,255,255,.2);border-radius:3px}.ent-prog i{display:block;height:100%;background:#7fd19b;border-radius:3px}
@@ -1984,8 +1985,8 @@ const KIT_CANAL = {'Meta Ads':[['video1','Vídeo 1','Vídeo'],['video2','Vídeo 
 const TIPOS_GLOBAIS = ['Assets orgânicos','Fluxo de email','Email marketing','Material rico','Materiais para dealers'];
 const ICONE_SECAO = {'KV':'image','Landing page':'globe','Meta Ads':'megaphone','YouTube Ads':'play-circle','Google Display':'layout-template','Google Search':'search','TikTok':'music-2','Assets orgânicos':'instagram','Fluxo de email':'mail','Email marketing':'mail-open','Material rico':'book-open','Materiais para dealers':'store'};
 /* colunas (marca · país) de um canal, juntando as fases e tirando o que foi cancelado */
-function colunasCanal(c, canal){ const out = [];
-  for (const ch of chavesCfg(c).filter(ch=>!canal || ch.canal===canal)) { if (ch.marca && marcaCancelada(c, ch.marca)) continue;
+function colunasCanal(c, canal, fase){ const out = [];
+  for (const ch of chavesCfg(c).filter(ch=>(!canal || ch.canal===canal) && (!fase || ch.fase===fase))) { if (ch.marca && marcaCancelada(c, ch.marca)) continue;
     for (const p of ((c.canaisCfg||{})[ch.key]||{}).paises||[]) { if (paisCancelado(c, ch.marca, p.cod)) continue; if (!out.some(x=>x.mk===ch.marca && x.p===p.cod)) out.push({mk:ch.marca||null, p:p.cod}); } }
   if (!out.length && !canal) for (const p of c.paises) out.push({mk:null, p:p.cod});
   const om = m => { const i = MARCAS.indexOf(m); return i<0 ? 99 : i; };
@@ -1994,11 +1995,14 @@ function colunasCanal(c, canal){ const out = [];
 function sincronizarEntregaveis(c){
   c.entregaveis = c.entregaveis || []; const tem = k => c.entregaveis.some(e=>e.auto===k), ign = new Set(c.entAutoIgnorar||[]); let n = 0;
   const nova = (k, campos) => { if (tem(k) || ign.has(k)) return; c.entregaveis.push(Object.assign({id:novoId('e'), auto:k, etapa:'briefing', link:'', versoes:[], aprovacoes:[], briefing:{}, idioma:'', formato:'', objetivo:'', prazo:null}, campos)); n++; };
-  const tipos = c.entregaveisTipos||[];
+  const tipos = c.entregaveisTipos||[], fases = faseada(c) ? FASES_CAMP : [null];
+  // campanha em fases: tira as peças-padrão sem fase que ainda não foram mexidas (passam a existir uma por fase)
+  if (faseada(c)) c.entregaveis = c.entregaveis.filter(e=>!(e.auto && !e.fase && /^(lp\||[^|]+\|[^|]*\|[^|]+\|)/.test(e.auto) && e.auto!=='kv' && !e.auto.startsWith('tipo|') && e.etapa==='briefing' && !(e.versoes||[]).length && !(e.aprovacoes||[]).length));
   if (tipos.includes('KV')) nova('kv', {secao:'KV', nome:'KV da campanha', canal:'', paises:c.paises.map(p=>p.cod), formato:'Key visual'});
-  if (tipos.includes('Landing page')) for (const x of colunasCanal(c, null)) nova(`lp|${x.mk||''}|${x.p}`, {secao:'Landing page', nome:`Landing page ${x.p}`, canal:'', paises:[x.p], ...(x.mk?{marca:x.mk}:{})});
-  for (const canal of (c.canais||[])) for (const [k, nome, formato] of (KIT_CANAL[canal]||[])) for (const x of colunasCanal(c, canal))
-    nova(`${canal}|${x.mk||''}|${x.p}|${k}`, {secao:canal, nome, canal, paises:[x.p], formato, ...(x.mk?{marca:x.mk}:{})});
+  // landing page: só na fase de lead gen (awareness não tem LP)
+  if (tipos.includes('Landing page')) for (const f of fases.filter(f=>f!=='Awareness')) for (const x of colunasCanal(c, null, f)) nova(`lp|${x.mk||''}|${x.p}${f?'|'+f:''}`, {secao:'Landing page', nome:`Landing page ${x.p}`, canal:'', paises:[x.p], ...(x.mk?{marca:x.mk}:{}), ...(f?{fase:f}:{})});
+  for (const f of fases) for (const canal of (f ? canaisDaFase(c, f) : (c.canais||[]))) for (const [k, nome, formato] of (KIT_CANAL[canal]||[])) for (const x of colunasCanal(c, canal, f))
+    nova(`${canal}|${x.mk||''}|${x.p}|${k}${f?'|'+f:''}`, {secao:canal, nome, canal, paises:[x.p], formato, ...(x.mk?{marca:x.mk}:{}), ...(f?{fase:f}:{})});
   for (const t of tipos.filter(t=>TIPOS_GLOBAIS.includes(t))) nova(`tipo|${t}`, {secao:t, nome:t, canal:'', paises:c.paises.map(p=>p.cod)});
   return n; }
 const ST_ENT_COR = {briefing:'cinza', aprov_conteudo:'amar', ajuste_conteudo:'verm', producao:'azul', aprov_asset:'amar', ajuste_asset:'verm', concluido:'verde'};
@@ -2007,25 +2011,26 @@ function cartaoEnt(c, e){ const dom = e.link ? (e.link.replace(/^https?:\/\//,''
     <span class="sd-pill sd-${ST_ENT_COR[e.etapa]==='cinza'?'cinza':ST_ENT_COR[e.etapa]}">${h(ETAPAS_ENT[e.etapa]||e.etapa)}</span>
     ${dom?`<span class="ent-link">${h(dom)}</span>`:''}${e.prazo?`<span class="small muted">prazo ${fdm(e.prazo)}</span>`:''}${(e.aprovacoes||[]).length?`<span class="small muted"><i data-lucide="message-square"></i> ${e.aprovacoes.length}</span>`:''}</a>`; }
 function entregaveisSecoes(c){
-  const ed = ehEquipe(), vis = e => !(e.marca && marcaCancelada(c, e.marca)) && !(e.paises||[]).every(p=>paisCancelado(c, e.marca, p));
+  const fase = etapaSel(c);   // campanha em fases: uma guia por fase (KV e materiais gerais aparecem nas duas)
+  const ed = ehEquipe(), vis = e => !(e.marca && marcaCancelada(c, e.marca)) && !(e.paises||[]).every(p=>paisCancelado(c, e.marca, p)) && (!fase || !e.fase || e.fase===fase);
   const L = (c.entregaveis||[]).filter(vis), usados = new Set();
   const rotCol = (x, varias) => `${varias && x.mk ? `<span class="ent-mk">${h(x.mk)}</span>` : ''}${PAISES[x.p] ? PAISES[x.p].f+' '+PAISES[x.p].n : h(x.p)}`;
   const faixa = (nome, lista) => { const conc = lista.filter(e=>e.etapa==='concluido').length;
     return `<div class="ent-faixa"><i data-lucide="${ICONE_SECAO[nome]||'package'}"></i>${h(nome)}<span>${lista.length ? `${conc} de ${lista.length} concluída${lista.length===1?'':'s'}` : 'sem peças'}</span>${lista.length?`<div class="ent-prog"><i style="width:${Math.round(conc/lista.length*100)}%"></i></div>`:''}</div>`; };
-  const novoBtn = (secao, canal, x) => ed ? `<button class="ent-novo" data-act="formEnt" data-id="${c.id}" data-secao="${h(secao)}" data-canal="${h(canal||'')}" ${x&&x.p?`data-pais="${x.p}"`:''} ${x&&x.mk?`data-marca="${h(x.mk)}"`:''}><i data-lucide="plus"></i>Nova peça</button>` : '';
-  const secaoColunas = (nome, canal, filtro) => { const cols = colunasCanal(c, canal), varias = new Set(cols.map(x=>x.mk)).size>1;
+  const novoBtn = (secao, canal, x, porFase) => ed ? `<button class="ent-novo" data-act="formEnt" data-id="${c.id}" data-secao="${h(secao)}" data-canal="${h(canal||'')}" ${x&&x.p?`data-pais="${x.p}"`:''} ${x&&x.mk?`data-marca="${h(x.mk)}"`:''} ${porFase&&fase?`data-fase="${h(fase)}"`:''}><i data-lucide="plus"></i>Nova peça</button>` : '';
+  const secaoColunas = (nome, canal, filtro) => { const cols = colunasCanal(c, canal, fase), varias = new Set(cols.map(x=>x.mk)).size>1;
     const daSec = L.filter(filtro); daSec.forEach(e=>usados.add(e.id));
     return faixa(nome, daSec) + `<div class="ent-cols" style="grid-template-columns:repeat(${Math.max(1,cols.length)}, minmax(220px,1fr))">${cols.map(x=>{ const da = daSec.filter(e=>(e.paises||[]).includes(x.p) && (!varias || !x.mk || e.marca===x.mk || !e.marca));
-      return `<div class="ent-col"><div class="ent-col-tit">${rotCol(x, varias)}<span>${da.length}</span></div>${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(nome, canal, x)}</div>`; }).join('')}</div>`; };
-  const tipos = c.entregaveisTipos||[]; let html = '';
-  if (tipos.includes('KV')) { const da = L.filter(e=>e.secao==='KV' || e.auto==='kv'); da.forEach(e=>usados.add(e.id)); html += faixa('KV', da) + `<div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn('KV','',null)}</div>`; }
-  if (tipos.includes('Landing page')) html += secaoColunas('Landing page', null, e=>e.secao==='Landing page');
-  for (const canal of (c.canais||[])) html += secaoColunas(canal, canal, e=>e.secao===canal || (!e.secao && e.canal===canal));
-  for (const t of tipos.filter(t=>TIPOS_GLOBAIS.includes(t))) { const da = L.filter(e=>e.secao===t); da.forEach(e=>usados.add(e.id)); html += faixa(t, da) + `<div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(t,'',null)}</div>`; }
+      return `<div class="ent-col"><div class="ent-col-tit">${rotCol(x, varias)}<span>${da.length}</span></div>${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(nome, canal, x, true)}</div>`; }).join('')}</div>`; };
+  const tipos = c.entregaveisTipos||[], comum = fase ? ' <span class="ent-comum">comum às duas fases</span>' : ''; let html = '';
+  if (tipos.includes('KV')) { const da = L.filter(e=>e.secao==='KV' || e.auto==='kv'); da.forEach(e=>usados.add(e.id)); html += faixa('KV', da).replace('</span>', '</span>'+comum) + `<div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn('KV','',null)}</div>`; }
+  if (tipos.includes('Landing page') && fase!=='Awareness') html += secaoColunas('Landing page', null, e=>e.secao==='Landing page');
+  for (const canal of (fase ? canaisDaFase(c, fase) : (c.canais||[]))) html += secaoColunas(canal, canal, e=>e.secao===canal || (!e.secao && e.canal===canal));
+  for (const t of tipos.filter(t=>TIPOS_GLOBAIS.includes(t))) { const da = L.filter(e=>e.secao===t); da.forEach(e=>usados.add(e.id)); html += faixa(t, da).replace('</span>', '</span>'+comum) + `<div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(t,'',null)}</div>`; }
   const outras = L.filter(e=>!usados.has(e.id));
   if (outras.length) html += faixa('Outras peças', outras) + `<div class="ent-grade">${outras.map(e=>cartaoEnt(c,e)).join('')}</div>`;
   const faltam = ed ? (()=>{ const copia = JSON.parse(JSON.stringify(c)); return sincronizarEntregaveis(copia); })() : 0;
-  return `<div class="ent-topo"><div class="seg"><button class="ativo"><i data-lucide="layout-list"></i>Seções</button><button data-act="ui" data-k="fen.visaoP" data-v="tabela"><i data-lucide="table"></i>Tabela</button></div>
+  return seletorEtapa(c, false) + `<div class="ent-topo"><div class="seg"><button class="ativo"><i data-lucide="layout-list"></i>Seções</button><button data-act="ui" data-k="fen.visaoP" data-v="tabela"><i data-lucide="table"></i>Tabela</button></div>
     ${faltam?`<button class="btn btn-s" data-act="gerarEntregaveis" data-id="${c.id}"><i data-lucide="wand-2"></i>Criar ${faltam} peça(s) padrão da ficha</button>`:''}</div>${html || '<div class="card card-p"><div class="vazio">Marque os entregáveis e os canais na ficha da campanha para montar as seções.</div></div>'}`; }
 function abaEntregaveis(c){
   const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:'',marca:''});
@@ -2827,8 +2832,8 @@ const ACT = {
     let k = c.kpis.find(x=>x.id===el.dataset.k); if (!k) { k = {id:novoId('k')}; c.kpis.push(k); } Object.assign(k, v); registrar(`KPI salvo em “${c.nome}”: ${k.nome}`); fecharModal(); render(); },
   delKpi: el => { const c = camp(el.dataset.id); c.kpis = c.kpis.filter(x=>x.id!==el.dataset.k); registrar('KPI excluído em '+c.nome); fecharModal(); render(); },
   /* entregáveis */
-  formEnt: el => { const c = camp(el.dataset.id), e = c.entregaveis.find(x=>x.id===el.dataset.e) || {paises: el.dataset.pais?[el.dataset.pais]:[], briefing:{}, canal: el.dataset.canal||'', marca: el.dataset.marca||undefined, secao: el.dataset.secao||undefined};
-    abrirModal(e.id?'Editar entregável':'Novo entregável — briefing', `<form id="f-ent" class="form-g"><input type="hidden" name="secao" value="${h(e.secao||'')}"><label class="campo">Nome da peça *<input name="nome" value="${h(e.nome||'')}"></label><label class="campo">Canal<select name="canal">${opts(c.canais,e.canal,'— sem canal —')}</select></label>
+  formEnt: el => { const c = camp(el.dataset.id), e = c.entregaveis.find(x=>x.id===el.dataset.e) || {paises: el.dataset.pais?[el.dataset.pais]:[], briefing:{}, canal: el.dataset.canal||'', marca: el.dataset.marca||undefined, secao: el.dataset.secao||undefined, fase: el.dataset.fase||undefined};
+    abrirModal(e.id?'Editar entregável':'Novo entregável — briefing', `<form id="f-ent" class="form-g"><input type="hidden" name="secao" value="${h(e.secao||'')}"><input type="hidden" name="fase" value="${h(e.fase||'')}"><label class="campo">Nome da peça *<input name="nome" value="${h(e.nome||'')}"></label><label class="campo">Canal<select name="canal">${opts(c.canais,e.canal,'— sem canal —')}</select></label>
       ${marcaSeparada(c) ? `<div class="campo tudo">Marca da peça<div class="chips">${(e.id?MARCAS_SEP:[...MARCAS_SEP,'Ambas (cria uma peça para cada marca)']).map(k=>`<label class="chip ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'on':''}"><input type="radio" name="marcaPeca" value="${k}" ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'checked':''} style="display:none" onchange="this.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.contains(this)))">${k}</label>`).join('')}</div></div>` : ''}
       <div class="campo tudo">Países (marque vários se o arquivo for o mesmo para todos)<div class="chips">${c.paises.map(p=>`<label class="chip ${e.paises.includes(p.cod)?'on':''}"><input type="checkbox" name="pais" value="${p.cod}" ${e.paises.includes(p.cod)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${pais(p.cod)}</label>`).join('')}</div></div>
       <label class="campo">Idioma<select name="idioma">${opts([...Object.entries(IDIOMAS),['Sem fala','Sem texto / sem fala']],e.idioma)}</select></label><label class="campo">Formato<input name="formato" value="${h(e.formato||'')}" placeholder="Ex.: 1080×1350"></label>
@@ -2840,7 +2845,7 @@ const ACT = {
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarEnt" data-id="${c.id}" data-e="${e.id||''}">Salvar</button>`, true); },
   salvarEnt: el => { const c = camp(el.dataset.id), fm = $('#f-ent'), v = ler(fm); if (!v.nome.trim()) return toast('Informe o nome da peça.');
     const paises = [...fm.querySelectorAll('input[name=pais]:checked')].map(x=>x.value); if (!paises.length) return toast('Escolha pelo menos um país.');
-    const mp = v.marcaPeca; delete v.marcaPeca; if (!v.secao) delete v.secao;
+    const mp = v.marcaPeca; delete v.marcaPeca; if (!v.secao) delete v.secao; if (!v.fase) delete v.fase;
     const br = {}; for (const k in v) if (k.startsWith('b_')) { br[k.slice(2)] = v[k]; delete v[k]; } delete v.pais;
     let e = c.entregaveis.find(x=>x.id===el.dataset.e);
     if (!e && marcaSeparada(c) && (!mp || mp.startsWith('Ambas'))) {
