@@ -159,7 +159,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .cc-per{display:flex;align-items:center;gap:5px;margin-top:4px}.cc-per svg{width:13px;height:13px}
 .st-resumo{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:0 0 12px;font-size:.88rem}.st-resumo i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .ponto-st{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}.st-nome{font-weight:600;color:var(--pet-900);text-decoration:none}.st-nome:hover{text-decoration:underline}
-.st-tab td{vertical-align:top}.st-obs textarea{width:100%;min-width:200px;border:1px solid var(--borda);border-radius:8px;padding:6px 8px;font:inherit;font-size:.84rem;resize:vertical}
+.st-tab td{vertical-align:top}.st-obs{min-width:280px;max-width:420px}.st-pts{list-style:none;margin:0;padding:0;font-size:.8rem;line-height:1.4}.st-pts li{display:flex;gap:7px;padding:2px 0}.st-pts li>i{flex:none;width:8px;height:8px;border-radius:50%;margin-top:5px}.st-pts .p-verm{background:#d0443a}.st-pts .p-amar{background:#e0a100}.st-pts .p-verde{background:#2e9d55}.st-pts .p-info{background:#2f80b8}
 .st-tab tr.st-sub td{background:#fafcfc;font-size:.86rem}
 .saude-filtros{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.saude-filtros .seg-etapa{margin-bottom:0}.seg-marca button{padding:7px 12px}
 .sd-pais a.sd-clic{color:inherit;text-decoration:none;border-radius:5px;padding:1px 4px;margin:0 -4px}.sd-pais a.sd-clic:hover{background:#e6eef1;text-decoration:underline}.sd-pais a.sd-clic.on{background:var(--pet-700);color:#fff}
@@ -1843,7 +1843,7 @@ function saudeAwareness(c, S2){
   if (cpms.length>1) pts.push({n:'info', t:`CPM mais baixo: ${cpms[0].n} (${moeda2(cpms[0].cpm,moe)}); mais alto: ${cpms[cpms.length-1].n} (${moeda2(cpms[cpms.length-1].cpm,moe)}).`});
   if (engMeta) { const r = eng/engMeta; pts.push({n: r>=1?'verde':r>=0.85?'amar':'verm', t:`${encerrada?'A fase fechou com':'Até agora,'} ${numCurto(eng)} engajamentos de ${numCurto(engMeta)} previstos (${Math.round(r*100)}%), a ${mc(cpe)} cada (meta ${mc(cpeMeta)}).`}); }
   else if (taxa!=null) pts.push({n: taxa>=0.3?'verde':'amar', t:`${(taxa*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões geraram engajamento (custo de ${mc(cpe)} por interação).`});
-  const ordem = {verm:0, amar:1, verde:2, info:3}; pts.sort((a,b)=>ordem[a.n]-ordem[b.n]);
+  const ordem = {verm:0, amar:1, verde:2, info:3}; pts.sort((a,b)=>ordem[a.n]-ordem[b.n]); S2._pts = pts;
   return faixaFim(c, S2, {real:eng, meta:engMeta, rotulo:'engajamento', custoReal:cpe, custoMeta:cpeMeta, rotCusto:'custo por engajamento', fmt:numCurto}) + `<div class="sd-kpis">${cAlc}${cEng}${cInv}</div>
   <div class="sd-meio">
     <div class="card card-p"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="sd-lb"><i data-lucide="trending-up"></i>Impressões acumuladas</div><div class="sd-leg"><span><i></i>Real</span>${emCurso?'<span><i class="p"></i>Projeção</span>':''}</div></div><div class="sd-graf" data-c="${c.id}" data-campo="impressoes"></div></div>
@@ -2021,14 +2021,16 @@ function metricasStatus(c, etapa, marca){
   const bkE = (UI.etapa||{})[c.id], bkM = (UI.sMarca||{})[c.id], bkP = (UI.sPais||{})[c.id];
   UI.etapa = UI.etapa||{}; UI.sMarca = UI.sMarca||{}; UI.sPais = UI.sPais||{};
   if (etapa) UI.etapa[c.id] = etapa; UI.sMarca[c.id] = marca||null; UI.sPais[c.id] = null;
-  let S2; try { S2 = dadosSaude(c); } finally { UI.etapa[c.id] = bkE; UI.sMarca[c.id] = bkM; UI.sPais[c.id] = bkP; }
-  const L = S2.linhas; if (!L.length) return {S2, vazio:true};
+  let S2, pts = []; try { S2 = dadosSaude(c);
+    if (S2.linhas.length) { if (S2.linhas.every(x=>x.objetivo==='Awareness')) { saudeAwareness(c, S2); pts = S2._pts || []; } else pts = pontosAtencao(c, S2); }
+  } finally { UI.etapa[c.id] = bkE; UI.sMarca[c.id] = bkM; UI.sPais[c.id] = bkP; }
+  const L = S2.linhas; if (!L.length) return {S2, vazio:true, pts:[]};
   const soma = k => L.reduce((t,x)=>t+(+x[k]||0),0), moe = L[0].moeda, inv = soma('inv'), bud = soma('bud');
   const aw = L.every(x=>x.objetivo==='Awareness');
   if (aw) { const real = soma('engaj'), comM = L.filter(x=>x.custoAw>0), meta = comM.length===L.length ? comM.reduce((t,x)=>t+x.bud/x.custoAw,0) : null;
-    return {S2, aw, moe, inv, bud, rotRes:'engajamentos', rotCusto:'custo por engajamento', real, meta, custo: real ? inv/real : null, custoMeta: meta ? bud/meta : null}; }
+    return {S2, pts, aw, moe, inv, bud, rotRes:'engajamentos', rotCusto:'custo por engajamento', real, meta, custo: real ? inv/real : null, custoMeta: meta ? bud/meta : null}; }
   const real = soma('leads'), meta = L.every(x=>x.leadsMeta) ? soma('leadsMeta') : null, lmx = L.every(x=>x.cplMeta>0) ? L.reduce((t,x)=>t+x.bud/x.cplMeta,0) : null;
-  return {S2, aw, moe, inv, bud, rotRes:'leads', rotCusto:'CPL', real, meta, custo: real ? inv/real : null, custoMeta: lmx ? bud/lmx : null}; }
+  return {S2, pts, aw, moe, inv, bud, rotRes:'leads', rotCusto:'CPL', real, meta, custo: real ? inv/real : null, custoMeta: lmx ? bud/lmx : null}; }
 const campanhaNoAr = c => c.status!=='Concluída' && (c.status==='Em veiculação' || (c.lancamento && c.fimVeiculacao && c.lancamento<=HOJE && HOJE<=c.fimVeiculacao));
 /* fases que estão no ar hoje (ou a mais recente que já começou) */
 function fasesNoAr(c){ if (!faseada(c)) return [null];
@@ -2050,18 +2052,24 @@ function pgStatus(){
       <td class="dir num">${m.custoMeta?mcusto(m.custoMeta, m.moe):'<span class="muted">a definir</span>'}</td><td class="dir num">${m.custo!=null?mcusto(m.custo, m.moe):'—'}</td><td class="dir">${pctTag(m.custo&&m.custoMeta ? m.custo/m.custoMeta : null, true)}</td>
       <td class="dir num">${m.meta?numCurto(m.meta):'<span class="muted">a definir</span>'}</td><td class="dir num">${numCurto(m.real)}</td><td class="dir">${(()=>{ if (!m.meta) return pctTag(null); const r = m.real/m.meta, esp = Math.min(1, m.S2.frac), rit = esp ? r/esp : r, cls = rit>=1?'verde':rit>=0.85?'amar':'verm';
         return `<span class="sd-pill sd-${cls}" style="margin:0" title="${Math.round(rit*100)}% do ritmo esperado">${Math.round(r*100)}%</span>${esp<1?`<div class="small muted" style="margin-top:3px">esperado hoje: ${Math.round(esp*100)}%</div>`:''}`; })()}</td>`;
-  const corpo = lin.map(x=>{ const n = niv(x.m), obsK = x.f||'_', obs = ((x.c.statusObs||{})[obsK])||'';
+  // pontos de atenção (os mesmos da Saúde), do mais grave para o mais leve; mostra os 3 primeiros
+  const pontos = (x, max, c, f, mk) => { const ps = (x.pts||[]).filter(p=>p.n!=='verde' || (x.pts||[]).every(q=>q.n==='verde')); if (!ps.length) return '<span class="small muted">Nada fora do esperado.</span>';
+    const txt = t => h(t.replace(/^Meta( Ads)? · /, '').replace(mk ? mk+' · ' : '\u0000', ''));
+    return `<ul class="st-pts">${ps.slice(0,max).map(p=>`<li><i class="p-${p.n}"></i><span>${txt(p.t)}</span></li>`).join('')}</ul>${ps.length>max?`<a class="small" href="#/campanha/${c.id}/saude" ${f?`onclick="UI.etapa=UI.etapa||{};UI.etapa['${c.id}']='${f}'"`:''}>+ ${ps.length-max} na Saúde da campanha →</a>`:''}`; };
+  const pesoN = x => { const n = niv(x.m); return n ? ({Crítica:0, Atenção:1, Saudável:2})[n.t] : 3; };
+  lin.sort((a,b)=>pesoN(a)-pesoN(b));
+  const corpo = lin.map(x=>{ const n = niv(x.m);
     return `<tr class="stp-lin"><td>${x.sub.length?`<button class="icone-btn" data-act="stAbrir" data-k="${h(x.chave)}" title="Ver por marca"><i data-lucide="${ab[x.chave]?'chevron-down':'chevron-right'}"></i></button>`:'<span style="display:inline-block;width:28px"></span>'}
         <span class="ponto-st" style="background:${n?({Saudável:'#2e9d55',Atenção:'#e0a100',Crítica:'#d0443a'})[n.t]:'#c9d3d6'}" title="${n?n.t:'Sem farol (meta ou dados faltando)'}"></span>
         <a href="#/campanha/${x.c.id}/saude" class="st-nome" ${x.f?`onclick="UI.etapa=UI.etapa||{};UI.etapa['${x.c.id}']='${x.f}'"`:''}>${h(x.c.nome)}</a>${x.f?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(x.f)+1} · ${x.f}</span>`:''}
         <div class="small muted" style="margin-left:46px">${h(cliente(x.c.clienteId).nome)}${x.m.vazio?'':` · ${x.m.rotRes} · ${x.m.rotCusto}`}</div></td>
       <td class="num" style="white-space:nowrap">${fdm(x.per.ini)} → ${fdm(x.per.fim)}<div class="small muted">${x.m.vazio?'':x.m.S2.frac>=1?'encerrada':x.m.S2.restam+' dias restantes'}</div></td>
       ${celulas(x.m, x.f)}
-      <td class="st-obs">${ed?`<textarea rows="2" data-chg="statusObs" data-id="${x.c.id}" data-k="${h(obsK)}" placeholder="Observação…">${h(obs)}</textarea>`:h(obs)||'<span class="muted">—</span>'}</td></tr>`
-      + (ab[x.chave] ? x.sub.map(s2=>`<tr class="st-sub"><td><span style="display:inline-block;width:46px"></span>${h(s2.mk)}</td><td></td>${celulas(s2.m, x.f, true)}<td></td></tr>`).join('') : ''); }).join('');
+      <td class="st-obs">${x.m.vazio?'<span class="small muted">—</span>':pontos(x.m, 3, x.c, x.f)}</td></tr>`
+      + (ab[x.chave] ? x.sub.map(s2=>`<tr class="st-sub"><td><span style="display:inline-block;width:46px"></span>${h(s2.mk)}</td><td></td>${celulas(s2.m, x.f, true)}<td class="st-obs">${s2.m.vazio?'':pontos(s2.m, 2, x.c, x.f, s2.mk)}</td></tr>`).join('') : ''); }).join('');
   return `<div class="cab"><div><h1>Status pontual</h1><p>Todas as campanhas no ar hoje (${fd(HOJE)}), com meta × atual de custo e de resultado, a partir dos dados do Gerenciador do Meta.</p></div></div>
   <div class="st-resumo">${[['Saudável','#2e9d55'],['Atenção','#e0a100'],['Crítica','#d0443a'],['sem','#c9d3d6']].filter(([k])=>cont[k]).map(([k,cor])=>`<span><i style="background:${cor}"></i>${cont[k]} ${k==='sem'?'sem farol':k.toLowerCase()}</span>`).join('')}<span class="muted" style="margin-left:auto">${lin.length} linha(s)</span></div>
-  <div class="card"><div class="tabela-wrap"><table class="tab st-tab"><thead><tr><th>Campanha</th><th>Veiculação</th><th class="dir">Meta de custo</th><th class="dir">Custo atual</th><th class="dir">% custo</th><th class="dir">Meta de resultado</th><th class="dir">Resultado atual</th><th class="dir">% resultado</th><th>Observação</th></tr></thead>
+  <div class="card"><div class="tabela-wrap"><table class="tab st-tab"><thead><tr><th>Campanha</th><th>Veiculação</th><th class="dir">Meta de custo</th><th class="dir">Custo atual</th><th class="dir">% custo</th><th class="dir">Meta de resultado</th><th class="dir">Resultado atual</th><th class="dir">% resultado</th><th>Pontos de atenção</th></tr></thead>
   <tbody>${corpo || '<tr><td colspan="9" class="vazio">Nenhuma campanha no ar hoje.</td></tr>'}</tbody></table></div>
   <div class="small muted" style="padding:10px 18px">% custo = custo atual ÷ meta (até 100% é bom). % resultado = resultado atual ÷ meta da campanha ou da fase inteira; a cor compara com o esperado para hoje (verde = no ritmo ou acima). Leads em campanhas de lead; engajamentos em awareness.</div></div>`; }
 const mcusto = (v, m) => v!=null && v<0.1 ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:m||'BRL',minimumFractionDigits:4,maximumFractionDigits:4}) : moeda2(v, m);
