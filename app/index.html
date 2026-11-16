@@ -2359,7 +2359,7 @@ function pgStatus(){
       const aberto = chave in abertos ? abertos[chave] : (pior==='Crítica' || pior==='Atenção');
       const pill = pior ? `<span class="stp-pill n-${({Saudável:'s',Atenção:'a',Crítica:'c'})[pior]}">${pior}</span>` : '';
       return `<div class="stp-card ${aberto?'':'fech'}">
-        <div class="stp-ch" data-act="stAbrir" data-k="${h(chave)}"><i data-lucide="chevron-down" class="stp-chev"></i><span class="ponto-st" style="background:${corN(pior?{t:pior}:null)}"></span>
+        <div class="stp-ch" data-act="stpAbrir" data-k="${h(chave)}"><i data-lucide="chevron-down" class="stp-chev"></i><span class="ponto-st" style="background:${corN(pior?{t:pior}:null)}"></span>
           <div class="stp-tit">${g.c?`<a ${lk} class="st-nome" onclick="event.stopPropagation()">${h(g.titulo)}</a>`:`<span class="st-nome">${h(g.titulo)}</span>`}${g.fase?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}</span>`:''}${pill}${semMeta?'<span class="stp-pill">Sem meta cadastrada</span>':''}${g.recorrente && !tipoF?'<span class="stp-pill"><i data-lucide="repeat"></i>Recorrente</span>':''}</div>
           <div class="stp-res"><span><b>${numCurto(res)}</b> ${h(tipoR)}</span><span><b>${res?mcusto(inv/res, moe):'—'}</b> por ${h(unid)}</span><span>${per.ini?fdm(per.ini):'?'} → ${per.fim?fdm(per.fim):'sem fim'}${restam!=null?` · <b>${restam}</b> dias restantes`:''}</span></div>
           ${ehEquipe()?`<a href="javascript:void 0" class="st-rec" data-act="alternarRecorrente" data-ids="${g.linhas.map(l=>l.mc.id).join(',')}" data-v="${g.recorrente?'0':'1'}" title="${g.recorrente?'Passar para pontual':'Marcar como recorrente'}"><i data-lucide="${g.recorrente?'target':'repeat'}"></i>${g.recorrente?'Tornar pontual':'Tornar recorrente'}</a>`:''}</div>
@@ -2911,7 +2911,7 @@ const ACT = {
     try { const r = await exportarSlides(g, tp); if (!r.n) { el.disabled = false; el.textContent = 'Gerar apresentação'; return toast('Nenhuma campanha desse tipo no ar nessa marca.'); } fecharModal(); toast(`Apresentação gerada (${r.n} slide(s) de campanha). Suba o arquivo no Google Drive para abrir no Google Apresentações.`); }
     catch (e) { console.error(e); toast('Não foi possível gerar: '+(e.message||e)); el.disabled = false; el.textContent = 'Gerar apresentação'; } },
   stTipo: el => { UI.stTipo = el.dataset.v || ''; render(); },
-  stAbrir: el => { const k = el.dataset.k, c = el.closest('.stp-card'); UI.stAbertos = UI.stAbertos || {}; UI.stAbertos[k] = c.classList.contains('fech'); c.classList.toggle('fech'); },
+  stpAbrir: el => { const k = el.dataset.k, c = el.closest('.stp-card'); UI.stAbertos = UI.stAbertos || {}; UI.stAbertos[k] = c.classList.contains('fech'); c.classList.toggle('fech'); },
   stTodas: el => { const v = el.dataset.v==='1'; UI.stAbertos = UI.stAbertos || {}; (UI.stChaves||[]).forEach(k=>UI.stAbertos[k]=v); render(); },
   alternarRecorrente: async el => { const ids = el.dataset.ids.split(','), sim = el.dataset.v==='1';
     ids.forEach(id=> sim ? RECORRENTES.add(id) : RECORRENTES.delete(id)); render();
