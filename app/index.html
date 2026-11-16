@@ -1388,7 +1388,7 @@ function pgCliente(id){
             return `<div class="cli-qh" data-act="cliQ" data-k="${h(id+'|'+k)}" data-v="${fe?'0':'1'}"><i data-lucide="${fe?'chevron-right':'chevron-down'}" class="cli-chev"></i>${q ? `<b>Q${q} ${ano}</b><span>${MQ[q-1]} · ${cs.length}</span>` : '<b>Sem data</b>'}<span class="cli-qt">mídia <b>${txtMoe(somaMoe(cs))}</b> · fee <b>${somaFee(cs) ? moedaCurta(somaFee(cs),'BRL') : '—'}</b></span></div>${fe ? '' : cs.map(linhaC).join('')}`; }).join('')}</div>`; } }
     if (!L.length) corpo = '<div class="card vazio">Nenhuma campanha com esses filtros.</div>';
   }
-  return cab + filtros + totais + corpo;
+  return cab + filtros + corpo;
 }
 
 /* =====================================================================
