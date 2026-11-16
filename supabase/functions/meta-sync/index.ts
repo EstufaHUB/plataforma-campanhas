@@ -74,19 +74,22 @@ async function referencia(act: string, token: string) {
   const ate = new Date(), desde = new Date(ate.getTime() - 182 * 864e5), d = (x: Date) => x.toISOString().slice(0, 10);
   const linhas = await graph(`${act}/insights`, token, { level: "campaign", time_range: JSON.stringify({ since: d(desde), until: d(ate) }), fields: "campaign_id,campaign_name,objective,spend,reach,actions", limit: "500" });
   const porObj: Record<string, Record<string, { gasto: number; res: number; n: number; custo?: number }>> = {};
+  // contribuição de cada campanha (para a plataforma tirar a própria campanha da média dela)
+  const porCamp: Record<string, Record<string, { gasto: number; res: number; pais: string | null }>> = {};
   for (const [mid, m] of Object.entries(METRICAS)) {
     const acc: Record<string, { gasto: number; res: number; n: number }> = {};
     for (const l of linhas) {
       if (!m.objs.includes(l.objective as string)) continue;
       const gasto = +(l.spend as string) || 0, res = m.res(l.actions as Acao[], +(l.reach as string) || 0);
       if (gasto < 50 || res < (m.mil ? 1000 : 3)) continue;   // ignora campanhas com gasto ou resultado pequenos demais
-      for (const k of [paisNome(l.campaign_name as string) || "?", "*"]) { const x = acc[k] || (acc[k] = { gasto: 0, res: 0, n: 0 }); x.gasto += gasto; x.res += res; x.n++; }
+      const pc = paisNome(l.campaign_name as string); (porCamp[l.campaign_id as string] = porCamp[l.campaign_id as string] || {})[mid] = { gasto, res, pais: pc };
+      for (const k of [pc || "?", "*"]) { const x = acc[k] || (acc[k] = { gasto: 0, res: 0, n: 0 }); x.gasto += gasto; x.res += res; x.n++; }
     }
     delete acc["?"];
     for (const x of Object.values(acc)) (x as { custo?: number }).custo = x.gasto / x.res * (m.mil ? 1000 : 1);
     if (Object.keys(acc).length) porObj[mid] = acc;
   }
-  return { desde: d(desde), ate: d(ate), porObj };
+  return { desde: d(desde), ate: d(ate), porObj, porCamp };
 }
 async function retratoContas(admin: ReturnType<typeof createClient>, token: string) {
   const { data: cfg } = await admin.from("config").select("valor").eq("chave", "contasStatus").single();
