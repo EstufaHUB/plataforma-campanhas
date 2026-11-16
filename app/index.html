@@ -2233,8 +2233,9 @@ function metaAutoGer(mc, conta){
   if (ini && fim && !longa && !RECORRENTES.has(mc.id)) { const tot = Math.max(1, difDias(ini, fim)+1), dec = Math.max(0, Math.min(tot, difDias(ini, HOJE)+1)); frac = dec/tot; meta = pl*tot/custoMeta; real = +mc.resultados||0; modo = 'periodo'; }
   else { frac = 1; meta = pl*7/custoMeta; real = +mc.resultados7||0; modo = '7d'; }
   const rit = frac>0 && meta ? (real/meta)/frac : null, custo = modo==='7d' ? (real ? (+mc.gasto7||0)/real : null) : (real ? (+mc.investido||0)/real : null);
-  const cr = custo ? custoMeta/custo : (real ? null : 0), score = rit==null ? null : Math.min(rit, cr==null ? rit : cr);
-  return {midia, custoMeta, n:x.n, base: xp ? 'país' : 'conta', meta, real, frac, modo, rit, custo, score, nivel: nivelSaude(score), fator}; }
+  const novo = ini && difDias(ini, HOJE) < 3;   // começou há menos de 3 dias: ainda sem farol
+  const cr = custo ? custoMeta/custo : (real ? null : 0), score = rit==null || novo ? null : Math.min(rit, cr==null ? rit : cr);
+  return {midia, custoMeta, n:x.n, base: xp ? 'país' : 'conta', meta, real, frac, modo, rit: novo ? null : rit, novo, custo, score, nivel: nivelSaude(score), fator}; }
 function gruposStatusConta(ct, vinc){ const snap = META_CONTAS.find(m=>m.conta===ct.conta), d = (snap||{}).dados || {}, moe = d.moeda || 'BRL', cs = d.campanhas || [], grupos = {};
   for (const mc of cs) { const vi = vinc[mc.id], p = vi ? vi.v.pais : paisDe(mc.nome);
     const chave = vi ? 'p|'+vi.c.id+'|'+(vi.v.fase||'') : 'm|'+titulo(mc.nome);
@@ -2463,8 +2464,9 @@ function pgStatus(){
     const notas = []; if (r!=null && r<0.85) notas.push(['amar', `Gastando ${Math.round(r*100)}% do budget diário do Gerenciador.`]); if (r!=null && r>1.15) notas.push(['amar', `Gastando acima do budget diário (${Math.round(r*100)}%).`]);
     if (!mc.resultados && mc.investido>0) notas.push(['verm', `Sem ${mc.tipoResultado} até agora.`]);
     if (A) { const esp = A.modo==='7d' ? null : Math.min(1, A.frac), rr = A.meta ? A.real/A.meta : 0, corR = A.rit==null ? 'amar' : A.rit>=1?'verde':A.rit>=0.85?'amar':'verm';
+      if (A.novo) { notas.length = 0; notas.push(['info', 'Começou há menos de 3 dias: farol a partir do 3º dia.']); }
       if (A.rit!=null && A.rit<0.85) notas.unshift([A.rit<0.6?'verm':'amar', `${A.modo==='7d'?'Últimos 7 dias':'Resultado'} abaixo do ritmo (${Math.round(A.rit*100)}%).`]);
-      if (A.custo && A.custo/A.custoMeta>1.1) notas.unshift([A.custo/A.custoMeta>1.3?'verm':'amar', `Custo ${Math.round((A.custo/A.custoMeta-1)*100)}% acima da média da conta.`]);
+      if (!A.novo && A.custo && A.custo/A.custoMeta>1.1) notas.unshift([A.custo/A.custoMeta>1.3?'verm':'amar', `Custo ${Math.round((A.custo/A.custoMeta-1)*100)}% acima da média da conta.`]);
       const rc = A.custo ? A.custo/A.custoMeta : null, escC = Math.max(rc||0, 1)*1.15;
       return {A, nivel: A.nivel ? A.nivel.t : null, cel1: cel(numCurto(A.real), numCurto(A.meta)+(A.modo==='7d'?' em 7 dias':''), Math.round(rr*100)+'%', rr, corR, esp!=null && esp<1 ? esp : null),
         cel2: rc==null ? '<span class="muted small">sem resultado</span>' : cel(mcusto(A.custo, moe), curto(A.custoMeta, moe), Math.round(rc*100)+'%', rc/escC, rc<=1?'verde':rc<=1.1?'amar':'verm', 1/escC),
