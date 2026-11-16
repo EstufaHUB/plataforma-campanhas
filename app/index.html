@@ -2166,7 +2166,7 @@ function gruposStatusConta(ct, vinc){ const snap = META_CONTAS.find(m=>m.conta==
 /* ---------- exportação para Google Apresentações (.pptx que o Google Slides abre e edita) ---------- */
 function carregarScript(src){ return new Promise((ok, erro)=>{ if ([...document.scripts].some(x=>x.src===src)) return ok(); const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = ()=>erro(new Error('Não foi possível carregar o gerador de slides.')); document.head.appendChild(el); }); }
 /* farol em PNG (a partir do mesmo desenho da Saúde da campanha) */
-function farolPng(pos){ return new Promise(ok=>{ const svg = medidorSaude(pos).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="440" height="240" '), img = new Image();
+function farolPng(pos){ return new Promise(ok=>{ const svg = medidorSaude(pos).replace(/\swidth="[^"]*"/, '').replace(/\sstyle="[^"]*"/, '').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="440" height="240" '), img = new Image();
   img.onload = ()=>{ const cv = document.createElement('canvas'); cv.width = 440; cv.height = 240; cv.getContext('2d').drawImage(img, 0, 0, 440, 240); ok(cv.toDataURL('image/png')); };
   img.onerror = ()=>ok(null); img.src = 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); }); }
 function logoPng(){ return new Promise(ok=>{ const img = new Image(); img.onload = ()=>{ const cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight; cv.getContext('2d').drawImage(img,0,0); ok(cv.toDataURL('image/png')); }; img.onerror = ()=>ok(null); img.src = 'logo-ptx.png'; }); }
@@ -2174,9 +2174,9 @@ async function exportarSlides(grupo){
   await carregarScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js');
   const ct = (CONTAS_STATUS.length ? CONTAS_STATUS : []).find(x=>x.grupo===grupo); if (!ct) throw new Error('Conta não encontrada.');
   const en = /EMEA/i.test(grupo), T = en
-    ? {saude:'Campaign health', termina:'Campaign ends in', dias:'days', encerrada:'Campaign ended', kpis:'KPIs follow-up', pais:'Country', meta:'Goal', ating:'Reached', custo:'Cost', diario:'Daily budget', plan:'Planned', real:'Actual (7d)', pontos:'Points of attention', coment:'Comments', periodo:'Campaign duration', relatorio:'Report date', fonte:'Source: Meta Ads Manager', atualizado:'updated', semMeta:'No goal set', total:'Total', investido:'Invested', fase:'Phase', capa:'Campaign status', campanhas:'campaigns live', ok:'All countries on track.', escreva:'Add comments here…',
+    ? {saude:'Campaign health', termina:'Campaign ends in', dias:'days', encerrada:'Campaign ended', kpis:'KPIs follow-up', pais:'Country', meta:'Goal', ating:'Reached', custo:'Cost', diario:'Daily budget', plan:'Planned', real:'Actual (7d)', pontos:'Points of attention', coment:'Comments', periodo:'Campaign duration', relatorio:'Report date', fonte:'Source: Meta Ads Manager', atualizado:'updated', semMeta:'No goal set', total:'Total', investido:'Invested', fase:'Phase', capa:'Campaign status', campanhas:'campaigns live', ok:'All countries on track.', escreva:'Add comments here…', esperado:'expected today', resumo:['Invested','Results','Avg. cost'], abaixo:(n,l)=>`${n} ${n===1?'country':'countries'} below pace: ${l}`, campanha:'Campaign',
        niv:{Saudável:'Healthy','Atenção':'Attention','Crítica':'Critical'}, tipo:{leads:'Leads','conversões':'Conversions',cliques:'Clicks',engajamentos:'Engagements',alcance:'Reach',compras:'Purchases'}, cpr:{leads:'CPL','conversões':'Cost per conversion',cliques:'CPC',engajamentos:'Cost per engagement',alcance:'Cost per person',compras:'Cost per purchase'}}
-    : {saude:'Saúde da campanha', termina:'A campanha termina em', dias:'dias', encerrada:'Campanha encerrada', kpis:'Acompanhamento de KPIs', pais:'País', meta:'Meta', ating:'Atingido', custo:'Custo', diario:'Budget diário', plan:'Planejado', real:'Real (7d)', pontos:'Pontos de atenção', coment:'Comentários', periodo:'Período de veiculação', relatorio:'Data do relatório', fonte:'Fonte: Gerenciador de Anúncios do Meta', atualizado:'atualizado', semMeta:'Meta a definir', total:'Total', investido:'Investido', fase:'Fase', capa:'Status das campanhas', campanhas:'campanhas no ar', ok:'Todos os países no ritmo.', escreva:'Escreva aqui os comentários…',
+    : {saude:'Saúde da campanha', termina:'A campanha termina em', dias:'dias', encerrada:'Campanha encerrada', kpis:'Acompanhamento de KPIs', pais:'País', meta:'Meta', ating:'Atingido', custo:'Custo', diario:'Budget diário', plan:'Planejado', real:'Real (7d)', pontos:'Pontos de atenção', coment:'Comentários', periodo:'Período de veiculação', relatorio:'Data do relatório', fonte:'Fonte: Gerenciador de Anúncios do Meta', atualizado:'atualizado', semMeta:'Meta a definir', total:'Total', investido:'Investido', fase:'Fase', capa:'Status das campanhas', campanhas:'campanhas no ar', ok:'Todos os países no ritmo.', escreva:'Escreva aqui os comentários…', esperado:'esperado hoje', resumo:['Investido','Resultados','Custo médio'], abaixo:(n,l)=>`${n} ${n===1?'país':'países'} abaixo do ritmo: ${l}`, campanha:'Campanha',
        niv:{Saudável:'Saudável','Atenção':'Atenção','Crítica':'Crítica'}, tipo:{leads:'Leads','conversões':'Conversões',cliques:'Cliques',engajamentos:'Engajamentos',alcance:'Alcance',compras:'Compras'}, cpr:{leads:'CPL','conversões':'Custo por conversão',cliques:'CPC',engajamentos:'Custo por engajamento',alcance:'Custo por pessoa',compras:'Custo por compra'}};
   const nPais = p => p ? (en ? p : (PAISES[p] ? PAISES[p].n : p)) : (en ? 'General' : 'Geral');
   const {d, moe, lista} = gruposStatusConta(ct, vinculosMeta());
@@ -2206,46 +2206,62 @@ async function exportarSlides(grupo){
       return {p, tipo: mc.tipoResultado, real:mc.resultados, meta:null, rit:null, custo:mc.custoResultado, custoMeta:null, plano:mc.budgetDiario, dia: mc.gasto7/7, inv:mc.investido}; }).filter(x=>!x.vazio);
     const tipo = (linhas[0]||{}).tipo || 'leads';
     const agg = g.c ? metricasStatus(g.c, g.fase||null, (g.linhas.find(l=>l.vi)||{}).vi?.v.marca || null) : null, nv = agg && !agg.vazio ? nivelSaude(agg.S2.score) : null;
-    // cabeçalho
-    sl.addShape(pptx.ShapeType.rect, {x:0, y:0, w:13.33, h:1.05, fill:{color:C.esc}, line:{color:C.esc}});
-    if (logo) sl.addImage({data:logo, x:0.35, y:0.2, w:0.65, h:0.65});
-    const x0 = logo ? 1.15 : 0.4;
-    sl.addText(g.titulo, {x:x0, y:0.12, w:7.6, h:0.5, fontFace:F, fontSize:22, bold:true, color:'FFFFFF'});
-    sl.addText(`${grupo}${g.fase ? ` · ${T.fase} ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}` : ''}`, {x:x0, y:0.6, w:7.6, h:0.32, fontFace:F, fontSize:12, color:'9FC3CB'});
-    sl.addText([{text:T.periodo+'  ', options:{color:'9FC3CB', fontSize:11}}, {text:`${dt(g.per.ini)} → ${dt(g.per.fim)}`, options:{color:'FFFFFF', fontSize:14, bold:true}}], {x:8.7, y:0.14, w:3.4, h:0.4, fontFace:F, align:'right'});
-    sl.addText([{text:T.relatorio+'  ', options:{color:'9FC3CB', fontSize:11}}, {text:dt(HOJE), options:{color:'FFFFFF', fontSize:14, bold:true}}], {x:8.7, y:0.54, w:3.4, h:0.4, fontFace:F, align:'right'});
-    sl.addText('estufa', {x:12.0, y:0.3, w:1.1, h:0.45, fontFace:F, fontSize:15, bold:true, color:'FFFFFF', align:'right'});
-    // saúde (farol)
-    card(sl, 0.35, 1.25, 3.1, 2.75, T.saude);
-    const png = await farolPng(agg && !agg.vazio && agg.S2.score!=null ? Math.min(1, agg.S2.score/1.25) : null);
-    if (png) sl.addImage({data:png, x:0.6, y:1.7, w:2.6, h:1.42});
-    sl.addText(nv ? T.niv[nv.t] : T.semMeta, {x:0.45, y:3.2, w:2.9, h:0.4, fontFace:F, fontSize:16, bold:true, align:'center', color: nv ? ({Saudável:C.verdeT,'Atenção':C.amarT,'Crítica':C.vermT})[nv.t] : C.mut});
-    if (agg && !agg.vazio && agg.S2.ritmo!=null) sl.addText(en ? `Results at ${Math.round(agg.S2.ritmo*100)}% of pace · cost ${Math.round((agg.S2.cplRatio||0)*100)}% efficiency` : `Resultado ${Math.round(agg.S2.ritmo*100)}% do ritmo · custo ${Math.round((agg.S2.cplRatio||0)*100)}% de eficiência`, {x:0.45, y:3.55, w:2.9, h:0.35, fontFace:F, fontSize:9, align:'center', color:C.mut});
-    // dias restantes
-    card(sl, 0.35, 4.15, 3.1, 2.6, T.termina);
-    const tot = g.per.ini && g.per.fim ? Math.max(1, difDias(g.per.ini, g.per.fim)+1) : null, dec = tot ? Math.max(0, Math.min(tot, difDias(g.per.ini, HOJE)+1)) : 0, fr = tot ? dec/tot : 0;
-    if (g.restam!=null && fr<1) { sl.addText([{text:String(g.restam), options:{fontSize:54, bold:true, color:C.esc}}, {text:'  '+T.dias, options:{fontSize:18, italic:true, color:C.mut}}], {x:0.55, y:4.6, w:2.7, h:1.1, fontFace:F}); }
-    else sl.addText(T.encerrada, {x:0.55, y:4.75, w:2.7, h:0.8, fontFace:F, fontSize:20, bold:true, color:C.esc});
-    sl.addShape(pptx.ShapeType.roundRect, {x:0.6, y:5.85, w:2.6, h:0.18, fill:{color:'E6ECEE'}, line:{color:'E6ECEE'}, rectRadius:0.09});
-    if (fr>0) sl.addShape(pptx.ShapeType.roundRect, {x:0.6, y:5.85, w:Math.max(0.18, 2.6*fr), h:0.18, fill:{color:C.pet}, line:{color:C.pet}, rectRadius:0.09});
-    sl.addText(`${Math.round(fr*100)}%`, {x:0.6, y:6.1, w:2.6, h:0.3, fontFace:F, fontSize:10, color:C.mut, align:'right'});
-    // KPIs por país (tabela única: resultado · custo · budget diário)
-    card(sl, 3.6, 1.25, 6.0, 5.5, T.kpis);
+    // ---- blocos do topo: campanha · período · data do relatório · estufa ----
+    const bloco = (x, w, rot, val, sub) => { card(sl, x, 0.3, w, 0.95);
+      sl.addText(rot.toUpperCase(), {x:x+0.2, y:0.36, w:w-0.3, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut, charSpacing:1});
+      sl.addText(val, {x:x+0.2, y:0.58, w:w-0.3, h:0.38, fontFace:F, fontSize:17, bold:true, color:C.esc, fit:'shrink'});
+      if (sub) sl.addText(sub, {x:x+0.2, y:0.92, w:w-0.3, h:0.25, fontFace:F, fontSize:9.5, color:C.mut}); };
+    card(sl, 0.35, 0.3, 5.6, 0.95); sl.addShape(pptx.ShapeType.rect, {x:0.35, y:0.3, w:0.07, h:0.95, fill:{color:C.pet}, line:{color:C.pet}});
+    if (logo) sl.addImage({data:logo, x:0.55, y:0.43, w:0.68, h:0.68});
+    const xc = logo ? 1.38 : 0.6;
+    sl.addText(T.campanha.toUpperCase(), {x:xc, y:0.36, w:4.4, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut, charSpacing:1});
+    sl.addText(g.titulo, {x:xc, y:0.58, w:4.45, h:0.38, fontFace:F, fontSize:17, bold:true, color:C.esc, fit:'shrink'});
+    sl.addText(`${grupo}${g.fase ? ` · ${T.fase} ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}` : ''}`, {x:xc, y:0.92, w:4.45, h:0.25, fontFace:F, fontSize:9.5, color:C.mut});
+    bloco(6.1, 2.9, T.periodo, `${dt(g.per.ini)} → ${dt(g.per.fim)}`);
+    bloco(9.15, 2.25, T.relatorio, dt(HOJE));
+    sl.addText([{text:'estufa', options:{color:C.esc}}, {text:'▲', options:{color:'EF9F27'}}], {x:11.5, y:0.3, w:1.5, h:0.95, fontFace:F, fontSize:22, bold:true, align:'right', valign:'middle'});
+    // ---- coluna 1: Leads e CPL por país + resumo ----
+    card(sl, 0.35, 1.45, 4.6, 5.4);
+    const totD = g.per.ini && g.per.fim ? Math.max(1, difDias(g.per.ini, g.per.fim)+1) : null, decD = totD ? Math.max(0, Math.min(totD, difDias(g.per.ini, HOJE)+1)) : 0, frac = totD ? decD/totD : 0;
     const nomeTipo = T.tipo[tipo] || tipo, nomeCusto = T.cpr[tipo] || T.custo;
     const hd = o => Object.assign({bold:true, color:'FFFFFF', fill:{color:C.pet}, align:'center', valign:'middle', fontSize:10}, o||{});
     const cel = (txt, cor, o) => ({text:txt, options:Object.assign({align:'center', valign:'middle', fontSize:10.5, color: cor ? C[cor+'T'] : C.txt, fill:{color: cor ? C[cor+'F'] : 'FFFFFF'}, bold: !!cor}, o||{})});
-    const rows = [
-      [{text:T.pais, options:hd({rowspan:2, fill:{color:C.esc}})}, {text:nomeTipo, options:hd({colspan:3, fill:{color:C.esc}})}, {text:nomeCusto, options:hd({colspan:2, fill:{color:C.esc}})}, {text:T.diario, options:hd({colspan:2, fill:{color:C.esc}})}],
-      [{text:T.meta, options:hd()}, {text:T.ating, options:hd()}, {text:'%', options:hd()}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}, {text:T.plan, options:hd()}, {text:T.real, options:hd()}]];
-    for (const l of linhas) { const pr = l.meta ? l.real/l.meta : null, cc = l.custo!=null && l.custoMeta ? (l.custo<=l.custoMeta ? 'verde' : l.custo<=l.custoMeta*1.1 ? 'amar' : 'verm') : null, rd = l.plano ? l.dia/l.plano : null;
-      rows.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(num(l.real), corR(l.rit)), cel(pr!=null?Math.round(pr*100)+'%':'—'), cel(din(l.custoMeta)), cel(din(l.custo), cc), cel(din(l.plano, 0)), cel(din(l.dia, 0), rd==null?null:Math.abs(rd-1)<=0.15?'verde':(rd<0.5||rd>1.3)?'verm':'amar')]); }
-    if (linhas.length>1) { const sR = linhas.reduce((t,l)=>t+(+l.real||0),0), sM = linhas.every(l=>l.meta) ? linhas.reduce((t,l)=>t+l.meta,0) : null, sI = linhas.reduce((t,l)=>t+(+l.inv||0),0), sP = linhas.every(l=>l.plano) ? linhas.reduce((t,l)=>t+l.plano,0) : null, sD = linhas.reduce((t,l)=>t+(+l.dia||0),0);
-      const tt = o => Object.assign({bold:true, fill:{color:'EEF3F4'}}, o||{});
-      rows.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(num(sR), null, tt()), cel(sM?Math.round(sR/sM*100)+'%':'—', null, tt()), cel('—', null, tt()), cel(sR?din(sI/sR):'—', null, tt()), cel(sP?din(sP,0):'—', null, tt()), cel(din(sD,0), null, tt())]); }
-    const alt = Math.min(0.42, 4.2/Math.max(rows.length, 1));
-    sl.addTable(rows, {x:3.8, y:1.75, w:5.6, colW:[1.05,0.62,0.72,0.5,0.72,0.72,0.64,0.63], rowH:alt, fontFace:F, border:{type:'solid', pt:0.75, color:'FFFFFF'}, margin:0.03});
-    const sInv = linhas.reduce((t,l)=>t+(+l.inv||0),0);
-    sl.addText(`${T.investido}: ${din(sInv, 0)}  ·  ${en ? 'Bar colors: green = on track, yellow = attention, red = critical.' : 'Cores: verde = no ritmo, amarelo = atenção, vermelho = crítico.'}`, {x:3.8, y:6.3, w:5.6, h:0.35, fontFace:F, fontSize:9, color:C.mut});
+    const tt = o => Object.assign({bold:true, fill:{color:'EEF3F4'}}, o||{});
+    const multi = linhas.length>1, sR = linhas.reduce((t,l)=>t+(+l.real||0),0), sM = linhas.every(l=>l.meta) ? linhas.reduce((t,l)=>t+l.meta,0) : null, sI = linhas.reduce((t,l)=>t+(+l.inv||0),0);
+    const rL = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}, {text:'%', options:hd()}]];
+    for (const l of linhas) { const pr = l.meta ? l.real/l.meta : null; rL.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(num(l.real), corR(l.rit)), cel(pr!=null?Math.round(pr*100)+'%':'—')]); }
+    if (multi) rL.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(num(sR), null, tt()), cel(sM?Math.round(sR/sM*100)+'%':'—', null, tt())]);
+    const rC = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}]];
+    for (const l of linhas) { const cc = l.custo!=null && l.custoMeta ? (l.custo<=l.custoMeta ? 'verde' : l.custo<=l.custoMeta*1.1 ? 'amar' : 'verm') : null; rC.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(din(l.custoMeta)), cel(din(l.custo), cc)]); }
+    const cmTot = linhas.every(l=>l.custoMeta && l.meta) ? linhas.reduce((t,l)=>t+l.custoMeta*l.meta,0)/linhas.reduce((t,l)=>t+l.meta,0) : null;
+    if (multi) rC.push([cel(T.total, null, tt({align:'left'})), cel(cmTot?din(cmTot):'—', null, tt()), cel(sR?din(sI/sR):'—', null, tt())]);
+    const rowH = Math.min(0.32, 3.55/Math.max(1, rL.length + rC.length));
+    sl.addText(nomeTipo, {x:0.55, y:1.55, w:2.0, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
+    if (sM && frac<1) sl.addText(`${T.esperado}: ${Math.round(frac*100)}%`, {x:2.4, y:1.55, w:2.35, h:0.35, fontFace:F, fontSize:9.5, color:C.mut, align:'right'});
+    sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.45,0.85,1.0,0.9], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
+    const yC = 1.92 + rowH*rL.length + 0.18;
+    sl.addText(nomeCusto, {x:0.55, y:yC, w:4.2, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
+    sl.addTable(rC, {x:0.55, y:yC+0.37, w:4.2, colW:[1.45,1.375,1.375], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
+    // resumo da campanha (3 números)
+    sl.addShape(pptx.ShapeType.line, {x:0.55, y:5.95, w:4.2, h:0, line:{color:C.borda, width:0.75}});
+    [[T.resumo[0], din(sI, 0)], [T.resumo[1], num(sR)], [T.resumo[2], sR ? din(sI/sR) : '—']].forEach(([r, v], k)=>{
+      sl.addText(r, {x:0.55+k*1.4, y:6.02, w:1.4, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut});
+      sl.addText(v, {x:0.55+k*1.4, y:6.25, w:1.4, h:0.45, fontFace:F, fontSize:15, bold:true, color:C.esc, fit:'shrink'}); });
+    // ---- coluna 2: saúde (farol) + dias restantes ----
+    card(sl, 5.1, 1.45, 3.95, 2.85, T.saude);
+    const png = await farolPng(agg && !agg.vazio && agg.S2.score!=null ? Math.min(1, agg.S2.score/1.25) : null);
+    if (png) sl.addImage({data:png, x:5.75, y:1.85, w:2.65, h:1.45});
+    sl.addText(nv ? T.niv[nv.t] : T.semMeta, {x:5.2, y:3.3, w:3.75, h:0.38, fontFace:F, fontSize:16, bold:true, align:'center', color: nv ? ({Saudável:C.verdeT,'Atenção':C.amarT,'Crítica':C.vermT})[nv.t] : C.mut});
+    const abaixo = linhas.filter(l=>l.rit!=null && l.rit<0.85).map(l=>nPais(l.p));
+    const cr = agg && !agg.vazio && agg.custo && agg.custoMeta ? agg.custo/agg.custoMeta - 1 : null;
+    const linha2 = abaixo.length ? T.abaixo(abaixo.length, abaixo.join(', ')) : (agg && !agg.vazio && agg.S2.ritmo!=null ? (en ? `Results at ${Math.round(agg.S2.ritmo*100)}% of pace${cr!=null?` · cost ${Math.round(Math.abs(cr)*100)}% ${cr<0?'below':'above'} goal`:''}` : `Resultado ${Math.round(agg.S2.ritmo*100)}% do ritmo${cr!=null?` · custo ${Math.round(Math.abs(cr)*100)}% ${cr<0?'abaixo':'acima'} da meta`:''}`) : '');
+    if (linha2) sl.addText(linha2, {x:5.2, y:3.68, w:3.75, h:0.5, fontFace:F, fontSize:9.5, align:'center', valign:'top', color: abaixo.length ? C.vermT : C.mut, bold: !!abaixo.length});
+    card(sl, 5.1, 4.45, 3.95, 2.4, T.termina);
+    if (g.restam!=null && frac<1) sl.addText([{text:String(g.restam), options:{fontSize:50, bold:true, color:C.esc}}, {text:'  '+T.dias, options:{fontSize:18, italic:true, color:C.mut}}], {x:5.3, y:4.85, w:3.6, h:1.05, fontFace:F});
+    else sl.addText(T.encerrada, {x:5.3, y:5.0, w:3.6, h:0.8, fontFace:F, fontSize:20, bold:true, color:C.esc});
+    sl.addShape(pptx.ShapeType.roundRect, {x:5.35, y:6.05, w:3.45, h:0.18, fill:{color:'E6ECEE'}, line:{color:'E6ECEE'}, rectRadius:0.09});
+    if (frac>0) sl.addShape(pptx.ShapeType.roundRect, {x:5.35, y:6.05, w:Math.max(0.18, 3.45*frac), h:0.18, fill:{color:C.pet}, line:{color:C.pet}, rectRadius:0.09});
+    sl.addText(`${Math.round(frac*100)}% ${en?'of the period':'do período'}`, {x:5.35, y:6.3, w:3.45, h:0.3, fontFace:F, fontSize:9.5, color:C.mut, align:'right'});
     // pontos de atenção (pré-preenchidos e editáveis) e comentários (em branco)
     const pts = [];
     for (const l of linhas) { const n = nPais(l.p);
@@ -2253,13 +2269,13 @@ async function exportarSlides(grupo){
       else if (l.rit!=null && l.rit<0.85) pts.push(en ? `${n}: results at ${Math.round(l.rit*100)}% of expected pace.` : `${n}: resultado a ${Math.round(l.rit*100)}% do ritmo esperado.`);
       if (l.custo!=null && l.custoMeta && l.custo>l.custoMeta*1.1) pts.push(en ? `${n}: ${T.cpr[l.tipo]||'cost'} ${Math.round((l.custo/l.custoMeta-1)*100)}% above goal.` : `${n}: ${T.cpr[l.tipo]||'custo'} ${Math.round((l.custo/l.custoMeta-1)*100)}% acima da meta.`);
       const rd = l.plano ? l.dia/l.plano : null; if (rd!=null && (rd<0.85 || rd>1.15)) pts.push(en ? `${n}: spending ${Math.round(rd*100)}% of the planned daily budget.` : `${n}: gastando ${Math.round(rd*100)}% do budget diário planejado.`); }
-    card(sl, 9.75, 1.25, 3.23, 2.75, T.pontos);
-    sl.addText((pts.length ? pts.slice(0,5) : [T.ok]).map(t=>({text:t, options:{bullet:{indent:12}, breakLine:true}})), {x:9.9, y:1.65, w:2.95, h:2.25, fontFace:F, fontSize:10.5, color:C.txt, valign:'top', paraSpaceAfter:4});
-    card(sl, 9.75, 4.15, 3.23, 2.6, T.coment);
-    sl.addText(T.escreva, {x:9.9, y:4.55, w:2.95, h:2.05, fontFace:F, fontSize:10.5, color:'A8B4B8', italic:true, valign:'top'});
+    card(sl, 9.2, 1.45, 3.78, 2.85, T.pontos);
+    sl.addText((pts.length ? pts.slice(0,5) : [T.ok]).map(t=>({text:t, options:{bullet:{indent:12}, breakLine:true}})), {x:9.35, y:1.88, w:3.5, h:2.3, fontFace:F, fontSize:10.5, color:C.txt, valign:'top', paraSpaceAfter:4});
+    card(sl, 9.2, 4.45, 3.78, 2.4, T.coment);
+    sl.addText(T.escreva, {x:9.35, y:4.88, w:3.5, h:1.85, fontFace:F, fontSize:10.5, color:'A8B4B8', italic:true, valign:'top'});
     // rodapé
     const at = (META_CONTAS.find(m=>m.conta===ct.conta)||{}).atualizado_em;
-    sl.addText(`${T.fonte} · ${d.nome||ct.nome||ct.conta}${at ? ` · ${T.atualizado} ${new Date(at).toLocaleString(en?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}` : ''}`, {x:0.35, y:6.95, w:12.6, h:0.35, fontFace:F, fontSize:8.5, color:C.mut});
+    sl.addText(`${T.fonte} · ${d.nome||ct.nome||ct.conta}${at ? ` · ${T.atualizado} ${new Date(at).toLocaleString(en?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}` : ''}`, {x:0.35, y:7.0, w:12.6, h:0.3, fontFace:F, fontSize:8.5, color:C.mut, line:{type:'none'}});
   }
   const nome = `Status pontual - ${grupo} - ${HOJE}.pptx`;
   await pptx.writeFile({fileName:nome});
