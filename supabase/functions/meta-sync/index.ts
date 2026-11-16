@@ -33,6 +33,71 @@ async function insights(campanhaId: string, token: string, extra: Record<string,
   return j.data as Record<string, unknown>[];
 }
 
+// ---------- retrato das contas: todas as campanhas ativas de cada conta (Status pontual) ----------
+async function graph(path: string, token: string, params: Record<string, string>) {
+  const out: Record<string, unknown>[] = [];
+  let u: string | null = (() => { const x = new URL(`${GRAPH}/${path}`); x.searchParams.set("access_token", token); for (const [k, v] of Object.entries(params)) x.searchParams.set(k, v); return x.toString(); })();
+  for (let i = 0; u && i < 20; i++) {
+    const r = await fetch(u); const j = await r.json();
+    if (!r.ok || j.error) throw new Error(`${path.split('/').pop()}: ${j.error?.error_user_msg || j.error?.message || 'Meta respondeu ' + r.status}`);
+    if (Array.isArray(j.data)) out.push(...j.data); else return [j];
+    u = j.paging?.next || null;
+  }
+  return out;
+}
+type Acao = { action_type: string; value: string };
+const acao = (a: Acao[] | undefined, t: string) => +((a || []).find((x) => x.action_type === t)?.value || 0);
+// resultado de acordo com o objetivo da campanha
+function resultado(obj: string, a: Acao[] | undefined, reach: number) {
+  if (obj === "OUTCOME_LEADS") { const l = leadsDe(a); if (l) return { n: l, tipo: "leads" };
+    const cust = (a || []).filter((x) => x.action_type.startsWith("offsite_conversion.custom.")).map((x) => +x.value || 0); return { n: cust.length ? Math.max(...cust) : 0, tipo: cust.length ? "conversões" : "leads" }; }
+  if (obj === "OUTCOME_ENGAGEMENT") return { n: acao(a, "post_engagement"), tipo: "engajamentos" };
+  if (obj === "OUTCOME_TRAFFIC") return { n: acao(a, "link_click"), tipo: "cliques" };
+  if (obj === "OUTCOME_AWARENESS") return { n: reach, tipo: "alcance" };
+  if (obj === "OUTCOME_SALES") return { n: Math.max(acao(a, "offsite_conversion.fb_pixel_purchase"), acao(a, "purchase")), tipo: "compras" };
+  return { n: acao(a, "link_click"), tipo: "cliques" };
+}
+async function retratoContas(admin: ReturnType<typeof createClient>, token: string) {
+  const { data: cfg } = await admin.from("config").select("valor").eq("chave", "contasStatus").single();
+  const contas = (cfg?.valor || []) as { conta: string; nome: string; grupo: string }[];
+  const feito: unknown[] = [];
+  for (const ct of contas) {
+    try {
+      const act = `act_${ct.conta}`;
+      const [info] = await graph(act, token, { fields: "name,currency" });
+      const camps = await graph(`${act}/campaigns`, token, { fields: "id,name,objective,start_time,stop_time,daily_budget,lifetime_budget", effective_status: '["ACTIVE"]', limit: "200" });
+      const ids = new Set(camps.map((c) => c.id as string));
+      let adsets: Record<string, unknown>[] = [];
+      if (camps.some((c) => !c.daily_budget && !c.lifetime_budget)) adsets = await graph(`${act}/adsets`, token, { fields: "campaign_id,daily_budget,lifetime_budget,end_time,start_time", effective_status: '["ACTIVE"]', limit: "500" });
+      const filtro = JSON.stringify([{ field: "campaign.effective_status", operator: "IN", value: ["ACTIVE"] }]);
+      const porId = (lista: Record<string, unknown>[]) => Object.fromEntries(lista.map((x) => [x.campaign_id as string, x]));
+      const sete = await graph(`${act}/insights`, token, { level: "campaign", date_preset: "last_7d", fields: "campaign_id,spend,actions,reach", filtering: filtro, limit: "500" });
+      const S7 = porId(sete);
+      const hoje = Date.now(), noAr = (c: Record<string, unknown>) => (!c.stop_time || Date.parse(c.stop_time as string) >= hoje - 864e5) && (+(((S7[c.id as string] || {}) as Record<string, unknown>).spend as string) > 0 || (c.start_time && Date.parse(c.start_time as string) >= hoje - 3 * 864e5));
+      const ativas = camps.filter((c) => ids.has(c.id as string) && noAr(c)), total: Record<string, unknown>[] = [];
+      // total desde o início, só das campanhas no ar (em lotes, para contas com muito histórico)
+      for (let i = 0; i < ativas.length; i += 25) total.push(...await graph(`${act}/insights`, token, { level: "campaign", date_preset: "maximum", fields: "campaign_id,spend,impressions,reach,clicks,actions", filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: ativas.slice(i, i + 25).map((c) => c.id) }]), limit: "100" }));
+      const T = porId(total);
+      const campanhas = ativas.map((c) => {
+        const t = (T[c.id as string] || {}) as Record<string, unknown>, s7 = (S7[c.id as string] || {}) as Record<string, unknown>;
+        const obj = c.objective as string, r = resultado(obj, t.actions as Acao[], +(t.reach as string) || 0), r7 = resultado(obj, s7.actions as Acao[], +(s7.reach as string) || 0);
+        // budget por dia: diário da campanha; vitalício ÷ dias; sem budget na campanha, soma dos conjuntos ativos
+        let diario: number | null = c.daily_budget ? +(c.daily_budget as string) / 100 : null;
+        const porDias = (lt: number, ini?: string, fim?: string) => ini && fim ? lt / Math.max(1, Math.round((Date.parse(fim) - Date.parse(ini)) / 864e5)) : null;
+        if (diario == null && c.lifetime_budget) diario = porDias(+(c.lifetime_budget as string) / 100, c.start_time as string, c.stop_time as string);
+        if (diario == null) { const as = adsets.filter((a) => a.campaign_id === c.id); if (as.length) diario = as.reduce((s, a) => s + (a.daily_budget ? +(a.daily_budget as string) / 100 : (a.lifetime_budget ? porDias(+(a.lifetime_budget as string) / 100, a.start_time as string, a.end_time as string) || 0 : 0)), 0) || null; }
+        const inv = +(t.spend as string) || 0, inv7 = +(s7.spend as string) || 0;
+        return { id: c.id, nome: c.name, objetivo: obj, inicio: c.start_time || null, fim: c.stop_time || null, budgetDiario: diario,
+          investido: inv, impressoes: +(t.impressions as string) || 0, alcance: +(t.reach as string) || 0, cliques: +(t.clicks as string) || 0,
+          resultados: r.n, tipoResultado: r.tipo, custoResultado: r.n ? inv / r.n : null, gasto7: inv7, resultados7: r7.n };
+      });
+      await admin.from("meta_contas").upsert({ conta: ct.conta, dados: { nome: info?.name || ct.nome, moeda: info?.currency || null, grupo: ct.grupo, campanhas }, atualizado_em: new Date().toISOString() });
+      feito.push({ conta: ct.conta, ok: true, campanhas: campanhas.length });
+    } catch (e) { feito.push({ conta: ct.conta, ok: false, erro: String((e as Error).message || e) }); }
+  }
+  return feito;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const token = Deno.env.get("META_ACCESS_TOKEN");
@@ -82,5 +147,7 @@ Deno.serve(async (req) => {
       }
     }
   }
-  return json({ resultado: feito });
+  // sem campanha específica (agendamento ou botão do Status pontual): atualiza também o retrato das contas
+  const contas = apenas ? [] : await retratoContas(admin, token);
+  return json({ resultado: feito, contas });
 });

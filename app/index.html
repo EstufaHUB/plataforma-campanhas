@@ -159,7 +159,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .cc-per{display:flex;align-items:center;gap:5px;margin-top:4px}.cc-per svg{width:13px;height:13px}
 .st-resumo{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:0 0 12px;font-size:.88rem}.st-resumo i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .ponto-st{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}.st-nome{font-weight:600;color:var(--pet-900);text-decoration:none}.st-nome:hover{text-decoration:underline}
-.st-tab td{vertical-align:top}.st-card{overflow:visible!important}.st-wrap{overflow:visible}
+.st-tab td{vertical-align:top}.st-filtro{margin:0 0 12px;flex-wrap:wrap}.st-card{overflow:visible!important}.st-wrap{overflow:visible}
 .st-tab thead th{position:sticky;top:56px;z-index:6;background:var(--sup);font-size:.86rem;font-weight:800;color:var(--pet-950);text-transform:none;letter-spacing:0;padding-top:12px;padding-bottom:12px;box-shadow:0 1px 0 var(--borda)}
 .stp-pct{margin-left:auto;color:var(--tx2);font-size:.78rem}.stp-fr{display:flex;gap:7px;align-items:baseline;font-size:.84rem;line-height:1.4}.stp-fr+.stp-fr{margin-top:3px}.stp-fr>i{flex:none;width:7px;height:7px;border-radius:50%;transform:translateY(-1px)}
 .stp-fr .p-verm{background:#d0443a}.stp-fr .p-amar{background:#e0a100}.stp-fr .p-verde{background:#2e9d55}.stp-fr .p-info{background:#2f80b8}.st-tab tr.st-pais.critica td:first-child{box-shadow:inset 3px 0 0 #d0443a}.st-tab tr.st-marca td{background:var(--pet-900);color:#fff;font-weight:700;font-size:.95rem;padding:9px 16px;letter-spacing:.01em}.st-tab tr.st-marca td span{font-weight:500;opacity:.75;font-size:.8rem;margin-left:8px}
@@ -842,7 +842,7 @@ function salvar(){ try { localStorage.setItem(CHAVE+'-lidas-'+(SESSAO?SESSAO.use
 /* =====================================================================
    NUVEM (Supabase): login, carga e gravação
    ===================================================================== */
-let sb = null, SESSAO = null, PERFIL = null, PERFIS = [], RESULTADOS = {}, NOTION = {};
+let sb = null, SESSAO = null, PERFIL = null, PERFIS = [], RESULTADOS = {}, NOTION = {}, META_CONTAS = [], CONTAS_STATUS = [];
 const SNAP = {cli:{}, camp:{}, cfg:{}};
 const CFG_CHAVES = ['agencia','usuarios','feriados','modelo','modeloHist','baseRegiao'];
 const ehEquipe = () => PERFIL && (PERFIL.papel==='equipe' || PERFIL.papel==='admin');
@@ -857,14 +857,15 @@ function estadoInicial(){
 const cliRow = c => ({id:c.id, nome:c.nome, segmento:c.segmento||'', contato:c.contato||'', arquivado:!!c.arquivado});
 async function carregar(){
   const q = (x) => x.then(r => { if (r.error) throw r.error; return r.data; });
-  const [cl, ca, cf, pf, rm, lg, rn] = await Promise.all([
+  const [cl, ca, cf, pf, rm, lg, rn, mc] = await Promise.all([
     q(sb.from('clientes').select('*').order('nome')),
     q(sb.from('campanhas').select('id,dados')),
     q(sb.from('config').select('chave,valor')),
     q(sb.from('perfis').select('*').order('email')),
     q(sb.from('resultados_meta').select('*')),
     ehEquipe() ? q(sb.from('log').select('quando,quem,texto').order('quando',{ascending:false}).limit(300)) : Promise.resolve([]),
-    q(sb.from('resultados_notion').select('*'))
+    q(sb.from('resultados_notion').select('*')),
+    ehEquipe() ? q(sb.from('meta_contas').select('*')) : Promise.resolve([])
   ]);
   S = estadoInicial();
   for (const r of cf) if (CFG_CHAVES.includes(r.chave)) S[r.chave] = r.valor;
@@ -875,6 +876,7 @@ async function carregar(){
   PERFIS = pf;
   RESULTADOS = {}; for (const r of rm) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r);
   NOTION = {}; for (const r of rn) (NOTION[r.campanha_id] = NOTION[r.campanha_id] || []).push(r);
+  META_CONTAS = mc || []; CONTAS_STATUS = ((cf.find(r=>r.chave==='contasStatus')||{}).valor) || [];
   /* se uma página aberta antiga salvou por cima e apagou os vínculos, recupera a partir dos resultados gravados */
   const vincRecup = [];
   for (const row of ca) { const d = row.dados || {};
@@ -2178,34 +2180,57 @@ function pgStatus(){
     if (!d.length) return '<span class="muted">No ritmo.</span>';
     const ord = {verm:0, amar:1, info:2, verde:3}; d.sort((a,b)=>ord[a[0]]-ord[b[0]]);
     return d.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join(''); };
-  // marca → campanha → país (cada país com seus números; sem linha geral)
-  const grupos = {};   // marca -> [{c, f, per, paises:[{p, m}]}]
-  for (const c of ativas().filter(campanhaNoAr)) for (const f of fasesNoAr(c)) {
-    const per = f ? periodoFase(c,f) : {ini:c.lancamento, fim:c.fimVeiculacao};
-    const rows = (RESULTADOS[c.id]||[]).filter(r=>!f || ((r.dados.vinculo||{}).fase||'Lead gen')===f).map(r=>r.dados.vinculo||{});
-    const marcas = rows.length ? [...new Set(rows.map(v=>v.marca||marcasDe(c)[0]||'Sem marca'))] : marcasDe(c).filter(mk=>!marcaCancelada(c,mk));
-    for (const mk of (marcas.length ? marcas : ['Sem marca'])) {
-      const ps = [...new Set(rows.filter(v=>(v.marca||marcasDe(c)[0]||'Sem marca')===mk).map(v=>v.pais||null))].sort();
-      const paises = ps.map(p=>({p, m: metricasStatus(c, f, rows.some(v=>v.marca)?mk:null, p)}));
-      const gk = mk==='Collab' ? 'PTx Trimble' : mk;   // Collab entra junto com PTx Trimble
-      (grupos[gk] = grupos[gk] || []).push({c, f, per, paises, mkOrig:mk}); } }
-  const ordemMarcas = [...MARCAS, ...Object.keys(grupos).filter(m=>!MARCAS.includes(m))].filter(m=>grupos[m]);
-  const pesoM = m => { const n = niv(m); return n ? ({Crítica:0, Atenção:1, Saudável:2})[n.t] : 3; };
-  const pesoC = x => x.paises.length ? Math.min(...x.paises.map(y=>pesoM(y.m))) : 3;
-  const cont = {Saudável:0, Atenção:0, Crítica:0, sem:0}; const idsCamp = new Set();
-  const corpo = ordemMarcas.map(mk=>{ const lista = grupos[mk].sort((a,b)=>pesoC(a)-pesoC(b) || (a.per.fim||'').localeCompare(b.per.fim||''));
-    return `<tr class="st-marca"><td colspan="5">${h(mk)} <span>${lista.length} campanha${lista.length===1?'':'s'} no ar</span></td></tr>` + lista.map(x=>{ idsCamp.add(x.c.id);
-      const lk = `href="#/campanha/${x.c.id}/saude" onclick="UI.etapa=UI.etapa||{};${x.f?`UI.etapa['${x.c.id}']='${x.f}';`:''}UI.sMarca=UI.sMarca||{};UI.sMarca['${x.c.id}']=${JSON.stringify(mk).replace(/"/g,'&quot;')};UI.sPais=UI.sPais||{};UI.sPais['${x.c.id}']=null"`;
-      const cab = `<tr class="st-camp"><td colspan="5"><a ${lk} class="st-nome">${h(x.c.nome)}</a>${x.mkOrig && x.mkOrig!==mk ? ` <span class="tag t-pet">${h(x.mkOrig)}</span>` : ''}${x.f?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(x.f)+1} · ${x.f}</span>`:''}<span class="small muted" style="margin-left:10px">${fdm(x.per.ini)} → ${fdm(x.per.fim)}${x.paises[0]&&!x.paises[0].m.vazio?(x.paises[0].m.S2.frac>=1?' · encerrada':` · ${x.paises[0].m.S2.restam} dias restantes`):''}</span>${x.paises.length?'':'<span class="small muted" style="margin-left:10px">· sem dados do Gerenciador do Meta vinculados</span>'}</td></tr>`;
-      const linhasP = x.paises.map(y=>{ const n = niv(y.m); cont[n ? n.t : 'sem']++;
-        return `<tr class="st-pais ${n&&n.t==='Crítica'?'critica':''}"><td><span class="ponto-st" style="background:${corN(n)}" title="${n?n.t:'Sem farol'}"></span>${y.p ? (PAISES[y.p] ? PAISES[y.p].f+' '+PAISES[y.p].n : h(y.p)) : 'Campanha'}</td>
-          <td class="stb-cel">${barraRes(y.m)}</td><td class="stb-cel">${barraCusto(y.m)}</td><td class="stb-cel">${barraDiario(y.m)}</td><td class="st-obs">${frase(y.m)}</td></tr>`; }).join('');
-      return cab + linhasP; }).join(''); }).join('');
-  return `<div class="cab"><div><h1>Status pontual</h1><p>Todas as campanhas no ar hoje (${fd(HOJE)}), com custo e resultado comparados à meta, a partir dos dados do Gerenciador do Meta.</p></div></div>
-  <div class="st-resumo">${[['Crítica','#d0443a'],['Atenção','#e0a100'],['Saudável','#2e9d55'],['sem','#c9d3d6']].filter(([k])=>cont[k]).map(([k,cor])=>`<span><i style="background:${cor}"></i>${cont[k]} ${k==='sem'?'sem farol':k==='Saudável'?'saudável':k==='Atenção'?'em atenção':'crítica'}</span>`).join('')}<span class="muted" style="margin-left:auto">${idsCamp.size} campanha(s) no ar · farol contado por país</span></div>
+  // por conta de anúncios (PTx Trimble LATAM, Precision Planting BR, PTx Trimble EMEA, Precision Planting EMEA):
+  // todas as campanhas no ar no Gerenciador; as vinculadas a uma campanha da plataforma usam as metas dela
+  const vinc = {}; for (const c of ativas()) for (const v of (c.metaVinculos||[])) vinc[v.campanhaId] = {c, v};
+  const contas = CONTAS_STATUS.length ? CONTAS_STATUS : META_CONTAS.map(m=>({conta:m.conta, grupo:(m.dados||{}).grupo||m.conta}));
+  const filtro = (UI.stGrupo||'');
+  const PAIS_RX = new RegExp('^('+Object.keys(PAISES).join('|')+'|UK|KZ|UA|TR|PL|NL|BE|AT|CZ|HU|RO|PT|IE|DK|SE|NO|FI|ZA)$');
+  const partes = nome => (String(nome).match(/\[([^\]]+)\]/g)||[]).map(x=>x.slice(1,-1).trim());
+  const paisDe = nome => { const ps = [...partes(nome), ...String(nome).split(/[_\s-]+/)]; return ps.find(x=>PAIS_RX.test(x)) || null; };
+  const titulo = nome => { const t = partes(nome).filter(x=>!/^ESTUFA$/i.test(x) && !PAIS_RX.test(x) && !/^20\d\d$/.test(x)); if (!t.length) return String(nome).replace(/_(?:[A-Z]{2})_/,' ').replace(/_/g,' ');
+    return t.map((x,i)=> i===0 ? x.toLowerCase().replace(/(^|\s)\S/g, m=>m.toUpperCase()) : x).join(' · '); };
+  const ultimaAtual = META_CONTAS.reduce((m,r)=>!m||r.atualizado_em>m?r.atualizado_em:m, null), horas = ultimaAtual ? (Date.now()-new Date(ultimaAtual).getTime())/36e5 : null;
+  // linha de campanha não vinculada: números direto do Gerenciador (sem meta da plataforma)
+  const celSemMeta = (val, sub) => `<div class="stb-top"><b>${val}</b><span class="muted">${sub}</span></div>`;
+  const linhaMeta = (mc, moe) => { const real = mc.gasto7/7, pl = mc.budgetDiario, r = pl ? real/pl : null, cls = r==null ? null : Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar';
+    const dias = mc.fim ? Math.max(0, difDias(HOJE, mc.fim.slice(0,10))) : null;
+    const notas = []; if (r!=null && r<0.85) notas.push(['amar', `Gastando ${Math.round(r*100)}% do budget diário do Gerenciador.`]); if (r!=null && r>1.15) notas.push(['amar', `Gastando acima do budget diário (${Math.round(r*100)}%).`]);
+    if (!mc.resultados && mc.investido>0) notas.push(['verm', `Sem ${mc.tipoResultado} até agora.`]);
+    notas.push(['info', 'Sem meta na plataforma.']);
+    return {cel1: celSemMeta(numCurto(mc.resultados), mc.tipoResultado), cel2: mc.custoResultado!=null ? celSemMeta(mcusto(mc.custoResultado, moe), 'por '+(mc.tipoResultado==='alcance'?'pessoa':mc.tipoResultado.replace(/s$/,''))) : '<span class="muted small">—</span>',
+      cel3: pl ? cel(moeda2(real, moe), curto(pl, moe), Math.round(r*100)+'%', r/(Math.max(r,1)*1.15), cls, 1/(Math.max(r,1)*1.15)) : `<div class="stb-top"><b>${moeda2(real, moe)}</b><span class="muted">/ dia</span></div>`,
+      fr: notas.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join(''), cor: notas.some(x=>x[0]==='verm') ? '#d0443a' : notas.some(x=>x[0]==='amar') ? '#e0a100' : '#c9d3d6', dias}; };
+  const cont = {Saudável:0, Atenção:0, Crítica:0, sem:0}; const nCamp = new Set();
+  const blocos = contas.filter(ct=>!filtro || ct.grupo===filtro).map(ct=>{ const snap = META_CONTAS.find(m=>m.conta===ct.conta), d = (snap||{}).dados || {}, moe = d.moeda || 'BRL', cs = d.campanhas || [];
+    // agrupa: campanha da plataforma (+fase) ou nome-base da campanha do Meta; dentro, uma linha por país
+    const grupos = {};
+    for (const mc of cs) { const vi = vinc[mc.id], p = vi ? vi.v.pais : paisDe(mc.nome);
+      const chave = vi ? 'p|'+vi.c.id+'|'+(vi.v.fase||'') : 'm|'+titulo(mc.nome);
+      const g = grupos[chave] || (grupos[chave] = {vi, titulo: vi ? vi.c.nome : titulo(mc.nome), fase: vi ? vi.v.fase : null, c: vi ? vi.c : null, linhas: [], fim: null, ini: null});
+      g.linhas.push({mc, p, vi}); g.fim = !g.fim || (mc.fim||'') > g.fim ? mc.fim : g.fim; g.ini = !g.ini || (mc.inicio||'') < g.ini ? mc.inicio : g.ini; }
+    const lista = Object.values(grupos).sort((a,b)=>(b.vi?1:0)-(a.vi?1:0) || a.titulo.localeCompare(b.titulo));
+    const corpoG = lista.map(g=>{ nCamp.add(g.titulo);
+      const per = g.c ? (g.fase ? periodoFase(g.c, g.fase) : {ini:g.c.lancamento, fim:g.c.fimVeiculacao}) : {ini:(g.ini||'').slice(0,10), fim:(g.fim||'').slice(0,10)};
+      const lk = g.c ? `href="#/campanha/${g.c.id}/saude" onclick="UI.etapa=UI.etapa||{};${g.fase?`UI.etapa['${g.c.id}']='${g.fase}';`:''}"` : '';
+      const restam = per.fim ? Math.max(0, difDias(HOJE, per.fim)) : null;
+      const cab = `<tr class="st-camp"><td colspan="5">${g.c?`<a ${lk} class="st-nome">${h(g.titulo)}</a>`:`<span class="st-nome">${h(g.titulo)}</span>`}${g.fase?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}</span>`:''}${g.c?'':' <span class="tag">Só no Gerenciador</span>'}<span class="small muted" style="margin-left:10px">${per.ini?fdm(per.ini):'?'} → ${per.fim?fdm(per.fim):'sem fim'}${restam!=null?` · ${restam} dias restantes`:''}</span></td></tr>`;
+      const linhas = g.linhas.sort((a,b)=>(a.p==='BR'?-1:b.p==='BR'?1:(a.p||'zz').localeCompare(b.p||'zz'))).map(({mc, p, vi})=>{
+        const rot = p ? (PAISES[p] ? PAISES[p].f+' '+PAISES[p].n : p) : h(mc.nome.slice(0,28));
+        if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null), n = niv(m); cont[n ? n.t : 'sem']++;
+          return `<tr class="st-pais ${n&&n.t==='Crítica'?'critica':''}"><td title="${h(mc.nome)}"><span class="ponto-st" style="background:${corN(n)}" title="${n?n.t:'Sem farol'}"></span>${rot}</td><td class="stb-cel">${barraRes(m)}</td><td class="stb-cel">${barraCusto(m)}</td><td class="stb-cel">${barraDiario(m)}</td><td class="st-obs">${frase(m)}</td></tr>`; }
+        const L2 = linhaMeta(mc, moe); cont.sem++;
+        return `<tr class="st-pais"><td title="${h(mc.nome)}"><span class="ponto-st" style="background:${L2.cor}"></span>${rot}</td><td class="stb-cel">${L2.cel1}</td><td class="stb-cel">${L2.cel2}</td><td class="stb-cel">${L2.cel3}</td><td class="st-obs">${L2.fr}</td></tr>`; }).join('');
+      return cab + linhas; }).join('');
+    return `<tr class="st-marca"><td colspan="5">${h(ct.grupo)} <span>${lista.length} campanha${lista.length===1?'':'s'} no ar · conta ${h(d.nome||ct.nome||ct.conta)}${moe!=='BRL'?' · '+moe:''}</span></td></tr>` + (corpoG || `<tr class="st-camp"><td colspan="5" class="small muted">${snap?'Nenhuma campanha no ar nesta conta.':'Conta ainda não sincronizada.'}</td></tr>`); }).join('');
+  const chips = `<div class="seg seg-marca st-filtro">${[['','Todas as marcas'], ...contas.map(ct=>[ct.grupo, ct.grupo])].map(([v,l])=>`<button class="${filtro===v?'ativo':''}" data-act="stGrupo" data-v="${h(v)}">${h(l)}</button>`).join('')}</div>`;
+  return `<div class="cab"><div><h1>Status pontual</h1><p>Todas as campanhas no ar hoje (${fd(HOJE)}) nas contas de anúncios do Meta. As vinculadas a uma campanha da plataforma são comparadas com as metas dela.</p></div>
+    <div class="filtros"><span class="small ${horas!=null&&horas>24?'':'muted'}" style="${horas!=null&&horas>24?'color:#b3392f':''}">${horas==null?'Ainda não sincronizado':`Gerenciador atualizado há ${horas<1?'menos de 1 h':Math.round(horas)+' h'}`}</span>${ehEquipe()?`<button class="btn btn-s" data-act="sincContas"><i data-lucide="refresh-cw"></i>Atualizar</button>`:''}</div></div>
+  ${chips}
+  <div class="st-resumo">${[['Crítica','#d0443a'],['Atenção','#e0a100'],['Saudável','#2e9d55'],['sem','#c9d3d6']].filter(([k])=>cont[k]).map(([k,cor])=>`<span><i style="background:${cor}"></i>${cont[k]} ${k==='sem'?'sem meta na plataforma':k==='Saudável'?'saudável':k==='Atenção'?'em atenção':'crítica'}</span>`).join('')}<span class="muted" style="margin-left:auto">${nCamp.size} campanha(s) no ar · farol contado por país</span></div>
   <div class="card st-card"><div class="st-wrap"><table class="tab st-tab"><colgroup><col style="width:17%"><col style="width:17%"><col style="width:17%"><col style="width:19%"><col style="width:30%"></colgroup><thead><tr><th class="st-col-pais">País</th><th>Resultado</th><th>Custo</th><th>Budget diário</th><th>Atenção</th></tr></thead>
-  <tbody>${corpo || '<tr><td colspan="5" class="vazio">Nenhuma campanha no ar hoje.</td></tr>'}</tbody></table></div>
-  <div class="small muted" style="padding:10px 18px">Resultado: atingido / meta (o traço marca o esperado para hoje; a cor indica o ritmo). Custo: atual / meta (o traço marca a meta). Budget diário: média dos últimos 7 dias no Gerenciador / planejado (budget ÷ dias de veiculação); verde até 15% de diferença.</div></div>`; }
+  <tbody>${blocos || '<tr><td colspan="5" class="vazio">Nenhuma conta configurada.</td></tr>'}</tbody></table></div>
+  <div class="small muted" style="padding:10px 18px">Campanhas vinculadas: resultado e custo comparados com a meta da plataforma (o traço marca a meta ou o esperado para hoje). Campanhas só no Gerenciador: resultado conforme o objetivo (leads, cliques, engajamentos…) e custo por resultado, sem meta. Budget diário: média dos últimos 7 dias × budget diário (planejado na plataforma, ou configurado no Gerenciador); verde até 15% de diferença.</div></div>`; }
 const mcusto = (v, m) => v!=null && v<0.1 ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:m||'BRL',minimumFractionDigits:4,maximumFractionDigits:4}) : moeda2(v, m);
 
 /* =====================================================================
@@ -2730,6 +2755,13 @@ const ACT = {
     registrar(`${t==='objetivo'?'Objetivo':'Objetivo de mídia'} de ${el.dataset.k} em “${c.nome}”: ${cf[t]||'—'}`); render(); },
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
+  stGrupo: el => { UI.stGrupo = el.dataset.v || ''; render(); },
+  sincContas: async el => { el.disabled = true; toast('Buscando as campanhas no Gerenciador do Meta… (leva alguns segundos)');
+    try { const { data, error } = await sb.functions.invoke('meta-sync', { body: {} }); if (error) throw error;
+      const [{ data: mc }, { data: rm }] = await Promise.all([sb.from('meta_contas').select('*'), sb.from('resultados_meta').select('*')]);
+      META_CONTAS = mc || []; RESULTADOS = {}; for (const r of (rm||[])) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r);
+      const falhas = (data.contas||[]).filter(x=>!x.ok); render(); toast(falhas.length ? 'Algumas contas falharam: '+falhas.map(x=>x.conta+' ('+x.erro+')').join('; ') : 'Campanhas atualizadas.'); }
+    catch (e) { let msg = e.message||String(e); try { const b = await e.context.json(); msg = b.erro || msg; } catch(_){} toast('Não foi possível atualizar: '+msg); el.disabled = false; } },
   stAbrir: el => { UI.stAberto = UI.stAberto||{}; UI.stAberto[el.dataset.k] = !UI.stAberto[el.dataset.k]; render(); },
   filtroStatusCli: el => { UI.fc = UI.fc||{}; UI.fc.status = UI.fc.status===el.dataset.v ? '' : el.dataset.v; render(); },
   importarNotion: el => { const c = camp(el.dataset.id), n = (NOTION[c.id]||[]).flatMap(r=>(r.dados&&r.dados.itens)||[]).filter(x=>(x.material||'').trim() && x.status!=='Canceled' && ((x.topicos||[]).length || x.link || x.status!=='Not started')).length;
