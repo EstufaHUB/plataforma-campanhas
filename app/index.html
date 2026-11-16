@@ -1669,19 +1669,19 @@ function contaMetaLinha(c, marca){
 function custoAutoInfo(c, b){
   if (!b || b.canal!=='Meta Ads') return null;
   const ch = chavesCfg(c).find(x=>x.canal===b.canal && mesmaLinha(b, x)); if (!ch) return null;
-  const cf = c.canaisCfg[ch.key]||{}, midia = cf.objMidia; if (!midia) return null;
+  const cf = (c.canaisCfg||{})[ch.key]||{}, midia = cf.objMidia; if (!midia) return null;
   const conta = contaMetaLinha(c, ch.marca), mc = conta && META_CONTAS.find(m=>m.conta===conta), d = (mc && mc.dados) || {}, bq = d.bench && d.bench.porObj && d.bench.porObj[midia]; if (!bq) return null;
   if (d.moeda && d.moeda!==(cf.moeda||c.moeda||'BRL')) return null;
   const x = bq[b.pais] || bq['*']; if (!x || !(x.custo>0)) return null;
   return {v: Math.round(x.custo*(x.custo<1?10000:100))/(x.custo<1?10000:100), n:x.n, base: bq[b.pais] ? 'país' : 'conta', conta: d.nome||conta, midia, de: d.bench.desde, ate: d.bench.ate}; }
 /* grava o custo automático nas linhas (equipe, ao carregar): só preenche ou atualiza antes da veiculação começar; depois fica congelado */
 function aplicarCustosAuto(){ if (!ehEquipe() || !META_CONTAS.length) return; let mud = false;
-  for (const c of S.campanhas) { if (c.arquivada || c.status==='Concluída') continue;
+  for (const c of S.campanhas) { if (c.arquivada || c.status==='Concluída') continue; try {
     for (const b of (c.budgets||[])) { const info = custoAutoInfo(c, b), ant = b.kpis && b.kpis.custoAuto;
       const ini = b.fase ? periodoFase(c, b.fase).ini : c.lancamento, congelado = ant && ini && ini<=HOJE && ant.midia===(info&&info.midia);
       if (congelado) continue;
       const nv = info ? {v:info.v, n:info.n, base:info.base, conta:info.conta, midia:info.midia, de:info.de, ate:info.ate} : null;
-      if (JSON.stringify(nv)!==JSON.stringify(ant||null)) { b.kpis = b.kpis || {}; if (nv) b.kpis.custoAuto = nv; else delete b.kpis.custoAuto; mud = true; } } }
+      if (JSON.stringify(nv)!==JSON.stringify(ant||null)) { b.kpis = b.kpis || {}; if (nv) b.kpis.custoAuto = nv; else delete b.kpis.custoAuto; mud = true; } } } catch (e) { console.error('custo automático', c.nome, e); } }
   if (mud) salvar(); }
 /* logos dos canais (Simple Icons, recoloridos com a cor da marca) */
 const LOGO_CANAL = {'Meta Ads':['meta','#0866FF'],'YouTube Ads':['youtube','#FF0000'],'Google Display':['googleads','#4285F4'],'Google Search':['google','#4285F4'],'TikTok':['tiktok','#111111']};
