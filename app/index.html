@@ -2270,7 +2270,7 @@ async function exportarSlides(grupo){
       if (l.custo!=null && l.custoMeta && l.custo>l.custoMeta*1.1) pts.push(en ? `${n}: ${T.cpr[l.tipo]||'cost'} ${Math.round((l.custo/l.custoMeta-1)*100)}% above goal.` : `${n}: ${T.cpr[l.tipo]||'custo'} ${Math.round((l.custo/l.custoMeta-1)*100)}% acima da meta.`);
       const rd = l.plano ? l.dia/l.plano : null; if (rd!=null && (rd<0.85 || rd>1.15)) pts.push(en ? `${n}: spending ${Math.round(rd*100)}% of the planned daily budget.` : `${n}: gastando ${Math.round(rd*100)}% do budget diário planejado.`); }
     card(sl, 9.2, 1.45, 3.78, 2.85, T.pontos);
-    sl.addText((pts.length ? pts.slice(0,5) : [T.ok]).map(t=>({text:t, options:{bullet:{indent:12}, breakLine:true}})), {x:9.35, y:1.88, w:3.5, h:2.3, fontFace:F, fontSize:10.5, color:C.txt, valign:'top', paraSpaceAfter:4});
+    sl.addText((pts.length ? pts.slice(0,5) : [linhas.some(l=>l.meta) ? T.ok : (en ? 'No goal set on the platform.' : 'Sem meta cadastrada na plataforma.')]).map(t=>({text:t, options:{bullet:{indent:12}, breakLine:true}})), {x:9.35, y:1.88, w:3.5, h:2.3, fontFace:F, fontSize:10.5, color:C.txt, valign:'top', paraSpaceAfter:4});
     card(sl, 9.2, 4.45, 3.78, 2.4, T.coment);
     sl.addText(T.escreva, {x:9.35, y:4.88, w:3.5, h:1.85, fontFace:F, fontSize:10.5, color:'A8B4B8', italic:true, valign:'top'});
     // rodapé
