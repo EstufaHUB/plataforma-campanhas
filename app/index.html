@@ -2185,10 +2185,10 @@ function pgStatus(){
   const vinc = {}; for (const c of ativas()) for (const v of (c.metaVinculos||[])) vinc[v.campanhaId] = {c, v};
   const contas = CONTAS_STATUS.length ? CONTAS_STATUS : META_CONTAS.map(m=>({conta:m.conta, grupo:(m.dados||{}).grupo||m.conta}));
   const filtro = (UI.stGrupo||'');
-  const PAIS_RX = new RegExp('^('+Object.keys(PAISES).join('|')+'|UK|KZ|UA|TR|PL|NL|BE|AT|CZ|HU|RO|PT|IE|DK|SE|NO|FI|ZA)$');
+  const PAIS_RX = new RegExp('^('+Object.keys(PAISES).join('|')+'|UK|KZ|UA|TR|TK|PL|NL|BE|AT|CZ|HU|RO|PT|IE|DK|SE|NO|FI|ZA)$');
   const partes = nome => (String(nome).match(/\[([^\]]+)\]/g)||[]).map(x=>x.slice(1,-1).trim());
   const paisDe = nome => { const ps = [...partes(nome), ...String(nome).split(/[_\s-]+/)]; return ps.find(x=>PAIS_RX.test(x)) || null; };
-  const titulo = nome => { const t = partes(nome).filter(x=>!/^ESTUFA$/i.test(x) && !PAIS_RX.test(x) && !/^20\d\d$/.test(x)); if (!t.length) return String(nome).replace(/_(?:[A-Z]{2})_/,' ').replace(/_/g,' ');
+  const titulo = nome => { const t = partes(nome).filter(x=>!/^ESTUFA$/i.test(x) && !PAIS_RX.test(x) && !/^20\d\d/.test(x)); if (!t.length) return String(nome).split('_').filter(x=>!PAIS_RX.test(x) && !/^20\d\d$/.test(x) && !/^estufa$/i.test(x)).join(' ');
     return t.map((x,i)=> i===0 ? x.toLowerCase().replace(/(^|\s)\S/g, m=>m.toUpperCase()) : x).join(' · '); };
   const ultimaAtual = META_CONTAS.reduce((m,r)=>!m||r.atualizado_em>m?r.atualizado_em:m, null), horas = ultimaAtual ? (Date.now()-new Date(ultimaAtual).getTime())/36e5 : null;
   // linha de campanha não vinculada: números direto do Gerenciador (sem meta da plataforma)
@@ -2216,7 +2216,7 @@ function pgStatus(){
       const restam = per.fim ? Math.max(0, difDias(HOJE, per.fim)) : null;
       const cab = `<tr class="st-camp"><td colspan="5">${g.c?`<a ${lk} class="st-nome">${h(g.titulo)}</a>`:`<span class="st-nome">${h(g.titulo)}</span>`}${g.fase?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}</span>`:''}${g.c?'':' <span class="tag">Só no Gerenciador</span>'}<span class="small muted" style="margin-left:10px">${per.ini?fdm(per.ini):'?'} → ${per.fim?fdm(per.fim):'sem fim'}${restam!=null?` · ${restam} dias restantes`:''}</span></td></tr>`;
       const linhas = g.linhas.sort((a,b)=>(a.p==='BR'?-1:b.p==='BR'?1:(a.p||'zz').localeCompare(b.p||'zz'))).map(({mc, p, vi})=>{
-        const rot = p ? (PAISES[p] ? PAISES[p].f+' '+PAISES[p].n : p) : h(mc.nome.slice(0,28));
+        const rot = p ? (PAISES[p] ? PAISES[p].f+' '+PAISES[p].n : p) : 'Geral';
         if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null), n = niv(m); cont[n ? n.t : 'sem']++;
           return `<tr class="st-pais ${n&&n.t==='Crítica'?'critica':''}"><td title="${h(mc.nome)}"><span class="ponto-st" style="background:${corN(n)}" title="${n?n.t:'Sem farol'}"></span>${rot}</td><td class="stb-cel">${barraRes(m)}</td><td class="stb-cel">${barraCusto(m)}</td><td class="stb-cel">${barraDiario(m)}</td><td class="st-obs">${frase(m)}</td></tr>`; }
         const L2 = linhaMeta(mc, moe); cont.sem++;
