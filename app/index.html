@@ -339,9 +339,15 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 @media (max-width:520px){.g4{grid-template-columns:1fr 1fr}.kpi .v{font-size:1.3rem}}
 @media print{.lateral,.topo,.aviso-demo,.nao-imprimir{display:none!important}.principal{margin:0}.gantt{max-height:none;overflow:visible}}
 /* login e sincronização */
-.tela-login{position:fixed;inset:0;background:var(--fundo);display:flex;align-items:center;justify-content:center;padding:16px;z-index:200}
-.tela-login .caixa{background:var(--sup);border:1px solid var(--borda);border-radius:12px;box-shadow:var(--sombra-f);width:100%;max-width:380px;padding:28px}
-.tela-login h1{font-size:1.25rem;margin:0 0 4px}.tela-login form{display:grid;gap:12px;margin-top:18px}
+.tela-login{position:fixed;inset:0;background:#0a0a0a linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.7)), url(login-fundo.webp) center/cover;background-image:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.7)), url(login-fundo.webp);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:200;overflow:auto}
+.tela-login .login-logo{width:230px;max-width:70%;display:block;margin:0 auto 28px}
+.tela-login .caixa{background:rgba(8,8,8,.55);border:1px solid rgba(252,185,19,.35);border-radius:16px;width:100%;max-width:400px;padding:28px;color:#eee;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.tela-login h1{font-size:1.15rem;margin:0 0 4px;color:#fff;text-align:center}.tela-login .muted{color:#bbb}.tela-login .sub{text-align:center;color:#bbb;font-size:.85rem}
+.tela-login .campo{color:#ccc;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.tela-login .campo input{background:rgba(255,255,255,.92);border:1.5px solid rgba(255,255,255,.2);color:#111;text-transform:none;letter-spacing:0;font-size:.9rem}
+.tela-login .btn-p{background:#FCB913;border-color:#FCB913;color:#111;font-weight:800;padding:11px}.tela-login .btn-p:hover{background:#e6a800;border-color:#e6a800}
+.tela-login .btn{color:#eee;background:transparent;border-color:rgba(255,255,255,.25)}.tela-login .btn-p{color:#111}
+.tela-login .links a{color:#ddd}.tela-login .links a:hover{color:#FCB913}.tela-login form{display:grid;gap:12px;margin-top:18px}
 .tela-login .links{display:flex;justify-content:space-between;gap:8px;margin-top:14px;font-size:.84rem}
 .topo-dir{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.8rem;color:var(--tx2);white-space:nowrap}
 #sync.erro{color:#b3392f;font-weight:600}
@@ -923,7 +929,7 @@ window.addEventListener('beforeunload', e => { if (ehEquipe() && (sincronizando 
 /* ---------- tela de login ---------- */
 function telaLogin(modo='entrar', msg=''){
   const t = {entrar:'Entrar', criar:'Criar conta', esqueci:'Recuperar senha', nova:'Definir nova senha'}[modo];
-  $('#login-raiz').innerHTML = `<div class="tela-login"><div class="caixa"><div style="display:flex;gap:14px;align-items:center"><div class="lg-estufa" style="color:#111">estufa<span>▲</span></div><div><h1>Gestão de campanhas</h1><div class="small muted">${t}</div></div></div>
+  $('#login-raiz').innerHTML = `<div class="tela-login"><img class="login-logo" src="logo-estufa.webp" alt="Estufa design & communication"><div class="caixa"><h1>Gestão de campanhas</h1><div class="sub">${t}</div>
     ${msg?`<div class="alerta ${/erro|inválid|não/i.test(msg)?'verm':'verde'}" style="margin:16px 0 0">${h(msg)}</div>`:''}
     <form id="f-login" data-modo="${modo}">
       ${modo==='criar'?'<label class="campo">Nome<input name="nome" required autocomplete="name"></label>':''}
@@ -934,7 +940,7 @@ function telaLogin(modo='entrar', msg=''){
   icones();
 }
 function telaPendente(){
-  $('#login-raiz').innerHTML = `<div class="tela-login"><div class="caixa"><h1>Acesso aguardando liberação</h1><p class="muted">Sua conta <b>${h(SESSAO.user.email)}</b> foi criada. Um administrador precisa liberar o seu acesso em Configurações → Usuários e perfis.</p><div style="display:flex;gap:8px"><button class="btn" data-act="recarregar">Já fui liberado</button><button class="btn" data-act="sair">Sair</button></div></div></div>`;
+  $('#login-raiz').innerHTML = `<div class="tela-login"><img class="login-logo" src="logo-estufa.webp" alt="Estufa design & communication"><div class="caixa"><h1>Acesso aguardando liberação</h1><p class="muted">Sua conta <b>${h(SESSAO.user.email)}</b> foi criada. Um administrador precisa liberar o seu acesso em Configurações → Usuários e perfis.</p><div style="display:flex;gap:8px"><button class="btn" data-act="recarregar">Já fui liberado</button><button class="btn" data-act="sair">Sair</button></div></div></div>`;
 }
 document.addEventListener('submit', e => { if (e.target.closest('#f-login')) return; const m = e.target.closest('.modal'); if (!m) return; e.preventDefault(); const b = m.querySelector('.modal-rod .btn-p'); if (b) b.click(); });
 document.addEventListener('submit', async e => { const f = e.target.closest('#f-login'); if (!f) return; e.preventDefault();
