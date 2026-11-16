@@ -1781,13 +1781,18 @@ function medidorSaude(pos, cor){   // pos 0 (crítico) .. 1 (ótimo); null = sem
     return `<path d="M${x0} ${y0} A${R} ${R} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${r0} ${r0} 0 0 0 ${x3} ${y3} Z" fill="${pos==null?'#dfe3e5':c}"/>`; }).join('');
   const a = Math.PI * (pos==null ? 0.5 : Math.max(0.02, Math.min(0.98, pos))), [px,py] = ponto(a, 66), [b1x,b1y] = ponto(a+Math.PI/2, 7), [b2x,b2y] = ponto(a-Math.PI/2, 7);
   return `<svg viewBox="0 0 220 120" width="100%" style="max-width:260px">${arcos}${pos==null?'':`<path d="M${b1x} ${b1y} L${px} ${py} L${b2x} ${b2y} Z" fill="#2b3437"/><circle cx="${cx}" cy="${cy}" r="9" fill="#2b3437"/><circle cx="${cx}" cy="${cy}" r="3.5" fill="#fff"/>`}</svg>`; }
+/* awareness: o que conta como resultado depende do objetivo de mídia do canal */
+const MET_AW = {'Engajamento':{k:'engaj', rot:'Engajamento', pl:'engajamentos', un:'engajamento', ic:'heart-handshake'}, 'Link click':{k:'cliquesLink', rot:'Cliques no link', pl:'cliques no link', un:'clique', ic:'mouse-pointer-click'}, 'Tráfego':{k:'cliquesLink', rot:'Cliques no link', pl:'cliques no link', un:'clique', ic:'mouse-pointer-click'}, 'Visita':{k:'visitas', rot:'Visitas à página', pl:'visitas', un:'visita', ic:'globe'}};
+const metAw = x => MET_AW[(x && x.objMidia) || 'Engajamento'] || null;
 function dadosSaude(c){
   const mf = marcaFiltro(c), pf = paisFiltro(c), linhas = resultadosDaFase(c).filter(r=>(!mf || (r.dados.vinculo||{}).marca===mf) && (!pf || (r.dados.vinculo||{}).pais===pf)).map(r=>{ const v = r.dados.vinculo || {}, chv = {canal:v.canal, marca: v.marca && marcaSeparada(c) ? v.marca : null, fase: faseada(c) ? (v.fase || 'Lead gen') : null}, key = v.canal + (chv.marca?'|'+chv.marca:'') + (chv.fase?'@'+chv.fase:''), cf = (c.canaisCfg||{})[key] || {};
     const pc = (cf.paises||[]).find(p=>p.cod===v.pais), bud = pc ? +pc.budget||0 : +cf.orcamento||0;
     const b = c.budgets.find(x=>x.canal===v.canal && x.pais===v.pais && mesmaLinha(x, chv));
-    const cplMeta = cf.objetivo==='Awareness' ? null : custoLinha(b), leadsMeta = cplMeta>0 ? Math.round(bud/cplMeta) : null;   // em awareness o custo não é CPL
+    // objetivo efetivo: o do canal (ou o padrão da campanha); objetivos de mídia de clique/visita/engajamento contam como awareness
+    const objEf = (objCanal(c, cf)==='Awareness' || (cf.objMidia && MET_AW[cf.objMidia])) ? 'Awareness' : (objCanal(c, cf) || null);
+    const cplMeta = objEf==='Awareness' ? null : custoLinha(b), leadsMeta = cplMeta>0 ? Math.round(bud/cplMeta) : null;   // em awareness o custo não é CPL
     const leads = +r.dados.leads||0, inv = +r.dados.investido||0;
-    return {r, v, bud, cplMeta, leadsMeta, custoAw: cf.objetivo==='Awareness' ? custoLinha(b) : null, objMidia: cf.objMidia||null, leads, inv, alcance:+r.dados.alcance||0, impressoes:+r.dados.impressoes||0, cliques:+r.dados.cliques||0, engaj:+r.dados.engajamentos||0, objetivo:cf.objetivo||null, cpl: leads ? inv/leads : null, moeda: r.dados.moeda || cf.moeda || c.moeda || 'BRL', porDia: r.dados.porDia||[], atualizado: r.atualizado_em}; });
+    return {r, v, bud, cplMeta, leadsMeta, custoAw: objEf==='Awareness' ? custoLinha(b) : null, objMidia: cf.objMidia||null, leads, inv, alcance:+r.dados.alcance||0, impressoes:+r.dados.impressoes||0, cliques:+r.dados.cliques||0, engaj:+r.dados.engajamentos||0, cliquesLink:+r.dados.cliquesLink||0, visitas:+r.dados.visitas||0, objetivo:objEf, cpl: leads ? inv/leads : null, moeda: r.dados.moeda || cf.moeda || c.moeda || 'BRL', porDia: r.dados.porDia||[], atualizado: r.atualizado_em}; });
   let ini = c.lancamento, fim = c.fimVeiculacao || c.lancamento;
   if (faseada(c) && linhas.length) { const fs = [...new Set(linhas.map(x=>x.v.fase||'Lead gen'))]; if (fs.length===1) { const pf = periodoFase(c, fs[0]); ini = pf.ini || ini; fim = pf.fim || fim; } }
   const total = Math.max(1, difDias(ini, fim)+1);
@@ -1799,8 +1804,8 @@ function dadosSaude(c){
     ritmo = lr / (lm*frac); const cplR = lr ? inv/lr : null, cplM = bud/lm; cplRatio = cplR ? cplM/cplR : 0;
     score = Math.min(ritmo, cplRatio); }
   let tipoScore = 'leads';
-  if (score==null && linhas.length && frac>0 && linhas.every(x=>x.objetivo==='Awareness' && x.custoAw>0 && (x.objMidia||'Engajamento')==='Engajamento')) {   // awareness: engajamento × custo por engajamento
-    const em = linhas.reduce((s,x)=>s+x.bud/x.custoAw,0), er = linhas.reduce((s,x)=>s+x.engaj,0), inv = linhas.reduce((s,x)=>s+x.inv,0), bud = linhas.reduce((s,x)=>s+x.bud,0);
+  if (score==null && linhas.length && frac>0 && linhas.every(x=>x.objetivo==='Awareness' && x.custoAw>0 && metAw(x) && metAw(x).k===metAw(linhas[0]).k)) {   // awareness: resultado do objetivo de mídia × custo
+    const mk = metAw(linhas[0]).k, em = linhas.reduce((s,x)=>s+x.bud/x.custoAw,0), er = linhas.reduce((s,x)=>s+(+x[mk]||0),0), inv = linhas.reduce((s,x)=>s+x.inv,0), bud = linhas.reduce((s,x)=>s+x.bud,0);
     ritmo = er/(em*Math.min(1,frac)); cplRatio = er && inv ? (bud/em)/(inv/er) : 0; score = Math.min(ritmo, cplRatio); tipoScore = 'engajamento'; }
   return {linhas, ini, fim, total, decorridos, frac, restam, score, ritmo, cplRatio, tipoScore}; }
 function pontosAtencao(c, S2){   // [{t, n}] n = verm | amar | verde | info
@@ -1892,7 +1897,7 @@ function faixaFim(c, S2, o){   // o = {real, meta, rotulo, custoReal, custoMeta,
 /* saúde de campanha (ou fase) de awareness: alcance, engajamento e investimento */
 function saudeAwareness(c, S2){
   const moe = S2.linhas[0].moeda, mc = v => v!=null && v<0.1 ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:moe,minimumFractionDigits:4,maximumFractionDigits:4}) : moeda2(v, moe), soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0), pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
-  const alc = soma('alcance'), imp = soma('impressoes'), eng = soma('engaj'), cli = soma('cliques'), inv = soma('inv'), bud = soma('bud');
+  const M = metAw(S2.linhas[0]) || MET_AW['Engajamento'], alc = soma('alcance'), imp = soma('impressoes'), eng = soma(M.k), cli = soma('cliques'), inv = soma('inv'), bud = soma('bud');
   const cpm = imp ? inv/imp*1000 : null, freq = alc ? imp/alc : null, cpe = eng ? inv/eng : null, taxa = imp ? eng/imp : null;
   const encerrada = S2.frac>=1, emCurso = S2.frac>0 && S2.frac<1, projI = emCurso ? inv/S2.frac : null;
   const pill = (cls, t) => `<span class="sd-pill sd-${cls}">${t}</span>`;
@@ -1901,14 +1906,14 @@ function saudeAwareness(c, S2){
   const porMarca = k => { const m = {}; for (const x of S2.linhas) { const n = [x.v.marca, x.v.pais].filter(Boolean).join(' · ') || 'Campanha'; (m[n] = m[n] || {v:0, mk:x.v.marca, pais:x.v.pais}).v += (+x[k]||0); } const e = Object.entries(m); return e.length>1 ? `<div class="sd-pais">${e.map(([n,o])=>linhaSaude(c, o.mk, o.pais, `<b>${k==='inv'?moedaCurta(o.v,moe):numCurto(o.v)}</b>`)).join('')}</div>` : ''; };
   const cAlc = cartao('radio-tower', 'Alcance', numCurto(alc), 'pessoas', barra(Math.min(1, (freq||0)/4), '#2f80b8', null), `Impressões: ${numCurto(imp)} · frequência ${freq?freq.toLocaleString('pt-BR',{maximumFractionDigits:2}):'—'}`,
     freq==null ? pill('cinza','Sem dados') : freq>3.5 ? pill('amar','Frequência alta') : pill('verde','Frequência saudável'), `CPM: <b>${moeda2(cpm, moe)}</b>`) .replace('</div></div>', porMarca('alcance')+'</div></div>');
-  const comMeta = S2.linhas.filter(x=>x.custoAw>0 && (x.objMidia||'Engajamento')==='Engajamento'), engMeta = comMeta.length===S2.linhas.length ? comMeta.reduce((s,x)=>s+x.bud/x.custoAw,0) : null, cpeMeta = engMeta ? bud/engMeta : null;
+  const comMeta = S2.linhas.filter(x=>x.custoAw>0 && metAw(x) && metAw(x).k===M.k), engMeta = comMeta.length===S2.linhas.length ? comMeta.reduce((s,x)=>s+x.bud/x.custoAw,0) : null, cpeMeta = engMeta ? bud/engMeta : null;
   const espE = engMeta ? engMeta*Math.min(1,S2.frac) : null, dE = espE ? eng/espE-1 : null, dC = cpe && cpeMeta ? cpe/cpeMeta-1 : null;
-  const cEng = cartao('heart-handshake', 'Engajamento', numCurto(eng), engMeta ? 'de '+numCurto(engMeta) : 'interações',
+  const cEng = cartao(M.ic, M.rot, numCurto(eng), engMeta ? 'de '+numCurto(engMeta) : (M.k==='engaj'?'interações':M.pl),
     engMeta ? barra(eng/engMeta, dE<-0.1?'#e0a100':'#2e9d55', Math.min(1,S2.frac), encerrada?'Meta da fase':'Esperado hoje') : barra(Math.min(1, (taxa||0)/0.6), '#2e9d55', null),
-    `Custo por engajamento: ${cpe!=null?mc(cpe):'—'}${cpeMeta?` · meta ${mc(cpeMeta)}`:''}`,
+    `Custo por ${M.un}: ${cpe!=null?mc(cpe):'—'}${cpeMeta?` · meta ${mc(cpeMeta)}`:''}`,
     engMeta ? pill(dE<-0.25||dC>0.15?'verm':dE<-0.1||dC>0.05?'amar':'verde', `${Math.round(eng/engMeta*100)}% da meta${dC!=null?` · custo ${Math.round(Math.abs(dC)*100)}% ${dC>0?'acima':'abaixo'}`:''}`)
       : taxa==null ? pill('cinza','Sem dados') : pill('cinza','Meta a definir'),
-    `${(taxa*100||0).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões · cliques: <b>${numCurto(cli)}</b>`).replace('</div></div>', porMarca('engaj')+'</div></div>');
+    `${(taxa*100||0).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões · cliques: <b>${numCurto(cli)}</b>`).replace('</div></div>', porMarca(M.k)+'</div></div>');
   const dI = bud ? inv/bud - S2.frac : null;
   const cInv = cartao('wallet', 'Investimento', moedaCurta(inv,moe), bud?'de '+moedaCurta(bud,moe):'', bud ? barra(inv/bud, '#2f80b8', Math.min(1,S2.frac), 'Ideal hoje') : barra(0,'#ccc',null),
     bud ? (encerrada ? `Fase encerrada · ${Math.round(inv/bud*100)}% do budget investido · média de ${moeda2(inv/S2.total,moe)}/dia (planejado ${moeda2(bud/S2.total,moe)})` : `Ideal hoje: ${moedaCurta(bud*S2.frac,moe)}${projI!=null?` · projeção ${moedaCurta(projI,moe)}`:''}${(g=>g.real!=null?`<br>Diário: <b>${moeda2(g.real,moe)}</b> (7 dias) · planejado ${moeda2(g.plano,moe)}`:'')(gastoDiario(S2, S2.linhas))}`) : 'Sem budget',
@@ -1924,10 +1929,10 @@ function saudeAwareness(c, S2){
   if (freq!=null) pts.push(freq>3.5 ? {n:'amar', t:`Frequência de ${freq.toLocaleString('pt-BR',{maximumFractionDigits:1})}: o mesmo público está vendo muitas vezes. Vale renovar criativos ou ampliar o público.`} : {n:'verde', t:`Frequência de ${freq.toLocaleString('pt-BR',{maximumFractionDigits:1})}: alcance bem distribuído.`});
   const cpms = S2.linhas.filter(x=>x.impressoes).map(x=>({n:[x.v.marca,x.v.pais].filter(Boolean).join(' · '), cpm:x.inv/x.impressoes*1000})).sort((a,b)=>a.cpm-b.cpm);
   if (cpms.length>1) pts.push({n:'info', t:`CPM mais baixo: ${cpms[0].n} (${moeda2(cpms[0].cpm,moe)}); mais alto: ${cpms[cpms.length-1].n} (${moeda2(cpms[cpms.length-1].cpm,moe)}).`});
-  if (engMeta) { const r = eng/engMeta; pts.push({n: r>=1?'verde':r>=0.85?'amar':'verm', t:`${encerrada?'A fase fechou com':'Até agora,'} ${numCurto(eng)} engajamentos de ${numCurto(engMeta)} previstos (${Math.round(r*100)}%), a ${mc(cpe)} cada (meta ${mc(cpeMeta)}).`}); }
-  else if (taxa!=null) pts.push({n: taxa>=0.3?'verde':'amar', t:`${(taxa*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões geraram engajamento (custo de ${mc(cpe)} por interação).`});
+  if (engMeta) { const r = eng/engMeta; pts.push({n: r>=1?'verde':r>=0.85?'amar':'verm', t:`${encerrada?'A fase fechou com':'Até agora,'} ${numCurto(eng)} ${M.pl} de ${numCurto(engMeta)} previstos (${Math.round(r*100)}%), a ${mc(cpe)} cada (meta ${mc(cpeMeta)}).`}); }
+  else if (taxa!=null && M.k==='engaj') pts.push({n: taxa>=0.3?'verde':'amar', t:`${(taxa*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% das impressões geraram engajamento (custo de ${mc(cpe)} por interação).`});
   const ordem = {verm:0, amar:1, verde:2, info:3}; pts.sort((a,b)=>ordem[a.n]-ordem[b.n]); S2._pts = pts;
-  return faixaFim(c, S2, {real:eng, meta:engMeta, rotulo:'engajamento', custoReal:cpe, custoMeta:cpeMeta, rotCusto:'custo por engajamento', fmt:numCurto}) + `<div class="sd-kpis">${cAlc}${cEng}${cInv}</div>
+  return faixaFim(c, S2, {real:eng, meta:engMeta, rotulo:M.un, custoReal:cpe, custoMeta:cpeMeta, rotCusto:'custo por '+M.un, fmt:numCurto}) + `<div class="sd-kpis">${cAlc}${cEng}${cInv}</div>
   <div class="sd-meio">
     <div class="card card-p"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="sd-lb"><i data-lucide="trending-up"></i>Impressões acumuladas</div><div class="sd-leg"><span><i></i>Real</span>${emCurso?'<span><i class="p"></i>Projeção</span>':''}</div></div><div class="sd-graf" data-c="${c.id}" data-campo="impressoes"></div></div>
     <div class="card card-p"><div class="sd-lb"><i data-lucide="alert-triangle"></i>Pontos de atenção</div>${pts.length?`<ul class="pts">${pts.map(x=>`<li><i class="p-${x.n}"></i><span>${h(x.t)}</span></li>`).join('')}</ul>`:'<div class="small muted" style="margin-top:8px">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta.</div></div>
@@ -2185,8 +2190,8 @@ function metricasStatus(c, etapa, marca, pais){
   const L = S2.linhas; if (!L.length) return {S2, vazio:true, pts:[]};
   const soma = k => L.reduce((t,x)=>t+(+x[k]||0),0), moe = L[0].moeda, inv = soma('inv'), bud = soma('bud');
   const aw = L.every(x=>x.objetivo==='Awareness');
-  if (aw) { const real = soma('engaj'), comM = L.filter(x=>x.custoAw>0), meta = comM.length===L.length ? comM.reduce((t,x)=>t+x.bud/x.custoAw,0) : null;
-    return {S2, pts, aw, moe, inv, bud, rotRes:'engajamentos', rotCusto:'custo por engajamento', real, meta, custo: real ? inv/real : null, custoMeta: meta ? bud/meta : null}; }
+  if (aw) { const M = metAw(L[0]) || MET_AW['Engajamento'], real = soma(M.k), comM = L.filter(x=>x.custoAw>0 && metAw(x) && metAw(x).k===M.k), meta = comM.length===L.length ? comM.reduce((t,x)=>t+x.bud/x.custoAw,0) : null;
+    return {S2, pts, aw, moe, inv, bud, rotRes:M.pl, rotCusto:'custo por '+M.un, real, meta, custo: real ? inv/real : null, custoMeta: meta ? bud/meta : null}; }
   const real = soma('leads'), meta = L.every(x=>x.leadsMeta) ? soma('leadsMeta') : null, lmx = L.every(x=>x.cplMeta>0) ? L.reduce((t,x)=>t+x.bud/x.cplMeta,0) : null;
   return {S2, pts, aw, moe, inv, bud, rotRes:'leads', rotCusto:'CPL', real, meta, custo: real ? inv/real : null, custoMeta: lmx ? bud/lmx : null}; }
 const campanhaNoAr = c => c.status!=='Concluída' && (c.status==='Em veiculação' || (c.lancamento && c.fimVeiculacao && c.lancamento<=HOJE && HOJE<=c.fimVeiculacao));
@@ -2254,7 +2259,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     const linhas = g.linhas.map(({mc, p, vi})=>{
       if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null); if (m.vazio) return {p, vazio:true};
         const gd = gastoDiario(m.S2, m.S2.linhas), esp = Math.min(1, m.S2.frac);
-        return {p, tipo: m.aw ? 'engajamentos' : 'leads', real:m.real, meta:m.meta, rit: m.meta && esp ? (m.real/m.meta)/esp : null, custo:m.custo, custoMeta:m.custoMeta, plano:gd.plano, dia: m.S2.frac>=1 ? m.inv/m.S2.total : gd.real, inv:m.inv}; }
+        return {p, tipo: m.aw ? (m.rotRes==='engajamentos' ? 'engajamentos' : m.rotRes==='visitas' ? 'visitas' : 'cliques') : 'leads', real:m.real, meta:m.meta, rit: m.meta && esp ? (m.real/m.meta)/esp : null, custo:m.custo, custoMeta:m.custoMeta, plano:gd.plano, dia: m.S2.frac>=1 ? m.inv/m.S2.total : gd.real, inv:m.inv}; }
       return {p, tipo: mc.tipoResultado, real:mc.resultados, meta:null, rit:null, custo:mc.custoResultado, custoMeta:null, plano:mc.budgetDiario, dia: mc.gasto7/7, inv:mc.investido}; }).filter(x=>!x.vazio);
     const tipo = (linhas[0]||{}).tipo || 'leads';
     const agg = g.c ? metricasStatus(g.c, g.fase||null, (g.linhas.find(l=>l.vi)||{}).vi?.v.marca || null) : null, nv = agg && !agg.vazio ? nivelSaude(agg.S2.score) : null;

@@ -169,7 +169,9 @@ Deno.serve(async (req) => {
           alcance: +(total.reach as string) || 0,
           leads: leadsDe(total.actions as never, v.acaoResultado),
           engajamentos: acaoDe(total.actions as never, "post_engagement"),
-          porDia: dias.map((d) => ({ data: d.date_start, investido: +(d.spend as string) || 0, leads: leadsDe(d.actions as never, v.acaoResultado), impressoes: +(d.impressions as string) || 0, engajamentos: acaoDe(d.actions as never, "post_engagement") })),
+          cliquesLink: acaoDe(total.actions as never, "link_click"),
+          visitas: acaoDe(total.actions as never, "landing_page_view"),
+          porDia: dias.map((d) => ({ data: d.date_start, investido: +(d.spend as string) || 0, leads: leadsDe(d.actions as never, v.acaoResultado), impressoes: +(d.impressions as string) || 0, engajamentos: acaoDe(d.actions as never, "post_engagement"), cliquesLink: acaoDe(d.actions as never, "link_click"), visitas: acaoDe(d.actions as never, "landing_page_view") })),
           fonte: "Meta Graph API",
         };
         await admin.from("resultados_meta").upsert({ campanha_id: c.id, meta_campanha: v.campanhaId, dados, atualizado_em: new Date().toISOString() });
