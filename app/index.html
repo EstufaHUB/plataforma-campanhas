@@ -1653,7 +1653,7 @@ function secaoKpis(c){
 const KPI_COLUNAS = {'Geração de leads':{vol:'Leads', custo:'CPL', fator:1}, 'Awareness':{vol:'Impressões', custo:'CPM', fator:1000}};
 const moeda2 = (v,m='BRL') => v==null||!isFinite(v) ? '—' : Number(v).toLocaleString('pt-BR',{style:'currency',currency:m,minimumFractionDigits:2,maximumFractionDigits:2});
 const OBJ_CANAL = ['Leads','Awareness'];
-const OBJ_MIDIA = ['Conversão','Alcance','Engajamento','Visita','Tráfego'];
+const OBJ_MIDIA = ['Conversão','Alcance','Engajamento','Visita','Tráfego','Link click','TrueView'];
 /* objetivo do canal (o escolhido no canal ou, se não houver, o da campanha) */
 const objCanal = (c, cf) => cf.objetivo || ((c.objetivos||[])[0]==='Awareness' ? 'Awareness' : (c.objetivos||[]).length ? 'Leads' : null);
 const custoLinha = b => !b || !b.kpis ? null : (b.kpis.custo ?? b.kpis.CPL ?? b.kpis.CPM ?? null);
