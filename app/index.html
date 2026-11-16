@@ -2330,10 +2330,9 @@ function pgStatus(){
     const dias = mc.fim ? Math.max(0, difDias(HOJE, mc.fim.slice(0,10))) : null;
     const notas = []; if (r!=null && r<0.85) notas.push(['amar', `Gastando ${Math.round(r*100)}% do budget diário do Gerenciador.`]); if (r!=null && r>1.15) notas.push(['amar', `Gastando acima do budget diário (${Math.round(r*100)}%).`]);
     if (!mc.resultados && mc.investido>0) notas.push(['verm', `Sem ${mc.tipoResultado} até agora.`]);
-    notas.push(['info', 'Sem meta na plataforma.']);
     return {cel1: celSemMeta(numCurto(mc.resultados), mc.tipoResultado), cel2: mc.custoResultado!=null ? celSemMeta(mcusto(mc.custoResultado, moe), 'por '+(mc.tipoResultado==='alcance'?'pessoa':mc.tipoResultado.replace(/s$/,''))) : '<span class="muted small">—</span>',
       cel3: pl ? cel(moeda2(real, moe), curto(pl, moe), Math.round(r*100)+'%', r/(Math.max(r,1)*1.15), cls, 1/(Math.max(r,1)*1.15)) : `<div class="stb-top"><b>${moeda2(real, moe)}</b><span class="muted">/ dia</span></div>`,
-      fr: notas.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join(''), cor: notas.some(x=>x[0]==='verm') ? '#d0443a' : notas.some(x=>x[0]==='amar') ? '#e0a100' : '#c9d3d6', dias}; };
+      fr: notas.length ? notas.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join('') : '<span class="muted">No ritmo.</span>', cor: notas.some(x=>x[0]==='verm') ? '#d0443a' : notas.some(x=>x[0]==='amar') ? '#e0a100' : '#c9d3d6', dias}; };
   const cont = {Saudável:0, Atenção:0, Crítica:0, sem:0}; const nCamp = new Set();
   const tipoF = UI.stTipo ?? 'pontuais', abertos = UI.stAbertos || (UI.stAbertos = {});
   const ORD = {Crítica:0, Atenção:1, Saudável:2};
