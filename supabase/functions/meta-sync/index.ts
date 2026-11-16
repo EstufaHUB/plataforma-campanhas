@@ -57,6 +57,37 @@ function resultado(obj: string, a: Acao[] | undefined, reach: number) {
   if (obj === "OUTCOME_SALES") return { n: Math.max(acao(a, "offsite_conversion.fb_pixel_purchase"), acao(a, "purchase")), tipo: "compras" };
   return { n: acao(a, "link_click"), tipo: "cliques" };
 }
+// ---------- custo de referência: média dos últimos 6 meses por objetivo de mídia e país ----------
+const PAISES_COD = ["DE","FR","IT","UK","GB","ES","NL","BR","AR","CL","CO","MX","PY","UY","US","CA","AU","NZ","JP","PE","KZ","UA","TR","PL","BE","AT","CZ","HU","RO","PT","IE","DK","SE","NO","FI","ZA"];
+const paisNome = (n: string) => { const c = String(n).toUpperCase().split(/[_\s\-|·]+/).find((x) => PAISES_COD.includes(x)); return c === "GB" ? "UK" : c || null; };
+const OBJ_LEAD = ["OUTCOME_LEADS", "LEAD_GENERATION", "CONVERSIONS"], OBJ_AW = ["OUTCOME_AWARENESS", "REACH", "BRAND_AWARENESS"], OBJ_ENG = ["OUTCOME_ENGAGEMENT", "POST_ENGAGEMENT", "VIDEO_VIEWS", "PAGE_LIKES"], OBJ_TRAF = ["OUTCOME_TRAFFIC", "LINK_CLICKS"];
+// objetivo de mídia da plataforma → campanhas do mesmo tipo no Meta e o que conta como resultado (Alcance: custo por mil pessoas)
+const METRICAS: Record<string, { objs: string[]; res: (a: Acao[] | undefined, reach: number) => number; mil?: boolean }> = {
+  "Conversão": { objs: OBJ_LEAD, res: (a) => { const l = leadsDe(a); if (l) return l; const cust = (a || []).filter((x) => x.action_type.startsWith("offsite_conversion.custom.")).map((x) => +x.value || 0); return cust.length ? Math.max(...cust) : 0; } },
+  "Alcance": { objs: OBJ_AW, res: (_a, reach) => reach, mil: true },
+  "Engajamento": { objs: OBJ_ENG, res: (a) => acao(a, "post_engagement") },
+  "Tráfego": { objs: OBJ_TRAF, res: (a) => acao(a, "link_click") },
+  "Link click": { objs: OBJ_TRAF, res: (a) => acao(a, "link_click") },
+  "Visita": { objs: OBJ_TRAF, res: (a) => acao(a, "landing_page_view") },
+};
+async function referencia(act: string, token: string) {
+  const ate = new Date(), desde = new Date(ate.getTime() - 182 * 864e5), d = (x: Date) => x.toISOString().slice(0, 10);
+  const linhas = await graph(`${act}/insights`, token, { level: "campaign", time_range: JSON.stringify({ since: d(desde), until: d(ate) }), fields: "campaign_id,campaign_name,objective,spend,reach,actions", limit: "500" });
+  const porObj: Record<string, Record<string, { gasto: number; res: number; n: number; custo?: number }>> = {};
+  for (const [mid, m] of Object.entries(METRICAS)) {
+    const acc: Record<string, { gasto: number; res: number; n: number }> = {};
+    for (const l of linhas) {
+      if (!m.objs.includes(l.objective as string)) continue;
+      const gasto = +(l.spend as string) || 0, res = m.res(l.actions as Acao[], +(l.reach as string) || 0);
+      if (gasto < 50 || res < (m.mil ? 1000 : 3)) continue;   // ignora campanhas com gasto ou resultado pequenos demais
+      for (const k of [paisNome(l.campaign_name as string) || "?", "*"]) { const x = acc[k] || (acc[k] = { gasto: 0, res: 0, n: 0 }); x.gasto += gasto; x.res += res; x.n++; }
+    }
+    delete acc["?"];
+    for (const x of Object.values(acc)) (x as { custo?: number }).custo = x.gasto / x.res * (m.mil ? 1000 : 1);
+    if (Object.keys(acc).length) porObj[mid] = acc;
+  }
+  return { desde: d(desde), ate: d(ate), porObj };
+}
 async function retratoContas(admin: ReturnType<typeof createClient>, token: string) {
   const { data: cfg } = await admin.from("config").select("valor").eq("chave", "contasStatus").single();
   const contas = (cfg?.valor || []) as { conta: string; nome: string; grupo: string }[];
@@ -91,7 +122,8 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
           investido: inv, impressoes: +(t.impressions as string) || 0, alcance: +(t.reach as string) || 0, cliques: +(t.clicks as string) || 0,
           resultados: r.n, tipoResultado: r.tipo, custoResultado: r.n ? inv / r.n : null, gasto7: inv7, resultados7: r7.n };
       });
-      await admin.from("meta_contas").upsert({ conta: ct.conta, dados: { nome: info?.name || ct.nome, moeda: info?.currency || null, grupo: ct.grupo, campanhas }, atualizado_em: new Date().toISOString() });
+      let bench = null; try { bench = await referencia(act, token); } catch (_) { /* sem referência nesta rodada */ }
+      await admin.from("meta_contas").upsert({ conta: ct.conta, dados: { nome: info?.name || ct.nome, moeda: info?.currency || null, grupo: ct.grupo, campanhas, bench }, atualizado_em: new Date().toISOString() });
       feito.push({ conta: ct.conta, ok: true, campanhas: campanhas.length });
     } catch (e) { feito.push({ conta: ct.conta, ok: false, erro: String((e as Error).message || e) }); }
   }
