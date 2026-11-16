@@ -2803,7 +2803,7 @@ async function gravarInvoice(x){ if (!sb) return; const {id, ...dados} = x; cons
 function pgInvoices(){
   migalha([['Administrativo'],['Invoices']]);
   if (!ehEquipe()) return '<div class="vazio">Somente a equipe da agência acessa esta página.</div>';
-  const f = UI.inv || (UI.inv = {cliente:'', status:'', ano:HOJE.slice(0,4), mes:'', busca:''});
+  const f = UI.inv || (UI.inv = {cliente:'', status:'', ano:'', mes:'', busca:''});
   let L = INVOICES.filter(x=>(!f.cliente || x.clienteId===f.cliente) && (!f.status || statusInv(x)===f.status) && (!f.ano || (x.mesRef||x.envio||'').startsWith(f.ano)) && (!f.mes || (x.mesRef||'').slice(5,7)===f.mes) && (!f.busca || [x.numero, x.descricao, (camp(x.campId)||{}).nome].join(' ').toLowerCase().includes(f.busca.toLowerCase())));
   L.sort((a,b)=>(a.mesRef||'9999').localeCompare(b.mesRef||'9999') || (a.numero||'').localeCompare(b.numero||''));
   const tot = (st) => { const xs = L.filter(x=>statusInv(x)===st); const o = {}; xs.forEach(x=>{ o[x.moeda||'BRL'] = (o[x.moeda||'BRL']||0) + (+x.valor||0); }); return {n:xs.length, v:Object.entries(o).map(([m,v])=>moedaCurta(v,m)).join(' + ') || '—'}; };
