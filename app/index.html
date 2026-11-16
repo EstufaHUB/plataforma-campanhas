@@ -2187,7 +2187,8 @@ function pgStatus(){
     for (const mk of (marcas.length ? marcas : ['Sem marca'])) {
       const ps = [...new Set(rows.filter(v=>(v.marca||marcasDe(c)[0]||'Sem marca')===mk).map(v=>v.pais||null))].sort();
       const paises = ps.map(p=>({p, m: metricasStatus(c, f, rows.some(v=>v.marca)?mk:null, p)}));
-      (grupos[mk] = grupos[mk] || []).push({c, f, per, paises}); } }
+      const gk = mk==='Collab' ? 'PTx Trimble' : mk;   // Collab entra junto com PTx Trimble
+      (grupos[gk] = grupos[gk] || []).push({c, f, per, paises, mkOrig:mk}); } }
   const ordemMarcas = [...MARCAS, ...Object.keys(grupos).filter(m=>!MARCAS.includes(m))].filter(m=>grupos[m]);
   const pesoM = m => { const n = niv(m); return n ? ({Crítica:0, Atenção:1, Saudável:2})[n.t] : 3; };
   const pesoC = x => x.paises.length ? Math.min(...x.paises.map(y=>pesoM(y.m))) : 3;
@@ -2195,7 +2196,7 @@ function pgStatus(){
   const corpo = ordemMarcas.map(mk=>{ const lista = grupos[mk].sort((a,b)=>pesoC(a)-pesoC(b) || (a.per.fim||'').localeCompare(b.per.fim||''));
     return `<tr class="st-marca"><td colspan="5">${h(mk)} <span>${lista.length} campanha${lista.length===1?'':'s'} no ar</span></td></tr>` + lista.map(x=>{ idsCamp.add(x.c.id);
       const lk = `href="#/campanha/${x.c.id}/saude" onclick="UI.etapa=UI.etapa||{};${x.f?`UI.etapa['${x.c.id}']='${x.f}';`:''}UI.sMarca=UI.sMarca||{};UI.sMarca['${x.c.id}']=${JSON.stringify(mk).replace(/"/g,'&quot;')};UI.sPais=UI.sPais||{};UI.sPais['${x.c.id}']=null"`;
-      const cab = `<tr class="st-camp"><td colspan="5"><a ${lk} class="st-nome">${h(x.c.nome)}</a>${x.f?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(x.f)+1} · ${x.f}</span>`:''}<span class="small muted" style="margin-left:10px">${fdm(x.per.ini)} → ${fdm(x.per.fim)}${x.paises[0]&&!x.paises[0].m.vazio?(x.paises[0].m.S2.frac>=1?' · encerrada':` · ${x.paises[0].m.S2.restam} dias restantes`):''}</span>${x.paises.length?'':'<span class="small muted" style="margin-left:10px">· sem dados do Gerenciador do Meta vinculados</span>'}</td></tr>`;
+      const cab = `<tr class="st-camp"><td colspan="5"><a ${lk} class="st-nome">${h(x.c.nome)}</a>${x.mkOrig && x.mkOrig!==mk ? ` <span class="tag t-pet">${h(x.mkOrig)}</span>` : ''}${x.f?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(x.f)+1} · ${x.f}</span>`:''}<span class="small muted" style="margin-left:10px">${fdm(x.per.ini)} → ${fdm(x.per.fim)}${x.paises[0]&&!x.paises[0].m.vazio?(x.paises[0].m.S2.frac>=1?' · encerrada':` · ${x.paises[0].m.S2.restam} dias restantes`):''}</span>${x.paises.length?'':'<span class="small muted" style="margin-left:10px">· sem dados do Gerenciador do Meta vinculados</span>'}</td></tr>`;
       const linhasP = x.paises.map(y=>{ const n = niv(y.m); cont[n ? n.t : 'sem']++;
         return `<tr class="st-pais ${n&&n.t==='Crítica'?'critica':''}"><td><span class="ponto-st" style="background:${corN(n)}" title="${n?n.t:'Sem farol'}"></span>${y.p ? (PAISES[y.p] ? PAISES[y.p].f+' '+PAISES[y.p].n : h(y.p)) : 'Campanha'}</td>
           <td class="stb-cel">${barraRes(y.m)}</td><td class="stb-cel">${barraCusto(y.m)}</td><td class="stb-cel">${barraDiario(y.m)}</td><td class="st-obs">${frase(y.m)}</td></tr>`; }).join('');
