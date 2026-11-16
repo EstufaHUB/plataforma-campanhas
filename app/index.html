@@ -159,7 +159,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .cc-per{display:flex;align-items:center;gap:5px;margin-top:4px}.cc-per svg{width:13px;height:13px}
 .st-resumo{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:0 0 12px;font-size:.88rem}.st-resumo i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .ponto-st{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}.st-nome{font-weight:600;color:var(--pet-900);text-decoration:none}.st-nome:hover{text-decoration:underline}
-.st-tab td{vertical-align:top}.st-filtro{margin:0 0 12px;flex-wrap:wrap}.st-card{overflow:visible!important}.st-wrap{overflow:visible}
+.st-tab td{vertical-align:top}.exp-marcas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.exp-op{display:flex;flex-direction:column;gap:2px;border:1px solid var(--borda);border-radius:10px;padding:12px 14px;cursor:pointer;position:relative}.exp-op input{position:absolute;top:12px;right:12px}.exp-op span{font-size:.8rem;color:var(--tx2)}.exp-op:has(input:checked){border-color:var(--pet-700);background:#f2f8f9}.st-filtro{margin:0 0 12px;flex-wrap:wrap}.st-card{overflow:visible!important}.st-wrap{overflow:visible}
 .st-tab thead th{position:sticky;top:56px;z-index:6;background:var(--sup);font-size:.86rem;font-weight:800;color:var(--pet-950);text-transform:none;letter-spacing:0;padding-top:12px;padding-bottom:12px;box-shadow:0 1px 0 var(--borda)}
 .stp-pct{margin-left:auto;color:var(--tx2);font-size:.78rem}.stp-fr{display:flex;gap:7px;align-items:baseline;font-size:.84rem;line-height:1.4}.stp-fr+.stp-fr{margin-top:3px}.stp-fr>i{flex:none;width:7px;height:7px;border-radius:50%;transform:translateY(-1px)}
 .stp-fr .p-verm{background:#d0443a}.stp-fr .p-amar{background:#e0a100}.stp-fr .p-verde{background:#2e9d55}.stp-fr .p-info{background:#2f80b8}.st-tab tr.st-pais.critica td:first-child{box-shadow:inset 3px 0 0 #d0443a}.st-tab tr.st-marca td{background:var(--pet-900);color:#fff;font-weight:700;font-size:.95rem;padding:9px 16px;letter-spacing:.01em}.st-tab tr.st-marca td span{font-weight:500;opacity:.75;font-size:.8rem;margin-left:8px}
@@ -2145,6 +2145,125 @@ const campanhaNoAr = c => c.status!=='Concluída' && (c.status==='Em veiculaçã
 function fasesNoAr(c){ if (!faseada(c)) return [null];
   const noAr = FASES_CAMP.filter(f=>{ const p = periodoFase(c,f); return p.ini && p.fim && p.ini<=HOJE && HOJE<=p.fim; });
   if (noAr.length) return noAr; const ja = FASES_CAMP.filter(f=>{ const p = periodoFase(c,f); return p.ini && p.ini<=HOJE; }); return ja.length ? [ja[ja.length-1]] : [FASES_CAMP[0]]; }
+/* ---------- Status pontual: agrupamento das campanhas do Gerenciador (tela e exportação) ---------- */
+const PAIS_RX = new RegExp('^('+Object.keys(PAISES).join('|')+'|UK|KZ|UA|TR|TK|PL|NL|BE|AT|CZ|HU|RO|PT|IE|DK|SE|NO|FI|ZA)$');
+const partes = nome => (String(nome).match(/\[([^\]]+)\]/g)||[]).map(x=>x.slice(1,-1).trim());
+const paisDe = nome => { const ps = [...partes(nome), ...String(nome).split(/[_\s-]+/)]; return ps.find(x=>PAIS_RX.test(x)) || null; };
+const titulo = nome => { const t = partes(nome).filter(x=>!/^ESTUFA$/i.test(x) && !PAIS_RX.test(x) && !/^20\d\d/.test(x)); if (!t.length) return String(nome).split('_').filter(x=>!PAIS_RX.test(x) && !/^20\d\d$/.test(x) && !/^estufa$/i.test(x)).join(' ');
+    return t.map((x,i)=> i===0 ? x.toLowerCase().replace(/(^|\s)\S/g, m=>m.toUpperCase()) : x).join(' · '); };
+function vinculosMeta(){ const v = {}; for (const c of ativas()) for (const x of (c.metaVinculos||[])) v[x.campanhaId] = {c, v:x}; return v; }
+/* campanhas no ar de uma conta, agrupadas (campanha da plataforma + fase, ou nome-base do Gerenciador); uma linha por país */
+function gruposStatusConta(ct, vinc){ const snap = META_CONTAS.find(m=>m.conta===ct.conta), d = (snap||{}).dados || {}, moe = d.moeda || 'BRL', cs = d.campanhas || [], grupos = {};
+  for (const mc of cs) { const vi = vinc[mc.id], p = vi ? vi.v.pais : paisDe(mc.nome);
+    const chave = vi ? 'p|'+vi.c.id+'|'+(vi.v.fase||'') : 'm|'+titulo(mc.nome);
+    const g = grupos[chave] || (grupos[chave] = {vi, titulo: vi ? vi.c.nome : titulo(mc.nome), fase: vi ? vi.v.fase : null, c: vi ? vi.c : null, linhas: [], fim: null, ini: null});
+    g.linhas.push({mc, p, vi}); g.fim = !g.fim || (mc.fim||'') > g.fim ? mc.fim : g.fim; g.ini = !g.ini || (mc.inicio||'') < g.ini ? mc.inicio : g.ini; }
+  const lista = Object.values(grupos).sort((a,b)=>(b.vi?1:0)-(a.vi?1:0) || a.titulo.localeCompare(b.titulo));
+  for (const g of lista) { g.per = g.c ? (g.fase ? periodoFase(g.c, g.fase) : {ini:g.c.lancamento, fim:g.c.fimVeiculacao}) : {ini:(g.ini||'').slice(0,10), fim:(g.fim||'').slice(0,10)};
+    g.restam = g.per.fim ? Math.max(0, difDias(HOJE, g.per.fim)) : null;
+    g.linhas.sort((a,b)=>(a.p==='BR'?-1:b.p==='BR'?1:(a.p||'zz').localeCompare(b.p||'zz'))); }
+  return {snap, d, moe, lista}; }
+/* ---------- exportação para Google Apresentações (.pptx que o Google Slides abre e edita) ---------- */
+function carregarScript(src){ return new Promise((ok, erro)=>{ if ([...document.scripts].some(x=>x.src===src)) return ok(); const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = ()=>erro(new Error('Não foi possível carregar o gerador de slides.')); document.head.appendChild(el); }); }
+/* farol em PNG (a partir do mesmo desenho da Saúde da campanha) */
+function farolPng(pos){ return new Promise(ok=>{ const svg = medidorSaude(pos).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="440" height="240" '), img = new Image();
+  img.onload = ()=>{ const cv = document.createElement('canvas'); cv.width = 440; cv.height = 240; cv.getContext('2d').drawImage(img, 0, 0, 440, 240); ok(cv.toDataURL('image/png')); };
+  img.onerror = ()=>ok(null); img.src = 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); }); }
+function logoPng(){ return new Promise(ok=>{ const img = new Image(); img.onload = ()=>{ const cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight; cv.getContext('2d').drawImage(img,0,0); ok(cv.toDataURL('image/png')); }; img.onerror = ()=>ok(null); img.src = 'logo-ptx.png'; }); }
+async function exportarSlides(grupo){
+  await carregarScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js');
+  const ct = (CONTAS_STATUS.length ? CONTAS_STATUS : []).find(x=>x.grupo===grupo); if (!ct) throw new Error('Conta não encontrada.');
+  const en = /EMEA/i.test(grupo), T = en
+    ? {saude:'Campaign health', termina:'Campaign ends in', dias:'days', encerrada:'Campaign ended', kpis:'KPIs follow-up', pais:'Country', meta:'Goal', ating:'Reached', custo:'Cost', diario:'Daily budget', plan:'Planned', real:'Actual (7d)', pontos:'Points of attention', coment:'Comments', periodo:'Campaign duration', relatorio:'Report date', fonte:'Source: Meta Ads Manager', atualizado:'updated', semMeta:'No goal set', total:'Total', investido:'Invested', fase:'Phase', capa:'Campaign status', campanhas:'campaigns live', ok:'All countries on track.', escreva:'Add comments here…',
+       niv:{Saudável:'Healthy','Atenção':'Attention','Crítica':'Critical'}, tipo:{leads:'Leads','conversões':'Conversions',cliques:'Clicks',engajamentos:'Engagements',alcance:'Reach',compras:'Purchases'}, cpr:{leads:'CPL','conversões':'Cost per conversion',cliques:'CPC',engajamentos:'Cost per engagement',alcance:'Cost per person',compras:'Cost per purchase'}}
+    : {saude:'Saúde da campanha', termina:'A campanha termina em', dias:'dias', encerrada:'Campanha encerrada', kpis:'Acompanhamento de KPIs', pais:'País', meta:'Meta', ating:'Atingido', custo:'Custo', diario:'Budget diário', plan:'Planejado', real:'Real (7d)', pontos:'Pontos de atenção', coment:'Comentários', periodo:'Período de veiculação', relatorio:'Data do relatório', fonte:'Fonte: Gerenciador de Anúncios do Meta', atualizado:'atualizado', semMeta:'Meta a definir', total:'Total', investido:'Investido', fase:'Fase', capa:'Status das campanhas', campanhas:'campanhas no ar', ok:'Todos os países no ritmo.', escreva:'Escreva aqui os comentários…',
+       niv:{Saudável:'Saudável','Atenção':'Atenção','Crítica':'Crítica'}, tipo:{leads:'Leads','conversões':'Conversões',cliques:'Cliques',engajamentos:'Engajamentos',alcance:'Alcance',compras:'Compras'}, cpr:{leads:'CPL','conversões':'Custo por conversão',cliques:'CPC',engajamentos:'Custo por engajamento',alcance:'Custo por pessoa',compras:'Custo por compra'}};
+  const nPais = p => p ? (en ? p : (PAISES[p] ? PAISES[p].n : p)) : (en ? 'General' : 'Geral');
+  const {d, moe, lista} = gruposStatusConta(ct, vinculosMeta());
+  const din = (v, casas=2) => v==null || !isFinite(v) ? '—' : (v<0.1 && v>0 ? mcusto(v, moe) : Number(v).toLocaleString(en?'en-US':'pt-BR', {style:'currency', currency:moe, maximumFractionDigits:casas, minimumFractionDigits: casas}));
+  const num = v => v==null ? '—' : Number(v).toLocaleString(en?'en-US':'pt-BR', {maximumFractionDigits:0});
+  const dt = s => s ? s.slice(8,10)+(en?'.':'/')+s.slice(5,7) : '—';
+  const C = {esc:'12343B', pet:'1F5F6E', fundo:'F3F6F7', borda:'DDE3E5', txt:'1B2A2F', mut:'6B7A80', verde:'2E9D55', verdeF:'E7F4E8', verdeT:'2E6B31', amar:'E0A100', amarF:'FDF3D8', amarT:'8A5A00', verm:'D0443A', vermF:'FDECEA', vermT:'A3261C'};
+  const corR = r => r==null ? null : r>=1 ? 'verde' : r>=0.85 ? 'amar' : 'verm';
+  const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE'; pptx.title = `${T.capa} · ${grupo}`;
+  const logo = /PTx/i.test(grupo) ? await logoPng() : null, F = 'Arial';
+  const card = (sl, x, y, w, hh, tit) => { sl.addShape(pptx.ShapeType.roundRect, {x, y, w, h:hh, fill:{color:'FFFFFF'}, line:{color:C.borda, width:0.75}, rectRadius:0.12});
+    if (tit) sl.addText(tit, {x:x+0.2, y:y+0.12, w:w-0.4, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc}); };
+  // capa
+  { const sl = pptx.addSlide(); sl.background = {color:C.esc};
+    if (logo) sl.addImage({data:logo, x:0.7, y:0.7, w:0.9, h:0.9});
+    sl.addText(T.capa, {x:0.7, y:2.3, w:11, h:0.6, fontFace:F, fontSize:20, color:'9FC3CB'});
+    sl.addText(grupo, {x:0.7, y:2.9, w:11.5, h:1.0, fontFace:F, fontSize:40, bold:true, color:'FFFFFF'});
+    sl.addText(`${lista.length} ${T.campanhas} · ${T.relatorio}: ${fd(HOJE).replace(/\//g, en?'.':'/')}`, {x:0.7, y:3.9, w:11, h:0.5, fontFace:F, fontSize:16, color:'D6E4E7'});
+    sl.addText('estufa', {x:10.6, y:6.5, w:2.2, h:0.5, fontFace:F, fontSize:22, bold:true, color:'FFFFFF', align:'right'}); }
+  for (const g of lista) {
+    const sl = pptx.addSlide(); sl.background = {color:C.fundo};
+    // números por país
+    const linhas = g.linhas.map(({mc, p, vi})=>{
+      if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null); if (m.vazio) return {p, vazio:true};
+        const gd = gastoDiario(m.S2, m.S2.linhas), esp = Math.min(1, m.S2.frac);
+        return {p, tipo: m.aw ? 'engajamentos' : 'leads', real:m.real, meta:m.meta, rit: m.meta && esp ? (m.real/m.meta)/esp : null, custo:m.custo, custoMeta:m.custoMeta, plano:gd.plano, dia: m.S2.frac>=1 ? m.inv/m.S2.total : gd.real, inv:m.inv}; }
+      return {p, tipo: mc.tipoResultado, real:mc.resultados, meta:null, rit:null, custo:mc.custoResultado, custoMeta:null, plano:mc.budgetDiario, dia: mc.gasto7/7, inv:mc.investido}; }).filter(x=>!x.vazio);
+    const tipo = (linhas[0]||{}).tipo || 'leads';
+    const agg = g.c ? metricasStatus(g.c, g.fase||null, (g.linhas.find(l=>l.vi)||{}).vi?.v.marca || null) : null, nv = agg && !agg.vazio ? nivelSaude(agg.S2.score) : null;
+    // cabeçalho
+    sl.addShape(pptx.ShapeType.rect, {x:0, y:0, w:13.33, h:1.05, fill:{color:C.esc}, line:{color:C.esc}});
+    if (logo) sl.addImage({data:logo, x:0.35, y:0.2, w:0.65, h:0.65});
+    const x0 = logo ? 1.15 : 0.4;
+    sl.addText(g.titulo, {x:x0, y:0.12, w:7.6, h:0.5, fontFace:F, fontSize:22, bold:true, color:'FFFFFF'});
+    sl.addText(`${grupo}${g.fase ? ` · ${T.fase} ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}` : ''}`, {x:x0, y:0.6, w:7.6, h:0.32, fontFace:F, fontSize:12, color:'9FC3CB'});
+    sl.addText([{text:T.periodo+'  ', options:{color:'9FC3CB', fontSize:11}}, {text:`${dt(g.per.ini)} → ${dt(g.per.fim)}`, options:{color:'FFFFFF', fontSize:14, bold:true}}], {x:8.7, y:0.14, w:3.4, h:0.4, fontFace:F, align:'right'});
+    sl.addText([{text:T.relatorio+'  ', options:{color:'9FC3CB', fontSize:11}}, {text:dt(HOJE), options:{color:'FFFFFF', fontSize:14, bold:true}}], {x:8.7, y:0.54, w:3.4, h:0.4, fontFace:F, align:'right'});
+    sl.addText('estufa', {x:12.0, y:0.3, w:1.1, h:0.45, fontFace:F, fontSize:15, bold:true, color:'FFFFFF', align:'right'});
+    // saúde (farol)
+    card(sl, 0.35, 1.25, 3.1, 2.75, T.saude);
+    const png = await farolPng(agg && !agg.vazio && agg.S2.score!=null ? Math.min(1, agg.S2.score/1.25) : null);
+    if (png) sl.addImage({data:png, x:0.6, y:1.7, w:2.6, h:1.42});
+    sl.addText(nv ? T.niv[nv.t] : T.semMeta, {x:0.45, y:3.2, w:2.9, h:0.4, fontFace:F, fontSize:16, bold:true, align:'center', color: nv ? ({Saudável:C.verdeT,'Atenção':C.amarT,'Crítica':C.vermT})[nv.t] : C.mut});
+    if (agg && !agg.vazio && agg.S2.ritmo!=null) sl.addText(en ? `Results at ${Math.round(agg.S2.ritmo*100)}% of pace · cost ${Math.round((agg.S2.cplRatio||0)*100)}% efficiency` : `Resultado ${Math.round(agg.S2.ritmo*100)}% do ritmo · custo ${Math.round((agg.S2.cplRatio||0)*100)}% de eficiência`, {x:0.45, y:3.55, w:2.9, h:0.35, fontFace:F, fontSize:9, align:'center', color:C.mut});
+    // dias restantes
+    card(sl, 0.35, 4.15, 3.1, 2.6, T.termina);
+    const tot = g.per.ini && g.per.fim ? Math.max(1, difDias(g.per.ini, g.per.fim)+1) : null, dec = tot ? Math.max(0, Math.min(tot, difDias(g.per.ini, HOJE)+1)) : 0, fr = tot ? dec/tot : 0;
+    if (g.restam!=null && fr<1) { sl.addText([{text:String(g.restam), options:{fontSize:54, bold:true, color:C.esc}}, {text:'  '+T.dias, options:{fontSize:18, italic:true, color:C.mut}}], {x:0.55, y:4.6, w:2.7, h:1.1, fontFace:F}); }
+    else sl.addText(T.encerrada, {x:0.55, y:4.75, w:2.7, h:0.8, fontFace:F, fontSize:20, bold:true, color:C.esc});
+    sl.addShape(pptx.ShapeType.roundRect, {x:0.6, y:5.85, w:2.6, h:0.18, fill:{color:'E6ECEE'}, line:{color:'E6ECEE'}, rectRadius:0.09});
+    if (fr>0) sl.addShape(pptx.ShapeType.roundRect, {x:0.6, y:5.85, w:Math.max(0.18, 2.6*fr), h:0.18, fill:{color:C.pet}, line:{color:C.pet}, rectRadius:0.09});
+    sl.addText(`${Math.round(fr*100)}%`, {x:0.6, y:6.1, w:2.6, h:0.3, fontFace:F, fontSize:10, color:C.mut, align:'right'});
+    // KPIs por país (tabela única: resultado · custo · budget diário)
+    card(sl, 3.6, 1.25, 6.0, 5.5, T.kpis);
+    const nomeTipo = T.tipo[tipo] || tipo, nomeCusto = T.cpr[tipo] || T.custo;
+    const hd = o => Object.assign({bold:true, color:'FFFFFF', fill:{color:C.pet}, align:'center', valign:'middle', fontSize:10}, o||{});
+    const cel = (txt, cor, o) => ({text:txt, options:Object.assign({align:'center', valign:'middle', fontSize:10.5, color: cor ? C[cor+'T'] : C.txt, fill:{color: cor ? C[cor+'F'] : 'FFFFFF'}, bold: !!cor}, o||{})});
+    const rows = [
+      [{text:T.pais, options:hd({rowspan:2, fill:{color:C.esc}})}, {text:nomeTipo, options:hd({colspan:3, fill:{color:C.esc}})}, {text:nomeCusto, options:hd({colspan:2, fill:{color:C.esc}})}, {text:T.diario, options:hd({colspan:2, fill:{color:C.esc}})}],
+      [{text:T.meta, options:hd()}, {text:T.ating, options:hd()}, {text:'%', options:hd()}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}, {text:T.plan, options:hd()}, {text:T.real, options:hd()}]];
+    for (const l of linhas) { const pr = l.meta ? l.real/l.meta : null, cc = l.custo!=null && l.custoMeta ? (l.custo<=l.custoMeta ? 'verde' : l.custo<=l.custoMeta*1.1 ? 'amar' : 'verm') : null, rd = l.plano ? l.dia/l.plano : null;
+      rows.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(num(l.real), corR(l.rit)), cel(pr!=null?Math.round(pr*100)+'%':'—'), cel(din(l.custoMeta)), cel(din(l.custo), cc), cel(din(l.plano, 0)), cel(din(l.dia, 0), rd==null?null:Math.abs(rd-1)<=0.15?'verde':(rd<0.5||rd>1.3)?'verm':'amar')]); }
+    if (linhas.length>1) { const sR = linhas.reduce((t,l)=>t+(+l.real||0),0), sM = linhas.every(l=>l.meta) ? linhas.reduce((t,l)=>t+l.meta,0) : null, sI = linhas.reduce((t,l)=>t+(+l.inv||0),0), sP = linhas.every(l=>l.plano) ? linhas.reduce((t,l)=>t+l.plano,0) : null, sD = linhas.reduce((t,l)=>t+(+l.dia||0),0);
+      const tt = o => Object.assign({bold:true, fill:{color:'EEF3F4'}}, o||{});
+      rows.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(num(sR), null, tt()), cel(sM?Math.round(sR/sM*100)+'%':'—', null, tt()), cel('—', null, tt()), cel(sR?din(sI/sR):'—', null, tt()), cel(sP?din(sP,0):'—', null, tt()), cel(din(sD,0), null, tt())]); }
+    const alt = Math.min(0.42, 4.2/Math.max(rows.length, 1));
+    sl.addTable(rows, {x:3.8, y:1.75, w:5.6, colW:[1.05,0.62,0.72,0.5,0.72,0.72,0.64,0.63], rowH:alt, fontFace:F, border:{type:'solid', pt:0.75, color:'FFFFFF'}, margin:0.03});
+    const sInv = linhas.reduce((t,l)=>t+(+l.inv||0),0);
+    sl.addText(`${T.investido}: ${din(sInv, 0)}  ·  ${en ? 'Bar colors: green = on track, yellow = attention, red = critical.' : 'Cores: verde = no ritmo, amarelo = atenção, vermelho = crítico.'}`, {x:3.8, y:6.3, w:5.6, h:0.35, fontFace:F, fontSize:9, color:C.mut});
+    // pontos de atenção (pré-preenchidos e editáveis) e comentários (em branco)
+    const pts = [];
+    for (const l of linhas) { const n = nPais(l.p);
+      if (!l.real && (l.inv||0)>0) pts.push(en ? `${n}: no ${(T.tipo[l.tipo]||'results').toLowerCase()} yet.` : `${n}: ainda sem ${(T.tipo[l.tipo]||'resultados').toLowerCase()}.`);
+      else if (l.rit!=null && l.rit<0.85) pts.push(en ? `${n}: results at ${Math.round(l.rit*100)}% of expected pace.` : `${n}: resultado a ${Math.round(l.rit*100)}% do ritmo esperado.`);
+      if (l.custo!=null && l.custoMeta && l.custo>l.custoMeta*1.1) pts.push(en ? `${n}: ${T.cpr[l.tipo]||'cost'} ${Math.round((l.custo/l.custoMeta-1)*100)}% above goal.` : `${n}: ${T.cpr[l.tipo]||'custo'} ${Math.round((l.custo/l.custoMeta-1)*100)}% acima da meta.`);
+      const rd = l.plano ? l.dia/l.plano : null; if (rd!=null && (rd<0.85 || rd>1.15)) pts.push(en ? `${n}: spending ${Math.round(rd*100)}% of the planned daily budget.` : `${n}: gastando ${Math.round(rd*100)}% do budget diário planejado.`); }
+    card(sl, 9.75, 1.25, 3.23, 2.75, T.pontos);
+    sl.addText((pts.length ? pts.slice(0,5) : [T.ok]).map(t=>({text:t, options:{bullet:{indent:12}, breakLine:true}})), {x:9.9, y:1.65, w:2.95, h:2.25, fontFace:F, fontSize:10.5, color:C.txt, valign:'top', paraSpaceAfter:4});
+    card(sl, 9.75, 4.15, 3.23, 2.6, T.coment);
+    sl.addText(T.escreva, {x:9.9, y:4.55, w:2.95, h:2.05, fontFace:F, fontSize:10.5, color:'A8B4B8', italic:true, valign:'top'});
+    // rodapé
+    const at = (META_CONTAS.find(m=>m.conta===ct.conta)||{}).atualizado_em;
+    sl.addText(`${T.fonte} · ${d.nome||ct.nome||ct.conta}${at ? ` · ${T.atualizado} ${new Date(at).toLocaleString(en?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}` : ''}`, {x:0.35, y:6.95, w:12.6, h:0.35, fontFace:F, fontSize:8.5, color:C.mut});
+  }
+  const nome = `Status pontual - ${grupo} - ${HOJE}.pptx`;
+  await pptx.writeFile({fileName:nome});
+  return {nome, n: lista.length}; }
 function pgStatus(){
   migalha([['Status pontual']]);
   const niv = m => m.vazio ? null : nivelSaude(m.S2.score);
@@ -2182,14 +2301,9 @@ function pgStatus(){
     return d.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join(''); };
   // por conta de anúncios (PTx Trimble LATAM, Precision Planting BR, PTx Trimble EMEA, Precision Planting EMEA):
   // todas as campanhas no ar no Gerenciador; as vinculadas a uma campanha da plataforma usam as metas dela
-  const vinc = {}; for (const c of ativas()) for (const v of (c.metaVinculos||[])) vinc[v.campanhaId] = {c, v};
+  const vinc = vinculosMeta();
   const contas = CONTAS_STATUS.length ? CONTAS_STATUS : META_CONTAS.map(m=>({conta:m.conta, grupo:(m.dados||{}).grupo||m.conta}));
   const filtro = (UI.stGrupo||'');
-  const PAIS_RX = new RegExp('^('+Object.keys(PAISES).join('|')+'|UK|KZ|UA|TR|TK|PL|NL|BE|AT|CZ|HU|RO|PT|IE|DK|SE|NO|FI|ZA)$');
-  const partes = nome => (String(nome).match(/\[([^\]]+)\]/g)||[]).map(x=>x.slice(1,-1).trim());
-  const paisDe = nome => { const ps = [...partes(nome), ...String(nome).split(/[_\s-]+/)]; return ps.find(x=>PAIS_RX.test(x)) || null; };
-  const titulo = nome => { const t = partes(nome).filter(x=>!/^ESTUFA$/i.test(x) && !PAIS_RX.test(x) && !/^20\d\d/.test(x)); if (!t.length) return String(nome).split('_').filter(x=>!PAIS_RX.test(x) && !/^20\d\d$/.test(x) && !/^estufa$/i.test(x)).join(' ');
-    return t.map((x,i)=> i===0 ? x.toLowerCase().replace(/(^|\s)\S/g, m=>m.toUpperCase()) : x).join(' · '); };
   const ultimaAtual = META_CONTAS.reduce((m,r)=>!m||r.atualizado_em>m?r.atualizado_em:m, null), horas = ultimaAtual ? (Date.now()-new Date(ultimaAtual).getTime())/36e5 : null;
   // linha de campanha não vinculada: números direto do Gerenciador (sem meta da plataforma)
   const celSemMeta = (val, sub) => `<div class="stb-top"><b>${val}</b><span class="muted">${sub}</span></div>`;
@@ -2202,14 +2316,7 @@ function pgStatus(){
       cel3: pl ? cel(moeda2(real, moe), curto(pl, moe), Math.round(r*100)+'%', r/(Math.max(r,1)*1.15), cls, 1/(Math.max(r,1)*1.15)) : `<div class="stb-top"><b>${moeda2(real, moe)}</b><span class="muted">/ dia</span></div>`,
       fr: notas.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join(''), cor: notas.some(x=>x[0]==='verm') ? '#d0443a' : notas.some(x=>x[0]==='amar') ? '#e0a100' : '#c9d3d6', dias}; };
   const cont = {Saudável:0, Atenção:0, Crítica:0, sem:0}; const nCamp = new Set();
-  const blocos = contas.filter(ct=>!filtro || ct.grupo===filtro).map(ct=>{ const snap = META_CONTAS.find(m=>m.conta===ct.conta), d = (snap||{}).dados || {}, moe = d.moeda || 'BRL', cs = d.campanhas || [];
-    // agrupa: campanha da plataforma (+fase) ou nome-base da campanha do Meta; dentro, uma linha por país
-    const grupos = {};
-    for (const mc of cs) { const vi = vinc[mc.id], p = vi ? vi.v.pais : paisDe(mc.nome);
-      const chave = vi ? 'p|'+vi.c.id+'|'+(vi.v.fase||'') : 'm|'+titulo(mc.nome);
-      const g = grupos[chave] || (grupos[chave] = {vi, titulo: vi ? vi.c.nome : titulo(mc.nome), fase: vi ? vi.v.fase : null, c: vi ? vi.c : null, linhas: [], fim: null, ini: null});
-      g.linhas.push({mc, p, vi}); g.fim = !g.fim || (mc.fim||'') > g.fim ? mc.fim : g.fim; g.ini = !g.ini || (mc.inicio||'') < g.ini ? mc.inicio : g.ini; }
-    const lista = Object.values(grupos).sort((a,b)=>(b.vi?1:0)-(a.vi?1:0) || a.titulo.localeCompare(b.titulo));
+  const blocos = contas.filter(ct=>!filtro || ct.grupo===filtro).map(ct=>{ const {snap, d, moe, lista} = gruposStatusConta(ct, vinc);
     const corpoG = lista.map(g=>{ nCamp.add(g.titulo);
       const per = g.c ? (g.fase ? periodoFase(g.c, g.fase) : {ini:g.c.lancamento, fim:g.c.fimVeiculacao}) : {ini:(g.ini||'').slice(0,10), fim:(g.fim||'').slice(0,10)};
       const lk = g.c ? `href="#/campanha/${g.c.id}/saude" onclick="UI.etapa=UI.etapa||{};${g.fase?`UI.etapa['${g.c.id}']='${g.fase}';`:''}"` : '';
@@ -2225,7 +2332,7 @@ function pgStatus(){
     return `<tr class="st-marca"><td colspan="5">${h(ct.grupo)} <span>${lista.length} campanha${lista.length===1?'':'s'} no ar · conta ${h(d.nome||ct.nome||ct.conta)}${moe!=='BRL'?' · '+moe:''}</span></td></tr>` + (corpoG || `<tr class="st-camp"><td colspan="5" class="small muted">${snap?'Nenhuma campanha no ar nesta conta.':'Conta ainda não sincronizada.'}</td></tr>`); }).join('');
   const chips = `<div class="seg seg-marca st-filtro">${[['','Todas as marcas'], ...contas.map(ct=>[ct.grupo, ct.grupo])].map(([v,l])=>`<button class="${filtro===v?'ativo':''}" data-act="stGrupo" data-v="${h(v)}">${h(l)}</button>`).join('')}</div>`;
   return `<div class="cab"><div><h1>Status pontual</h1><p>Todas as campanhas no ar hoje (${fd(HOJE)}) nas contas de anúncios do Meta. As vinculadas a uma campanha da plataforma são comparadas com as metas dela.</p></div>
-    <div class="filtros"><span class="small ${horas!=null&&horas>24?'':'muted'}" style="${horas!=null&&horas>24?'color:#b3392f':''}">${horas==null?'Ainda não sincronizado':`Gerenciador atualizado há ${horas<1?'menos de 1 h':Math.round(horas)+' h'}`}</span>${ehEquipe()?`<button class="btn btn-s" data-act="sincContas"><i data-lucide="refresh-cw"></i>Atualizar</button>`:''}</div></div>
+    <div class="filtros"><span class="small ${horas!=null&&horas>24?'':'muted'}" style="${horas!=null&&horas>24?'color:#b3392f':''}">${horas==null?'Ainda não sincronizado':`Gerenciador atualizado há ${horas<1?'menos de 1 h':Math.round(horas)+' h'}`}</span>${ehEquipe()?`<button class="btn btn-s" data-act="sincContas"><i data-lucide="refresh-cw"></i>Atualizar</button>`:''}<button class="btn btn-s btn-p" data-act="exportarSlides"><i data-lucide="presentation"></i>Exportar para Google Apresentações</button></div></div>
   ${chips}
   <div class="st-resumo">${[['Crítica','#d0443a'],['Atenção','#e0a100'],['Saudável','#2e9d55'],['sem','#c9d3d6']].filter(([k])=>cont[k]).map(([k,cor])=>`<span><i style="background:${cor}"></i>${cont[k]} ${k==='sem'?'sem meta na plataforma':k==='Saudável'?'saudável':k==='Atenção'?'em atenção':'crítica'}</span>`).join('')}<span class="muted" style="margin-left:auto">${nCamp.size} campanha(s) no ar · farol contado por país</span></div>
   <div class="card st-card"><div class="st-wrap"><table class="tab st-tab"><colgroup><col style="width:17%"><col style="width:17%"><col style="width:17%"><col style="width:19%"><col style="width:30%"></colgroup><thead><tr><th class="st-col-pais">País</th><th>Resultado</th><th>Custo</th><th>Budget diário</th><th>Atenção</th></tr></thead>
@@ -2755,6 +2862,14 @@ const ACT = {
     registrar(`${t==='objetivo'?'Objetivo':'Objetivo de mídia'} de ${el.dataset.k} em “${c.nome}”: ${cf[t]||'—'}`); render(); },
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
+  exportarSlides: () => { const contas = CONTAS_STATUS, at = UI.stGrupo || '';
+    abrirModal('Exportar para Google Apresentações', `<p style="margin-top:0">Escolha a marca. Cada campanha no ar vira um slide, com farol, dias restantes, KPIs por país (resultado, custo e budget diário) e pontos de atenção já preenchidos. O campo de comentários vem em branco para vocês escreverem.</p>
+      <div class="exp-marcas">${contas.map(ct=>{ const n = (((META_CONTAS.find(m=>m.conta===ct.conta)||{}).dados||{}).campanhas||[]).length; return `<label class="exp-op"><input type="radio" name="expGrupo" value="${h(ct.grupo)}" ${(at||contas[0].grupo)===ct.grupo?'checked':''}><b>${h(ct.grupo)}</b><span>${/EMEA/i.test(ct.grupo)?'slides em inglês':'slides em português'}</span></label>`; }).join('')}</div>
+      <p class="small muted" style="margin-bottom:0">Baixa um arquivo .pptx. Para abrir no Google Apresentações: no Google Drive, clique em <b>Novo → Upload de arquivo</b> e abra o arquivo com o Google Apresentações (ou arraste o arquivo para o Drive).</p>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="exportarSlidesOk"><i data-lucide="download"></i>Gerar apresentação</button>`); },
+  exportarSlidesOk: async el => { const g = ($('input[name=expGrupo]:checked')||{}).value; if (!g) return toast('Escolha a marca.'); el.disabled = true; el.textContent = 'Gerando…';
+    try { const r = await exportarSlides(g); fecharModal(); toast(`Apresentação gerada (${r.n} slide(s) de campanha). Suba o arquivo no Google Drive para abrir no Google Apresentações.`); }
+    catch (e) { console.error(e); toast('Não foi possível gerar: '+(e.message||e)); el.disabled = false; el.textContent = 'Gerar apresentação'; } },
   stGrupo: el => { UI.stGrupo = el.dataset.v || ''; render(); },
   sincContas: async el => { el.disabled = true; toast('Buscando as campanhas no Gerenciador do Meta… (leva alguns segundos)');
     try { const { data, error } = await sb.functions.invoke('meta-sync', { body: {} }); if (error) throw error;
