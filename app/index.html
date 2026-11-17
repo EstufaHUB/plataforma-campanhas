@@ -2419,6 +2419,9 @@ function carregarScript(src){ return new Promise((ok, erro)=>{ if ([...document.
 function farolPng(pos){ return new Promise(ok=>{ const svg = medidorSaude(pos).replace(/\swidth="[^"]*"/, '').replace(/\sstyle="[^"]*"/, '').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="440" height="240" '), img = new Image();
   img.onload = ()=>{ const cv = document.createElement('canvas'); cv.width = 440; cv.height = 240; cv.getContext('2d').drawImage(img, 0, 0, 440, 240); ok(cv.toDataURL('image/png')); };
   img.onerror = ()=>ok(null); img.src = 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); }); }
+function fundoSlidePng(){ return new Promise(ok=>{ const img = new Image(); img.onload = ()=>{ const W = 1600, H = 900, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const k = Math.max(W/img.naturalWidth, H/img.naturalHeight), w = img.naturalWidth*k, hh = img.naturalHeight*k; cv.getContext('2d').drawImage(img, (W-w)/2, (H-hh)/2, w, hh); ok(cv.toDataURL('image/jpeg', 0.85)); };
+  img.onerror = ()=>ok(null); img.src = 'login-fundo.webp'; }); }
 function logoPng(){ return new Promise(ok=>{ const img = new Image(); img.onload = ()=>{ const cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight; cv.getContext('2d').drawImage(img,0,0); ok(cv.toDataURL('image/png')); }; img.onerror = ()=>ok(null); img.src = 'logo-ptx.png'; }); }
 async function montarSlides(grupo, tipo = '', opc = {}){
   if (!opc.Pptx) await carregarScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js');
@@ -2438,18 +2441,18 @@ async function montarSlides(grupo, tipo = '', opc = {}){
   const C = {esc:'12343B', pet:'1F5F6E', fundo:'F3F6F7', borda:'DDE3E5', txt:'1B2A2F', mut:'6B7A80', verde:'2E9D55', verdeF:'E7F4E8', verdeT:'2E6B31', amar:'E0A100', amarF:'FDF3D8', amarT:'8A5A00', verm:'D0443A', vermF:'FDECEA', vermT:'A3261C'};
   const corR = r => r==null ? null : r>=1 ? 'verde' : r>=0.85 ? 'amar' : 'verm';
   const pptx = new (opc.Pptx || PptxGenJS)(); pptx.layout = 'LAYOUT_WIDE'; pptx.title = `${T.capa} · ${grupo}`;
-  const logo = /PTx/i.test(grupo) ? await logoPng() : null, F = 'Arial';
+  const logo = /PTx/i.test(grupo) ? await logoPng() : null, F = 'Arial', fundo = await fundoSlidePng(), bg = fundo ? {data: fundo} : null;
   const card = (sl, x, y, w, hh, tit) => { sl.addShape(pptx.ShapeType.roundRect, {x, y, w, h:hh, fill:{color:'FFFFFF'}, line:{color:C.borda, width:0.75}, rectRadius:0.12});
     if (tit) sl.addText(tit, {x:x+0.2, y:y+0.12, w:w-0.4, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc}); };
   // capa
-  { const sl = pptx.addSlide(); sl.background = {color:C.esc};
+  { const sl = pptx.addSlide(); sl.background = bg || {color:C.esc};
     if (logo) sl.addImage({data:logo, x:0.7, y:0.7, w:0.9, h:0.9});
     sl.addText(T.capa, {x:0.7, y:2.3, w:11, h:0.6, fontFace:F, fontSize:20, color:'9FC3CB'});
     sl.addText(grupo, {x:0.7, y:2.9, w:11.5, h:1.0, fontFace:F, fontSize:40, bold:true, color:'FFFFFF'});
     sl.addText(`${tipo ? (en ? (tipo==='recorrentes'?'Always-on campaigns':'One-off campaigns') : (tipo==='recorrentes'?'Campanhas recorrentes':'Campanhas pontuais'))+' · ' : ''}${lista.length} ${T.campanhas} · ${T.relatorio}: ${fd(HOJE).replace(/\//g, en?'.':'/')}`, {x:0.7, y:3.9, w:11, h:0.5, fontFace:F, fontSize:16, color:'D6E4E7'});
     sl.addText('estufa', {x:10.6, y:6.5, w:2.2, h:0.5, fontFace:F, fontSize:22, bold:true, color:'FFFFFF', align:'right'}); }
   for (const [gi, g] of lista.entries()) {
-    const sl = pptx.addSlide(); sl.background = {color:C.fundo};
+    const sl = pptx.addSlide(); sl.background = bg || {color:C.fundo};
     // números por país
     const linhas = g.linhas.map(({mc, p, vi})=>{
       if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null); if (m.vazio) return {p, vazio:true};
@@ -2473,7 +2476,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     sl.addText(`${grupo}${g.fase ? ` · ${T.fase} ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}` : ''}${g.pausada ? (en?' · Paused':' · Pausada')+(g.pausadaEm?' '+dt(g.pausadaEm):'') : ''}`, {x:xc, y:0.92, w:4.45, h:0.25, fontFace:F, fontSize:9.5, color:C.mut});
     bloco(6.1, 2.9, T.periodo, `${dt(g.per.ini)} → ${dt(g.per.fim)}`);
     bloco(9.15, 2.25, T.relatorio, dt(HOJE));
-    sl.addText([{text:'estufa', options:{color:C.esc}}, {text:'▲', options:{color:'EF9F27'}}], {x:11.5, y:0.3, w:1.5, h:0.95, fontFace:F, fontSize:22, bold:true, align:'right', valign:'middle'});
+    sl.addText([{text:'estufa', options:{color: bg ? 'FFFFFF' : C.esc}}, {text:'▲', options:{color:'EF9F27'}}], {x:11.5, y:0.3, w:1.5, h:0.95, fontFace:F, fontSize:22, bold:true, align:'right', valign:'middle'});
     // ---- coluna 1: Leads e CPL por país + resumo ----
     card(sl, 0.35, 1.45, 4.6, 5.4);
     const totD = g.per.ini && g.per.fim ? Math.max(1, difDias(g.per.ini, g.per.fim)+1) : null, decD = totD ? Math.max(0, Math.min(totD, difDias(g.per.ini, HOJE)+1)) : 0, frac = totD ? decD/totD : 0;
@@ -2489,18 +2492,13 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     for (const l of linhas) { const cc = l.custo!=null && l.custoMeta ? (l.custo<=l.custoMeta ? 'verde' : l.custo<=l.custoMeta*1.1 ? 'amar' : 'verm') : null; rC.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(din(l.custoMeta)), cel(din(l.custo), cc)]); }
     const cmTot = linhas.every(l=>l.custoMeta && l.meta) ? linhas.reduce((t,l)=>t+l.custoMeta*l.meta,0)/linhas.reduce((t,l)=>t+l.meta,0) : null;
     if (multi) rC.push([cel(T.total, null, tt({align:'left'})), cel(cmTot?din(cmTot):'—', null, tt()), cel(sR?din(sI/sR):'—', null, tt())]);
-    const rowH = Math.min(0.32, 3.55/Math.max(1, rL.length + rC.length));
+    const rowH = Math.min(0.34, 4.1/Math.max(1, rL.length + rC.length));
     sl.addText(nomeTipo, {x:0.55, y:1.55, w:2.0, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
     if (sM && frac<1) sl.addText(`${T.esperado}: ${Math.round(frac*100)}%`, {x:2.4, y:1.55, w:2.35, h:0.35, fontFace:F, fontSize:9.5, color:C.mut, align:'right'});
     sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.45,0.85,1.0,0.9], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
     const yC = 1.92 + rowH*rL.length + 0.18;
     sl.addText(nomeCusto, {x:0.55, y:yC, w:4.2, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
     sl.addTable(rC, {x:0.55, y:yC+0.37, w:4.2, colW:[1.45,1.375,1.375], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
-    // resumo da campanha (3 números)
-    sl.addShape(pptx.ShapeType.line, {x:0.55, y:5.95, w:4.2, h:0, line:{color:C.borda, width:0.75}});
-    [[T.resumo[0], din(sI, 0)], [T.resumo[1], num(sR)], [T.resumo[2], sR ? din(sI/sR) : '—']].forEach(([r, v], k)=>{
-      sl.addText(r, {x:0.55+k*1.4, y:6.02, w:1.4, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut});
-      sl.addText(v, {x:0.55+k*1.4, y:6.25, w:1.4, h:0.45, fontFace:F, fontSize:15, bold:true, color:C.esc, fit:'shrink'}); });
     // ---- coluna 2: saúde (farol) + dias restantes ----
     card(sl, 5.1, 1.45, 3.95, 2.85, T.saude);
     const png = await farolPng(agg && !agg.vazio && agg.S2.score!=null ? Math.min(1, agg.S2.score/1.25) : scoreAuto!=null ? Math.min(1, scoreAuto/1.25) : null);
@@ -2532,7 +2530,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     if (!opc.previa) sl.addText(coment || T.escreva, coment ? {x:9.35, y:4.88, w:3.5, h:1.85, fontFace:F, fontSize:10.5, color:C.txt, valign:'top', fit:'shrink'} : {x:9.35, y:4.88, w:3.5, h:1.85, fontFace:F, fontSize:10.5, color:'A8B4B8', italic:true, valign:'top'});
     // rodapé
     const at = (META_CONTAS.find(m=>m.conta===ct.conta)||{}).atualizado_em;
-    sl.addText(`${T.fonte} · ${d.nome||ct.nome||ct.conta}${at ? ` · ${T.atualizado} ${new Date(at).toLocaleString(en?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}` : ''}`, {x:0.35, y:7.0, w:12.6, h:0.3, fontFace:F, fontSize:8.5, color:C.mut, line:{type:'none'}});
+    sl.addText(`${T.fonte} · ${d.nome||ct.nome||ct.conta}${at ? ` · ${T.atualizado} ${new Date(at).toLocaleString(en?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}` : ''}`, {x:0.35, y:7.0, w:12.6, h:0.3, fontFace:F, fontSize:8.5, color: bg ? 'C9CDD0' : C.mut, line:{type:'none'}});
   }
   const nome = `Status pontual - ${grupo}${tipo ? ' - '+(tipo==='recorrentes'?'recorrentes':'pontuais') : ''} - ${HOJE}.pptx`;
   return {pptx, nome, n: lista.length, info, en}; }
@@ -2557,7 +2555,7 @@ class PptxPrevia {
         out += `<div style="position:absolute;${caixa(o)};${estilo(o)};display:flex;flex-direction:column;justify-content:${va};line-height:1.2;overflow:hidden;${o.fit==='shrink'&&!lista?'white-space:nowrap;text-overflow:ellipsis':''}"><div style="${o.fit==='shrink'&&!lista?'overflow:hidden;text-overflow:ellipsis':''}">${corpo}</div></div>`; }
       else if (it[0]==='tb') { const rows = it[1], o = it[2], cw = o.colW || rows[0].map(()=>o.w/rows[0].length);
         out += `<table style="position:absolute;left:${px(o.x)};top:${px(o.y)};width:${px(o.w)};border-collapse:collapse;table-layout:fixed;font-family:Arial,sans-serif"><colgroup>${cw.map(w=>`<col style="width:${px(w)}">`).join('')}</colgroup>${rows.map(r=>`<tr style="height:${px(o.rowH||0.3)}">${r.map(c=>{ const co = c.options||{}; return `<td style="border:1px solid #fff;padding:0 ${px(o.margin||0.04)};background:${cor(co.fill&&co.fill.color)};color:${cor(co.color)};font-size:${pt(co.fontSize||10)};${co.bold?'font-weight:700;':''}text-align:${co.align||'left'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h(c.text)}</td>`; }).join('')}</tr>`).join('')}</table>`; } }
-    return `<div class="prev-slide" style="position:relative;width:${px(13.333)};height:${px(7.5)};background:${cor(s.background&&s.background.color)};overflow:hidden">${out}</div>`; }
+    return `<div class="prev-slide" style="position:relative;width:${px(13.333)};height:${px(7.5)};background:${s.background&&s.background.data ? `#111 url(${s.background.data}) center/cover` : cor(s.background&&s.background.color)};overflow:hidden">${out}</div>`; }
 }
 function lerTextosRel(){ const coment = {}, pontos = {};
   document.querySelectorAll('[data-rel-coment]').forEach(t=>{ coment[t.dataset.relComent] = t.value; });
