@@ -904,7 +904,7 @@ async function carregar(){
     ehEquipe() ? q(sb.from('meta_contas').select('*')) : Promise.resolve([]),
     ehEquipe() ? sb.from('invoices').select('*').then(r=>r.error ? [] : r.data) : Promise.resolve([])
   ]);
-  S = estadoInicial();
+  S = estadoInicial(); DESF.pilha = []; DESF.refazer = []; DESF.atual = null;
   for (const r of cf) if (CFG_CHAVES.includes(r.chave)) S[r.chave] = r.valor;
   S.clientes = cl.map(c=>({id:c.id, nome:c.nome, segmento:c.segmento, contato:c.contato, arquivado:c.arquivado}));
   S.campanhas = ca.map(r=>r.dados);
@@ -1207,7 +1207,7 @@ function render(){
   try { $('#app').innerHTML = pg(r); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
   icones(); posRender.forEach(f=>f()); posRender = [];
-  capturarDesfazer(r);
+  capturarDesfazer();
   verificarRelatorio(r);
 }
 /* quando a ação "Relatório" passa para Concluída, pede o link e conclui a campanha */
@@ -1215,17 +1215,18 @@ function verificarRelatorio(r){ if (r[0]!=='campanha' || !ehEquipe()) return; co
   const t = c.crono.tarefas.filter(x=>tidBase(x.tid)==='F5-02').pop(); if (!t) return; UI.relSt = UI.relSt || {};   // em fases: o relatório da última fase
   const ant = UI.relSt[c.id]; UI.relSt[c.id] = t.status;
   if (ant!==undefined && ant!=='Concluída' && t.status==='Concluída' && !c.urlRelatorio && !$('#modal-raiz').innerHTML) setTimeout(()=>ACT.formRelatorio({dataset:{id:c.id, origem:'acao'}}), 50); }
-/* desfazer (Ctrl+Z) e refazer (Ctrl+Shift+Z ou Ctrl+Y): guarda o estado da campanha aberta a cada mudança */
-const DESF = {};
-let DEP_ATIVAS = true; try { DEP_ATIVAS = localStorage.getItem('dep-off')!=='1'; } catch(e){}   // por campanha: {pilha:[], refazer:[], atual:json}
-function capturarDesfazer(r){ if (r[0]!=='campanha' || !ehEquipe()) return; const c = camp(r[1]); if (!c) return;
-  const j = JSON.stringify(c), d = DESF[c.id] || (DESF[c.id] = {pilha:[], refazer:[], atual:j});
-  if (d.atual !== j) { d.pilha.push(d.atual); if (d.pilha.length > 60) d.pilha.shift(); d.refazer = []; d.atual = j; }
-  const bD = $('[data-act="desfazer"]'), bR = $('[data-act="refazer"]'); if (bD) bD.disabled = !d.pilha.length; if (bR) bR.disabled = !d.refazer.length; }
-function trocarCampanha(id, json){ const i = S.campanhas.findIndex(c=>c.id===id); if (i<0) return; S.campanhas[i] = JSON.parse(json); DESF[id].atual = json; salvar(); render(); }
-function desfazer(refazer){ const r = rota(); if (r[0]!=='campanha' || !ehEquipe()) return; const d = DESF[r[1]]; if (!d) return;
-  const de = refazer ? d.refazer : d.pilha, para = refazer ? d.pilha : d.refazer; if (!de.length) return toast(refazer?'Nada para refazer.':'Nada para desfazer.');
-  para.push(d.atual); trocarCampanha(r[1], de.pop()); toast(refazer?'Refeito.':'Desfeito. Ctrl+Shift+Z refaz.'); }
+/* desfazer (Ctrl+Z) e refazer (Ctrl+Shift+Z ou Ctrl+Y) em todo o sistema: a cada tela montada, guarda o estado
+   gravável (campanhas, clientes e configurações, incluindo metas, budgets e comentários do Status pontual) se mudou */
+const DESF = {pilha:[], refazer:[], atual:null};
+let DEP_ATIVAS = true; try { DEP_ATIVAS = localStorage.getItem('dep-off')!=='1'; } catch(e){}
+const estadoDesf = () => S ? JSON.stringify({campanhas:S.campanhas, clientes:S.clientes, cfg:Object.fromEntries(CFG_CHAVES.map(k=>[k, S[k]]))}) : null;
+function capturarDesfazer(){ if (!S || !ehEquipe()) return; const j = estadoDesf(); if (DESF.atual==null) DESF.atual = j;
+  else if (DESF.atual !== j) { DESF.pilha.push(DESF.atual); if (DESF.pilha.length > 40) DESF.pilha.shift(); DESF.refazer = []; DESF.atual = j; }
+  const bD = $('[data-act="desfazer"]'), bR = $('[data-act="refazer"]'); if (bD) bD.disabled = !DESF.pilha.length; if (bR) bR.disabled = !DESF.refazer.length; }
+function aplicarEstado(j){ const e = JSON.parse(j); S.campanhas = e.campanhas; S.clientes = e.clientes; for (const k of CFG_CHAVES) if (k in e.cfg) S[k] = e.cfg[k]; DESF.atual = j; salvar(); render(); }
+function desfazer(refazer){ if (!S || !ehEquipe()) return;
+  const de = refazer ? DESF.refazer : DESF.pilha, para = refazer ? DESF.pilha : DESF.refazer; if (!de.length) return toast(refazer?'Nada para refazer.':'Nada para desfazer.');
+  para.push(DESF.atual); aplicarEstado(de.pop()); toast(refazer?'Refeito.':'Desfeito. Ctrl+Shift+Z refaz.'); }
 document.addEventListener('keydown', e => { if (!(e.ctrlKey || e.metaKey) || e.altKey) return; const k = e.key.toLowerCase(); if (k!=='z' && k!=='y') return;
   const a = document.activeElement; if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
   if ($('#modal-raiz').innerHTML || $('#login-raiz').innerHTML) return;
