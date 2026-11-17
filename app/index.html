@@ -2655,7 +2655,12 @@ function gravarBudStatus(auto){
   if (x.vi) { const c = x.vi.c, cf = x.l.cf, novo = Math.round(val*x.dias*100)/100, ant = +x.l.pc.budget||0;
     x.l.pc.budget = novo; cf.orcamento = Math.round(cf.paises.reduce((t,p)=>t+(+p.budget||0),0)*100)/100;
     if (cf.orcamento>0) { cf.divisao = 'pct'; let acc = 0; cf.paises.forEach((p,i)=>{ if (i<cf.paises.length-1) { p.pct = Math.round((+p.budget||0)/cf.orcamento*10000)/100; acc += p.pct; } else p.pct = Math.round((100-acc)*100)/100; }); }
-    const bk = typeof rascunho!=='undefined' ? rascunho : null; try { rascunho = {paises: c.paises}; consolidarCanais(c); } finally { rascunho = bk; }
+    // totais da ficha (mesma conta de consolidarCanais, sem mexer na lista de países)
+    const chs = chavesCfg(c), moedas = [...new Set(chs.map(ch=>(c.canaisCfg[ch.key]||{}).moeda||'BRL'))];
+    for (const pp of (c.paises||[])) { const porM = {}; for (const ch of chs) { const cf2 = c.canaisCfg[ch.key]||{}, q = (cf2.paises||[]).find(z=>z.cod===pp.cod); if (q) porM[cf2.moeda||'BRL'] = Math.round(((porM[cf2.moeda||'BRL']||0) + (+q.budget||0))*100)/100; }
+      pp.budgetPorMoeda = porM; pp.budget = moedas.length===1 ? (porM[moedas[0]]||0) : null; }
+    c.orcamentoPorMoeda = {}; for (const ch of chs) { const cf2 = c.canaisCfg[ch.key]||{}; c.orcamentoPorMoeda[cf2.moeda||'BRL'] = (c.orcamentoPorMoeda[cf2.moeda||'BRL']||0) + (+cf2.orcamento||0); }
+    c.orcamento = moedas.length===1 ? (c.orcamentoPorMoeda[moedas[0]]||0) : 0;
     sincronizarBudgetCanais(c);
     registrar(`Budget de Meta Ads · ${PAISES[x.l.pc.cod]?PAISES[x.l.pc.cod].n:x.l.pc.cod} em “${c.nome}” ajustado no Status pontual: ${moeda2(ant, x.moe)} → ${moeda2(novo, x.moe)} (${moeda2(val, x.moe)}/dia)`); }
   else { S.metasStatus = S.metasStatus || {}; const ant = S.metasStatus[mcId] || {};
