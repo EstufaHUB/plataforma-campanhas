@@ -2692,7 +2692,7 @@ function budMesConta(){ const t = document.querySelector('.bud-mes'); if (!t) re
   t.querySelectorAll('input[data-m]').forEach(i=>{ const v = +i.value||0, tr = i.closest('tr'), g = i.dataset.g==='' ? null : +i.dataset.g; soma += v; tr.querySelector('[data-dia]').textContent = moeda2(v/(+i.dataset.d), moe);
     const sc = tr.querySelector('[data-saldo]'); if (g==null || i.dataset.st==='fut') { sc.textContent = '—'; sc.className = 'dir small'; return; }
     const sd = Math.round((v-g)*100)/100; if (i.dataset.st==='pass') saldo += sd;
-    sc.innerHTML = i.dataset.st==='agora' ? `${moeda2(Math.max(0, sd), moe)}<div class="muted" style="font-size:.7rem">a gastar no mês</div>` : (sd>=0 ? '+' : '−')+moeda2(Math.abs(sd), moe);
+    sc.innerHTML = i.dataset.st==='agora' ? (sd>=0 ? `${moeda2(sd, moe)}<div class="muted" style="font-size:.7rem">a gastar no mês</div>` : `<span class="saldo-neg">−${moeda2(-sd, moe)}</span><div class="muted" style="font-size:.7rem">acima do mês</div>`) : (sd>=0 ? '+' : '−')+moeda2(Math.abs(sd), moe);
     sc.className = 'dir small ' + (i.dataset.st==='agora' ? '' : sd>0.009 ? 'saldo-pos' : sd<-0.009 ? 'saldo-neg' : ''); });
   const sb = document.getElementById('bud-mes-saldo'); if (sb) { sb.querySelector('b').textContent = (saldo>=0?'+':'−')+moeda2(Math.abs(saldo), moe); sb.className = saldo>0.009 ? 'ok' : saldo<-0.009 ? 'aviso' : ''; }
   const D = budMesDados(); if (D) { document.getElementById('bud-corr-v').textContent = D.daily!=null ? moeda2(D.daily, moe)+'/dia' : '—';
