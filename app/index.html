@@ -3124,7 +3124,7 @@ const ACT = {
       render(); toast(falhas.length ? 'Erro do Meta: '+falhas[0].erro : 'Dados atualizados.'); }
     catch (e) { let msg = e.message||String(e); try { const b = await e.context.json(); msg = b.erro || msg; } catch(_){} toast('Não foi possível atualizar: '+msg); el.disabled = false; } },
   vincularMeta: el => { const c = camp(el.dataset.id), vs = c.metaVinculos||[];
-    abrirModal('Campanhas do Gerenciador do Meta', `<p class="small muted" style="margin-top:0">Informe o ID da campanha no Gerenciador (coluna “ID da campanha”). Os resultados são buscados automaticamente.</p>
+    abrirModal('Campanhas do Gerenciador do Meta', `<p class="small muted" style="margin-top:0">Escolha a conta de anúncios e marque as campanhas do Gerenciador que fazem parte desta campanha. Os resultados são buscados automaticamente.</p>
       <div class="tabela-wrap"><table class="tab"><thead><tr><th>Conta</th><th>ID da campanha</th><th>Marca</th><th>País</th><th></th></tr></thead><tbody>${vs.map((v,i)=>`<tr><td>${h(v.contaNome||v.conta)}</td><td class="small">${h(v.campanhaId)}<div class="muted">${h(v.campanhaNome||'')}</div></td><td>${h(v.marca||'—')}</td><td>${h(v.pais||'—')}</td><td><button class="icone-btn" data-act="desvincularMeta" data-id="${c.id}" data-i="${i}" title="Remover"><i data-lucide="trash-2"></i></button></td></tr>`).join('')||'<tr><td colspan="5" class="vazio">Nenhum vínculo.</td></tr>'}</tbody></table></div>
       ${formVinculo(c)}
         <label class="campo">Marca<select name="marca">${opts(marcasDe(c),'', '—')}</select></label>
