@@ -1361,6 +1361,8 @@ function pgCliente(id){
   const situacao = c => { const fc = c.status==='Em veiculação' ? farolCab(c, true) : '', ini = c.crono ? inicioPlan(c) : null;
     if (fc) return fc.replace('cc-farol','cc-farol cli-farol');
     if (c.status==='Não iniciada' && ini && ini < HOJE) return '<span class="cli-pz verm">Planejar já</span>';
+    if (c.status==='Não iniciada' && ini && difDias(HOJE, ini) <= 30) { const d = difDias(HOJE, ini);
+      return `<span class="cli-pz amar" title="Esta campanha precisa começar em ${fds(ini)}">${d===0 ? 'Começar hoje' : `Começar em ${d} dia${d===1?'':'s'}`}</span>`; }
     const cor = {'Em andamento':'azul','Em veiculação':'verde','Finalizada – relatório pendente':'amar','Concluída':'cinza'}[c.status];
     return cor ? `<span class="cli-pz ${cor}">${h(c.status==='Em andamento'?'Em produção':c.status)}</span>` + (c.status==='Em andamento' && saude(c).cor==='verm' ? ' <span class="cli-pz verm">Atrasada</span>' : '') : '<span class="cli-pz">Não iniciada</span>'; };
   const comecar = c => { const ini = c.crono ? inicioPlan(c) : null; if (!ini || c.status!=='Não iniciada') return '<span class="muted">—</span>'; return ini < HOJE ? `<span class="cor-verm" title="O planejamento devia ter começado em ${fd(ini)}">atrasada</span>` : fdm(ini); };
@@ -1419,7 +1421,7 @@ function alertasCampanha(c){
   const ini = inicioPlan(c);
   if (atr.length || inv.length) {}
   else if (naoIniciada(c) && ini < HOJE) s += `<div class="alerta verm"><i data-lucide="alarm-clock-off"></i><div><b>O briefing deveria ter sido recebido em ${fds(ini)}.</b> Nenhuma etapa foi iniciada. Use “Recalcular a partir de hoje” na aba Cronograma para ver se ainda é possível lançar em ${fd(c.lancamento)}.</div></div>`;
-  else if (naoIniciada(c) && difDias(HOJE,ini)<=30) s += `<div class="alerta amar"><i data-lucide="calendar-clock"></i><div>Esta campanha precisa começar em <b>${fds(ini)}</b> (em ${difDias(HOJE,ini)} dias).</div></div>`;
+  else if (naoIniciada(c) && difDias(HOJE,ini)<=30) s += `<div class="alerta amar"><i data-lucide="calendar-clock"></i><div>Esta campanha precisa começar em <b>${fds(ini)}</b> (${difDias(HOJE,ini)===0?'hoje':`em ${difDias(HOJE,ini)} dia${difDias(HOJE,ini)===1?'':'s'}`}).</div></div>`;
   riscosPais(c).forEach(r=>{ if (!inv.some(i=>i.pais===r.cod) && !/atrasad/.test(r.motivo)) s += `<div class="alerta amar"><i data-lucide="flag"></i><div><b>${pais(r.cod)}:</b> ${h(r.motivo)}</div></div>`; });
   return s;
 }
