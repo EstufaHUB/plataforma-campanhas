@@ -2642,7 +2642,7 @@ function fracPlano(id, ini, fim, total){ const P = planoMensal(id); if (!P || !i
   return {esperado: esp, frac: total ? Math.min(1, esp/total) : null, atual, ms, P}; }
 function gastoMes(mc, vi, mes){ if (vi) { const r = (RESULTADOS[vi.c.id]||[]).find(x=>x.meta_campanha===mc.id) || (RESULTADOS[vi.c.id]||[]).find(x=>((x.dados||{}).vinculo||{}).campanhaId===mc.id);
     if (r) return ((r.dados||{}).porDia||[]).filter(d=>String(d.data).slice(0,7)===mes).reduce((t,d)=>t+(+d.investido||0),0); }
-  return mc.porMes && mc.porMes[mes]!=null ? +mc.porMes[mes] : null; }
+  return mc.porMes ? (mes <= HOJE.slice(0,7) ? (+mc.porMes[mes]||0) : null) : null; }
 const notaMes = (mc, vi, fp, moe) => { if (!fp || !fp.atual) return ''; const a = fp.atual, g = gastoMes(mc, vi, a.m), rest = Math.max(1, difDias(HOJE, a.fim)+1);
   return `<div class="stb-esp">${NOMES_MES[+a.m.slice(5)-1]}: <b>${moedaCurta(a.B, moe)}</b>${g!=null?` · faltam ${moedaCurta(Math.max(0, a.B-g), moe)} em ${rest} dia${rest===1?'':'s'}`:''}</div>`; };
 function ctxBudStatus(mcId, conta){
