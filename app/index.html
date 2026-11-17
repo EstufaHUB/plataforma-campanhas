@@ -1415,8 +1415,16 @@ function pgCampanha(r){
    <div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop">${c.status==='Não iniciada'||c.status==='Em andamento'?`<button data-act="iniciarCampanha" data-id="${c.id}"><i data-lucide="rocket"></i>Iniciar campanha</button>`:''}${c.status==='Finalizada – relatório pendente'?`<button data-act="formRelatorio" data-id="${c.id}"><i data-lucide="file-plus"></i>Adicionar relatório</button>`:''}${c.iniciadaEm&&!c.urlRelatorio?`<button data-act="desfazerInicio" data-id="${c.id}"><i data-lucide="undo-2"></i>${c.finalizadaEm?'Voltar para “Em veiculação”':'Desfazer início da campanha'}</button>`:''}${marcasDe(c).length>1 ? marcasDe(c).map(m=>marcaCancelada(c,m) ? `<button data-act="reativarMarca" data-id="${c.id}" data-m="${h(m)}"><i data-lucide="rotate-ccw"></i>Reativar marca: ${h(m)}</button>` : `<button data-act="cancelarMarca" data-id="${c.id}" data-m="${h(m)}"><i data-lucide="ban"></i>Cancelar marca: ${h(m)}</button>`).join('') : ''}<button data-act="cancelarPais" data-id="${c.id}"><i data-lucide="map-pin-off"></i>Cancelar país${listaCancPais(c).length?' / reativar':''}</button><button data-act="alterarLanc" data-id="${c.id}"><i data-lucide="calendar-sync"></i>Alterar lançamento</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'} campanha</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div></div>
    <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`;
 }
+/* ficha salva sem canais ou sem budget: fica como pendência na visão geral */
+function pendenciasFicha(c){ const p = [];
+  if (!(c.canais||[]).length) p.push('canais de mídia');
+  else { const semB = chavesCfg(c).filter(ch=>!(+((c.canaisCfg||{})[ch.key]||{}).orcamento>0)).map(ch=>rotuloCfg(ch)); if (semB.length) p.push('budget de '+semB.join(', ')); }
+  if (!(c.paises||[]).length) p.push('países');
+  return p; }
 function alertasCampanha(c){
   let s = '';
+  const pend = pendenciasFicha(c);
+  if (pend.length) s += `<div class="alerta amar"><i data-lucide="clipboard-list"></i><div><b>Ficha incompleta:</b> falta definir ${pend.join(', ').replace(/, ([^,]*)$/, ' e $1')}.${ehEquipe()?` <a href="javascript:void 0" data-act="editarCampanha" data-id="${c.id}">Completar a ficha</a>`:''}</div></div>`;
   const inv = c.crono.inviaveis||[], atr = c.crono.tarefas.filter(t=>statusExib(t)==='Atrasada');
   const nomesAtr = [...new Set(atr.map(t=>t.nome))];
   if (atr.length || inv.length) s += `<div class="alerta verm"><i data-lucide="octagon-alert"></i><div><b>Ações atrasadas – ajustar cronograma</b></div></div>`;
@@ -3146,16 +3154,14 @@ function validarCampanha(d){
   if (!d.lancamento) err.push('Informe a data de lançamento.'); if (!d.fimVeiculacao) err.push('Informe o fim da veiculação.');
   if (d.lancamento && d.fimVeiculacao && d.fimVeiculacao < d.lancamento) err.push('O fim da veiculação não pode ser antes do lançamento.');
   if (faseada(d)) { let fimAnt = null;
-    for (const f of FASES_CAMP) { if (!canaisDaFase(d,f).length) err.push(`Marque pelo menos um canal na fase ${f}.`);
+    for (const f of FASES_CAMP) {
       const pf = periodoFase(d,f); if (!pf.ini || !pf.fim) { err.push(`Informe o início e o fim da fase ${f}.`); continue; }
       if (pf.fim < pf.ini) err.push(`A fase ${f} termina antes de começar.`);
       if ((d.lancamento && pf.ini < d.lancamento) || (d.fimVeiculacao && pf.fim > d.fimVeiculacao)) err.push(`A fase ${f} precisa ficar dentro da veiculação (${fd(d.lancamento)} a ${fd(d.fimVeiculacao)}).`);
       if (fimAnt && pf.ini < fimAnt) err.push(`A fase ${f} começa antes do fim da fase anterior.`);
       fimAnt = pf.fim; } }
-  else if (!(d.canais||[]).length) err.push('Marque pelo menos um canal.');
   for (const ch of chavesCfg(d)) { const cf = (d.canaisCfg||{})[ch.key] || cfgVazio(), k = rotuloCfg(ch);
     if (!cf.paises.length) err.push(`Selecione os países de ${k}.`);
-    if (!(cf.orcamento>0)) err.push(`Informe o budget total de ${k}.`);
     if (cf.divisao==='pct' && cf.paises.length) { const sp = cf.paises.reduce((s,p)=>s+(+p.pct||0),0); if (Math.abs(sp-100) > 0.01) err.push(`${k}: a divisão por país soma ${+sp.toFixed(2)}%. Ajuste para 100%.`); } }
   if (!(d.marcas||[]).length) err.push('Escolha a marca da campanha.');
   if (!(d.objetivos||[]).length) err.push('Escolha o objetivo da campanha (geração de leads e/ou awareness).');
