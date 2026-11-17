@@ -118,6 +118,10 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
       // total desde o início, só das campanhas no ar (em lotes, para contas com muito histórico)
       for (let i = 0; i < ativas.length; i += 25) total.push(...await graph(`${act}/insights`, token, { level: "campaign", date_preset: "maximum", fields: "campaign_id,spend,impressions,reach,clicks,actions", filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: ativas.slice(i, i + 25).map((c) => c.id) }]), limit: "100" }));
       const T = porId(total);
+      // gasto por mês (para o plano mensal de budget do Status pontual)
+      const porMes: Record<string, Record<string, number>> = {};
+      try { for (let i = 0; i < ativas.length; i += 25) for (const l of await graph(`${act}/insights`, token, { level: "campaign", date_preset: "maximum", time_increment: "monthly", fields: "campaign_id,spend", filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: ativas.slice(i, i + 25).map((c) => c.id) }]), limit: "500" })) {
+        const id = l.campaign_id as string, m = String(l.date_start || "").slice(0, 7); if (!m) continue; (porMes[id] = porMes[id] || {})[m] = Math.round(((porMes[id][m] || 0) + (+(l.spend as string) || 0)) * 100) / 100; } } catch (_) { /* sem gasto mensal nesta rodada */ }
       const campanhas = ativas.map((c) => {
         const t = (T[c.id as string] || {}) as Record<string, unknown>, s7 = (S7[c.id as string] || {}) as Record<string, unknown>;
         const obj = c.objective as string, r = resultado(obj, t.actions as Acao[], +(t.reach as string) || 0), r7 = resultado(obj, s7.actions as Acao[], +(s7.reach as string) || 0);
@@ -129,7 +133,7 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
         const inv = +(t.spend as string) || 0, inv7 = +(s7.spend as string) || 0;
         return { id: c.id, nome: c.name, objetivo: obj, inicio: c.start_time || null, fim: c.stop_time || null, budgetDiario: diario,
           investido: inv, impressoes: +(t.impressions as string) || 0, alcance: +(t.reach as string) || 0, cliques: +(t.clicks as string) || 0,
-          resultados: r.n, tipoResultado: r.tipo, custoResultado: r.n ? inv / r.n : null, gasto7: inv7, resultados7: r7.n,
+          resultados: r.n, tipoResultado: r.tipo, custoResultado: r.n ? inv / r.n : null, gasto7: inv7, resultados7: r7.n, porMes: porMes[c.id as string] || {},
           ...(c.effective_status === "PAUSED" ? { pausada: true, pausadaEm: c.updated_time || null } : {}) };
       });
       let bench = null; try { bench = await referencia(act, token); } catch (_) { /* sem referência nesta rodada */ }
