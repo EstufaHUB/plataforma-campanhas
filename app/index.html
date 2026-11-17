@@ -2382,7 +2382,7 @@ function vinculosMeta(){ const v = {}; for (const c of ativas()) for (const x of
    com o mesmo objetivo (no país; sem histórico do país, na conta), e resultado esperado = budget diário × dias ÷ custo.
    Recorrentes, sem data de fim ou com mais de 4 meses: acumulado desde o início (budget diário × dias até hoje ÷ custo). */
 const MIDIA_OBJ = {OUTCOME_LEADS:'Conversão', LEAD_GENERATION:'Conversão', CONVERSIONS:'Conversão', OUTCOME_TRAFFIC:'Link click', LINK_CLICKS:'Link click', OUTCOME_ENGAGEMENT:'Engajamento', POST_ENGAGEMENT:'Engajamento', OUTCOME_AWARENESS:'Alcance', REACH:'Alcance', BRAND_AWARENESS:'Alcance'};
-const plDe = mc => { const m = ((S && S.metasStatus)||{})[mc.id]; if (m && m.budgetDiario>0) return +m.budgetDiario; if (m && m.mensal) { const fp = fracPlano(mc.id, (mc.inicio||'').slice(0,10), (mc.fim||'').slice(0,10), null); if (fp && fp.atual) return fp.atual.B/fp.atual.dias; } return +mc.budgetDiario||0; };   // só para a coluna Budget diário
+const plDe = mc => { const m = ((S && S.metasStatus)||{})[mc.id]; if (m && m.budgetDiario>0) return +m.budgetDiario; if (m && m.mensal) { const fp = fracPlano(mc.id, (mc.inicio||'').slice(0,10), (mc.fim||'').slice(0,10), null); if (fp && fp.atual) return diarioMes(mc, null, fp); } return +mc.budgetDiario||0; };   // só para a coluna Budget diário
 function metaAutoGer(mc, conta){
   const midia = MIDIA_OBJ[mc.objetivo], pl = +mc.budgetDiario || 0; if (!midia || !pl) return null;
   const man = ((S && S.metasStatus)||{})[mc.id], fator = midia==='Alcance' ? 1000 : 1; let xp = null, x = null;
@@ -2643,6 +2643,7 @@ function fracPlano(id, ini, fim, total){ const P = planoMensal(id); if (!P || !i
 function gastoMes(mc, vi, mes){ if (vi) { const r = (RESULTADOS[vi.c.id]||[]).find(x=>x.meta_campanha===mc.id) || (RESULTADOS[vi.c.id]||[]).find(x=>((x.dados||{}).vinculo||{}).campanhaId===mc.id);
     if (r) return ((r.dados||{}).porDia||[]).filter(d=>String(d.data).slice(0,7)===mes).reduce((t,d)=>t+(+d.investido||0),0); }
   return mc.porMes ? (mes <= HOJE.slice(0,7) ? (+mc.porMes[mes]||0) : null) : null; }
+const diarioMes = (mc, vi, fp) => { if (!fp || !fp.atual) return null; const a = fp.atual, g = gastoMes(mc, vi, a.m); if (g==null) return a.B/a.dias; const ontem = addDias(HOJE, -1), rest = Math.max(1, difDias(HOJE, a.fim)+1); return Math.max(0, a.B-g)/rest; };
 const notaMes = (mc, vi, fp, moe) => { if (!fp || !fp.atual) return ''; const a = fp.atual, g = gastoMes(mc, vi, a.m), rest = Math.max(1, difDias(HOJE, a.fim)+1);
   return `<div class="stb-esp">${NOMES_MES[+a.m.slice(5)-1]}: <b>${moedaCurta(a.B, moe)}</b>${g!=null?` · faltam ${moedaCurta(Math.max(0, a.B-g), moe)} em ${rest} dia${rest===1?'':'s'}`:''}</div>`; };
 function ctxBudStatus(mcId, conta){
@@ -2749,7 +2750,7 @@ function pgStatus(){
     if (!m.meta) return `<div class="stb-top"><b>${numCurto(m.real)}</b><span class="muted">/ meta a definir</span></div>`;
     const r = m.real/m.meta, fe = fpR && fpR.frac!=null ? fpR.frac : Math.min(1, m.S2.frac), rit = fe ? r/fe : r; return cel(numCurto(m.real), numCurto(m.meta), Math.round(r*100)+'%', r, rit>=1?'verde':rit>=0.85?'amar':'verm', fe<1?fe:null) + esp(numCurto(Math.round(m.meta*fe))); };
   // budget diário: média real de 7 dias × planejado (traço)
-  const barraDiario = (m, mc) => { if (m.vazio) return '<span class="muted small">—</span>'; const g = gastoDiario(m.S2, m.S2.linhas), man = mc && budDiaManual(mc), fpD = mc && !man ? fracPlano(mc.id, m.S2.ini, m.S2.fim, m.bud) : null; if (man) g.plano = man; else if (fpD && fpD.atual) g.plano = fpD.atual.B/fpD.atual.dias;
+  const barraDiario = (m, mc) => { if (m.vazio) return '<span class="muted small">—</span>'; const g = gastoDiario(m.S2, m.S2.linhas), man = mc && budDiaManual(mc), fpD = mc && !man ? fracPlano(mc.id, m.S2.ini, m.S2.fim, m.bud) : null; if (man) g.plano = man; else if (fpD && fpD.atual) g.plano = diarioMes(mc, vinculosMeta()[mc.id], fpD);
     if (g.real==null || !g.plano) return `<span class="muted small">sem dados</span>${man?'<div class="stb-esp">ajustado: <b>'+moeda2(man,m.moe)+'/dia</b></div>':''}`;
     const real = m.S2.frac>=1 ? m.inv/m.S2.total : g.real, r = real/g.plano, esc = Math.max(r, 1)*1.15;
     return cel(moeda2(real,m.moe), curto(g.plano,m.moe), Math.round(r*100)+'%', r/esc, Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar', 1/esc) + (man ? '<div class="stb-esp">diário ajustado (pace)</div>' : notaMes(mc, vinculosMeta()[mc.id], fpD, m.moe)); };
@@ -2777,7 +2778,7 @@ function pgStatus(){
   const celSemMeta = (val, sub) => `<div class="stb-top"><b>${val}</b><span class="muted">${sub}</span></div>`;
   const linhaMeta = (mc, moe, conta) => { const A = conta ? metaAutoGer(mc, conta) : null; const real = mc.gasto7/7, pl = plDe(mc), r = pl ? real/pl : null, cls = r==null ? null : Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar';
     const dias = mc.fim ? Math.max(0, difDias(HOJE, mc.fim.slice(0,10))) : null;
-    const notas = []; if (r!=null && r<0.85) notas.push(['amar', `Gastando ${Math.round(r*100)}% do budget diário${budDiaManual(mc)?' ajustado':' do Gerenciador'}.`]); if (r!=null && r>1.15) notas.push(['amar', `Gastando acima do budget diário (${Math.round(r*100)}%).`]);
+    const notas = []; if (r!=null && r<0.85) notas.push(['amar', `Gastando ${Math.round(r*100)}% do budget diário${budDiaManual(mc)?' ajustado':planoMensal(mc.id)?' para fechar o mês':' do Gerenciador'}.`]); if (r!=null && r>1.15) notas.push(['amar', `Gastando acima do budget diário (${Math.round(r*100)}%).`]);
     if (!mc.resultados && mc.investido>0) notas.push(['verm', `Sem ${mc.tipoResultado} até agora.`]);
     const IG = invGer(mc), cel4 = barraInv(IG.inv, IG.total, IG.esperado, moe);
     if (A) { const mT = A.metaTotal ?? A.meta, eFr = mT && A.modo!=='7d' ? A.esperado/mT : null, rr = mT ? A.real/mT : 0, corR = A.rit==null ? 'amar' : A.rit>=1?'verde':A.rit>=0.85?'amar':'verm';
