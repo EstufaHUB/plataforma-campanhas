@@ -99,15 +99,21 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
     try {
       const act = `act_${ct.conta}`;
       const [info] = await graph(act, token, { fields: "name,currency" });
-      const camps = await graph(`${act}/campaigns`, token, { fields: "id,name,objective,start_time,stop_time,daily_budget,lifetime_budget", effective_status: '["ACTIVE"]', limit: "200" });
+      const camps = await graph(`${act}/campaigns`, token, { fields: "id,name,objective,start_time,stop_time,daily_budget,lifetime_budget,effective_status,updated_time", effective_status: '["ACTIVE","PAUSED"]', limit: "200" });
       const ids = new Set(camps.map((c) => c.id as string));
       let adsets: Record<string, unknown>[] = [];
-      if (camps.some((c) => !c.daily_budget && !c.lifetime_budget)) adsets = await graph(`${act}/adsets`, token, { fields: "campaign_id,daily_budget,lifetime_budget,end_time,start_time", effective_status: '["ACTIVE"]', limit: "500" });
-      const filtro = JSON.stringify([{ field: "campaign.effective_status", operator: "IN", value: ["ACTIVE"] }]);
+      if (camps.some((c) => !c.daily_budget && !c.lifetime_budget)) adsets = await graph(`${act}/adsets`, token, { fields: "campaign_id,daily_budget,lifetime_budget,end_time,start_time", effective_status: '["ACTIVE","CAMPAIGN_PAUSED"]', limit: "500" });
+      const filtro = JSON.stringify([{ field: "campaign.effective_status", operator: "IN", value: ["ACTIVE", "PAUSED"] }]);
       const porId = (lista: Record<string, unknown>[]) => Object.fromEntries(lista.map((x) => [x.campaign_id as string, x]));
       const sete = await graph(`${act}/insights`, token, { level: "campaign", date_preset: "last_7d", fields: "campaign_id,spend,actions,reach", filtering: filtro, limit: "500" });
       const S7 = porId(sete);
-      const hoje = Date.now(), noAr = (c: Record<string, unknown>) => (!c.stop_time || Date.parse(c.stop_time as string) >= hoje - 864e5) && (+(((S7[c.id as string] || {}) as Record<string, unknown>).spend as string) > 0 || (c.start_time && Date.parse(c.start_time as string) >= hoje - 3 * 864e5));
+      // pausadas no Gerenciador: entram se ainda estão no período e gastaram nos últimos 30 dias (pausa recente)
+      const pausadas = camps.filter((c) => c.effective_status === "PAUSED");
+      let S30: Record<string, Record<string, unknown>> = {};
+      if (pausadas.length) S30 = porId(await graph(`${act}/insights`, token, { level: "campaign", date_preset: "last_30d", fields: "campaign_id,spend", filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: pausadas.slice(0, 100).map((c) => c.id) }]), limit: "500" }));
+      const gastou = (M: Record<string, Record<string, unknown>>, id: string) => +((M[id] || {}).spend as string) > 0;
+      const hoje = Date.now(), noAr = (c: Record<string, unknown>) => (!c.stop_time || Date.parse(c.stop_time as string) >= hoje - 864e5) &&
+        (c.effective_status === "PAUSED" ? gastou(S30, c.id as string) : (gastou(S7, c.id as string) || (c.start_time && Date.parse(c.start_time as string) >= hoje - 3 * 864e5)));
       const ativas = camps.filter((c) => ids.has(c.id as string) && noAr(c)), total: Record<string, unknown>[] = [];
       // total desde o início, só das campanhas no ar (em lotes, para contas com muito histórico)
       for (let i = 0; i < ativas.length; i += 25) total.push(...await graph(`${act}/insights`, token, { level: "campaign", date_preset: "maximum", fields: "campaign_id,spend,impressions,reach,clicks,actions", filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: ativas.slice(i, i + 25).map((c) => c.id) }]), limit: "100" }));
@@ -123,7 +129,8 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
         const inv = +(t.spend as string) || 0, inv7 = +(s7.spend as string) || 0;
         return { id: c.id, nome: c.name, objetivo: obj, inicio: c.start_time || null, fim: c.stop_time || null, budgetDiario: diario,
           investido: inv, impressoes: +(t.impressions as string) || 0, alcance: +(t.reach as string) || 0, cliques: +(t.clicks as string) || 0,
-          resultados: r.n, tipoResultado: r.tipo, custoResultado: r.n ? inv / r.n : null, gasto7: inv7, resultados7: r7.n };
+          resultados: r.n, tipoResultado: r.tipo, custoResultado: r.n ? inv / r.n : null, gasto7: inv7, resultados7: r7.n,
+          ...(c.effective_status === "PAUSED" ? { pausada: true, pausadaEm: c.updated_time || null } : {}) };
       });
       let bench = null; try { bench = await referencia(act, token); } catch (_) { /* sem referência nesta rodada */ }
       await admin.from("meta_contas").upsert({ conta: ct.conta, dados: { nome: info?.name || ct.nome, moeda: info?.currency || null, grupo: ct.grupo, campanhas, bench }, atualizado_em: new Date().toISOString() });
