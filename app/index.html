@@ -373,10 +373,10 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
    1. DADOS DE REFERÊNCIA
    ===================================================================== */
 const HOJE = (()=>{ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
-const IDIOMAS = {EN:'Inglês',PT:'Português',ES:'Espanhol',DE:'Alemão',FR:'Francês',IT:'Italiano',JA:'Japonês',NL:'Holandês',TR:'Turco',RU:'Russo'};
+const IDIOMAS = {EN:'Inglês',PT:'Português',ES:'Espanhol',DE:'Alemão',FR:'Francês',IT:'Italiano',JA:'Japonês',NL:'Holandês',TR:'Turco',RU:'Russo',UA:'Ucraniano'};
 const REGIOES = {EMEA:'Europa (EMEA)',LATAM:'América Latina (LATAM)',NA:'América do Norte (NA)',APAC:'Ásia-Pacífico (APAC)',OUT:'Outros'};
 const PAISES = {
-  DE:{n:'Alemanha',r:'EMEA',i:'DE',f:'🇩🇪'},FR:{n:'França',r:'EMEA',i:'FR',f:'🇫🇷'},IT:{n:'Itália',r:'EMEA',i:'IT',f:'🇮🇹'},UK:{n:'Reino Unido',r:'EMEA',i:'EN',f:'🇬🇧'},ES:{n:'Espanha',r:'EMEA',i:'ES',f:'🇪🇸'},NL:{n:'Holanda',r:'EMEA',i:'NL',f:'🇳🇱'},TR:{n:'Turquia',r:'EMEA',i:'TR',f:'🇹🇷'},KZ:{n:'Cazaquistão',r:'EMEA',i:'RU',f:'🇰🇿'},
+  DE:{n:'Alemanha',r:'EMEA',i:'DE',f:'🇩🇪'},FR:{n:'França',r:'EMEA',i:'FR',f:'🇫🇷'},IT:{n:'Itália',r:'EMEA',i:'IT',f:'🇮🇹'},UK:{n:'Reino Unido',r:'EMEA',i:'EN',f:'🇬🇧'},ES:{n:'Espanha',r:'EMEA',i:'ES',f:'🇪🇸'},NL:{n:'Holanda',r:'EMEA',i:'NL',f:'🇳🇱'},TR:{n:'Turquia',r:'EMEA',i:'TR',f:'🇹🇷'},KZ:{n:'Cazaquistão',r:'EMEA',i:'RU',f:'🇰🇿'},UA:{n:'Ucrânia',r:'EMEA',i:'UA',f:'🇺🇦'},
   BR:{n:'Brasil',r:'LATAM',i:'PT',f:'🇧🇷'},AR:{n:'Argentina',r:'LATAM',i:'ES',f:'🇦🇷'},CL:{n:'Chile',r:'LATAM',i:'ES',f:'🇨🇱'},CO:{n:'Colômbia',r:'LATAM',i:'ES',f:'🇨🇴'},MX:{n:'México',r:'LATAM',i:'ES',f:'🇲🇽'},PY:{n:'Paraguai',r:'LATAM',i:'ES',f:'🇵🇾'},UY:{n:'Uruguai',r:'LATAM',i:'ES',f:'🇺🇾'},
   US:{n:'Estados Unidos',r:'NA',i:'EN',f:'🇺🇸'},CA:{n:'Canadá',r:'NA',i:'EN',f:'🇨🇦'},
   AU:{n:'Austrália',r:'APAC',i:'EN',f:'🇦🇺'},NZ:{n:'Nova Zelândia',r:'APAC',i:'EN',f:'🇳🇿'},JP:{n:'Japão',r:'APAC',i:'JA',f:'🇯🇵'}
