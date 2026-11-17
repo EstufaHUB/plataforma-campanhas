@@ -2646,6 +2646,7 @@ function gastoMes(mc, vi, mes){ if (vi) { const r = (RESULTADOS[vi.c.id]||[]).fi
   return mc.porMes ? (mes <= HOJE.slice(0,7) ? (+mc.porMes[mes]||0) : null) : null; }
 const diarioMes = (mc, vi, fp) => { if (!fp || !fp.atual) return null; const a = fp.atual, g = gastoMes(mc, vi, a.m); if (g==null) return a.B/a.dias; const ontem = addDias(HOJE, -1), rest = Math.max(1, difDias(HOJE, a.fim)+1); return Math.max(0, a.B-g)/rest; };
 const notaMes = (mc, vi, fp, moe) => { if (!fp || !fp.atual) return ''; const a = fp.atual, g = gastoMes(mc, vi, a.m), rest = Math.max(1, difDias(HOJE, a.fim)+1);
+  if (g!=null && g >= a.B) return `<div class="stb-esp" style="color:#9a2a22" title="Use “Ajustar budget” › Corrigir daily do mês atual para somar o saldo dos meses anteriores.">${NOMES_MES[+a.m.slice(5)-1]} esgotado: <b style="color:#9a2a22">${moedaCurta(g, moe)} de ${moedaCurta(a.B, moe)}</b></div>`;
   return `<div class="stb-esp">${NOMES_MES[+a.m.slice(5)-1]}: <b>${moedaCurta(a.B, moe)}</b>${g!=null?` · faltam ${moedaCurta(Math.max(0, a.B-g), moe)} em ${rest} dia${rest===1?'':'s'}`:''}</div>`; };
 function ctxBudStatus(mcId, conta){
   const mc = META_CONTAS.flatMap(m=>((m.dados||{}).campanhas)||[]).find(x=>x.id===mcId); if (!mc) return null;
@@ -2780,6 +2781,7 @@ function pgStatus(){
     const r = m.real/m.meta, fe = fpR && fpR.frac!=null ? fpR.frac : Math.min(1, m.S2.frac), rit = fe ? r/fe : r; return cel(numCurto(m.real), numCurto(m.meta), Math.round(r*100)+'%', r, rit>=1?'verde':rit>=0.85?'amar':'verm', fe<1?fe:null) + esp(numCurto(Math.round(m.meta*fe))); };
   // budget diário: média real de 7 dias × planejado (traço)
   const barraDiario = (m, mc) => { if (m.vazio) return '<span class="muted small">—</span>'; const g = gastoDiario(m.S2, m.S2.linhas), man = mc && budDiaManual(mc), fpD = mc && !man ? fracPlano(mc.id, m.S2.ini, m.S2.fim, m.bud) : null; if (man) g.plano = man; else if (fpD && fpD.atual) g.plano = diarioMes(mc, vinculosMeta()[mc.id], fpD);
+    if (g.real!=null && fpD && fpD.atual && !g.plano) return `<div class="stb-top"><b>${moeda2(g.real, m.moe)}</b><span class="muted">/ dia</span></div>${notaMes(mc, vinculosMeta()[mc.id], fpD, m.moe)}`;
     if (g.real==null || !g.plano) return `<span class="muted small">sem dados</span>${man?'<div class="stb-esp">ajustado: <b>'+moeda2(man,m.moe)+'/dia</b></div>':''}`;
     const real = m.S2.frac>=1 ? m.inv/m.S2.total : g.real, r = real/g.plano, esc = Math.max(r, 1)*1.15;
     return cel(moeda2(real,m.moe), curto(g.plano,m.moe), Math.round(r*100)+'%', r/esc, Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar', 1/esc) + (man ? '<div class="stb-esp">diário ajustado (pace)</div>' : notaMes(mc, vinculosMeta()[mc.id], fpD, m.moe)); };
