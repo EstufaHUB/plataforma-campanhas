@@ -2605,7 +2605,7 @@ function abrirMetaStatus(mcId, conta){
     </form>
     <div class="meta-st-res"><span>Meta de ${h(x.tipo)}</span><b id="meta-st-res">${x.meta!=null?Math.round(x.meta).toLocaleString('pt-BR'):'—'}</b></div>
     <p class="small muted" style="margin:8px 0 0">Meta = budget ÷ custo: ${h(x.baseTxt)}.</p>
-    <p class="small" style="margin:8px 0 0">${x.vi ? `<i data-lucide="link" style="width:13px;height:13px;vertical-align:-2px"></i> Campanha vinculada a <b>${h(x.vi.c.nome)}</b>: o custo também muda em Budgets e KPIs.` : 'Campanha só no Gerenciador: a meta manual substitui a automática no Status pontual.'}</p>`,
+    <p class="small" style="margin:8px 0 0">${x.vi ? `<i data-lucide="link" style="width:13px;height:13px;vertical-align:-2px"></i> Campanha vinculada a <b>${h(x.vi.c.nome)}</b>: o custo também muda em Budgets e KPIs.` : 'Campanha só no Gerenciador: este custo substitui o automático (média da conta) no Status pontual.'}</p>`,
     `${x.manual?`<button class="btn" data-act="metaStAuto"><i data-lucide="sparkles"></i>Voltar ao automático</button>`:''}<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="metaStSalvar">Salvar</button>`); }
 function gravarMetaStatus(auto){
   const {mcId, conta} = UI.metaSt || {}, x = ctxMetaStatus(mcId, conta); if (!x) return fecharModal();
