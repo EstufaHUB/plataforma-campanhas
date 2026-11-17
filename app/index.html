@@ -1963,7 +1963,7 @@ function dadosSaude(c){
     const objEf = (objCanal(c, cf)==='Awareness' || (cf.objMidia && MET_AW[cf.objMidia])) ? 'Awareness' : (objCanal(c, cf) || null);
     const cplMeta = objEf==='Awareness' ? null : custoLinha(b), leadsMeta = cplMeta>0 ? Math.round(bud/cplMeta) : null;   // em awareness o custo não é CPL
     const leads = +r.dados.leads||0, inv = +r.dados.investido||0;
-    return {r, v, b, bud, cplMeta, leadsMeta, custoAw: objEf==='Awareness' ? custoLinha(b) : null, objMidia: cf.objMidia||null, leads, inv, alcance:+r.dados.alcance||0, impressoes:+r.dados.impressoes||0, cliques:+r.dados.cliques||0, engaj:+r.dados.engajamentos||0, cliquesLink:+r.dados.cliquesLink||0, visitas:+r.dados.visitas||0, objetivo:objEf, cpl: leads ? inv/leads : null, moeda: r.dados.moeda || cf.moeda || c.moeda || 'BRL', porDia: r.dados.porDia||[], atualizado: r.atualizado_em}; });
+    return {r, v, b, pc, cf, key, bud, cplMeta, leadsMeta, custoAw: objEf==='Awareness' ? custoLinha(b) : null, objMidia: cf.objMidia||null, leads, inv, alcance:+r.dados.alcance||0, impressoes:+r.dados.impressoes||0, cliques:+r.dados.cliques||0, engaj:+r.dados.engajamentos||0, cliquesLink:+r.dados.cliquesLink||0, visitas:+r.dados.visitas||0, objetivo:objEf, cpl: leads ? inv/leads : null, moeda: r.dados.moeda || cf.moeda || c.moeda || 'BRL', porDia: r.dados.porDia||[], atualizado: r.atualizado_em}; });
   let ini = c.lancamento, fim = c.fimVeiculacao || c.lancamento;
   if (faseada(c) && linhas.length) { const fs = [...new Set(linhas.map(x=>x.v.fase||'Lead gen'))]; if (fs.length===1) { const pf = periodoFase(c, fs[0]); ini = pf.ini || ini; fim = pf.fim || fim; } }
   const total = Math.max(1, difDias(ini, fim)+1);
@@ -2382,8 +2382,9 @@ function vinculosMeta(){ const v = {}; for (const c of ativas()) for (const x of
    com o mesmo objetivo (no país; sem histórico do país, na conta), e resultado esperado = budget diário × dias ÷ custo.
    Recorrentes, sem data de fim ou com mais de 4 meses: acumulado desde o início (budget diário × dias até hoje ÷ custo). */
 const MIDIA_OBJ = {OUTCOME_LEADS:'Conversão', LEAD_GENERATION:'Conversão', CONVERSIONS:'Conversão', OUTCOME_TRAFFIC:'Link click', LINK_CLICKS:'Link click', OUTCOME_ENGAGEMENT:'Engajamento', POST_ENGAGEMENT:'Engajamento', OUTCOME_AWARENESS:'Alcance', REACH:'Alcance', BRAND_AWARENESS:'Alcance'};
+const plDe = mc => { const m = ((S && S.metasStatus)||{})[mc.id]; return m && m.budgetDiario>0 ? +m.budgetDiario : (+mc.budgetDiario||0); };
 function metaAutoGer(mc, conta){
-  const midia = MIDIA_OBJ[mc.objetivo], pl = +mc.budgetDiario || 0; if (!midia || !pl) return null;
+  const midia = MIDIA_OBJ[mc.objetivo], pl = plDe(mc); if (!midia || !pl) return null;
   const man = ((S && S.metasStatus)||{})[mc.id], fator = midia==='Alcance' ? 1000 : 1; let xp = null, x = null;
   if (man && man.custo>0) x = {custo:+man.custo, n:0, manual:true};
   else { const d = ((META_CONTAS.find(m=>m.conta===conta)||{}).dados)||{}, bq = d.bench && d.bench.porObj && d.bench.porObj[midia]; if (!bq) return null;
@@ -2459,8 +2460,8 @@ async function montarSlides(grupo, tipo = '', opc = {}){
         const gd = gastoDiario(m.S2, m.S2.linhas), esp = Math.min(1, m.S2.frac);
         return {p, tipo: m.aw ? (m.rotRes==='engajamentos' ? 'engajamentos' : m.rotRes==='visitas' ? 'visitas' : 'cliques') : 'leads', real:m.real, meta:m.meta, rit: m.meta && esp ? (m.real/m.meta)/esp : null, custo:m.custo, custoMeta:m.custoMeta, plano:gd.plano, dia: m.S2.frac>=1 ? m.inv/m.S2.total : gd.real, inv:m.inv}; }
       const A = metaAutoGer(mc, ct.conta);
-      if (A) return {p, tipo: mc.tipoResultado, real:A.real, meta:Math.round(A.meta), rit:A.rit, custo:A.custo, custoMeta:A.custoMeta, plano:mc.budgetDiario, dia: mc.gasto7/7, inv: A.modo==='7d' ? mc.gasto7 : mc.investido, nivel:A.nivel, auto:A};
-      return {p, tipo: mc.tipoResultado, real:mc.resultados, meta:null, rit:null, custo:mc.custoResultado, custoMeta:null, plano:mc.budgetDiario, dia: mc.gasto7/7, inv:mc.investido}; }).filter(x=>!x.vazio);
+      if (A) return {p, tipo: mc.tipoResultado, real:A.real, meta:Math.round(A.meta), rit:A.rit, custo:A.custo, custoMeta:A.custoMeta, plano:plDe(mc), dia: mc.gasto7/7, inv: A.modo==='7d' ? mc.gasto7 : mc.investido, nivel:A.nivel, auto:A};
+      return {p, tipo: mc.tipoResultado, real:mc.resultados, meta:null, rit:null, custo:mc.custoResultado, custoMeta:null, plano:plDe(mc), dia: mc.gasto7/7, inv:mc.investido}; }).filter(x=>!x.vazio);
     const tipo = (linhas[0]||{}).tipo || 'leads';
     const agg = g.c ? metricasStatus(g.c, g.fase||null, (g.linhas.find(l=>l.vi)||{}).vi?.v.marca || null) : null, autos = linhas.filter(l=>l.auto && l.auto.score!=null), scoreAuto = !g.c && autos.length ? Math.min(...autos.map(l=>l.auto.score)) : null, nv = agg && !agg.vazio ? nivelSaude(agg.S2.score) : nivelSaude(scoreAuto);
     // ---- blocos do topo: campanha · período · data do relatório · estufa ----
@@ -2590,7 +2591,7 @@ function ctxMetaStatus(mcId, conta){
     const ls = m.S2.linhas.filter(x=>x.b && x.bud>0), base = ls.reduce((t,x)=>t+x.bud,0);
     return {mc, vi, ls, base, moe: m.moe||moe, meta: m.meta, custo: m.custoMeta, tipo: m.rotRes, unid: m.rotCusto, manual: ls.some(x=>custoManual(x.b)!=null),
       baseTxt: `budget de ${moeda2(base, m.moe||moe)} ${vi.v.fase?'da fase':'da campanha'} neste país`}; }
-  const A = metaAutoGer(mc, conta), pl = +mc.budgetDiario||0; if (!pl) return null;
+  const A = metaAutoGer(mc, conta), pl = plDe(mc); if (!pl) return null;
   const tot = A ? A.tot : 7, base = pl*tot, tipo = mc.tipoResultado || 'resultados';
   return {mc, base, moe, meta: A ? A.meta : null, custo: A ? A.custoMeta : null, tipo, unid: 'custo por '+(tipo==='alcance'?'pessoa':tipo.replace(/s$/,'')), manual: !!(A && A.manual),
     baseTxt: `budget diário de ${moeda2(pl, moe)} × ${tot} dias${A && A.modo==='7d' ? ' (últimos 7 dias)' : A && A.modo==='acum' ? ' (desde o início até hoje)' : ' (período da campanha)'} = ${moeda2(base, moe)}`}; }
@@ -2618,8 +2619,49 @@ function gravarMetaStatus(auto){
       b.hist = b.hist||[]; b.hist.unshift({q:fd(HOJE), o:`custo: ${val??'automático'} (Status pontual)`}); }
     registrar(`Meta de ${x.ls.map(l=>PAISES[l.b.pais]?PAISES[l.b.pais].n:l.b.pais).join(', ')} em “${c.nome}” ${auto?'voltou para o automático':'ajustada no Status pontual: custo '+val}`); }
   else { S.metasStatus = S.metasStatus || {};
-    if (auto) delete S.metasStatus[mcId]; else S.metasStatus[mcId] = {custo: val, em: HOJE, por: (PERFIL&&PERFIL.nome)||''};
+    const ant = S.metasStatus[mcId] || {}; if (auto) { delete ant.custo; } else Object.assign(ant, {custo: val, em: HOJE, por: (PERFIL&&PERFIL.nome)||''}); if (ant.custo || ant.budgetDiario) S.metasStatus[mcId] = ant; else delete S.metasStatus[mcId];
     registrar(`Meta de “${x.mc.nome}” no Status pontual ${auto?'voltou para a automática':'ajustada: custo '+val}`); }
+  fecharModal(); salvar(); render(); }
+/* ---------- budget diário no Status pontual ----------
+   vinculada: o novo diário × dias do período vira o budget do país no canal (Budgets e KPIs e ficha da campanha);
+   só no Gerenciador: vira o budget diário planejado (config.metasStatus), usado na meta, no investimento e no budget diário */
+function ctxBudStatus(mcId, conta){
+  const mc = META_CONTAS.flatMap(m=>((m.dados||{}).campanhas)||[]).find(x=>x.id===mcId); if (!mc) return null;
+  const moe = ((META_CONTAS.find(m=>m.conta===conta)||{}).dados||{}).moeda || 'BRL', vi = vinculosMeta()[mcId];
+  if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null); if (m.vazio) return null;
+    const l = m.S2.linhas.find(x=>x.v && x.v.campanhaId===mcId && x.pc) || m.S2.linhas.find(x=>x.pc), dias = m.S2.total;
+    return {mc, vi, l, dias, moe: m.moe||moe, atual: l && dias ? (+l.pc.budget||0)/dias : null, ger: +mc.budgetDiario||0, manual:false,
+      txt: `× ${dias} dias ${vi.v.fase?'da fase':'da campanha'} = budget de ${PAISES[vi.v.pais]?PAISES[vi.v.pais].n:vi.v.pais} no Meta Ads`}; }
+  const ini = (mc.inicio||'').slice(0,10), fim = (mc.fim||'').slice(0,10), dias = ini && fim ? Math.max(1, difDias(ini, fim)+1) : null, man = ((S.metasStatus||{})[mcId]||{}).budgetDiario;
+  return {mc, dias, moe, atual: plDe(mc), ger: +mc.budgetDiario||0, manual: man>0, txt: dias ? `× ${dias} dias da campanha = investimento total previsto` : 'campanha sem data de fim'}; }
+function abrirBudStatus(mcId, conta){
+  const x = ctxBudStatus(mcId, conta); if (!x) return alert('Não foi possível ler esta campanha.');
+  if (x.vi && !x.l) return alert(`Defina os países e o budget de Meta Ads em “${x.vi.c.nome}” para ajustar o budget diário.`);
+  UI.budSt = {mcId, conta};
+  const pais = (x.vi && x.vi.v.pais) || paisDe(x.mc.nome), rot = x.vi ? x.vi.c.nome : titulo(x.mc.nome), v2 = v => v==null ? '' : +(+v).toFixed(2);
+  const tot = v => x.dias && v>0 ? moeda2(v*x.dias, x.moe) : '—';
+  abrirModal('Ajustar budget diário', `<div class="small muted" style="margin-bottom:10px"><b style="color:var(--pet-950)">${h(rot)}</b>${pais?' · '+h(PAISES[pais]?PAISES[pais].n:pais):''}</div>
+    <form id="f-bud-st" class="rel-form" data-dias="${x.dias||0}" data-moe="${h(x.moe)}" onsubmit="return false">
+      <label>Budget diário (${h(x.moe)})<input type="number" min="0" step="any" name="dia" value="${v2(x.atual)}" autofocus oninput="const d=+this.form.dataset.dias;document.getElementById('bud-st-tot').textContent=d&&this.value>0?(this.value*d).toLocaleString('pt-BR',{style:'currency',currency:this.form.dataset.moe}):'—'"></label>
+    </form>
+    <div class="meta-st-res"><span>${x.vi ? 'Budget total do país' : 'Investimento total previsto'}</span><b id="bud-st-tot">${tot(x.atual)}</b></div>
+    <p class="small muted" style="margin:8px 0 0">Budget diário ${h(x.txt)}. No Gerenciador hoje: ${x.ger ? moeda2(x.ger, x.moe)+'/dia' : '—'}.</p>
+    <p class="small" style="margin:8px 0 0">${x.vi ? `<i data-lucide="link" style="width:13px;height:13px;vertical-align:-2px"></i> Campanha vinculada a <b>${h(x.vi.c.nome)}</b>: o budget do país também muda em Budgets e KPIs e na ficha da campanha.` : 'Campanha só no Gerenciador: este budget vale como planejado no Status pontual (meta, investimento e budget diário).'} Lembre de ajustar também no Gerenciador.</p>`,
+    `${x.manual?`<button class="btn" data-act="budStAuto"><i data-lucide="rotate-ccw"></i>Usar o do Gerenciador</button>`:''}<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="budStSalvar">Salvar</button>`); }
+function gravarBudStatus(auto){
+  const {mcId, conta} = UI.budSt || {}, x = ctxBudStatus(mcId, conta); if (!x) return fecharModal();
+  const dia = auto ? null : +$('#f-bud-st').dia.value; if (!auto && !(dia>0)) return alert('Informe o budget diário.');
+  const val = dia==null ? null : Math.round(dia*100)/100;
+  if (x.vi) { const c = x.vi.c, cf = x.l.cf, novo = Math.round(val*x.dias*100)/100, ant = +x.l.pc.budget||0;
+    x.l.pc.budget = novo; cf.orcamento = Math.round(cf.paises.reduce((t,p)=>t+(+p.budget||0),0)*100)/100;
+    if (cf.orcamento>0) { cf.divisao = 'pct'; let acc = 0; cf.paises.forEach((p,i)=>{ if (i<cf.paises.length-1) { p.pct = Math.round((+p.budget||0)/cf.orcamento*10000)/100; acc += p.pct; } else p.pct = Math.round((100-acc)*100)/100; }); }
+    const bk = typeof rascunho!=='undefined' ? rascunho : null; try { rascunho = {paises: c.paises}; consolidarCanais(c); } finally { rascunho = bk; }
+    sincronizarBudgetCanais(c);
+    registrar(`Budget de Meta Ads · ${PAISES[x.l.pc.cod]?PAISES[x.l.pc.cod].n:x.l.pc.cod} em “${c.nome}” ajustado no Status pontual: ${moeda2(ant, x.moe)} → ${moeda2(novo, x.moe)} (${moeda2(val, x.moe)}/dia)`); }
+  else { S.metasStatus = S.metasStatus || {}; const ant = S.metasStatus[mcId] || {};
+    if (auto) delete ant.budgetDiario; else Object.assign(ant, {budgetDiario: val, emB: HOJE, porB: (PERFIL&&PERFIL.nome)||''});
+    if (ant.custo || ant.budgetDiario) S.metasStatus[mcId] = ant; else delete S.metasStatus[mcId];
+    registrar(`Budget diário de “${x.mc.nome}” no Status pontual ${auto?'voltou para o do Gerenciador':'ajustado: '+moeda2(val, x.moe)+'/dia'}`); }
   fecharModal(); salvar(); render(); }
 function pgStatus(){
   migalha([['Status pontual']]);
@@ -2635,7 +2677,7 @@ function pgStatus(){
     if (!total) return `<div class="stb-top"><b>${mc0(inv)}</b><span class="muted">consumido</span></div>${esperado?esp(mc0(esperado)):''}`;
     const fr = inv/total, ei = esperado!=null ? Math.min(1, esperado/total) : null, r = esperado ? inv/esperado : null;
     return cel(mc0(inv), mc0(total).replace(/^[^\d]+/,''), Math.round(fr*100)+'%', fr, r==null ? 'verde' : Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar', ei!=null && ei<1 ? ei : null) + (esperado!=null ? esp(mc0(esperado)) : ''); };
-  const invGer = mc => { const pl = +mc.budgetDiario||0, ini = (mc.inicio||'').slice(0,10), fim = (mc.fim||'').slice(0,10); if (!pl || !ini) return {inv:+mc.investido||0};
+  const invGer = mc => { const pl = plDe(mc), ini = (mc.inicio||'').slice(0,10), fim = (mc.fim||'').slice(0,10); if (!pl || !ini) return {inv:+mc.investido||0};
     const tot = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(0, Math.min(tot||1e9, difDias(ini, HOJE)+1)); return {inv:+mc.investido||0, total: tot ? pl*tot : null, esperado: pl*dec}; };
   // custo: preenchimento = custo atual, traço = meta (verde abaixo da meta)
   const barraCusto = m => { if (m.vazio) return '<span class="muted small">—</span>'; if (m.custo==null) return `<span class="muted small">sem resultado</span>${m.custoMeta?esp('≤ '+mcusto(m.custoMeta,m.moe), 'esperado'):''}`;
@@ -2672,7 +2714,7 @@ function pgStatus(){
   const ultimaAtual = META_CONTAS.reduce((m,r)=>!m||r.atualizado_em>m?r.atualizado_em:m, null), horas = ultimaAtual ? (Date.now()-new Date(ultimaAtual).getTime())/36e5 : null;
   // linha de campanha não vinculada: números direto do Gerenciador (sem meta da plataforma)
   const celSemMeta = (val, sub) => `<div class="stb-top"><b>${val}</b><span class="muted">${sub}</span></div>`;
-  const linhaMeta = (mc, moe, conta) => { const A = conta ? metaAutoGer(mc, conta) : null; const real = mc.gasto7/7, pl = mc.budgetDiario, r = pl ? real/pl : null, cls = r==null ? null : Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar';
+  const linhaMeta = (mc, moe, conta) => { const A = conta ? metaAutoGer(mc, conta) : null; const real = mc.gasto7/7, pl = plDe(mc), r = pl ? real/pl : null, cls = r==null ? null : Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar';
     const dias = mc.fim ? Math.max(0, difDias(HOJE, mc.fim.slice(0,10))) : null;
     const notas = []; if (r!=null && r<0.85) notas.push(['amar', `Gastando ${Math.round(r*100)}% do budget diário do Gerenciador.`]); if (r!=null && r>1.15) notas.push(['amar', `Gastando acima do budget diário (${Math.round(r*100)}%).`]);
     if (!mc.resultados && mc.investido>0) notas.push(['verm', `Sem ${mc.tipoResultado} até agora.`]);
@@ -2690,6 +2732,7 @@ function pgStatus(){
       cel3: pl ? cel(moeda2(real, moe), curto(pl, moe), Math.round(r*100)+'%', r/(Math.max(r,1)*1.15), cls, 1/(Math.max(r,1)*1.15)) : `<div class="stb-top"><b>${moeda2(real, moe)}</b><span class="muted">/ dia</span></div>`,
       fr: notas.length ? notas.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join('') : '<span class="muted">No ritmo.</span>', cor: notas.some(x=>x[0]==='verm') ? '#d0443a' : notas.some(x=>x[0]==='amar') ? '#e0a100' : '#c9d3d6', dias}; };
   const cont = {Saudável:0, Atenção:0, Crítica:0, sem:0, pausada:0};
+  const lapisB = (mc, conta) => ehEquipe() ? `<a href="javascript:void 0" class="st-lapis" data-act="budStAbrir" data-mc="${h(mc.id)}" data-conta="${h(conta)}"><i data-lucide="pencil"></i>Ajustar budget</a>` : '';
   const lapis = (mc, conta) => ehEquipe() ? `<a href="javascript:void 0" class="st-lapis" data-act="metaStAbrir" data-mc="${h(mc.id)}" data-conta="${h(conta)}"><i data-lucide="pencil"></i>Ajustar custo</a>` : ''; const nCamp = new Set();
   const tipoF = UI.stTipo ?? 'pontuais', abertos = UI.stAbertos || (UI.stAbertos = {});
   const ORD = {Crítica:0, Atenção:1, Saudável:2};
@@ -2709,9 +2752,9 @@ function pgStatus(){
           return `<tr class="st-pais st-pausada"><td title="${h(mc.nome)}"><span class="ponto-st" style="background:#9aa3a6" title="Pausada"></span>${rot}</td><td class="stb-cel">${c1}</td><td class="stb-cel">${c2}</td><td class="stb-cel">${c4}</td><td class="stb-cel"><span class="muted small">pausada</span></td><td class="st-obs"><div class="stp-fr"><i class="p-info"></i>Pausada no Gerenciador${mc.pausadaEm?' em '+fdm(mc.pausadaEm.slice(0,10)):''}.</div></td></tr>`; }
         if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null), n = niv(m); cont[n ? n.t : 'sem']++;
           if (n && (pior==null || ORD[n.t]<ORD[pior])) pior = n.t; if (!m.meta || !m.custoMeta) semMeta = true;
-          return `<tr class="st-pais ${n&&n.t==='Crítica'?'critica':''}"><td title="${h(mc.nome)}"><span class="ponto-st" style="background:${corN(n)}" title="${n?n.t:'Sem farol'}"></span>${rot}</td><td class="stb-cel">${barraRes(m)}</td><td class="stb-cel">${barraCusto(m)}${lapis(mc, ct.conta)}</td><td class="stb-cel">${m.vazio?'<span class="muted small">—</span>':barraInv(m.inv, m.bud, m.bud ? m.bud*Math.min(1, m.S2.frac) : null, m.moe)}</td><td class="stb-cel">${barraDiario(m)}</td><td class="st-obs">${frase(m)}</td></tr>`; }
+          return `<tr class="st-pais ${n&&n.t==='Crítica'?'critica':''}"><td title="${h(mc.nome)}"><span class="ponto-st" style="background:${corN(n)}" title="${n?n.t:'Sem farol'}"></span>${rot}</td><td class="stb-cel">${barraRes(m)}</td><td class="stb-cel">${barraCusto(m)}${lapis(mc, ct.conta)}</td><td class="stb-cel">${m.vazio?'<span class="muted small">—</span>':barraInv(m.inv, m.bud, m.bud ? m.bud*Math.min(1, m.S2.frac) : null, m.moe)}</td><td class="stb-cel">${barraDiario(m)}${lapisB(mc, ct.conta)}</td><td class="st-obs">${frase(m)}</td></tr>`; }
         const L2 = linhaMeta(mc, moe, ct.conta); cont[L2.nivel || 'sem']++; if (L2.nivel && (pior==null || ORD[L2.nivel]<ORD[pior])) pior = L2.nivel; if (!L2.A) semMeta = true; else auto = L2.A;
-        return `<tr class="st-pais ${L2.nivel==='Crítica'?'critica':''}"><td title="${h(mc.nome)}"><span class="ponto-st" style="background:${L2.cor}"></span>${rot}</td><td class="stb-cel">${L2.cel1}</td><td class="stb-cel">${L2.cel2}${lapis(mc, ct.conta)}</td><td class="stb-cel">${L2.cel4}</td><td class="stb-cel">${L2.cel3}</td><td class="st-obs">${L2.fr}</td></tr>`; }).join('');
+        return `<tr class="st-pais ${L2.nivel==='Crítica'?'critica':''}"><td title="${h(mc.nome)}"><span class="ponto-st" style="background:${L2.cor}"></span>${rot}</td><td class="stb-cel">${L2.cel1}</td><td class="stb-cel">${L2.cel2}${lapis(mc, ct.conta)}</td><td class="stb-cel">${L2.cel4}</td><td class="stb-cel">${L2.cel3}${lapisB(mc, ct.conta)}</td><td class="st-obs">${L2.fr}</td></tr>`; }).join('');
       // resumo da linha recolhida: números do Gerenciador somados entre os países
       const res = g.linhas.reduce((t,l)=>t+(+l.mc.resultados||0),0), inv = g.linhas.reduce((t,l)=>t+(+l.mc.investido||0),0), tipoR = (g.linhas[0].mc.tipoResultado||'resultados');
       const unid = tipoR==='alcance' ? 'pessoa' : tipoR.replace(/s$/,'');
@@ -3407,6 +3450,9 @@ const ACT = {
   custoAutoVoltar: el => { const c = camp(el.dataset.id), b = c && c.budgets.find(x=>x.id===el.dataset.b); if (!b || !b.kpis) return; ['custo','CPL','CPM'].forEach(k=>{ if (k in b.kpis) b.kpis[k] = null; }); registrar(`Custo de ${b.canal} · ${PAISES[b.pais]?PAISES[b.pais].n:b.pais} em “${c.nome}” voltou para o automático`); render(); },
   metaStAbrir: (el, e) => { e && e.stopPropagation(); abrirMetaStatus(el.dataset.mc, el.dataset.conta); },
   metaStSalvar: () => gravarMetaStatus(false),
+  budStAbrir: (el, e) => { e && e.stopPropagation(); abrirBudStatus(el.dataset.mc, el.dataset.conta); },
+  budStSalvar: () => gravarBudStatus(false),
+  budStAuto: () => gravarBudStatus(true),
   metaStAuto: () => gravarMetaStatus(true),
   stpAbrir: el => { const k = el.dataset.k, c = el.closest('.stp-card'); UI.stAbertos = UI.stAbertos || {}; UI.stAbertos[k] = c.classList.contains('fech'); c.classList.toggle('fech'); },
   stTodas: el => { const v = el.dataset.v==='1'; UI.stAbertos = UI.stAbertos || {}; (UI.stChaves||[]).forEach(k=>UI.stAbertos[k]=v); render(); },
