@@ -1196,11 +1196,11 @@ function render(){
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida).length;
   const nAtr = acoesGlobais().filter(x=>statusExib(x.t)==='Atrasada').length;
-  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['status','list-checks','Status pontual'],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','bell','Notificações',nN],['config','settings','Configurações']];
+  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','bell','Notificações',nN],['config','settings','Configurações']];
   const sec = r[0]==='campanha' ? 'clientes' : r[0];
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
-  $('#menu').innerHTML = itens.map(itemMenu).join('') + (ehEquipe() ? `<div class="menu-grupo">Administrativo</div>` + [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões']].map(itemMenu).join('') : '');
+  $('#menu').innerHTML = itens.map(itemMenu).join('') + `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Status pontual']].map(itemMenu).join('') + (ehEquipe() ? `<div class="menu-grupo">Administrativo</div>` + [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões']].map(itemMenu).join('') : '');
   $('#hoje-txt').textContent = fd(HOJE);
   const pg = {dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
@@ -2771,7 +2771,7 @@ function abrirRegStatus(mcId){
     <div class="reg-lista">${rs.length ? rs.map((r,i)=>`<div class="reg-item ${r.tipo==='coment'?'coment':''}"><i data-lucide="${r.tipo==='coment'?'message-square':'history'}"></i><div><div class="reg-o">${h(r.o)}</div><div class="reg-m">${h(r.q||'')}${r.quem?' · '+h(r.quem):''}${r.tipo==='coment'?' · comentário':' · alteração'}</div></div>${ehEquipe() && r.tipo==='coment' && r.t ? `<button class="icone-btn" data-act="regStApagar" data-t="${r.t}" title="Apagar comentário"><i data-lucide="trash-2"></i></button>` : ''}</div>`).join('') : '<div class="small muted" style="padding:10px 0">Nenhum registro ainda.</div>'}</div>`,
     `<button class="btn" data-act="fechar">Fechar</button>`); }
 function pgStatus(){
-  migalha([['Status pontual']]);
+  migalha([['Digital'],['Status pontual']]);
   const niv = m => m.vazio ? null : nivelSaude(m.S2.score);
   const corN = n => n ? ({Saudável:'#2e9d55',Atenção:'#e0a100',Crítica:'#d0443a'})[n.t] : '#c9d3d6';
   // barra de custo: preenchimento = custo atual, traço = meta (verde enquanto estiver abaixo da meta)
