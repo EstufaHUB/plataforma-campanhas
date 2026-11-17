@@ -2459,16 +2459,16 @@ async function montarSlides(grupo, tipo = '', opc = {}){
   const dt = s => s ? s.slice(8,10)+(en?'.':'/')+s.slice(5,7) : '—';
   const C = {esc:'12343B', pet:'1F5F6E', fundo:'F3F6F7', borda:'DDE3E5', txt:'1B2A2F', mut:'6B7A80', verde:'2E9D55', verdeF:'E7F4E8', verdeT:'2E6B31', amar:'E0A100', amarF:'FDF3D8', amarT:'8A5A00', verm:'D0443A', vermF:'FDECEA', vermT:'A3261C'};
   const corR = r => r==null ? null : r>=1 ? 'verde' : r>=0.85 ? 'amar' : 'verm';
-  const pptx = new (opc.Pptx || PptxGenJS)(); pptx.layout = 'LAYOUT_WIDE'; pptx.title = `${T.capa} · ${grupo}`;
+  const pptx = opc.pptx || new (opc.Pptx || PptxGenJS)(), off = opc.off || 0; if (!opc.pptx) { pptx.layout = 'LAYOUT_WIDE'; pptx.title = `${T.capa} · ${grupo}`; }
   const logo = /PTx/i.test(grupo) ? await logoPng() : null, F = 'Arial', fundo = await fundoSlidePng(), bg = fundo ? {data: fundo} : null;
   const card = (sl, x, y, w, hh, tit) => { sl.addShape(pptx.ShapeType.roundRect, {x, y, w, h:hh, fill:{color:'FFFFFF'}, line:{color:C.borda, width:0.75}, rectRadius:0.12});
     if (tit) sl.addText(tit, {x:x+0.2, y:y+0.12, w:w-0.4, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc}); };
   // capa
-  { const sl = pptx.addSlide(); sl.background = bg || {color:C.esc};
+  if (opc.capa !== false) { const sl = pptx.addSlide(); sl.background = bg || {color:C.esc}; const tCapa = opc.tituloCapa || grupo;
     if (logo) sl.addImage({data:logo, x:0.7, y:0.7, w:0.9, h:0.9});
     sl.addText(T.capa, {x:0.7, y:2.3, w:11, h:0.6, fontFace:F, fontSize:20, color:'9FC3CB'});
-    sl.addText(grupo, {x:0.7, y:2.9, w:11.5, h:1.0, fontFace:F, fontSize:40, bold:true, color:'FFFFFF'});
-    sl.addText(`${tipo ? (en ? (tipo==='recorrentes'?'Always-on campaigns':'One-off campaigns') : (tipo==='recorrentes'?'Campanhas recorrentes':'Campanhas pontuais'))+' · ' : ''}${lista.length} ${T.campanhas} · ${T.relatorio}: ${fd(HOJE).replace(/\//g, en?'.':'/')}`, {x:0.7, y:3.9, w:11, h:0.5, fontFace:F, fontSize:16, color:'D6E4E7'});
+    sl.addText(tCapa, {x:0.7, y:2.9, w:11.5, h:1.0, fontFace:F, fontSize: tCapa.length > 40 ? 28 : 40, bold:true, color:'FFFFFF', fit:'shrink'});
+    sl.addText(`${tipo ? (en ? (tipo==='recorrentes'?'Always-on campaigns':'One-off campaigns') : (tipo==='recorrentes'?'Campanhas recorrentes':'Campanhas pontuais'))+' · ' : ''}${opc.nCapa ?? lista.length} ${T.campanhas} · ${T.relatorio}: ${fd(HOJE).replace(/\//g, en?'.':'/')}`, {x:0.7, y:3.9, w:11, h:0.5, fontFace:F, fontSize:16, color:'D6E4E7'});
     sl.addText('estufa', {x:10.6, y:6.5, w:2.2, h:0.5, fontFace:F, fontSize:22, bold:true, color:'FFFFFF', align:'right'}); }
   for (const [gi, g] of lista.entries()) {
     const sl = pptx.addSlide(); sl.background = bg || {color:C.fundo};
@@ -2542,7 +2542,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
       const rd = l.plano ? l.dia/l.plano : null; if (rd!=null && (rd<0.85 || rd>1.15)) pts.push(en ? `${n}: spending ${Math.round(rd*100)}% of the planned daily budget.` : `${n}: gastando ${Math.round(rd*100)}% do budget diário planejado.`); }
     card(sl, 9.2, 1.45, 3.78, 2.85, T.pontos);
     const ptsPadrao = pts.length ? pts.slice(0,5) : [linhas.some(l=>l.meta) ? T.ok : (en ? 'No goal set on the platform.' : 'Sem meta cadastrada na plataforma.')];
-    const ptsUsar = opc.pontos && opc.pontos[gi]!=null ? opc.pontos[gi] : ptsPadrao, coment = ((opc.coment||{})[gi]||'').trim();
+    const ptsUsar = opc.pontos && opc.pontos[gi+off]!=null ? opc.pontos[gi+off] : ptsPadrao, coment = ((opc.coment||{})[gi+off]||'').trim();
     info.push({titulo:g.titulo, fase:g.fase, nivel: nv ? nv.t : null, pontos: ptsPadrao, escreva:T.escreva, en});
     if (!opc.previa && ptsUsar.length) sl.addText(ptsUsar.map(t=>({text:t, options:{bullet:{indent:12}, breakLine:true}})), {x:9.35, y:1.88, w:3.5, h:2.3, fontFace:F, fontSize:10.5, color:C.txt, valign:'top', paraSpaceAfter:4, fit:'shrink'});
     card(sl, 9.2, 4.45, 3.78, 2.4, T.coment);
@@ -2553,7 +2553,16 @@ async function montarSlides(grupo, tipo = '', opc = {}){
   }
   const nome = `Status pontual - ${grupo}${tipo ? ' - '+(tipo==='recorrentes'?'recorrentes':'pontuais') : ''} - ${HOJE}.pptx`;
   return {pptx, nome, n: lista.length, info, en}; }
-async function exportarSlides(grupo, tipo = '', opc = {}){ const r = await montarSlides(grupo, tipo, opc); if (r.n) await r.pptx.writeFile({fileName:r.nome}); return r; }
+/* relatório de uma ou mais marcas (contas): uma capa só e os slides de cada marca em sequência */
+const nCampsRel = (g, tipo) => { const ct = CONTAS_STATUS.find(x=>x.grupo===g); return ct ? gruposStatusConta(ct, vinculosMeta()).lista.filter(x=>!tipo || (tipo==='recorrentes')===!!x.recorrente).length : 0; };
+async function montarRel(grupos, tipo = '', opc = {}){ grupos = [].concat(grupos);
+  const gs = grupos.length > 1 ? grupos.filter(g=>nCampsRel(g, tipo)>0) : grupos; if (!gs.length) return {nome:'', n:0, info:[]}; if (gs.length===1) return montarSlides(gs[0], tipo, opc);
+  if (!opc.Pptx) await carregarScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js');
+  const pptx = new (opc.Pptx || PptxGenJS)(); pptx.layout = 'LAYOUT_WIDE'; pptx.title = 'Status das campanhas · '+gs.join(' + ');
+  const nTot = gs.reduce((t,g)=>t+nCampsRel(g, tipo),0); let info = [], n = 0;
+  for (const [k,g] of gs.entries()) { const r = await montarSlides(g, tipo, {...opc, pptx, capa: k===0, tituloCapa: gs.join(' + '), nCapa: nTot, off: n}); info = info.concat(r.info); n += r.n; }
+  return {pptx, n, info, en: gs.every(g=>/EMEA/i.test(g)), nome: `Status pontual - ${gs.join(' + ')}${tipo ? ' - '+(tipo==='recorrentes'?'recorrentes':'pontuais') : ''} - ${HOJE}.pptx`}; }
+async function exportarSlides(grupos, tipo = '', opc = {}){ const r = await montarRel(grupos, tipo, opc); if (r.n) await r.pptx.writeFile({fileName:r.nome}); return r; }
 // prévia: imita a API do PptxGenJS e desenha os slides em HTML (mesmas posições, em polegadas)
 class PptxPrevia {
   constructor(){ this.slides = []; this.ShapeType = {rect:'rect', roundRect:'roundRect', line:'line'}; }
@@ -3514,26 +3523,27 @@ const ACT = {
   bCanal: el => { UI.bCanal = UI.bCanal===el.dataset.k ? null : el.dataset.k; render(); },
   bAbrir: el => { UI.bAberto = UI.bAberto||{}; UI.bAberto[el.dataset.k] = !UI.bAberto[el.dataset.k]; render(); },
   exportarSlides: () => { const contas = CONTAS_STATUS, at = UI.stGrupo || '';
-    abrirModal('Enviar relatório', `<p style="margin-top:0">Escolha a marca e as campanhas. Na próxima tela aparece a prévia dos slides para você escrever os comentários antes de enviar.</p>
-      <div class="exp-marcas">${contas.map(ct=>{ const n = (((META_CONTAS.find(m=>m.conta===ct.conta)||{}).dados||{}).campanhas||[]).length; return `<label class="exp-op"><input type="radio" name="expGrupo" value="${h(ct.grupo)}" ${(at||contas[0].grupo)===ct.grupo?'checked':''}><b>${h(ct.grupo)}</b><span>${/EMEA/i.test(ct.grupo)?'slides em inglês':'slides em português'}</span></label>`; }).join('')}</div>
+    const sel = UI.relGrupos && UI.relGrupos.length ? UI.relGrupos : [at||contas[0].grupo];
+    abrirModal('Enviar relatório', `<p style="margin-top:0">Escolha uma ou mais marcas e as campanhas. Com mais de uma marca, sai um relatório só, com uma capa e os slides de cada marca em sequência. Na próxima tela aparece a prévia para você escrever os comentários antes de enviar.</p>
+      <div class="exp-marcas">${contas.map(ct=>`<label class="exp-op"><input type="checkbox" name="expGrupo" value="${h(ct.grupo)}" ${sel.includes(ct.grupo)?'checked':''}><b>${h(ct.grupo)}</b><span>${/EMEA/i.test(ct.grupo)?'slides em inglês':'slides em português'}</span></label>`).join('')}</div>
       <div class="small" style="font-weight:700;margin:4px 0 6px">Quais campanhas?</div>
       <div class="exp-marcas" style="grid-template-columns:repeat(3,1fr)">${[['pontuais','Pontuais','campanhas com período definido'],['recorrentes','Recorrentes','sempre no ar (inbound, impulsionados…)'],['','Todas','pontuais e recorrentes']].map(([v,l,d],k)=>`<label class="exp-op"><input type="radio" name="expTipo" value="${v}" ${(UI.stTipo ?? 'pontuais')===v?'checked':''}><b>${l}</b><span>${d}</span></label>`).join('')}</div>
       `,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="exportarSlidesOk"><i data-lucide="eye"></i>Ver prévia</button>`); },
-  exportarSlidesOk: async el => { const g = ($('input[name=expGrupo]:checked')||{}).value, tp = ($('input[name=expTipo]:checked')||{value:''}).value; if (!g) return toast('Escolha a marca.'); el.disabled = true; el.textContent = 'Montando…';
-    try { const r = await montarSlides(g, tp, {Pptx: PptxPrevia, previa: true}); if (!r.n) { el.disabled = false; el.textContent = 'Ver prévia'; return toast('Nenhuma campanha desse tipo no ar nessa marca.'); }
-      UI.relEnvio = {grupo:g, tipo:tp, r}; abrirPreviaRelatorio(); }
+  exportarSlidesOk: async el => { const gs = [...document.querySelectorAll('input[name=expGrupo]:checked')].map(i=>i.value), tp = ($('input[name=expTipo]:checked')||{value:''}).value; if (!gs.length) return toast('Escolha ao menos uma marca.'); el.disabled = true; el.textContent = 'Montando…';
+    try { UI.relGrupos = gs; const r = await montarRel(gs, tp, {Pptx: PptxPrevia, previa: true}); if (!r.n) { el.disabled = false; el.textContent = 'Ver prévia'; return toast(gs.length>1 ? 'Nenhuma campanha desse tipo no ar nessas marcas.' : 'Nenhuma campanha desse tipo no ar nessa marca.'); }
+      const usadas = gs.filter(g=>nCampsRel(g, tp)>0); UI.relEnvio = {grupo: (usadas.length?usadas:gs).join(' + '), grupos: usadas.length?usadas:gs, tipo:tp, r}; abrirPreviaRelatorio(); }
     catch (e) { console.error(e); toast('Não foi possível montar: '+(e.message||e)); el.disabled = false; el.textContent = 'Ver prévia'; } },
   relCheca: () => checarEnvioRel(),
   relBaixar: async el => { const R = UI.relEnvio; if (!R) return; el.disabled = true;
-    try { await exportarSlides(R.grupo, R.tipo, lerTextosRel()); toast('Apresentação baixada.'); } catch (e) { toast('Não foi possível gerar: '+(e.message||e)); } el.disabled = false; },
+    try { await exportarSlides(R.grupos || R.grupo, R.tipo, lerTextosRel()); toast('Apresentação baixada.'); } catch (e) { toast('Não foi possível gerar: '+(e.message||e)); } el.disabled = false; },
   relEnviar: async el => { const R = UI.relEnvio; if (!R) return;
     const para = $('#rel-para').value.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean), assunto = $('#rel-assunto').value.trim(), msg = $('#rel-msg').value.trim();
     if (!para.length) return toast('Informe o e-mail de quem vai receber.');
     const ruim = para.find(e=>!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(e)); if (ruim) return toast('E-mail inválido: '+ruim);
     if (!sb) return toast('Faça login para enviar.');
     el.disabled = true; el.innerHTML = 'Enviando…';
-    try { const txt = lerTextosRel(), r = await montarSlides(R.grupo, R.tipo, txt), anexo = await r.pptx.write({outputType:'base64'});
+    try { const txt = lerTextosRel(), r = await montarRel(R.grupos || R.grupo, R.tipo, txt), anexo = await r.pptx.write({outputType:'base64'});
       const en = r.en, corN = {Saudável:'#2e9d55','Atenção':'#e0a100','Crítica':'#d0443a'};
       const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1b2a2f;line-height:1.5">${msg ? msg.split(/\n+/).map(l=>`<p style="margin:0 0 10px">${h(l)}</p>`).join('') : ''}
         <p style="margin:16px 0 6px;font-weight:700">${en?'Campaigns in this report':'Campanhas neste relatório'} (${h(R.grupo)})</p>
