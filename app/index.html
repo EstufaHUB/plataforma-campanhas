@@ -2111,6 +2111,17 @@ function saudeAwareness(c, S2){
     <div class="card card-p"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="sd-lb"><i data-lucide="trending-up"></i>Impressões acumuladas</div><div class="sd-leg"><span><i></i>Real</span>${emCurso?'<span><i class="p"></i>Projeção</span>':''}</div></div><div class="sd-graf" data-c="${c.id}" data-campo="impressoes"></div></div>
     <div class="card card-p"><div class="sd-lb"><i data-lucide="alert-triangle"></i>Pontos de atenção</div>${pts.length?`<ul class="pts">${pts.map(x=>`<li><i class="p-${x.n}"></i><span>${h(x.t)}</span></li>`).join('')}</ul>`:'<div class="small muted" style="margin-top:8px">Nada fora do esperado.</div>'}<div class="small muted" style="margin-top:6px">Calculado automaticamente a partir dos dados do Meta.</div></div>
   </div>`; }
+/* campanhas do Gerenciador vinculadas que estão pausadas (status trazido pela sincronização; senão o retrato das contas) */
+function pausasMeta(c){ const out = [];
+  for (const v of (c.metaVinculos||[])) { const r = (RESULTADOS[c.id]||[]).find(x=>x.meta_campanha===v.campanhaId), d = (r && r.dados) || {};
+    const mc = META_CONTAS.flatMap(m=>((m.dados||{}).campanhas)||[]).find(x=>x.id===v.campanhaId);
+    const st = d.status || (mc ? (mc.pausada ? 'PAUSED' : 'ACTIVE') : null);
+    if (st==='PAUSED' || st==='CAMPAIGN_PAUSED') out.push({v, em: ((d.status ? d.statusEm : mc && mc.pausadaEm) || '').slice(0,10) || null}); }
+  return out; }
+function avisoPausa(c){ const ps = pausasMeta(c); if (!ps.length) return ''; const todas = ps.length === (c.metaVinculos||[]).length;
+  const datas = [...new Set(ps.map(p=>p.em).filter(Boolean))].sort(), quando = datas.length ? ` em ${datas.map(fdm).join(', ')}` : '';
+  const ond = [...new Set(ps.map(p=>p.v.pais ? (PAISES[p.v.pais] ? PAISES[p.v.pais].f+' '+PAISES[p.v.pais].n : p.v.pais) : (p.v.campanhaNome||p.v.campanhaId)))].join(', ');
+  return `<div class="alerta amar" style="margin-bottom:12px"><i data-lucide="pause-circle"></i><div><b>${todas ? 'Campanha pausada no Gerenciador' : 'Pausada no Gerenciador em parte dos países'}${quando}.</b> ${todas ? 'Todos os países' : ond}${todas ? ` (${ond})` : ''}: enquanto estiver pausada, o ritmo de resultados e o gasto diário ficam abaixo do esperado.</div></div>`; }
 function abaSaude(c){
   const ed = ehEquipe(), S2 = dadosSaude(c), nv = (c.metaVinculos||[]);
   const atual = S2.linhas.length ? S2.linhas.reduce((m,x)=>!m||x.atualizado>m?x.atualizado:m,null) : null;
@@ -2119,7 +2130,7 @@ function abaSaude(c){
   const detalhe = nv.map(v=>`${v.contaNome||v.conta} — ${v.campanhaNome||v.campanhaId}`).join('\n') + (atual ? '\nAtualizado em '+new Date(atual).toLocaleString('pt-BR') : '');
   const fonte = `<div class="saude-fonte ${velho?'velho':''}" style="margin-bottom:${faseada(c)?'10px':'0'}"><i data-lucide="${velho?'alert-circle':'database'}"></i><span title="${h(detalhe)}">${nv.length ? `${[...new Set(nv.map(v=>v.canal||'Meta Ads'))].join(', ')} · atualizado ${ha}${velho?' — dados desatualizados':''}` : 'Nenhuma campanha do Gerenciador do Meta vinculada.'}</span>
     ${ed?`<span style="margin-left:auto;display:flex;gap:8px">${nv.length?`<button class="btn btn-s" data-act="sincMeta" data-id="${c.id}"><i data-lucide="refresh-cw"></i>Atualizar</button>`:''}<button class="btn btn-s" data-act="vincularMeta" data-id="${c.id}"><i data-lucide="link"></i>${nv.length?'Vínculos':'Vincular campanha do Meta'}</button></span>`:''}</div>`;
-  const sel = (faseada(c) || marcasDaSaude(c).length>1 || paisesDaSaude(c).length>1) ? `<div class="saude-filtros">${seletorEtapa(c, false)}${filtroMarcas(c)}${filtroPaises(c)}</div>` : '';
+  const sel = avisoPausa(c) + ((faseada(c) || marcasDaSaude(c).length>1 || paisesDaSaude(c).length>1) ? `<div class="saude-filtros">${seletorEtapa(c, false)}${filtroMarcas(c)}${filtroPaises(c)}</div>` : '');
   if (!S2.linhas.length) return fonte + sel + `<div class="card card-p" style="margin-top:12px"><div class="vazio">Vincule a campanha do Gerenciador do Meta para acompanhar a saúde automaticamente.</div></div>`;
   if (faseada(c) ? etapaSel(c)==='Awareness' : S2.linhas.every(x=>x.objetivo==='Awareness')) return fonte + sel + saudeAwareness(c, S2);
   const moe = S2.linhas[0].moeda, soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0);

@@ -174,6 +174,8 @@ Deno.serve(async (req) => {
       try {
         const total = (await insights(v.campanhaId, token, { date_preset: "maximum" }))[0] || {};
         const dias = await insights(v.campanhaId, token, { date_preset: "maximum", time_increment: "1", limit: "500" });
+        let status: string | null = null, statusEm: string | null = null, paradaEm: string | null = null;
+        try { const [st] = await graph(v.campanhaId, token, { fields: "effective_status,updated_time,stop_time" }); status = (st?.effective_status as string) || null; statusEm = (st?.updated_time as string) || null; paradaEm = (st?.stop_time as string) || null; } catch (_) { /* sem status nesta rodada */ }
         const dados = {
           vinculo: v,
           moeda: total.account_currency || null,
@@ -186,6 +188,7 @@ Deno.serve(async (req) => {
           cliquesLink: acaoDe(total.actions as never, "link_click"),
           visitas: acaoDe(total.actions as never, "landing_page_view"),
           porDia: dias.map((d) => ({ data: d.date_start, investido: +(d.spend as string) || 0, leads: leadsDe(d.actions as never, v.acaoResultado), impressoes: +(d.impressions as string) || 0, engajamentos: acaoDe(d.actions as never, "post_engagement"), cliquesLink: acaoDe(d.actions as never, "link_click"), visitas: acaoDe(d.actions as never, "landing_page_view") })),
+          status, statusEm, fimMeta: paradaEm,
           fonte: "Meta Graph API",
         };
         await admin.from("resultados_meta").upsert({ campanha_id: c.id, meta_campanha: v.campanhaId, dados, atualizado_em: new Date().toISOString() });
