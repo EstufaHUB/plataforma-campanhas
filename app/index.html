@@ -2101,17 +2101,15 @@ function dadosSaude(c){
   let ini = c.lancamento, fim = c.fimVeiculacao || c.lancamento;
   { const cods = [...new Set(linhas.map(x=>x.v.pais))], pcs = linhas.map(x=>x.pc).filter(Boolean); if (cods.length===1 && pcs.length && (pcs[0].ini || pcs[0].fim)) { ini = pcs[0].ini || ini; fim = pcs[0].fim || fim; var perProprio = true; } }
   if (!perProprio && faseada(c) && linhas.length) { const fs = [...new Set(linhas.map(x=>x.v.fase||'Lead gen'))]; if (fs.length===1) { const pf = periodoFase(c, fs[0]); ini = pf.ini || ini; fim = pf.fim || fim; } }
-  // números só dentro do período: o da campanha (ficha) ou o escolhido na tela; budget e meta proporcionais aos dias (ou ao budget mensal da ficha)
-  const per = periodoSaude(c, ini, fim), de = per ? per.de : ini, ate = per ? per.ate : fim, totO = Math.max(1, difDias(ini, fim)+1), msO = mesesPeriodo(ini, fim);
+  // números só dentro do período: o da campanha (ficha) ou o escolhido na tela
+  const per = periodoSaude(c, ini, fim), de = per ? per.de : ini, ate = per ? per.ate : fim;
   let fora = 0, foraDe = null;
   for (const x of linhas) { if (!x.porDia.length) continue;
     for (const d of x.porDia) if (d.data < de || d.data > ate) { fora += +d.investido||0; if (d.data < de && (+d.investido||0) > 0 && (!foraDe || d.data < foraDe)) foraDe = d.data; }
     const pd = x.porDia.filter(d=>d.data>=de && d.data<=ate), sm = k => pd.reduce((t,d)=>t+(+d[k]||0),0);
     Object.assign(x, {porDia: pd, leads: sm('leads'), inv: sm('investido'), impressoes: sm('impressoes'), engaj: sm('engajamentos'), cliquesLink: sm('cliquesLink'), visitas: sm('visitas')}); x.cpl = x.leads ? x.inv/x.leads : null;
-    if (per) { const P = x.pc && x.pc.mensal && Object.keys(x.pc.mensal).length ? x.pc.mensal : null, a = de > ini ? de : ini, b = ate < fim ? ate : fim, dP = a <= b ? difDias(a, b)+1 : 0;
-      x.bud = !dP ? 0 : P ? mesesPeriodo(a, b).reduce((t,m)=>{ const mm = msO.find(k=>k.m===m.m); return t + (mm ? (+P[m.m]||0)*m.dias/mm.dias : 0); }, 0) : x.bud*dP/totO;
-      x.leadsMeta = x.cplMeta>0 ? Math.round(x.bud/x.cplMeta) : null; } }
-  if (per) { ini = per.de; fim = per.ate; }
+  }
+  // as metas (budget, leads, custo) ficam as de Budgets e KPIs; o período escolhido só filtra os dias dos resultados
   const total = Math.max(1, difDias(ini, fim)+1);
   const decorridos = Math.max(0, Math.min(total, difDias(ini, HOJE)+1)), frac = decorridos/total, restam = Math.max(0, difDias(HOJE, fim));
   const comMeta = linhas.filter(x=>x.leadsMeta);
@@ -2132,8 +2130,8 @@ function periodoSaude(c, ini, fim){ const p = (UI.sPer||{})[c.id]; if (!p || !p.
 function filtroPeriodo(c, S2){ const p = (UI.sPer||{})[c.id] || {}, m = S2.per ? S2.per.modo : '', moe = (S2.linhas[0]||{}).moeda;
   const bt = (k, t) => `<button class="${m===k?'ativo':''}" onclick="sPer('${c.id}','${k}')">${t}</button>`;
   return `<div class="sd-per"><i data-lucide="calendar-range"></i><span>Período</span><div class="seg seg-marca">${bt('', 'Campanha toda')}${bt('mes', 'Mês atual')}${bt('30', 'Últimos 30 dias')}${bt('pers', 'Personalizar')}</div>
-    ${m==='pers' ? `<input type="date" value="${S2.ini}" onchange="sPerData('${c.id}','de',this.value)"><span>→</span><input type="date" value="${S2.fim}" onchange="sPerData('${c.id}','ate',this.value)">` : `<span class="small">${fdm(S2.ini)} → ${fdm(S2.fim)}</span>`}
-    ${m ? `<span class="small muted">metas e budget proporcionais ao período</span>` : S2.fora > 0.5 && S2.foraDe ? `<span class="small muted" title="O Gerenciador mostra o total desde o início da campanha no Meta; aqui contam só os dias do período da ficha.">fora do período: ${moeda2(S2.fora, moe)} investidos desde ${fdm(S2.foraDe)}</span>` : ''}</div>`; }
+    ${m==='pers' ? `<input type="date" value="${S2.per.de}" onchange="sPerData('${c.id}','de',this.value)"><span>→</span><input type="date" value="${S2.per.ate}" onchange="sPerData('${c.id}','ate',this.value)">` : `<span class="small">${fdm(S2.per ? S2.per.de : S2.ini)} → ${fdm(S2.per ? S2.per.ate : S2.fim)}</span>`}
+    ${m ? `<span class="small muted">resultados do período · metas de Budgets e KPIs</span>` : S2.fora > 0.5 && S2.foraDe ? `<span class="small muted" title="O Gerenciador mostra o total desde o início da campanha no Meta; aqui contam só os dias do período da ficha.">fora do período: ${moeda2(S2.fora, moe)} investidos desde ${fdm(S2.foraDe)}</span>` : ''}</div>`; }
 function sPer(id, modo){ UI.sPer = UI.sPer || {}; const p = UI.sPer[id] || {}; UI.sPer[id] = {...p, modo}; render(); }
 function sPerData(id, k, v){ UI.sPer = UI.sPer || {}; UI.sPer[id] = {...(UI.sPer[id]||{}), modo:'pers', [k]: v}; render(); }
 function pontosAtencao(c, S2){   // [{t, n}] n = verm | amar | verde | info
