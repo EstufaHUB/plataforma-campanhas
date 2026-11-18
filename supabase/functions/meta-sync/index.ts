@@ -178,7 +178,11 @@ async function alertasBudget(admin: ReturnType<typeof createClient>) {
       const cfgs = Object.entries((d.canaisCfg || {}) as Record<string, { paises?: { cod: string; budget?: number }[]; moeda?: string }>)
         .filter(([k]) => k.split(/[|@]/)[0] === (v.canal || "Meta Ads") && (!v.fase || !k.includes("@") || k.endsWith("@" + v.fase)) && (!v.marca || !k.includes("|") || k.includes("|" + v.marca)));
       const cf = cfgs.map(([, x]) => x).find((x) => (x.paises || []).some((p) => p.cod === v.pais)); const pc = cf && (cf.paises || []).find((p) => p.cod === v.pais);
-      const r = (rms || []).find((x) => x.campanha_id === c.id && x.meta_campanha === v.campanhaId); const total = +(pc?.budget || 0), inv = +(r?.dados?.investido || 0);
+      const r = (rms || []).find((x) => x.campanha_id === c.id && x.meta_campanha === v.campanhaId); const total = +(pc?.budget || 0);
+      // investido só a partir do início do período (país, fase ou campanha): gasto anterior no Gerenciador não conta para o budget da ficha
+      const iniPer = String((pc as Record<string, unknown>)?.ini || (d.faseada ? d.fasesDatas?.[v.fase || "Lead gen"]?.ini : "") || d.lancamento || "").slice(0, 10);
+      const pdia = (r?.dados?.porDia || []) as { data: string; investido: number }[];
+      const inv = iniPer && pdia.length ? pdia.filter((x) => String(x.data) >= iniPer).reduce((t, x) => t + (+x.investido || 0), 0) : +(r?.dados?.investido || 0);
       // fase ou campanha já encerrada, ou campanha parada no Gerenciador: não avisa
       const fimPer = d.faseada ? (d.fasesDatas?.[v.fase || "Lead gen"]?.fim || d.fimVeiculacao) : d.fimVeiculacao, st = String(r?.dados?.status || ""), fimMeta = String(r?.dados?.fimMeta || "").slice(0, 10);
       if ((fimPer && fimPer < hoje) || ["PAUSED", "CAMPAIGN_PAUSED", "ARCHIVED", "DELETED"].includes(st) || (fimMeta && fimMeta < hoje)) continue;

@@ -2101,15 +2101,17 @@ function dadosSaude(c){
   let ini = c.lancamento, fim = c.fimVeiculacao || c.lancamento;
   { const cods = [...new Set(linhas.map(x=>x.v.pais))], pcs = linhas.map(x=>x.pc).filter(Boolean); if (cods.length===1 && pcs.length && (pcs[0].ini || pcs[0].fim)) { ini = pcs[0].ini || ini; fim = pcs[0].fim || fim; var perProprio = true; } }
   if (!perProprio && faseada(c) && linhas.length) { const fs = [...new Set(linhas.map(x=>x.v.fase||'Lead gen'))]; if (fs.length===1) { const pf = periodoFase(c, fs[0]); ini = pf.ini || ini; fim = pf.fim || fim; } }
-  // período personalizado: só os dias escolhidos; budget e meta proporcionais aos dias (ou ao budget mensal da ficha)
-  const per = periodoSaude(c, ini, fim);
-  if (per) { const totO = Math.max(1, difDias(ini, fim)+1), dP = difDias(per.de, per.ate)+1, msO = mesesPeriodo(ini, fim);
-    for (const x of linhas) { const pd = x.porDia.filter(d=>d.data>=per.de && d.data<=per.ate), sm = k => pd.reduce((t,d)=>t+(+d[k]||0),0);
-      Object.assign(x, {porDia: pd, leads: sm('leads'), inv: sm('investido'), impressoes: sm('impressoes'), engaj: sm('engajamentos'), cliquesLink: sm('cliquesLink'), visitas: sm('visitas')}); x.cpl = x.leads ? x.inv/x.leads : null;
-      const P = x.pc && x.pc.mensal && Object.keys(x.pc.mensal).length ? x.pc.mensal : null;
-      x.bud = P ? mesesPeriodo(per.de, per.ate).reduce((t,m)=>{ const mm = msO.find(k=>k.m===m.m); return t + (mm ? (+P[m.m]||0)*m.dias/mm.dias : 0); }, 0) : x.bud*dP/totO;
-      x.leadsMeta = x.cplMeta>0 ? Math.round(x.bud/x.cplMeta) : null; }
-    ini = per.de; fim = per.ate; }
+  // números só dentro do período: o da campanha (ficha) ou o escolhido na tela; budget e meta proporcionais aos dias (ou ao budget mensal da ficha)
+  const per = periodoSaude(c, ini, fim), de = per ? per.de : ini, ate = per ? per.ate : fim, totO = Math.max(1, difDias(ini, fim)+1), msO = mesesPeriodo(ini, fim);
+  let fora = 0, foraDe = null;
+  for (const x of linhas) { if (!x.porDia.length) continue;
+    for (const d of x.porDia) if (d.data < de || d.data > ate) { fora += +d.investido||0; if (d.data < de && (+d.investido||0) > 0 && (!foraDe || d.data < foraDe)) foraDe = d.data; }
+    const pd = x.porDia.filter(d=>d.data>=de && d.data<=ate), sm = k => pd.reduce((t,d)=>t+(+d[k]||0),0);
+    Object.assign(x, {porDia: pd, leads: sm('leads'), inv: sm('investido'), impressoes: sm('impressoes'), engaj: sm('engajamentos'), cliquesLink: sm('cliquesLink'), visitas: sm('visitas')}); x.cpl = x.leads ? x.inv/x.leads : null;
+    if (per) { const P = x.pc && x.pc.mensal && Object.keys(x.pc.mensal).length ? x.pc.mensal : null, a = de > ini ? de : ini, b = ate < fim ? ate : fim, dP = a <= b ? difDias(a, b)+1 : 0;
+      x.bud = !dP ? 0 : P ? mesesPeriodo(a, b).reduce((t,m)=>{ const mm = msO.find(k=>k.m===m.m); return t + (mm ? (+P[m.m]||0)*m.dias/mm.dias : 0); }, 0) : x.bud*dP/totO;
+      x.leadsMeta = x.cplMeta>0 ? Math.round(x.bud/x.cplMeta) : null; } }
+  if (per) { ini = per.de; fim = per.ate; }
   const total = Math.max(1, difDias(ini, fim)+1);
   const decorridos = Math.max(0, Math.min(total, difDias(ini, HOJE)+1)), frac = decorridos/total, restam = Math.max(0, difDias(HOJE, fim));
   const comMeta = linhas.filter(x=>x.leadsMeta);
@@ -2122,15 +2124,18 @@ function dadosSaude(c){
   if (score==null && linhas.length && frac>0 && linhas.every(x=>x.objetivo==='Awareness' && x.custoAw>0 && metAw(x) && metAw(x).k===metAw(linhas[0]).k)) {   // awareness: resultado do objetivo de mídia × custo
     const mk = metAw(linhas[0]).k, em = linhas.reduce((s,x)=>s+x.bud/x.custoAw,0), er = linhas.reduce((s,x)=>s+(+x[mk]||0),0), inv = linhas.reduce((s,x)=>s+x.inv,0), bud = linhas.reduce((s,x)=>s+x.bud,0);
     ritmo = er/(em*Math.min(1,frac)); cplRatio = er && inv ? (bud/em)/(inv/er) : 0; score = Math.min(ritmo, cplRatio); tipoScore = 'engajamento'; }
-  return {linhas, ini, fim, total, decorridos, frac, restam, score, ritmo, cplRatio, tipoScore, per}; }
+  return {linhas, ini, fim, total, decorridos, frac, restam, score, ritmo, cplRatio, tipoScore, per, fora, foraDe}; }
 /* período da Saúde escolhido na tela (UI.sPer[id] = {de, ate}); sempre dentro do período da campanha */
-function periodoSaude(c, ini, fim){ const p = (UI.sPer||{})[c.id]; if (!p || (!p.de && !p.ate)) return null;
-  const de = p.de && p.de > ini ? p.de : ini, ate = p.ate && p.ate < fim ? p.ate : fim; return de <= ate && (de!==ini || ate!==fim) ? {de, ate} : null; }
-function filtroPeriodo(c, S2){ const p = (UI.sPer||{})[c.id] || {}, on = !!S2.per, mesI = HOJE.slice(0,8)+'01', d30 = addDias(HOJE, -29);
-  return `<div class="sd-per"><i data-lucide="calendar-range"></i><span>Período</span><input type="date" value="${S2.ini}" onchange="sPer('${c.id}','de',this.value)"><span>→</span><input type="date" value="${S2.fim}" onchange="sPer('${c.id}','ate',this.value)">
-    <div class="seg seg-marca"><button class="${!on?'ativo':''}" onclick="sPer('${c.id}')">Campanha toda</button><button class="${on&&p.de===mesI&&!p.ate?'ativo':''}" onclick="sPer('${c.id}','de','${mesI}',1)">Mês atual</button><button class="${on&&p.de===d30&&!p.ate?'ativo':''}" onclick="sPer('${c.id}','de','${d30}',1)">Últimos 30 dias</button></div>
-    ${on?`<span class="small muted">metas e budget proporcionais ao período</span>`:''}</div>`; }
-function sPer(id, k, v, novo){ UI.sPer = UI.sPer || {}; if (!k) delete UI.sPer[id]; else { const p = novo ? {} : {...(UI.sPer[id]||{})}; p[k] = v || ''; UI.sPer[id] = p; } render(); }
+function periodoSaude(c, ini, fim){ const p = (UI.sPer||{})[c.id]; if (!p || !p.modo) return null;
+  const de = p.modo==='mes' ? HOJE.slice(0,8)+'01' : p.modo==='30' ? addDias(HOJE, -29) : (p.de || ini), ate = p.modo==='pers' ? (p.ate || HOJE) : p.modo==='mes' ? addDias((m2=>m2.slice(5)==='12'?(+m2.slice(0,4)+1)+'-01-01':m2.slice(0,5)+String(+m2.slice(5)+1).padStart(2,'0')+'-01')(HOJE.slice(0,7)), -1) : HOJE;
+  return de <= ate ? {de, ate, modo: p.modo} : null; }
+function filtroPeriodo(c, S2){ const p = (UI.sPer||{})[c.id] || {}, m = S2.per ? S2.per.modo : '', moe = (S2.linhas[0]||{}).moeda;
+  const bt = (k, t) => `<button class="${m===k?'ativo':''}" onclick="sPer('${c.id}','${k}')">${t}</button>`;
+  return `<div class="sd-per"><i data-lucide="calendar-range"></i><span>Período</span><div class="seg seg-marca">${bt('', 'Campanha toda')}${bt('mes', 'Mês atual')}${bt('30', 'Últimos 30 dias')}${bt('pers', 'Personalizar')}</div>
+    ${m==='pers' ? `<input type="date" value="${S2.ini}" onchange="sPerData('${c.id}','de',this.value)"><span>→</span><input type="date" value="${S2.fim}" onchange="sPerData('${c.id}','ate',this.value)">` : `<span class="small">${fdm(S2.ini)} → ${fdm(S2.fim)}</span>`}
+    ${m ? `<span class="small muted">metas e budget proporcionais ao período</span>` : S2.fora > 0.5 && S2.foraDe ? `<span class="small muted" title="O Gerenciador mostra o total desde o início da campanha no Meta; aqui contam só os dias do período da ficha.">fora do período: ${moeda2(S2.fora, moe)} investidos desde ${fdm(S2.foraDe)}</span>` : ''}</div>`; }
+function sPer(id, modo){ UI.sPer = UI.sPer || {}; const p = UI.sPer[id] || {}; UI.sPer[id] = {...p, modo}; render(); }
+function sPerData(id, k, v){ UI.sPer = UI.sPer || {}; UI.sPer[id] = {...(UI.sPer[id]||{}), modo:'pers', [k]: v}; render(); }
 function pontosAtencao(c, S2){   // [{t, n}] n = verm | amar | verde | info
   const p = [], add = (n, t) => p.push({n, t});
   if (!S2.linhas.length) return p;
@@ -2515,12 +2520,12 @@ function abaMercados(c){
    ===================================================================== */
 /* números da Saúde de uma campanha numa fase/marca, sem mexer nos filtros da tela */
 function metricasStatus(c, etapa, marca, pais){
-  const bkE = (UI.etapa||{})[c.id], bkM = (UI.sMarca||{})[c.id], bkP = (UI.sPais||{})[c.id];
+  const bkE = (UI.etapa||{})[c.id], bkM = (UI.sMarca||{})[c.id], bkP = (UI.sPais||{})[c.id], bkPer = (UI.sPer||{})[c.id]; if (bkPer) delete UI.sPer[c.id];   // Digital › Campanhas usa sempre o período da campanha
   UI.etapa = UI.etapa||{}; UI.sMarca = UI.sMarca||{}; UI.sPais = UI.sPais||{};
   if (etapa) UI.etapa[c.id] = etapa; UI.sMarca[c.id] = marca||null; UI.sPais[c.id] = pais||null;
   let S2, pts = []; try { S2 = dadosSaude(c);
     if (S2.linhas.length) { if (S2.linhas.every(x=>x.objetivo==='Awareness')) { saudeAwareness(c, S2); pts = S2._pts || []; } else pts = pontosAtencao(c, S2); }
-  } finally { UI.etapa[c.id] = bkE; UI.sMarca[c.id] = bkM; UI.sPais[c.id] = bkP; }
+  } finally { UI.etapa[c.id] = bkE; UI.sMarca[c.id] = bkM; UI.sPais[c.id] = bkP; if (bkPer) UI.sPer[c.id] = bkPer; }
   const L = S2.linhas; if (!L.length) return {S2, vazio:true, pts:[]};
   const soma = k => L.reduce((t,x)=>t+(+x[k]||0),0), moe = L[0].moeda, inv = soma('inv'), bud = soma('bud');
   const aw = L.every(x=>x.objetivo==='Awareness');
