@@ -156,7 +156,7 @@ async function alertasBudget(admin: ReturnType<typeof createClient>) {
   const ant = ((cfg || []).find((r) => r.chave === "alertasBudget")?.valor || {}) as Record<string, { nivel: number; em: string }>;
   const nomesConta = Object.fromEntries((((cfg || []).find((r) => r.chave === "contasStatus")?.valor || []) as { conta: string; grupo: string }[]).map((c) => [String(c.conta), c.grupo]));
   const ocultas = ((cfg || []).find((r) => r.chave === "ocultasStatus")?.valor || {}) as Record<string, unknown>;
-  type Item = { chave: string; campanha: string; pais: string; inv: number; total: number; moeda: string; nivel: number; onde: string };
+  type Item = { chave: string; campanha: string; pais: string; inv: number; total: number; moeda: string; nivel: number; onde: string; campId?: string; conta?: string };
   const itens: Item[] = [], vinculadas = new Set<string>(), hoje = new Date().toISOString().slice(0, 10);
   // campanhas da plataforma: budget do país no canal (ficha) × investido no Gerenciador
   for (const c of camps || []) { const d = c.dados || {}; if (d.arquivada || d.status === "Concluída") continue;
@@ -165,15 +165,15 @@ async function alertasBudget(admin: ReturnType<typeof createClient>) {
         .filter(([k]) => k.split(/[|@]/)[0] === (v.canal || "Meta Ads") && (!v.fase || !k.includes("@") || k.endsWith("@" + v.fase)) && (!v.marca || !k.includes("|") || k.includes("|" + v.marca)));
       const cf = cfgs.map(([, x]) => x).find((x) => (x.paises || []).some((p) => p.cod === v.pais)); const pc = cf && (cf.paises || []).find((p) => p.cod === v.pais);
       const r = (rms || []).find((x) => x.campanha_id === c.id && x.meta_campanha === v.campanhaId); const total = +(pc?.budget || 0), inv = +(r?.dados?.investido || 0);
-      if (total > 0 && inv >= total * 0.9) itens.push({ chave: v.campanhaId, campanha: d.nome, pais: v.pais || "", inv, total, moeda: cf?.moeda || d.moeda || "BRL", nivel: inv >= total ? 100 : 90, onde: "Campanha da plataforma" }); } }
+      if (total > 0 && inv >= total * 0.9) itens.push({ chave: v.campanhaId, campanha: d.nome, pais: v.pais || "", inv, total, moeda: cf?.moeda || d.moeda || "BRL", nivel: inv >= total ? 100 : 90, onde: "Campanha da plataforma", campId: c.id, conta: String(v.conta || "").replace(/^act_/, "") }); } }
   // campanhas só no Gerenciador (com data de fim): budget diário × dias do período
   for (const m of mcs || []) for (const mc of ((m.dados?.campanhas || []) as Record<string, unknown>[])) { const id = String(mc.id);
     if (vinculadas.has(id) || ocultas[id] || mc.pausada || !mc.fim || !mc.inicio || !mc.budgetDiario) continue; if (String(mc.fim).slice(0, 10) < hoje) continue;
     const total = +(mc.budgetDiario as number) * dias(String(mc.inicio).slice(0, 10), String(mc.fim).slice(0, 10)), inv = +(mc.investido as number || 0);
-    if (total > 0 && inv >= total * 0.9) itens.push({ chave: id, campanha: String(mc.nome), pais: "", inv, total, moeda: m.dados?.moeda || "BRL", nivel: inv >= total ? 100 : 90, onde: nomesConta[String(m.conta)] || m.dados?.nome || "Gerenciador" }); }
+    if (total > 0 && inv >= total * 0.9) itens.push({ chave: id, campanha: String(mc.nome), pais: "", inv, total, moeda: m.dados?.moeda || "BRL", nivel: inv >= total ? 100 : 90, onde: nomesConta[String(m.conta)] || m.dados?.nome || "Gerenciador", conta: String(m.conta) }); }
   const novos = itens.filter((i) => !ant[i.chave] || ant[i.chave].nivel < i.nivel);
   const prox: Record<string, Record<string, unknown>> = {}; for (const i of itens) prox[i.chave] = { nivel: Math.max(i.nivel, ant[i.chave]?.nivel || 0), em: ant[i.chave] && ant[i.chave].nivel >= i.nivel ? ant[i.chave].em : hoje,
-    campanha: i.campanha, pais: i.pais, inv: Math.round(i.inv * 100) / 100, total: Math.round(i.total * 100) / 100, moeda: i.moeda, onde: i.onde, atualizado: new Date().toISOString() };
+    campanha: i.campanha, pais: i.pais, inv: Math.round(i.inv * 100) / 100, total: Math.round(i.total * 100) / 100, moeda: i.moeda, onde: i.onde, campId: i.campId || null, conta: i.conta || null, atualizado: new Date().toISOString() };
   await admin.from("config").upsert({ chave: "alertasBudget", valor: prox });
   const cfgEmail = ((cfg || []).find((r) => r.chave === "alertasEmail")?.valor || {}) as { para?: string[]; ativo?: boolean };
   if (cfgEmail.ativo === false) return { avisos: itens.length, novos: novos.length, enviado: false, desligado: true };
