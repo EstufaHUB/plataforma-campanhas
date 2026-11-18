@@ -16,11 +16,20 @@ const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { sta
 // leads = maior entre os tipos de lead que o Meta informa (formulário, pixel, agrupado)
 const TIPOS_LEAD = ["lead", "offsite_conversion.fb_pixel_lead", "onsite_conversion.lead_grouped"];
 // acaoResultado: tipo de ação usado como resultado quando não é lead (ex.: offsite_conversion.custom.123 = download do ebook)
-function leadsDe(actions: { action_type: string; value: string }[] | undefined, acaoResultado?: string) {
+function leadsDe(actions: { action_type: string; value: string }[] | undefined, acaoResultado?: string | string[] | null) {
   if (!actions) return 0;
-  const tipos = acaoResultado ? [acaoResultado] : TIPOS_LEAD;
+  const tipos = Array.isArray(acaoResultado) && acaoResultado.length ? acaoResultado : typeof acaoResultado === "string" && acaoResultado ? [acaoResultado] : TIPOS_LEAD;
   return Math.max(0, ...actions.filter((a) => tipos.includes(a.action_type)).map((a) => +a.value || 0));
 }
+// o que o Gerenciador conta como "resultado": o evento de otimização dos conjuntos (ex.: COMPLETE_REGISTRATION = cadastro concluído no site)
+// LEAD ou sem evento → tipos de lead padrão (null)
+function acaoDoConjunto(po: Record<string, unknown> | undefined): string[] | null {
+  if (!po) return null;
+  if (po.custom_conversion_id) return [`offsite_conversion.custom.${po.custom_conversion_id}`];
+  const e = String(po.custom_event_type || ""); if (!e || e === "LEAD" || e === "OTHER") return null;
+  const k = e.toLowerCase(); return [`offsite_conversion.fb_pixel_${k}`, k, `onsite_web_${k}`, `onsite_conversion.${k}`, `omni_${k}`];
+}
+const acaoDosConjuntos = (as: Record<string, unknown>[]) => { for (const a of as) { const t = acaoDoConjunto(a.promoted_object as Record<string, unknown>); if (t) return t; } return null; };
 const acaoDe = (actions: { action_type: string; value: string }[] | undefined, tipo: string) => +((actions || []).find((a) => a.action_type === tipo)?.value || 0);
 
 async function insights(campanhaId: string, token: string, extra: Record<string, string>) {
@@ -49,7 +58,8 @@ async function graph(path: string, token: string, params: Record<string, string>
 type Acao = { action_type: string; value: string };
 const acao = (a: Acao[] | undefined, t: string) => +((a || []).find((x) => x.action_type === t)?.value || 0);
 // resultado de acordo com o objetivo da campanha
-function resultado(obj: string, a: Acao[] | undefined, reach: number) {
+function resultado(obj: string, a: Acao[] | undefined, reach: number, tipos?: string[] | null) {
+  if (tipos && ["OUTCOME_LEADS", "OUTCOME_SALES", "CONVERSIONS", "LEAD_GENERATION"].includes(obj)) return { n: leadsDe(a, tipos), tipo: obj === "OUTCOME_SALES" ? "compras" : "leads" };
   if (obj === "OUTCOME_LEADS") { const l = leadsDe(a); if (l) return { n: l, tipo: "leads" };
     const cust = (a || []).filter((x) => x.action_type.startsWith("offsite_conversion.custom.")).map((x) => +x.value || 0); return { n: cust.length ? Math.max(...cust) : 0, tipo: cust.length ? "conversões" : "leads" }; }
   if (obj === "OUTCOME_ENGAGEMENT") return { n: acao(a, "post_engagement"), tipo: "engajamentos" };
@@ -116,6 +126,10 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
       const hoje = Date.now(), noAr = (c: Record<string, unknown>) => (!c.stop_time || Date.parse(c.stop_time as string) >= hoje - 864e5) &&
         (c.effective_status === "PAUSED" ? gastou(S30, c.id as string) : (gastou(S7, c.id as string) || (c.start_time && Date.parse(c.start_time as string) >= hoje - 3 * 864e5)));
       const ativas = camps.filter((c) => ids.has(c.id as string) && noAr(c)), total: Record<string, unknown>[] = [];
+      // evento de otimização dos conjuntos de cada campanha (o "resultado" do Gerenciador)
+      const evento: Record<string, string[] | null> = {};
+      try { const conj = await graph(`${act}/adsets`, token, { fields: "campaign_id,promoted_object", effective_status: '["ACTIVE","PAUSED","CAMPAIGN_PAUSED"]', limit: "500" });
+        for (const c of ativas) evento[c.id as string] = acaoDosConjuntos(conj.filter((a) => a.campaign_id === c.id)); } catch (_) { /* sem evento: tipos de lead padrão */ }
       // total desde o início, só das campanhas no ar (em lotes, para contas com muito histórico)
       for (let i = 0; i < ativas.length; i += 25) total.push(...await graph(`${act}/insights`, token, { level: "campaign", date_preset: "maximum", fields: "campaign_id,spend,impressions,reach,clicks,actions", filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: ativas.slice(i, i + 25).map((c) => c.id) }]), limit: "100" }));
       const T = porId(total);
@@ -125,7 +139,7 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
         const id = l.campaign_id as string, m = String(l.date_start || "").slice(0, 7); if (!m) continue; (porMes[id] = porMes[id] || {})[m] = Math.round(((porMes[id][m] || 0) + (+(l.spend as string) || 0)) * 100) / 100; } } catch (_) { /* sem gasto mensal nesta rodada */ }
       const campanhas = ativas.map((c) => {
         const t = (T[c.id as string] || {}) as Record<string, unknown>, s7 = (S7[c.id as string] || {}) as Record<string, unknown>;
-        const obj = c.objective as string, r = resultado(obj, t.actions as Acao[], +(t.reach as string) || 0), r7 = resultado(obj, s7.actions as Acao[], +(s7.reach as string) || 0);
+        const obj = c.objective as string, ev = evento[c.id as string], r = resultado(obj, t.actions as Acao[], +(t.reach as string) || 0, ev), r7 = resultado(obj, s7.actions as Acao[], +(s7.reach as string) || 0, ev);
         // budget por dia: diário da campanha; vitalício ÷ dias; sem budget na campanha, soma dos conjuntos ativos
         let diario: number | null = c.daily_budget ? +(c.daily_budget as string) / 100 : null;
         const porDias = (lt: number, ini?: string, fim?: string) => ini && fim ? lt / Math.max(1, Math.round((Date.parse(fim) - Date.parse(ini)) / 864e5)) : null;
@@ -227,6 +241,9 @@ Deno.serve(async (req) => {
     const vinculos = (c.dados?.metaVinculos || []) as { campanhaId: string; acaoResultado?: string; [k: string]: unknown }[];
     for (const v of vinculos) {
       try {
+        // sem ação escolhida no vínculo: usa o evento de otimização dos conjuntos (igual ao "Resultados" do Gerenciador)
+        let acaoV: string | string[] | null = v.acaoResultado || null;
+        if (!acaoV) { try { acaoV = acaoDosConjuntos(await graph(`${v.campanhaId}/adsets`, token, { fields: "promoted_object", limit: "100" })); } catch (_) { /* tipos de lead padrão */ } }
         const total = (await insights(v.campanhaId, token, { date_preset: "maximum" }))[0] || {};
         const dias = await insights(v.campanhaId, token, { date_preset: "maximum", time_increment: "1", limit: "500" });
         let status: string | null = null, statusEm: string | null = null, paradaEm: string | null = null;
@@ -238,11 +255,11 @@ Deno.serve(async (req) => {
           impressoes: +(total.impressions as string) || 0,
           cliques: +(total.clicks as string) || 0,
           alcance: +(total.reach as string) || 0,
-          leads: leadsDe(total.actions as never, v.acaoResultado),
+          leads: leadsDe(total.actions as never, acaoV),
           engajamentos: acaoDe(total.actions as never, "post_engagement"),
           cliquesLink: acaoDe(total.actions as never, "link_click"),
           visitas: acaoDe(total.actions as never, "landing_page_view"),
-          porDia: dias.map((d) => ({ data: d.date_start, investido: +(d.spend as string) || 0, leads: leadsDe(d.actions as never, v.acaoResultado), impressoes: +(d.impressions as string) || 0, engajamentos: acaoDe(d.actions as never, "post_engagement"), cliquesLink: acaoDe(d.actions as never, "link_click"), visitas: acaoDe(d.actions as never, "landing_page_view") })),
+          porDia: dias.map((d) => ({ data: d.date_start, investido: +(d.spend as string) || 0, leads: leadsDe(d.actions as never, acaoV), impressoes: +(d.impressions as string) || 0, engajamentos: acaoDe(d.actions as never, "post_engagement"), cliquesLink: acaoDe(d.actions as never, "link_click"), visitas: acaoDe(d.actions as never, "landing_page_view") })),
           status, statusEm, fimMeta: paradaEm,
           fonte: "Meta Graph API",
         };
