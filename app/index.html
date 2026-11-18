@@ -2481,13 +2481,17 @@ async function montarSlides(grupo, tipo = '', opc = {}){
   for (const [gi, g] of lista.entries()) {
     const sl = pptx.addSlide(); sl.background = bg || {color:C.fundo};
     // números por país
+    const invG = mc => { const pl = +mc.budgetDiario||0, ini = (mc.inicio||'').slice(0,10), fim = (mc.fim||'').slice(0,10); if (!pl || !ini) return {total:null, esperado:null};
+      const tot = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(0, Math.min(tot||1e9, difDias(ini, HOJE)+1)), fp = tot ? fracPlano(mc.id, ini, fim, pl*tot) : null;
+      return {total: tot ? pl*tot : null, esperado: fp ? fp.esperado : pl*dec}; };
     const linhas = g.linhas.map(({mc, p, vi})=>{
       if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null); if (m.vazio) return {p, vazio:true};
-        const gd = gastoDiario(m.S2, m.S2.linhas), esp = Math.min(1, m.S2.frac);
-        return {p, tipo: m.aw ? (m.rotRes==='engajamentos' ? 'engajamentos' : m.rotRes==='visitas' ? 'visitas' : 'cliques') : 'leads', real:m.real, meta:m.meta, rit: m.meta && esp ? (m.real/m.meta)/esp : null, custo:m.custo, custoMeta:m.custoMeta, plano:gd.plano, dia: m.S2.frac>=1 ? m.inv/m.S2.total : gd.real, inv:m.inv}; }
-      const A = metaAutoGer(mc, ct.conta);
-      if (A) return {p, tipo: mc.tipoResultado, real:A.real, meta:Math.round(A.meta), rit:A.rit, custo:A.custo, custoMeta:A.custoMeta, plano:plDe(mc), dia: mc.gasto7/7, inv: A.modo==='7d' ? mc.gasto7 : mc.investido, nivel:A.nivel, auto:A};
-      return {p, tipo: mc.tipoResultado, real:mc.resultados, meta:null, rit:null, custo:mc.custoResultado, custoMeta:null, plano:plDe(mc), dia: mc.gasto7/7, inv:mc.investido}; }).filter(x=>!x.vazio);
+        const gd = gastoDiario(m.S2, m.S2.linhas), fp = fracPlano(mc.id, m.S2.ini, m.S2.fim, m.bud), esp = fp && fp.frac!=null ? fp.frac : Math.min(1, m.S2.frac), man = budDiaManual(mc);
+        return {p, tipo: m.aw ? (m.rotRes==='engajamentos' ? 'engajamentos' : m.rotRes==='visitas' ? 'visitas' : 'cliques') : 'leads', real:m.real, meta:m.meta, esp: m.meta ? m.meta*esp : null, rit: m.meta && esp ? (m.real/m.meta)/esp : null, custo:m.custo, custoMeta:m.custoMeta,
+          plano: man || (fp && fp.atual ? diarioMes(mc, vi, fp) : gd.plano), dia: m.S2.frac>=1 ? m.inv/m.S2.total : gd.real, inv:m.inv, invTot: m.bud || null, invEsp: m.bud ? (fp ? fp.esperado : m.bud*Math.min(1, m.S2.frac)) : null}; }
+      const A = metaAutoGer(mc, ct.conta), IG = invG(mc);
+      if (A) return {p, tipo: mc.tipoResultado, real:A.real, meta:Math.round(A.metaTotal ?? A.meta), esp: A.esperado, modo:A.modo, rit:A.rit, custo:A.custo, custoMeta:A.custoMeta, plano:plDe(mc), dia: mc.gasto7/7, inv: +mc.investido||0, invTot: IG.total, invEsp: IG.esperado, nivel:A.nivel, auto:A};
+      return {p, tipo: mc.tipoResultado, real:mc.resultados, meta:null, esp:null, rit:null, custo:mc.custoResultado, custoMeta:null, plano:plDe(mc), dia: mc.gasto7/7, inv:+mc.investido||0, invTot: IG.total, invEsp: IG.esperado}; }).filter(x=>!x.vazio);
     const tipo = (linhas[0]||{}).tipo || 'leads';
     const agg = g.c ? metricasStatus(g.c, g.fase||null, (g.linhas.find(l=>l.vi)||{}).vi?.v.marca || null) : null, autos = linhas.filter(l=>l.auto && l.auto.score!=null), scoreAuto = !g.c && autos.length ? Math.min(...autos.map(l=>l.auto.score)) : null, nv = agg && !agg.vazio ? nivelSaude(agg.S2.score) : nivelSaude(scoreAuto);
     // ---- blocos do topo: campanha · período · data do relatório · estufa ----
@@ -2495,34 +2499,40 @@ async function montarSlides(grupo, tipo = '', opc = {}){
       sl.addText(rot.toUpperCase(), {x:x+0.2, y:0.36, w:w-0.3, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut, charSpacing:1});
       sl.addText(val, {x:x+0.2, y:0.58, w:w-0.3, h:0.38, fontFace:F, fontSize:17, bold:true, color:C.esc, fit:'shrink'});
       if (sub) sl.addText(sub, {x:x+0.2, y:0.92, w:w-0.3, h:0.25, fontFace:F, fontSize:9.5, color:C.mut}); };
-    card(sl, 0.35, 0.3, 5.6, 0.95); sl.addShape(pptx.ShapeType.rect, {x:0.35, y:0.3, w:0.07, h:0.95, fill:{color:C.pet}, line:{color:C.pet}});
+    card(sl, 0.35, 0.3, 5.6, 0.95); sl.addShape(pptx.ShapeType.rect, {x:0.35, y:0.3, w:0.07, h:0.95, fill:{color:C.pet}, line:{color:C.pet}});   // campanha
     if (logo) sl.addImage({data:logo, x:0.55, y:0.43, w:0.68, h:0.68});
     const xc = logo ? 1.38 : 0.6;
     sl.addText(T.campanha.toUpperCase(), {x:xc, y:0.36, w:4.4, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut, charSpacing:1});
     sl.addText(g.titulo, {x:xc, y:0.58, w:4.45, h:0.38, fontFace:F, fontSize:17, bold:true, color:C.esc, fit:'shrink'});
     sl.addText(`${grupo}${g.fase ? ` · ${T.fase} ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}` : ''}${g.pausada ? (en?' · Paused':' · Pausada')+(g.pausadaEm?' '+dt(g.pausadaEm):'') : ''}`, {x:xc, y:0.92, w:4.45, h:0.25, fontFace:F, fontSize:9.5, color:C.mut});
-    bloco(6.1, 2.9, T.periodo, `${dt(g.per.ini)} → ${dt(g.per.fim)}`);
-    bloco(9.15, 2.25, T.relatorio, dt(HOJE));
-    sl.addText([{text:'estufa', options:{color: bg ? 'FFFFFF' : C.esc}}, {text:'▲', options:{color:'EF9F27'}}], {x:11.5, y:0.3, w:1.5, h:0.95, fontFace:F, fontSize:22, bold:true, align:'right', valign:'middle'});
+    const totD = g.per.ini && g.per.fim ? Math.max(1, difDias(g.per.ini, g.per.fim)+1) : null, decD = totD ? Math.max(0, Math.min(totD, difDias(g.per.ini, HOJE)+1)) : 0, frac = totD ? decD/totD : 0;
+    card(sl, 6.1, 0.3, 3.85, 0.95);
+    sl.addText(T.periodo.toUpperCase(), {x:6.3, y:0.36, w:3.5, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut, charSpacing:1});
+    sl.addText(`${dt(g.per.ini)} → ${dt(g.per.fim)}`, {x:6.3, y:0.57, w:2.1, h:0.36, fontFace:F, fontSize:16, bold:true, color:C.esc, fit:'shrink'});
+    sl.addText(g.restam!=null && frac<1 ? [{text:String(g.restam), options:{bold:true, color:C.esc, fontSize:13}}, {text:' '+(en?'days left':'dias restantes'), options:{color:C.mut, fontSize:9.5}}] : [{text:T.encerrada, options:{bold:true, color:C.esc, fontSize:10.5}}], {x:8.2, y:0.57, w:1.6, h:0.36, fontFace:F, align:'right'});
+    sl.addShape(pptx.ShapeType.roundRect, {x:6.3, y:1.02, w:3.45, h:0.1, fill:{color:'E6ECEE'}, line:{color:'E6ECEE'}, rectRadius:0.05});
+    if (frac>0) sl.addShape(pptx.ShapeType.roundRect, {x:6.3, y:1.02, w:Math.max(0.1, 3.45*frac), h:0.1, fill:{color:C.pet}, line:{color:C.pet}, rectRadius:0.05});
+    bloco(10.1, 1.4, T.relatorio, dt(HOJE));
+    sl.addText([{text:'estufa', options:{color: bg ? 'FFFFFF' : C.esc}}, {text:'▲', options:{color:'EF9F27'}}], {x:11.6, y:0.3, w:1.4, h:0.95, fontFace:F, fontSize:22, bold:true, align:'right', valign:'middle'});
     // ---- coluna 1: Leads e CPL por país + resumo ----
     card(sl, 0.35, 1.45, 4.6, 5.4);
-    const totD = g.per.ini && g.per.fim ? Math.max(1, difDias(g.per.ini, g.per.fim)+1) : null, decD = totD ? Math.max(0, Math.min(totD, difDias(g.per.ini, HOJE)+1)) : 0, frac = totD ? decD/totD : 0;
     const nomeTipo = T.tipo[tipo] || tipo, nomeCusto = T.cpr[tipo] || T.custo;
     const hd = o => Object.assign({bold:true, color:'FFFFFF', fill:{color:C.pet}, align:'center', valign:'middle', fontSize:10}, o||{});
     const cel = (txt, cor, o) => ({text:txt, options:Object.assign({align:'center', valign:'middle', fontSize:10.5, color: cor ? C[cor+'T'] : C.txt, fill:{color: cor ? C[cor+'F'] : 'FFFFFF'}, bold: !!cor}, o||{})});
     const tt = o => Object.assign({bold:true, fill:{color:'EEF3F4'}}, o||{});
     const multi = linhas.length>1, sR = linhas.reduce((t,l)=>t+(+l.real||0),0), sM = linhas.every(l=>l.meta) ? linhas.reduce((t,l)=>t+l.meta,0) : null, sI = linhas.reduce((t,l)=>t+(+l.inv||0),0);
-    const rL = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}]];
-    for (const l of linhas) rL.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(num(l.real), corR(l.rit))]);
-    if (multi) rL.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(num(sR), null, tt())]);
+    const espHoje = en ? 'Expected today' : 'Esperado hoje', sE = linhas.every(l=>l.esp!=null) ? linhas.reduce((t,l)=>t+l.esp,0) : null;
+    const rL = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:espHoje, options:hd()}, {text:T.ating, options:hd()}]];
+    for (const l of linhas) rL.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(l.esp!=null?num(Math.round(l.esp)):'—'), cel(num(l.real), corR(l.rit))]);
+    if (multi) rL.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(sE!=null?num(Math.round(sE)):'—', null, tt()), cel(num(sR), null, tt())]);
     const rC = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}]];
-    for (const l of linhas) { const cc = l.custo!=null && l.custoMeta ? (l.custo<=l.custoMeta ? 'verde' : l.custo<=l.custoMeta*1.1 ? 'amar' : 'verm') : null; rC.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(din(l.custoMeta)), cel(din(l.custo), cc)]); }
+    for (const l of linhas) { const cc = l.custo!=null && l.custoMeta ? (l.custo<=l.custoMeta ? 'verde' : l.custo<=l.custoMeta*1.3 ? 'amar' : 'verm') : null; rC.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(din(l.custoMeta)), cel(din(l.custo), cc)]); }
     const cmTot = linhas.every(l=>l.custoMeta && l.meta) ? linhas.reduce((t,l)=>t+l.custoMeta*l.meta,0)/linhas.reduce((t,l)=>t+l.meta,0) : null;
     if (multi) rC.push([cel(T.total, null, tt({align:'left'})), cel(cmTot?din(cmTot):'—', null, tt()), cel(sR?din(sI/sR):'—', null, tt())]);
     const rowH = Math.min(0.34, 4.1/Math.max(1, rL.length + rC.length));
     sl.addText(nomeTipo, {x:0.55, y:1.55, w:2.0, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
-    if (sM && frac<1) sl.addText(`${T.esperado}: ${Math.round(frac*100)}%`, {x:2.4, y:1.55, w:2.35, h:0.35, fontFace:F, fontSize:9.5, color:C.mut, align:'right'});
-    sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.45,1.375,1.375], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
+    sl.addText(en ? 'green: on pace · red: below' : 'verde: no ritmo · vermelho: abaixo', {x:2.2, y:1.55, w:2.55, h:0.35, fontFace:F, fontSize:8.5, color:C.mut, align:'right'});
+    sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.2,1.0,1.05,0.95], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
     const yC = 1.92 + rowH*rL.length + 0.18;
     sl.addText(nomeCusto, {x:0.55, y:yC, w:4.2, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
     sl.addTable(rC, {x:0.55, y:yC+0.37, w:4.2, colW:[1.45,1.375,1.375], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
@@ -2530,17 +2540,26 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     card(sl, 5.1, 1.45, 3.95, 2.85, T.saude);
     const png = await farolPng(agg && !agg.vazio && agg.S2.score!=null ? Math.min(1, agg.S2.score/1.25) : scoreAuto!=null ? Math.min(1, scoreAuto/1.25) : null);
     if (png) sl.addImage({data:png, x:5.75, y:1.85, w:2.65, h:1.45});
-    sl.addText(nv ? T.niv[nv.t] : T.semMeta, {x:5.2, y:3.3, w:3.75, h:0.38, fontFace:F, fontSize:16, bold:true, align:'center', color: nv ? ({Saudável:C.verdeT,'Atenção':C.amarT,'Crítica':C.vermT})[nv.t] : C.mut});
+    const aprend = !nv && linhas.some(l=>l.auto && l.auto.novo), desde = aprend && g.per.ini ? addDias(g.per.ini, 3) : null;
+    sl.addText(nv ? T.niv[nv.t] : aprend ? (en ? 'Learning' : 'Em aprendizado') : T.semMeta, {x:5.2, y:3.3, w:3.75, h:0.38, fontFace:F, fontSize:16, bold:true, align:'center', color: nv ? ({Saudável:C.verdeT,'Atenção':C.amarT,'Crítica':C.vermT})[nv.t] : C.mut});
+    if (aprend) sl.addText(en ? `Started ${decD} day${decD===1?'':'s'} ago · health from ${dt(desde)}` : `Começou há ${decD} dia${decD===1?'':'s'} · farol a partir de ${dt(desde)}`, {x:5.2, y:3.68, w:3.75, h:0.3, fontFace:F, fontSize:9.5, align:'center', color:C.mut});
     const abaixo = linhas.filter(l=>l.rit!=null && l.rit<0.85).map(l=>nPais(l.p));
     const cr = agg && !agg.vazio && agg.custo && agg.custoMeta ? agg.custo/agg.custoMeta - 1 : null;
     const linha2 = abaixo.length ? T.abaixo(abaixo.length, abaixo.join(', ')) : (agg && !agg.vazio && agg.S2.ritmo!=null ? (en ? `Results at ${Math.round(agg.S2.ritmo*100)}% of pace${cr!=null?` · cost ${Math.round(Math.abs(cr)*100)}% ${cr<0?'below':'above'} goal`:''}` : `Resultado ${Math.round(agg.S2.ritmo*100)}% do ritmo${cr!=null?` · custo ${Math.round(Math.abs(cr)*100)}% ${cr<0?'abaixo':'acima'} da meta`:''}`) : '');
-    if (linha2) sl.addText(linha2, {x:5.2, y:3.68, w:3.75, h:0.5, fontFace:F, fontSize:9.5, align:'center', valign:'top', color: abaixo.length ? C.vermT : C.mut, bold: !!abaixo.length});
-    card(sl, 5.1, 4.45, 3.95, 2.4, T.termina);
-    if (g.restam!=null && frac<1) sl.addText([{text:String(g.restam), options:{fontSize:50, bold:true, color:C.esc}}, {text:'  '+T.dias, options:{fontSize:18, italic:true, color:C.mut}}], {x:5.3, y:4.85, w:3.6, h:1.05, fontFace:F});
-    else sl.addText(T.encerrada, {x:5.3, y:5.0, w:3.6, h:0.8, fontFace:F, fontSize:20, bold:true, color:C.esc});
-    sl.addShape(pptx.ShapeType.roundRect, {x:5.35, y:6.05, w:3.45, h:0.18, fill:{color:'E6ECEE'}, line:{color:'E6ECEE'}, rectRadius:0.09});
-    if (frac>0) sl.addShape(pptx.ShapeType.roundRect, {x:5.35, y:6.05, w:Math.max(0.18, 3.45*frac), h:0.18, fill:{color:C.pet}, line:{color:C.pet}, rectRadius:0.09});
-    sl.addText(`${Math.round(frac*100)}% ${en?'of the period':'do período'}`, {x:5.35, y:6.3, w:3.45, h:0.3, fontFace:F, fontSize:9.5, color:C.mut, align:'right'});
+    if (linha2 && !aprend) sl.addText(linha2, {x:5.2, y:3.68, w:3.75, h:0.5, fontFace:F, fontSize:9.5, align:'center', valign:'top', color: abaixo.length ? C.vermT : C.mut, bold: !!abaixo.length});
+    card(sl, 5.1, 4.45, 3.95, 2.4, en ? 'Investment' : 'Investimento');
+    { const iT = linhas.every(l=>l.invTot) ? linhas.reduce((t,l)=>t+l.invTot,0) : null, iE = linhas.every(l=>l.invEsp!=null) ? linhas.reduce((t,l)=>t+l.invEsp,0) : null;
+      const dR = linhas.every(l=>l.dia!=null) ? linhas.reduce((t,l)=>t+(+l.dia||0),0) : null, dP = linhas.every(l=>l.plano) ? linhas.reduce((t,l)=>t+l.plano,0) : null;
+      const rI = iE ? sI/iE : null, cI = rI==null ? null : Math.abs(rI-1)<=0.15 ? 'verde' : (rI<0.5 || rI>1.3) ? 'verm' : 'amar';
+      sl.addText([{text:din(sI, 0), options:{bold:true, color:C.esc, fontSize:18}}, ...(iT ? [{text:'  '+(en?'of ':'de ')+din(iT, 0), options:{color:C.mut, fontSize:10.5}}] : [])], {x:5.3, y:4.88, w:2.75, h:0.42, fontFace:F, fit:'shrink'});
+      if (cI) sl.addText(rI<0.85 ? (en?'below':'abaixo') : rI>1.15 ? (en?'above':'acima') : (en?'on pace':'no ritmo'), {x:7.95, y:4.93, w:0.95, h:0.3, fontFace:F, fontSize:9, bold:true, align:'center', color:C[cI+'T'], fill:{color:C[cI+'F']}, shape:pptx.ShapeType.roundRect, rectRadius:0.1});
+      if (iT) { const fr = Math.min(1, sI/iT), fe = iE!=null ? Math.min(1, iE/iT) : null;
+        sl.addShape(pptx.ShapeType.roundRect, {x:5.35, y:5.45, w:3.45, h:0.14, fill:{color:'E6ECEE'}, line:{color:'E6ECEE'}, rectRadius:0.07});
+        if (fr>0) sl.addShape(pptx.ShapeType.roundRect, {x:5.35, y:5.45, w:Math.max(0.14, 3.45*fr), h:0.14, fill:{color:C[cI||'verde']}, line:{color:C[cI||'verde']}, rectRadius:0.07});
+        if (fe!=null && fe<1) sl.addShape(pptx.ShapeType.rect, {x:5.35+3.45*fe-0.015, y:5.39, w:0.03, h:0.26, fill:{color:C.esc}, line:{color:C.esc}}); }
+      if (iE!=null) sl.addText(`${en?'expected today':'esperado hoje'}: ${din(iE, 0)}${iT?(en?' · the mark shows the expected':' · o traço marca o esperado'):''}`, {x:5.35, y:5.68, w:3.5, h:0.3, fontFace:F, fontSize:9, color:C.mut});
+      sl.addShape(pptx.ShapeType.line, {x:5.35, y:6.1, w:3.45, h:0, line:{color:C.borda, width:0.75}});
+      sl.addText([{text:(en?'Daily (7d)':'Diário (7d)')+'  ', options:{color:C.mut, fontSize:9.5}}, {text:dR!=null?din(dR):'—', options:{bold:true, color:C.esc, fontSize:11}}, ...(dP ? [{text:'  / '+(en?'planned ':'planejado ')+din(dP), options:{color:C.mut, fontSize:9.5}}] : [])], {x:5.35, y:6.18, w:3.5, h:0.35, fontFace:F, fit:'shrink'}); }
     // pontos de atenção (pré-preenchidos e editáveis) e comentários (em branco)
     const pts = [];
     for (const l of linhas) { const n = nPais(l.p);
@@ -2578,7 +2597,7 @@ class PptxPrevia {
     addText:(t,o)=>s.itens.push(['t',t,o]), addShape:(k,o)=>s.itens.push(['s',k,o]), addImage:o=>s.itens.push(['i',o]), addTable:(r,o)=>s.itens.push(['tb',r,o])}; this.slides.push(s); return api; }
   html(i, u){ const s = this.slides[i], px = v => (v*u).toFixed(1)+'px', pt = v => (v/72*u).toFixed(2)+'px', cor = c => c ? '#'+c : 'transparent';
     const caixa = o => `left:${px(o.x)};top:${px(o.y)};width:${px(o.w)};height:${px(o.h||0)}`;
-    const estilo = o => `font-family:${o.fontFace||'Arial'},sans-serif;font-size:${pt(o.fontSize||18)};color:${cor(o.color)};${o.bold?'font-weight:700;':''}${o.italic?'font-style:italic;':''}text-align:${o.align||'left'}`;
+    const estilo = o => `font-family:${o.fontFace||'Arial'},sans-serif;font-size:${pt(o.fontSize||18)};color:${cor(o.color)};${o.bold?'font-weight:700;':''}${o.italic?'font-style:italic;':''}text-align:${o.align||'left'}${o.fill&&o.fill.color?`;background:#${o.fill.color};border-radius:6px`:''}`;
     const run = r => typeof r==='string' ? h(r) : `<span style="${r.options&&r.options.color?'color:#'+r.options.color+';':''}${r.options&&r.options.fontSize?'font-size:'+pt(r.options.fontSize)+';':''}${r.options&&r.options.bold?'font-weight:700;':''}${r.options&&r.options.italic?'font-style:italic;':''}">${h(r.text)}</span>`;
     let out = '';
     for (const it of s.itens) {
