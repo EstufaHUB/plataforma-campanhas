@@ -151,7 +151,7 @@ const dias = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)
 async function alertasBudget(admin: ReturnType<typeof createClient>) {
   const [{ data: camps }, { data: rms }, { data: mcs }, { data: cfg }, { data: adms }] = await Promise.all([
     admin.from("campanhas").select("id, dados"), admin.from("resultados_meta").select("campanha_id, meta_campanha, dados"),
-    admin.from("meta_contas").select("conta, dados"), admin.from("config").select("chave, valor").in("chave", ["alertasBudget", "contasStatus", "ocultasStatus"]),
+    admin.from("meta_contas").select("conta, dados"), admin.from("config").select("chave, valor").in("chave", ["alertasBudget", "contasStatus", "ocultasStatus", "alertasEmail"]),
     admin.from("perfis").select("email, papel").eq("papel", "admin")]);
   const ant = ((cfg || []).find((r) => r.chave === "alertasBudget")?.valor || {}) as Record<string, { nivel: number; em: string }>;
   const nomesConta = Object.fromEntries((((cfg || []).find((r) => r.chave === "contasStatus")?.valor || []) as { conta: string; grupo: string }[]).map((c) => [String(c.conta), c.grupo]));
@@ -174,7 +174,9 @@ async function alertasBudget(admin: ReturnType<typeof createClient>) {
   const novos = itens.filter((i) => !ant[i.chave] || ant[i.chave].nivel < i.nivel);
   const prox: Record<string, { nivel: number; em: string }> = {}; for (const i of itens) prox[i.chave] = { nivel: Math.max(i.nivel, ant[i.chave]?.nivel || 0), em: ant[i.chave] && ant[i.chave].nivel >= i.nivel ? ant[i.chave].em : hoje };
   await admin.from("config").upsert({ chave: "alertasBudget", valor: prox });
-  const para = (adms || []).map((a) => a.email).filter(Boolean), user = (Deno.env.get("GMAIL_USER") || "").trim(), pass = (Deno.env.get("GMAIL_APP_PASSWORD") || "").replace(/\s+/g, "");
+  const cfgEmail = ((cfg || []).find((r) => r.chave === "alertasEmail")?.valor || {}) as { para?: string[]; ativo?: boolean };
+  if (cfgEmail.ativo === false) return { avisos: itens.length, novos: novos.length, enviado: false, desligado: true };
+  const para = (cfgEmail.para && cfgEmail.para.length ? cfgEmail.para : (adms || []).map((a) => a.email)).filter(Boolean), user = (Deno.env.get("GMAIL_USER") || "").trim(), pass = (Deno.env.get("GMAIL_APP_PASSWORD") || "").replace(/\s+/g, "");
   if (!novos.length || !para.length || !user || !pass) return { avisos: itens.length, novos: novos.length, enviado: false };
   const linhas = novos.sort((a, b) => b.inv / b.total - a.inv / a.total).map((i) => { const pct = Math.round(i.inv / i.total * 100), cor = i.nivel >= 100 ? "#a32d2d" : "#8a5a00";
     return `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee"><b>${i.campanha}</b>${i.pais ? " · " + i.pais : ""}<div style="color:#6b7a80;font-size:12px">${i.onde}</div></td><td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${fmt(i.inv, i.moeda)} de ${fmt(i.total, i.moeda)}</td><td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;color:${cor};font-weight:700">${pct}%${i.nivel >= 100 ? " · estourou" : ""}</td></tr>`; }).join("");

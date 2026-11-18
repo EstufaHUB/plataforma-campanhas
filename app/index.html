@@ -951,13 +951,13 @@ function salvar(){ try { localStorage.setItem(CHAVE+'-lidas-'+(SESSAO?SESSAO.use
    ===================================================================== */
 let sb = null, SESSAO = null, PERFIL = null, PERFIS = [], RESULTADOS = {}, NOTION = {}, META_CONTAS = [], CONTAS_STATUS = [], RECORRENTES = new Set(), INVOICES = [];
 const SNAP = {cli:{}, camp:{}, cfg:{}};
-const CFG_CHAVES = ['agencia','usuarios','feriados','modelo','modeloHist','baseRegiao','metasStatus','registrosStatus','ocultasStatus'];
+const CFG_CHAVES = ['agencia','usuarios','feriados','modelo','modeloHist','baseRegiao','metasStatus','registrosStatus','ocultasStatus','alertasEmail'];
 const ehEquipe = () => PERFIL && (PERFIL.papel==='equipe' || PERFIL.papel==='admin');
 const ehAdmin = () => PERFIL && PERFIL.papel==='admin';
 const PAPEIS = {pendente:'Aguardando liberação', equipe:'Equipe da agência', admin:'Administrador', cliente:'Cliente (somente leitura)'};
 function estadoInicial(){
   seq = 1000;
-  return {migr:2, metasStatus:{}, registrosStatus:{}, ocultasStatus:{}, agencia:{pais:'BR',estado:'',cidade:''}, usuarios:[], feriados:feriadosIniciais(),
+  return {migr:2, metasStatus:{}, registrosStatus:{}, ocultasStatus:{}, alertasEmail:{para:[], ativo:true}, agencia:{pais:'BR',estado:'',cidade:''}, usuarios:[], feriados:feriadosIniciais(),
     modelo:{versao:1, data:HOJE, origem:VERSAO_MODELO_PLANILHA, tarefas:JSON.parse(JSON.stringify(MODELO_PADRAO))}, modeloHist:[],
     baseRegiao:{EMEA:'EN',LATAM:'PT',NA:'EN',APAC:'EN',OUT:'EN'}, notifLidas:{}, log:[], clientes:[], campanhas:[]};
 }
@@ -3154,10 +3154,18 @@ function pgNotificacoes(){
 function pgConfig(r){
   const aba = r[1] || 'modelo';
   migalha([['Configurações']]);
-  const abas = [['modelo','gantt-chart','Modelo de cronograma'],['feriados','calendar-x','Feriados'],['idiomas','languages','Idiomas por região'],['log','history','Histórico de alterações']];
-  const corpo = {modelo:cfgModelo,feriados:cfgFeriados,idiomas:cfgIdiomas,usuarios:cfgUsuarios,log:cfgLog}[aba]();
+  const abas = [['modelo','gantt-chart','Modelo de cronograma'],['feriados','calendar-x','Feriados'],['idiomas','languages','Idiomas por região'],['alertas','bell-ring','Alertas por e-mail'],['log','history','Histórico de alterações']];
+  const corpo = {modelo:cfgModelo,feriados:cfgFeriados,idiomas:cfgIdiomas,alertas:cfgAlertas,usuarios:cfgUsuarios,log:cfgLog}[aba]();
   return `<div class="cab"><div><h1>Configurações</h1></div></div><nav class="abas">${abas.map(([k,ic,t])=>`<a href="#/config/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`;
 }
+/* destinatários do alerta de budget (90% e 100% do total), enviado a cada sincronização com o Meta */
+function cfgAlertas(){ const a = S.alertasEmail || {para:[], ativo:true}, adms = PERFIS.filter(p=>p.papel==='admin').map(p=>p.email), ed = ehEquipe();
+  return `<div class="card card-p" style="max-width:760px"><h3 style="margin-top:0">Alerta de budget</h3>
+    <p class="small muted" style="margin-top:0">A cada sincronização com o Meta (a cada 6 horas), o sistema avisa por e-mail quando uma campanha chega a <b>90%</b> do budget total e de novo se passar de <b>100%</b>. Cada campanha avisa uma vez por nível. Campanhas ocultas no Status pontual não entram.</p>
+    <label class="campo" style="flex-direction:row;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="al-ativo" ${a.ativo!==false?'checked':''} ${ed?'':'disabled'} style="width:auto">Enviar o alerta por e-mail</label>
+    <label class="campo" style="margin-top:12px">Destinatários<textarea id="al-para" rows="3" placeholder="nome@agenciaestufa.com, outra@agenciaestufa.com" ${ed?'':'disabled'}>${h((a.para||[]).join(', '))}</textarea></label>
+    <div class="small muted" style="margin-top:4px">Separe os e-mails por vírgula. Em branco, o alerta vai para os administradores${adms.length?': '+h(adms.join(', ')):''}.</div>
+    ${ed?'<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-p" data-act="salvarAlertas"><i data-lucide="check"></i>Salvar</button></div>':''}</div>`; }
 function cfgModelo(){
   const T = S.modelo.tarefas;
   return `<div class="alerta azul"><i data-lucide="info"></i><div>Este é o modelo usado nas <b>novas</b> campanhas (versão ${S.modelo.versao}). Ao salvar, é criada uma nova versão: campanhas já criadas guardam a própria cópia e não mudam. Durações em <b>dias úteis</b>. Dependências: <b>FS</b> = começa no dia útil seguinte ao fim da anterior; <b>SS</b> = começa no mesmo dia que a anterior.</div></div>
@@ -3852,6 +3860,9 @@ const ACT = {
     const mc = META_CONTAS.flatMap(m=>((m.dados||{}).campanhas)||[]).find(x=>x.id===ids[0]); registrar(`Status pontual: ${on?'ocultada':'volta a aparecer'} “${mc?titulo(mc.nome):ids[0]}”`);
     salvar(); render(); toast(on ? 'Campanha oculta. Use “Ver ocultas” para mostrar de novo.' : 'Campanha visível de novo.'); },
   stVerOcultas: () => { UI.stOcultas = !UI.stOcultas; render(); },
+  salvarAlertas: () => { const para = ($('#al-para').value||'').split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean), ruim = para.find(e=>!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(e));
+    if (ruim) return toast('E-mail inválido: '+ruim); if (para.length>30) return toast('No máximo 30 destinatários.');
+    S.alertasEmail = {para:[...new Set(para)], ativo: $('#al-ativo').checked}; registrar(`Alerta de budget: ${S.alertasEmail.ativo?'ligado':'desligado'} · ${para.length ? para.join(', ') : 'administradores'}`); salvar(); render(); toast('Alertas salvos.'); },
   stAddConta: () => abrirAddConta(),
   stAddContaOk: async el => { const sel = [...document.querySelectorAll('.add-conta')].filter(x=>x.querySelector('input[type=checkbox]').checked);
     if (!sel.length) return toast('Marque ao menos uma conta.');
