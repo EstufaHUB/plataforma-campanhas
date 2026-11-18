@@ -2512,7 +2512,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     sl.addText(g.restam!=null && frac<1 ? [{text:String(g.restam), options:{bold:true, color:C.esc, fontSize:13}}, {text:' '+(en?'days left':'dias restantes'), options:{color:C.mut, fontSize:9.5}}] : [{text:T.encerrada, options:{bold:true, color:C.esc, fontSize:10.5}}], {x:8.2, y:0.57, w:1.6, h:0.36, fontFace:F, align:'right'});
     sl.addShape(pptx.ShapeType.roundRect, {x:6.3, y:1.02, w:3.45, h:0.1, fill:{color:'E6ECEE'}, line:{color:'E6ECEE'}, rectRadius:0.05});
     if (frac>0) sl.addShape(pptx.ShapeType.roundRect, {x:6.3, y:1.02, w:Math.max(0.1, 3.45*frac), h:0.1, fill:{color:C.pet}, line:{color:C.pet}, rectRadius:0.05});
-    bloco(10.1, 1.4, T.relatorio, dt(HOJE));
+    bloco(10.1, 1.4, en ? 'Report' : 'Relatório', dt(HOJE));
     sl.addText([{text:'estufa', options:{color: bg ? 'FFFFFF' : C.esc}}, {text:'▲', options:{color:'EF9F27'}}], {x:11.6, y:0.3, w:1.4, h:0.95, fontFace:F, fontSize:22, bold:true, align:'right', valign:'middle'});
     // ---- coluna 1: Leads e CPL por país + resumo ----
     card(sl, 0.35, 1.45, 4.6, 5.4);
@@ -2532,7 +2532,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     const rowH = Math.min(0.34, 4.1/Math.max(1, rL.length + rC.length));
     sl.addText(nomeTipo, {x:0.55, y:1.55, w:2.0, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
     sl.addText(en ? 'green: on pace · red: below' : 'verde: no ritmo · vermelho: abaixo', {x:2.2, y:1.55, w:2.55, h:0.35, fontFace:F, fontSize:8.5, color:C.mut, align:'right'});
-    sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.2,1.0,1.05,0.95], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
+    sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.0,0.95,1.3,0.95], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
     const yC = 1.92 + rowH*rL.length + 0.18;
     sl.addText(nomeCusto, {x:0.55, y:yC, w:4.2, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
     sl.addTable(rC, {x:0.55, y:yC+0.37, w:4.2, colW:[1.45,1.375,1.375], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
