@@ -2512,9 +2512,9 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     const cel = (txt, cor, o) => ({text:txt, options:Object.assign({align:'center', valign:'middle', fontSize:10.5, color: cor ? C[cor+'T'] : C.txt, fill:{color: cor ? C[cor+'F'] : 'FFFFFF'}, bold: !!cor}, o||{})});
     const tt = o => Object.assign({bold:true, fill:{color:'EEF3F4'}}, o||{});
     const multi = linhas.length>1, sR = linhas.reduce((t,l)=>t+(+l.real||0),0), sM = linhas.every(l=>l.meta) ? linhas.reduce((t,l)=>t+l.meta,0) : null, sI = linhas.reduce((t,l)=>t+(+l.inv||0),0);
-    const rL = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}, {text:'%', options:hd()}]];
-    for (const l of linhas) { const pr = l.meta ? l.real/l.meta : null; rL.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(num(l.real), corR(l.rit)), cel(pr!=null?Math.round(pr*100)+'%':'—')]); }
-    if (multi) rL.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(num(sR), null, tt()), cel(sM?Math.round(sR/sM*100)+'%':'—', null, tt())]);
+    const rL = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}]];
+    for (const l of linhas) rL.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(num(l.real), corR(l.rit))]);
+    if (multi) rL.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(num(sR), null, tt())]);
     const rC = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}]];
     for (const l of linhas) { const cc = l.custo!=null && l.custoMeta ? (l.custo<=l.custoMeta ? 'verde' : l.custo<=l.custoMeta*1.1 ? 'amar' : 'verm') : null; rC.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(din(l.custoMeta)), cel(din(l.custo), cc)]); }
     const cmTot = linhas.every(l=>l.custoMeta && l.meta) ? linhas.reduce((t,l)=>t+l.custoMeta*l.meta,0)/linhas.reduce((t,l)=>t+l.meta,0) : null;
@@ -2522,7 +2522,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     const rowH = Math.min(0.34, 4.1/Math.max(1, rL.length + rC.length));
     sl.addText(nomeTipo, {x:0.55, y:1.55, w:2.0, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
     if (sM && frac<1) sl.addText(`${T.esperado}: ${Math.round(frac*100)}%`, {x:2.4, y:1.55, w:2.35, h:0.35, fontFace:F, fontSize:9.5, color:C.mut, align:'right'});
-    sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.45,0.85,1.0,0.9], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
+    sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.45,1.375,1.375], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
     const yC = 1.92 + rowH*rL.length + 0.18;
     sl.addText(nomeCusto, {x:0.55, y:yC, w:4.2, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
     sl.addTable(rC, {x:0.55, y:yC+0.37, w:4.2, colW:[1.45,1.375,1.375], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
