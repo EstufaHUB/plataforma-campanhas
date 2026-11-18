@@ -3,6 +3,7 @@
 // Precisa do segredo META_ACCESS_TOKEN (token de usuário do sistema com permissão ads_read).
 // Chamada pelo agendamento (pg_cron) ou pelo botão "Atualizar agora" da plataforma.
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import nodemailer from "npm:nodemailer@6.9.16";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 const cors = {
@@ -144,6 +145,47 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
   return feito;
 }
 
+// ---------- alerta de budget: avisa por e-mail quando o investido chega a 90% (e a 100%) do budget total ----------
+const fmt = (v: number, m: string) => { try { return v.toLocaleString("pt-BR", { style: "currency", currency: m || "BRL", maximumFractionDigits: 0 }); } catch { return String(Math.round(v)); } };
+const dias = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5) + 1;
+async function alertasBudget(admin: ReturnType<typeof createClient>) {
+  const [{ data: camps }, { data: rms }, { data: mcs }, { data: cfg }, { data: adms }] = await Promise.all([
+    admin.from("campanhas").select("id, dados"), admin.from("resultados_meta").select("campanha_id, meta_campanha, dados"),
+    admin.from("meta_contas").select("conta, dados"), admin.from("config").select("chave, valor").in("chave", ["alertasBudget", "contasStatus", "ocultasStatus"]),
+    admin.from("perfis").select("email, papel").eq("papel", "admin")]);
+  const ant = ((cfg || []).find((r) => r.chave === "alertasBudget")?.valor || {}) as Record<string, { nivel: number; em: string }>;
+  const nomesConta = Object.fromEntries((((cfg || []).find((r) => r.chave === "contasStatus")?.valor || []) as { conta: string; grupo: string }[]).map((c) => [String(c.conta), c.grupo]));
+  const ocultas = ((cfg || []).find((r) => r.chave === "ocultasStatus")?.valor || {}) as Record<string, unknown>;
+  type Item = { chave: string; campanha: string; pais: string; inv: number; total: number; moeda: string; nivel: number; onde: string };
+  const itens: Item[] = [], vinculadas = new Set<string>(), hoje = new Date().toISOString().slice(0, 10);
+  // campanhas da plataforma: budget do país no canal (ficha) × investido no Gerenciador
+  for (const c of camps || []) { const d = c.dados || {}; if (d.arquivada || d.status === "Concluída") continue;
+    for (const v of (d.metaVinculos || []) as Record<string, string>[]) { vinculadas.add(v.campanhaId); if (ocultas[v.campanhaId]) continue;
+      const cfgs = Object.entries((d.canaisCfg || {}) as Record<string, { paises?: { cod: string; budget?: number }[]; moeda?: string }>)
+        .filter(([k]) => k.split(/[|@]/)[0] === (v.canal || "Meta Ads") && (!v.fase || !k.includes("@") || k.endsWith("@" + v.fase)) && (!v.marca || !k.includes("|") || k.includes("|" + v.marca)));
+      const cf = cfgs.map(([, x]) => x).find((x) => (x.paises || []).some((p) => p.cod === v.pais)); const pc = cf && (cf.paises || []).find((p) => p.cod === v.pais);
+      const r = (rms || []).find((x) => x.campanha_id === c.id && x.meta_campanha === v.campanhaId); const total = +(pc?.budget || 0), inv = +(r?.dados?.investido || 0);
+      if (total > 0 && inv >= total * 0.9) itens.push({ chave: v.campanhaId, campanha: d.nome, pais: v.pais || "", inv, total, moeda: cf?.moeda || d.moeda || "BRL", nivel: inv >= total ? 100 : 90, onde: "Campanha da plataforma" }); } }
+  // campanhas só no Gerenciador (com data de fim): budget diário × dias do período
+  for (const m of mcs || []) for (const mc of ((m.dados?.campanhas || []) as Record<string, unknown>[])) { const id = String(mc.id);
+    if (vinculadas.has(id) || ocultas[id] || mc.pausada || !mc.fim || !mc.inicio || !mc.budgetDiario) continue; if (String(mc.fim).slice(0, 10) < hoje) continue;
+    const total = +(mc.budgetDiario as number) * dias(String(mc.inicio).slice(0, 10), String(mc.fim).slice(0, 10)), inv = +(mc.investido as number || 0);
+    if (total > 0 && inv >= total * 0.9) itens.push({ chave: id, campanha: String(mc.nome), pais: "", inv, total, moeda: m.dados?.moeda || "BRL", nivel: inv >= total ? 100 : 90, onde: nomesConta[String(m.conta)] || m.dados?.nome || "Gerenciador" }); }
+  const novos = itens.filter((i) => !ant[i.chave] || ant[i.chave].nivel < i.nivel);
+  const prox: Record<string, { nivel: number; em: string }> = {}; for (const i of itens) prox[i.chave] = { nivel: Math.max(i.nivel, ant[i.chave]?.nivel || 0), em: ant[i.chave] && ant[i.chave].nivel >= i.nivel ? ant[i.chave].em : hoje };
+  await admin.from("config").upsert({ chave: "alertasBudget", valor: prox });
+  const para = (adms || []).map((a) => a.email).filter(Boolean), user = (Deno.env.get("GMAIL_USER") || "").trim(), pass = (Deno.env.get("GMAIL_APP_PASSWORD") || "").replace(/\s+/g, "");
+  if (!novos.length || !para.length || !user || !pass) return { avisos: itens.length, novos: novos.length, enviado: false };
+  const linhas = novos.sort((a, b) => b.inv / b.total - a.inv / a.total).map((i) => { const pct = Math.round(i.inv / i.total * 100), cor = i.nivel >= 100 ? "#a32d2d" : "#8a5a00";
+    return `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee"><b>${i.campanha}</b>${i.pais ? " · " + i.pais : ""}<div style="color:#6b7a80;font-size:12px">${i.onde}</div></td><td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${fmt(i.inv, i.moeda)} de ${fmt(i.total, i.moeda)}</td><td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;color:${cor};font-weight:700">${pct}%${i.nivel >= 100 ? " · estourou" : ""}</td></tr>`; }).join("");
+  const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1b2a2f;line-height:1.5"><p style="margin:0 0 12px">Estas campanhas chegaram perto do budget total (ou passaram dele). Confira e, se for o caso, ajuste ou pause no Gerenciador.</p>
+    <table style="border-collapse:collapse;font-size:13px;width:100%;max-width:640px"><tr style="background:#f3f4f6"><th style="text-align:left;padding:6px 10px">Campanha</th><th style="text-align:right;padding:6px 10px">Investido</th><th style="text-align:right;padding:6px 10px">Do total</th></tr>${linhas}</table>
+    <p style="margin:14px 0 0;color:#6b7a80;font-size:12px">Aviso automático da plataforma de campanhas Estufa (a cada sincronização com o Meta). Cada campanha avisa uma vez ao chegar a 90% e outra vez se passar de 100%.</p></div>`;
+  const t = nodemailer.createTransport({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user, pass } });
+  await t.sendMail({ from: `"Estufa · Alertas" <${user}>`, to: para.join(", "), subject: `Budget no limite: ${novos.length} campanha${novos.length === 1 ? "" : "s"}${novos.some((i) => i.nivel >= 100) ? " (alguma já estourou)" : ""}`, html });
+  return { avisos: itens.length, novos: novos.length, enviado: true, para };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const token = Deno.env.get("META_ACCESS_TOKEN");
@@ -207,5 +249,6 @@ Deno.serve(async (req) => {
   }
   // sem campanha específica (agendamento ou botão do Status pontual): atualiza também o retrato das contas
   const contas = apenas ? [] : await retratoContas(admin, token);
-  return json({ resultado: feito, contas });
+  let alertas: unknown = null; if (!apenas) { try { alertas = await alertasBudget(admin); } catch (e) { alertas = { erro: String((e as Error).message || e) }; } }
+  return json({ resultado: feito, contas, alertas });
 });
