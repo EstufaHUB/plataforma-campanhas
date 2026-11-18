@@ -179,7 +179,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .ent-card{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:#fff;border:1px solid var(--borda);border-radius:10px;padding:11px 13px;text-decoration:none;color:inherit;transition:box-shadow .15s}.ent-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .ent-card b{font-size:.9rem}.ent-card .sd-pill{margin:0}.ent-card.st-verde{background:#f3faf4}.ent-card.st-azul{background:#f2f8fd}.ent-link{font-size:.78rem;color:var(--tx2);text-decoration:underline}.ent-card .small svg{width:12px;height:12px;vertical-align:-2px}
 .ent-novo{display:flex;align-items:center;gap:6px;border:1px dashed var(--borda);background:transparent;border-radius:10px;padding:9px 12px;color:var(--tx2);cursor:pointer;font:inherit;font-size:.85rem}.ent-novo:hover{background:#fff;color:var(--pet-700)}.ent-novo svg{width:14px;height:14px}
-.saude-filtros{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.saude-filtros .seg-etapa{margin-bottom:0}.seg-marca button{padding:7px 12px}
+.sd-per{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 2px;font-size:.86rem;color:var(--tx2)}.sd-per>svg{width:16px;height:16px}.sd-per>span:first-of-type{font-weight:600;color:var(--pet-950)}.sd-per input{padding:5px 8px;font-size:.84rem}.sd-per .seg{margin-left:4px}.saude-filtros{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.saude-filtros .seg-etapa{margin-bottom:0}.seg-marca button{padding:7px 12px}
 .sd-pais a.sd-clic{color:inherit;text-decoration:none;border-radius:5px;padding:1px 4px;margin:0 -4px}.sd-pais a.sd-clic:hover{background:#e8eaed;text-decoration:underline}.sd-pais a.sd-clic.on{background:var(--pet-700);color:#fff}
 .seg-etapa{margin-bottom:14px;display:inline-flex;flex-wrap:wrap}.seg-etapa button{display:inline-flex;align-items:center;gap:8px;padding:8px 14px}.seg-etapa .fase-num{width:20px;height:20px;font-size:.72rem}.seg-etapa button:not(.ativo) .fase-num{background:#9aa9ae}
 .fase-datas{display:grid;grid-template-columns:repeat(2,minmax(0,220px));gap:12px}
@@ -2101,6 +2101,15 @@ function dadosSaude(c){
   let ini = c.lancamento, fim = c.fimVeiculacao || c.lancamento;
   { const cods = [...new Set(linhas.map(x=>x.v.pais))], pcs = linhas.map(x=>x.pc).filter(Boolean); if (cods.length===1 && pcs.length && (pcs[0].ini || pcs[0].fim)) { ini = pcs[0].ini || ini; fim = pcs[0].fim || fim; var perProprio = true; } }
   if (!perProprio && faseada(c) && linhas.length) { const fs = [...new Set(linhas.map(x=>x.v.fase||'Lead gen'))]; if (fs.length===1) { const pf = periodoFase(c, fs[0]); ini = pf.ini || ini; fim = pf.fim || fim; } }
+  // período personalizado: só os dias escolhidos; budget e meta proporcionais aos dias (ou ao budget mensal da ficha)
+  const per = periodoSaude(c, ini, fim);
+  if (per) { const totO = Math.max(1, difDias(ini, fim)+1), dP = difDias(per.de, per.ate)+1, msO = mesesPeriodo(ini, fim);
+    for (const x of linhas) { const pd = x.porDia.filter(d=>d.data>=per.de && d.data<=per.ate), sm = k => pd.reduce((t,d)=>t+(+d[k]||0),0);
+      Object.assign(x, {porDia: pd, leads: sm('leads'), inv: sm('investido'), impressoes: sm('impressoes'), engaj: sm('engajamentos'), cliquesLink: sm('cliquesLink'), visitas: sm('visitas')}); x.cpl = x.leads ? x.inv/x.leads : null;
+      const P = x.pc && x.pc.mensal && Object.keys(x.pc.mensal).length ? x.pc.mensal : null;
+      x.bud = P ? mesesPeriodo(per.de, per.ate).reduce((t,m)=>{ const mm = msO.find(k=>k.m===m.m); return t + (mm ? (+P[m.m]||0)*m.dias/mm.dias : 0); }, 0) : x.bud*dP/totO;
+      x.leadsMeta = x.cplMeta>0 ? Math.round(x.bud/x.cplMeta) : null; }
+    ini = per.de; fim = per.ate; }
   const total = Math.max(1, difDias(ini, fim)+1);
   const decorridos = Math.max(0, Math.min(total, difDias(ini, HOJE)+1)), frac = decorridos/total, restam = Math.max(0, difDias(HOJE, fim));
   const comMeta = linhas.filter(x=>x.leadsMeta);
@@ -2113,7 +2122,15 @@ function dadosSaude(c){
   if (score==null && linhas.length && frac>0 && linhas.every(x=>x.objetivo==='Awareness' && x.custoAw>0 && metAw(x) && metAw(x).k===metAw(linhas[0]).k)) {   // awareness: resultado do objetivo de mídia × custo
     const mk = metAw(linhas[0]).k, em = linhas.reduce((s,x)=>s+x.bud/x.custoAw,0), er = linhas.reduce((s,x)=>s+(+x[mk]||0),0), inv = linhas.reduce((s,x)=>s+x.inv,0), bud = linhas.reduce((s,x)=>s+x.bud,0);
     ritmo = er/(em*Math.min(1,frac)); cplRatio = er && inv ? (bud/em)/(inv/er) : 0; score = Math.min(ritmo, cplRatio); tipoScore = 'engajamento'; }
-  return {linhas, ini, fim, total, decorridos, frac, restam, score, ritmo, cplRatio, tipoScore}; }
+  return {linhas, ini, fim, total, decorridos, frac, restam, score, ritmo, cplRatio, tipoScore, per}; }
+/* período da Saúde escolhido na tela (UI.sPer[id] = {de, ate}); sempre dentro do período da campanha */
+function periodoSaude(c, ini, fim){ const p = (UI.sPer||{})[c.id]; if (!p || (!p.de && !p.ate)) return null;
+  const de = p.de && p.de > ini ? p.de : ini, ate = p.ate && p.ate < fim ? p.ate : fim; return de <= ate && (de!==ini || ate!==fim) ? {de, ate} : null; }
+function filtroPeriodo(c, S2){ const p = (UI.sPer||{})[c.id] || {}, on = !!S2.per, mesI = HOJE.slice(0,8)+'01', d30 = addDias(HOJE, -29);
+  return `<div class="sd-per"><i data-lucide="calendar-range"></i><span>Período</span><input type="date" value="${S2.ini}" onchange="sPer('${c.id}','de',this.value)"><span>→</span><input type="date" value="${S2.fim}" onchange="sPer('${c.id}','ate',this.value)">
+    <div class="seg seg-marca"><button class="${!on?'ativo':''}" onclick="sPer('${c.id}')">Campanha toda</button><button class="${on&&p.de===mesI&&!p.ate?'ativo':''}" onclick="sPer('${c.id}','de','${mesI}',1)">Mês atual</button><button class="${on&&p.de===d30&&!p.ate?'ativo':''}" onclick="sPer('${c.id}','de','${d30}',1)">Últimos 30 dias</button></div>
+    ${on?`<span class="small muted">metas e budget proporcionais ao período</span>`:''}</div>`; }
+function sPer(id, k, v, novo){ UI.sPer = UI.sPer || {}; if (!k) delete UI.sPer[id]; else { const p = novo ? {} : {...(UI.sPer[id]||{})}; p[k] = v || ''; UI.sPer[id] = p; } render(); }
 function pontosAtencao(c, S2){   // [{t, n}] n = verm | amar | verde | info
   const p = [], add = (n, t) => p.push({n, t});
   if (!S2.linhas.length) return p;
@@ -2194,7 +2211,7 @@ function gastoDiario(S2, linhas){
   return {plano, real, precisa, r: real!=null && plano ? real/plano : null, dias: dias.length}; }
 /* faixa quando a campanha (ou a fase) terminou: diz se a meta foi batida */
 function faixaFim(c, S2, o){   // o = {real, meta, rotulo, custoReal, custoMeta, rotCusto, fmt}
-  if (S2.frac < 1) return '';
+  if (S2.frac < 1 || S2.per) return '';
   const nomeF = faseada(c) ? `Fase ${FASES_CAMP.indexOf(etapaSel(c))+1} · ${etapaSel(c)}` : 'Campanha';
   if (!o.meta) return `<div class="faixa-fim neutra"><i data-lucide="flag"></i><div><b>${nomeF} finalizada em ${fd(S2.fim)}.</b> Sem meta cadastrada para comparar o resultado.</div></div>`;
   const r = o.real/o.meta, bateu = r>=1, dc = o.custoReal && o.custoMeta ? o.custoReal/o.custoMeta-1 : null;
@@ -2262,7 +2279,7 @@ function abaSaude(c){
   const detalhe = nv.map(v=>`${v.contaNome||v.conta} — ${v.campanhaNome||v.campanhaId}`).join('\n') + (atual ? '\nAtualizado em '+new Date(atual).toLocaleString('pt-BR') : '');
   const fonte = `<div class="saude-fonte ${velho?'velho':''}" style="margin-bottom:${faseada(c)?'10px':'0'}"><i data-lucide="${velho?'alert-circle':'database'}"></i><span title="${h(detalhe)}">${nv.length ? `${[...new Set(nv.map(v=>v.canal||'Meta Ads'))].join(', ')} · atualizado ${ha}${velho?' — dados desatualizados':''}` : 'Nenhuma campanha do Gerenciador do Meta vinculada.'}</span>
     ${ed?`<span style="margin-left:auto;display:flex;gap:8px">${nv.length?`<button class="btn btn-s" data-act="sincMeta" data-id="${c.id}"><i data-lucide="refresh-cw"></i>Atualizar</button>`:''}<button class="btn btn-s" data-act="vincularMeta" data-id="${c.id}"><i data-lucide="link"></i>${nv.length?'Vínculos':'Vincular campanha do Meta'}</button></span>`:''}</div>`;
-  const sel = avisoPausa(c) + ((faseada(c) || marcasDaSaude(c).length>1 || paisesDaSaude(c).length>1) ? `<div class="saude-filtros">${seletorEtapa(c, false)}${filtroMarcas(c)}${filtroPaises(c)}</div>` : '');
+  const sel = avisoPausa(c) + ((faseada(c) || marcasDaSaude(c).length>1 || paisesDaSaude(c).length>1) ? `<div class="saude-filtros">${seletorEtapa(c, false)}${filtroMarcas(c)}${filtroPaises(c)}</div>` : '') + (S2.linhas.length ? filtroPeriodo(c, S2) : '');
   if (!S2.linhas.length) return fonte + sel + `<div class="card card-p" style="margin-top:12px"><div class="vazio">Vincule a campanha do Gerenciador do Meta para acompanhar a saúde automaticamente.</div></div>`;
   if (faseada(c) ? etapaSel(c)==='Awareness' : S2.linhas.every(x=>x.objetivo==='Awareness')) return fonte + sel + saudeAwareness(c, S2);
   const moe = S2.linhas[0].moeda, soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0);
