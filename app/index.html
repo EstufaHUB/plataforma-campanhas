@@ -2648,10 +2648,10 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     sl.addText(nomeCusto, {x:0.55, y:yC, w:4.2, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
     sl.addTable(rC, {x:0.55, y:yC+0.37, w:4.2, colW:[1.45,1.375,1.375], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
     // ---- coluna 2: saúde (farol) + dias restantes ----
+    const todosAprend = linhas.length && linhas.every(l=>l.aprend); if (todosAprend) nv = null;
     card(sl, 5.1, 1.45, 3.95, 5.4, T.saude);
     const png = await farolPng(todosAprend ? null : agg && !agg.vazio && agg.S2.score!=null ? Math.min(1, agg.S2.score/1.25) : scoreAuto!=null ? Math.min(1, scoreAuto/1.25) : null);
     if (png) sl.addImage({data:png, x:5.55, y:2.7, w:3.05, h:1.67});
-    const todosAprend = linhas.length && linhas.every(l=>l.aprend); if (todosAprend) nv = null;
     const aprend = todosAprend || (!nv && linhas.some(l=>l.auto && l.auto.novo)), iniA = linhas.map(l=>l.aprend).filter(Boolean).sort()[0] || g.per.ini, desde = aprend && iniA ? addDias(iniA, DIAS_APR) : null;
     sl.addText(nv ? T.niv[nv.t] : aprend ? (en ? 'Learning' : 'Em aprendizado') : T.semMeta, {x:5.2, y:4.5, w:3.75, h:0.45, fontFace:F, fontSize:18, bold:true, align:'center', color: nv ? ({Saudável:C.verdeT,'Atenção':C.amarT,'Crítica':C.vermT})[nv.t] : C.mut});
     if (aprend) sl.addText(en ? `Learning phase · health from ${dt(desde)}` : `Fase de aprendizado · farol a partir de ${dt(desde)}`, {x:5.2, y:4.98, w:3.75, h:0.3, fontFace:F, fontSize:10, align:'center', color:C.mut});
