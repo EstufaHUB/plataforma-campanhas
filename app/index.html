@@ -352,6 +352,28 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .topo-dir{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.8rem;color:var(--tx2);white-space:nowrap}
 #sync.erro{color:#b3392f;font-weight:600}
 @media (max-width:640px){.topo-dir .quem{display:none}}
+
+/* Status pontual no celular: cada país em linhas (rótulo à esquerda, valor à direita) */
+@media (max-width:760px){
+  .stp-det .st-tab,.stp-det .st-tab tbody,.stp-det .st-tab tr,.stp-det .st-tab td{display:block;width:auto!important}
+  .stp-det .st-tab colgroup,.stp-det .st-tab thead{display:none}
+  .stp-det .st-tab tr.st-pais{padding:10px 14px 6px;border-top:1px solid var(--borda)}
+  .stp-det .st-tab tr.st-pais:first-child{border-top:0}
+  .stp-det .st-tab tr.st-pais td{border:0;border-top:1px dashed #eef0f2;padding:8px 0 8px 104px;position:relative;min-width:0;max-width:none}
+  .stp-det .st-tab tr.st-pais td:first-child{border-top:0;padding:2px 0 6px;font-weight:600;font-size:.95rem}
+  .stp-det .st-tab tr.st-pais td::before{position:absolute;left:0;top:9px;width:96px;font-size:.76rem;color:var(--tx2)}
+  .stp-det .st-tab tr.st-pais td:nth-child(2)::before{content:'Resultado'}
+  .stp-det .st-tab tr.st-pais td:nth-child(3)::before{content:'Custo'}
+  .stp-det .st-tab tr.st-pais td:nth-child(4)::before{content:'Investimento'}
+  .stp-det .st-tab tr.st-pais td:nth-child(5)::before{content:'Budget diário'}
+  .stp-det .st-tab tr.st-pais td:nth-child(6)::before{content:'Atenção'}
+  .stp-det .st-tab tr.st-pais td:nth-child(7)::before{content:'Comentários'}
+  .stp-det .stb-top{white-space:normal!important;flex-wrap:wrap!important}
+  .stp-det .stb-esp{white-space:normal}
+  .stp-det .st-lapis{opacity:1;margin-top:6px}
+  .stp-det .st-com-a{background:#f7f8f9;border-radius:8px;padding:8px 10px}
+  .stp-ch{padding:12px 14px}.stp-ch .stp-tit{flex-basis:100%}.stp-res{gap:4px 14px}
+}
 </style>
 </head>
 <body>
