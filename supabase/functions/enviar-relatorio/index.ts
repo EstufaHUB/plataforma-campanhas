@@ -22,7 +22,8 @@ Deno.serve(async (req) => {
     const { data: equipe } = await sb.rpc("eh_equipe");
     if (!equipe) return json({ erro: "Só a equipe da agência pode enviar relatórios." }, 403);
 
-    const user = Deno.env.get("GMAIL_USER"), pass = Deno.env.get("GMAIL_APP_PASSWORD");
+    // tira espaços e quebras de linha: a senha de app do Google aparece em grupos de 4 ("abcd efgh ijkl mnop")
+    const user = (Deno.env.get("GMAIL_USER") || "").trim(), pass = (Deno.env.get("GMAIL_APP_PASSWORD") || "").replace(/\s+/g, "");
     if (!user || !pass) return json({ erro: "Envio de e-mail ainda não configurado (faltam GMAIL_USER e GMAIL_APP_PASSWORD no Supabase)." }, 500);
 
     const b = await req.json();
@@ -48,6 +49,8 @@ Deno.serve(async (req) => {
     });
     return json({ ok: true, enviados: para.length + cc.length });
   } catch (e) {
-    return json({ erro: (e as Error).message || String(e) }, 500);
+    const msg = (e as Error).message || String(e);
+    if (/535|BadCredentials|Username and Password not accepted/i.test(msg)) return json({ erro: "O Gmail recusou o login. Confira no Supabase: GMAIL_USER é exatamente a conta onde a senha de app foi criada, e GMAIL_APP_PASSWORD é a senha de app de 16 letras (não a senha normal da conta). Se continuar, gere uma nova senha de app." }, 500);
+    return json({ erro: msg }, 500);
   }
 });
