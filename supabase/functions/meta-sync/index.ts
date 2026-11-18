@@ -165,6 +165,9 @@ async function alertasBudget(admin: ReturnType<typeof createClient>) {
         .filter(([k]) => k.split(/[|@]/)[0] === (v.canal || "Meta Ads") && (!v.fase || !k.includes("@") || k.endsWith("@" + v.fase)) && (!v.marca || !k.includes("|") || k.includes("|" + v.marca)));
       const cf = cfgs.map(([, x]) => x).find((x) => (x.paises || []).some((p) => p.cod === v.pais)); const pc = cf && (cf.paises || []).find((p) => p.cod === v.pais);
       const r = (rms || []).find((x) => x.campanha_id === c.id && x.meta_campanha === v.campanhaId); const total = +(pc?.budget || 0), inv = +(r?.dados?.investido || 0);
+      // fase ou campanha já encerrada, ou campanha parada no Gerenciador: não avisa
+      const fimPer = d.faseada ? (d.fasesDatas?.[v.fase || "Lead gen"]?.fim || d.fimVeiculacao) : d.fimVeiculacao, st = String(r?.dados?.status || ""), fimMeta = String(r?.dados?.fimMeta || "").slice(0, 10);
+      if ((fimPer && fimPer < hoje) || ["PAUSED", "CAMPAIGN_PAUSED", "ARCHIVED", "DELETED"].includes(st) || (fimMeta && fimMeta < hoje)) continue;
       if (total > 0 && inv >= total * 0.9) itens.push({ chave: v.campanhaId, campanha: d.nome, pais: v.pais || "", inv, total, moeda: cf?.moeda || d.moeda || "BRL", nivel: inv >= total ? 100 : 90, onde: "Campanha da plataforma", campId: c.id, fase: d.faseada ? (v.fase || "Lead gen") : undefined, marca: v.marca || undefined, conta: String(v.conta || "").replace(/^act_/, "") }); } }
   // campanhas só no Gerenciador (com data de fim): budget diário × dias do período
   for (const m of mcs || []) for (const mc of ((m.dados?.campanhas || []) as Record<string, unknown>[])) { const id = String(mc.id);
