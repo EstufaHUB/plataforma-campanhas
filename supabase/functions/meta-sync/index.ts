@@ -172,7 +172,8 @@ async function alertasBudget(admin: ReturnType<typeof createClient>) {
     const total = +(mc.budgetDiario as number) * dias(String(mc.inicio).slice(0, 10), String(mc.fim).slice(0, 10)), inv = +(mc.investido as number || 0);
     if (total > 0 && inv >= total * 0.9) itens.push({ chave: id, campanha: String(mc.nome), pais: "", inv, total, moeda: m.dados?.moeda || "BRL", nivel: inv >= total ? 100 : 90, onde: nomesConta[String(m.conta)] || m.dados?.nome || "Gerenciador" }); }
   const novos = itens.filter((i) => !ant[i.chave] || ant[i.chave].nivel < i.nivel);
-  const prox: Record<string, { nivel: number; em: string }> = {}; for (const i of itens) prox[i.chave] = { nivel: Math.max(i.nivel, ant[i.chave]?.nivel || 0), em: ant[i.chave] && ant[i.chave].nivel >= i.nivel ? ant[i.chave].em : hoje };
+  const prox: Record<string, Record<string, unknown>> = {}; for (const i of itens) prox[i.chave] = { nivel: Math.max(i.nivel, ant[i.chave]?.nivel || 0), em: ant[i.chave] && ant[i.chave].nivel >= i.nivel ? ant[i.chave].em : hoje,
+    campanha: i.campanha, pais: i.pais, inv: Math.round(i.inv * 100) / 100, total: Math.round(i.total * 100) / 100, moeda: i.moeda, onde: i.onde, atualizado: new Date().toISOString() };
   await admin.from("config").upsert({ chave: "alertasBudget", valor: prox });
   const cfgEmail = ((cfg || []).find((r) => r.chave === "alertasEmail")?.valor || {}) as { para?: string[]; ativo?: boolean };
   if (cfgEmail.ativo === false) return { avisos: itens.length, novos: novos.length, enviado: false, desligado: true };
