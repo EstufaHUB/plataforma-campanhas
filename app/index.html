@@ -1185,7 +1185,11 @@ function saude(c){
   return {cor:'verde',txt:'No prazo'};
 }
 /* farol da campanha no cabeçalho (dados do Meta × metas) */
-function nivelSaude(score){ return score==null ? null : score>=0.9 ? {t:'Saudável', cls:'sd-verde'} : score>=0.7 ? {t:'Atenção', cls:'sd-amar'} : {t:'Crítica', cls:'sd-verm'}; }
+/* escala de resultados: verde = igual ou acima do esperado/meta; amarelo = até 50% fora; vermelho = mais de 50% fora */
+function nivelSaude(score){ return score==null ? null : score>=1 ? {t:'Saudável', cls:'sd-verde'} : score>=0.5 ? {t:'Atenção', cls:'sd-amar'} : {t:'Crítica', cls:'sd-verm'}; }
+const corRes = r => r==null ? null : r>=1 ? 'verde' : r>=0.5 ? 'amar' : 'verm';          // resultado ÷ esperado
+const corCusto = c => c==null ? null : c<=1 ? 'verde' : c<=1.5 ? 'amar' : 'verm';         // custo ÷ meta (menor é melhor)
+const corDev = r => r==null ? null : Math.abs(r-1)<=0.15 ? 'verde' : Math.abs(r-1)<=0.5 ? 'amar' : 'verm';   // gasto ÷ planejado
 function farolCab(c, curto){ if (!(RESULTADOS[c.id]||[]).length) return ''; const S2 = dadosSaude(c), n = nivelSaude(S2.score); if (!n) return '';
   const aw = S2.tipoScore==='engajamento', pr = `${aw?'engajamento':'leads'} ${Math.round(S2.ritmo*100)}% do ritmo, ${aw?'custo por engajamento':'CPL'} ${S2.cplRatio>=1?Math.round((1-1/S2.cplRatio)*100)+'% melhor':Math.round((1/S2.cplRatio-1)*100)+'% acima'} que a meta`;
   return `<a href="#/campanha/${c.id}/saude" class="sd-pill ${n.cls} cc-farol" title="${curto?h(n.t+' · '+pr):'Saúde da campanha, a partir dos dados do Meta'}"><i data-lucide="gauge"></i>${curto?n.t:`${filtroTxt(c)?h(filtroTxt(c))+': ':''}${n.t} · ${pr}`}</a>`; }
@@ -2183,7 +2187,7 @@ function faixaFim(c, S2, o){   // o = {real, meta, rotulo, custoReal, custoMeta,
     <span>${o.fmt(o.real)} de ${o.fmt(o.meta)} previstos${dc!=null?` · ${o.rotCusto} ${Math.round(Math.abs(dc)*100)}% ${dc>0?'acima':'abaixo'} da meta`:''}.</span></div></div>`; }
 /* saúde de campanha (ou fase) de awareness: alcance, engajamento e investimento */
 function saudeAwareness(c, S2){
-  const moe = S2.linhas[0].moeda, mc = v => v!=null && v<0.1 ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:moe,minimumFractionDigits:4,maximumFractionDigits:4}) : moeda2(v, moe), soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0), pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
+  const moe = S2.linhas[0].moeda, mc = v => moeda2(v, moe), soma = k => S2.linhas.reduce((t,x)=>t+(+x[k]||0),0), pct = v => Math.max(0, Math.min(100, Math.round(v*100)));
   const M = metAw(S2.linhas[0]) || MET_AW['Engajamento'], alc = soma('alcance'), imp = soma('impressoes'), eng = soma(M.k), cli = soma('cliques'), inv = soma('inv'), bud = soma('bud');
   const cpm = imp ? inv/imp*1000 : null, freq = alc ? imp/alc : null, cpe = eng ? inv/eng : null, taxa = imp ? eng/imp : null;
   const encerrada = S2.frac>=1, emCurso = S2.frac>0 && S2.frac<1, projI = emCurso ? inv/S2.frac : null;
@@ -2575,7 +2579,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
   const num = v => v==null ? '—' : Number(v).toLocaleString(en?'en-US':'pt-BR', {maximumFractionDigits:0});
   const dt = s => s ? s.slice(8,10)+(en?'.':'/')+s.slice(5,7) : '—';
   const C = {esc:'12343B', pet:'1F5F6E', fundo:'F3F6F7', borda:'DDE3E5', txt:'1B2A2F', mut:'6B7A80', verde:'2E9D55', verdeF:'E7F4E8', verdeT:'2E6B31', amar:'E0A100', amarF:'FDF3D8', amarT:'8A5A00', verm:'D0443A', vermF:'FDECEA', vermT:'A3261C'};
-  const corR = r => r==null ? null : r>=1 ? 'verde' : r>=0.85 ? 'amar' : 'verm';
+  const corR = corRes;
   const pptx = opc.pptx || new (opc.Pptx || PptxGenJS)(), off = opc.off || 0; if (!opc.pptx) { pptx.layout = 'LAYOUT_WIDE'; pptx.title = `${T.capa} · ${grupo}`; }
   const logo = ct.logo || (/PTx/i.test(grupo) ? await logoPng() : null), F = 'Arial', fundo = await fundoSlidePng(), bg = fundo ? {data: fundo} : null;
   const card = (sl, x, y, w, hh, tit) => { sl.addShape(pptx.ShapeType.roundRect, {x, y, w, h:hh, fill:{color:'FFFFFF'}, line:{color:C.borda, width:0.75}, rectRadius:0.12});
@@ -2637,12 +2641,12 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     for (const l of linhas) rL.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(l.esp!=null?num(Math.round(l.esp)):'—'), cel(num(l.real), corR(l.rit))]);
     if (multi) rL.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(sE!=null?num(Math.round(sE)):'—', null, tt()), cel(num(sR), null, tt())]);
     const rC = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:T.ating, options:hd()}]];
-    for (const l of linhas) { const cc = l.aprend ? null : l.custo!=null && l.custoMeta ? (l.custo<=l.custoMeta ? 'verde' : l.custo<=l.custoMeta*1.3 ? 'amar' : 'verm') : null; rC.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(din(l.custoMeta)), cel(din(l.custo), cc)]); }
+    for (const l of linhas) { const cc = l.aprend ? null : l.custo!=null && l.custoMeta ? corCusto(l.custo/l.custoMeta) : null; rC.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(din(l.custoMeta)), cel(din(l.custo), cc)]); }
     const cmTot = linhas.every(l=>l.custoMeta && l.meta) ? linhas.reduce((t,l)=>t+l.custoMeta*l.meta,0)/linhas.reduce((t,l)=>t+l.meta,0) : null;
     if (multi) rC.push([cel(T.total, null, tt({align:'left'})), cel(cmTot?din(cmTot):'—', null, tt()), cel(sR?din(sI/sR):'—', null, tt())]);
     const rowH = Math.min(0.34, 4.1/Math.max(1, rL.length + rC.length));
     sl.addText(nomeTipo, {x:0.55, y:1.55, w:2.0, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
-    sl.addText(en ? 'green: on pace · red: below' : 'verde: no ritmo · vermelho: abaixo', {x:2.2, y:1.55, w:2.55, h:0.35, fontFace:F, fontSize:8.5, color:C.mut, align:'right'});
+    sl.addText(en ? 'green: on/above · yellow: up to 50% off · red: 50%+' : 'verde: no ritmo · amarelo: até 50% · vermelho: +50%', {x:1.9, y:1.55, w:2.85, h:0.35, fontFace:F, fontSize:8.5, color:C.mut, align:'right'});
     sl.addTable(rL, {x:0.55, y:1.92, w:4.2, colW:[1.0,0.95,1.3,0.95], rowH, fontFace:F, border:{type:'solid', pt:1, color:'FFFFFF'}, margin:0.04});
     const yC = 1.92 + rowH*rL.length + 0.18;
     sl.addText(nomeCusto, {x:0.55, y:yC, w:4.2, h:0.35, fontFace:F, fontSize:13, bold:true, color:C.esc});
@@ -2655,7 +2659,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     const aprend = todosAprend || (!nv && linhas.some(l=>l.auto && l.auto.novo)), iniA = linhas.map(l=>l.aprend).filter(Boolean).sort()[0] || g.per.ini, desde = aprend && iniA ? addDias(iniA, DIAS_APR) : null;
     sl.addText(nv ? T.niv[nv.t] : aprend ? (en ? 'Learning' : 'Em aprendizado') : T.semMeta, {x:5.2, y:4.5, w:3.75, h:0.45, fontFace:F, fontSize:18, bold:true, align:'center', color: nv ? ({Saudável:C.verdeT,'Atenção':C.amarT,'Crítica':C.vermT})[nv.t] : C.mut});
     if (aprend) sl.addText(en ? `Learning phase · health from ${dt(desde)}` : `Fase de aprendizado · farol a partir de ${dt(desde)}`, {x:5.2, y:4.98, w:3.75, h:0.3, fontFace:F, fontSize:10, align:'center', color:C.mut});
-    const abaixo = linhas.filter(l=>l.rit!=null && l.rit<0.85).map(l=>nPais(l.p));
+    const abaixo = linhas.filter(l=>l.rit!=null && l.rit<1).map(l=>nPais(l.p));
     const cr = agg && !agg.vazio && agg.custo && agg.custoMeta ? agg.custo/agg.custoMeta - 1 : null;
     const linha2 = abaixo.length ? T.abaixo(abaixo.length, abaixo.join(', ')) : (agg && !agg.vazio && agg.S2.ritmo!=null ? (en ? `Results at ${Math.round(agg.S2.ritmo*100)}% of pace${cr!=null?` · cost ${Math.round(Math.abs(cr)*100)}% ${cr<0?'below':'above'} goal`:''}` : `Resultado ${Math.round(agg.S2.ritmo*100)}% do ritmo${cr!=null?` · custo ${Math.round(Math.abs(cr)*100)}% ${cr<0?'abaixo':'acima'} da meta`:''}`) : '');
     if (linha2 && !aprend) sl.addText(linha2, {x:5.3, y:4.98, w:3.55, h:0.7, fontFace:F, fontSize:9.5, align:'center', valign:'top', color: abaixo.length ? C.vermT : C.mut, bold: !!abaixo.length});
@@ -2664,8 +2668,8 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     for (const l of linhas) { const n = nPais(l.p);
       if (l.aprend) { const dA = Math.max(0, difDias(l.aprend, HOJE)); pts.push(en ? `${n}: learning phase (started ${dA} day${dA===1?'':'s'} ago); results are not evaluated yet.` : `${n}: fase de aprendizado (começou há ${dA} dia${dA===1?'':'s'}); resultados ainda não avaliados.`); continue; }
       if (!l.real && (l.inv||0)>0) pts.push(en ? `${n}: no ${(T.tipo[l.tipo]||'results').toLowerCase()} yet.` : `${n}: ainda sem ${(T.tipo[l.tipo]||'resultados').toLowerCase()}.`);
-      else if (l.rit!=null && l.rit<0.85) pts.push(en ? `${n}: ${num(l.real)} of ${num(l.esp)} expected so far.` : `${n}: ${num(l.real)} de ${num(l.esp)} esperados até hoje.`);
-      if (l.custo!=null && l.custoMeta && l.custo>l.custoMeta*1.1) pts.push(en ? `${n}: ${T.cpr[l.tipo]||'cost'} ${din(l.custo)} (goal ${din(l.custoMeta)}).` : `${n}: ${T.cpr[l.tipo]||'custo'} ${din(l.custo)} (meta ${din(l.custoMeta)}).`);
+      else if (l.rit!=null && l.rit<1) pts.push(en ? `${n}: ${num(l.real)} of ${num(l.esp)} expected so far.` : `${n}: ${num(l.real)} de ${num(l.esp)} esperados até hoje.`);
+      if (l.custo!=null && l.custoMeta && l.custo>l.custoMeta) pts.push(en ? `${n}: ${T.cpr[l.tipo]||'cost'} ${din(l.custo)} (goal ${din(l.custoMeta)}).` : `${n}: ${T.cpr[l.tipo]||'custo'} ${din(l.custo)} (meta ${din(l.custoMeta)}).`);
       const rd = l.plano ? l.dia/l.plano : null; if (rd!=null && (rd<0.85 || rd>1.15)) pts.push(en ? `${n}: spending ${din(l.dia)}/day of ${din(l.plano)} planned.` : `${n}: gastando ${din(l.dia)}/dia de ${din(l.plano)} planejados.`); }
     card(sl, 9.2, 1.45, 3.78, 2.85, T.pontos);
     const ptsPadrao = pts.length ? pts.slice(0,5) : [linhas.some(l=>l.meta) ? T.ok : (en ? 'No goal set on the platform.' : 'Sem meta cadastrada na plataforma.')];
@@ -2753,7 +2757,7 @@ function abrirMetaStatus(mcId, conta){
   const x = ctxMetaStatus(mcId, conta); if (!x || !(x.base>0)) return alert(x && x.vi ? `Defina o budget de Meta Ads deste país em Budgets e KPIs de “${x.vi.c.nome}” para ajustar a meta.` : 'Sem budget para calcular a meta desta campanha.');
   UI.metaSt = {mcId, conta};
   const pais = (x.vi && x.vi.v.pais) || paisDe(x.mc.nome), rot = x.vi ? x.vi.c.nome : titulo(x.mc.nome);
-  const fmtC = v => v==null ? '' : +(+v).toFixed(v<1 ? 4 : 2);
+  const fmtC = v => v==null ? '' : +(+v).toFixed(2);
   abrirModal(`Ajustar custo por resultado`, `<div class="small muted" style="margin-bottom:10px"><b style="color:var(--pet-950)">${h(rot)}</b>${pais?' · '+h(PAISES[pais]?PAISES[pais].n:pais):''}</div>
     <form id="f-meta-st" class="rel-form" data-base="${x.base}" onsubmit="return false">
       <label>${h(x.unid.charAt(0).toUpperCase()+x.unid.slice(1))} (${h(x.moe)})<input type="number" min="0" step="any" name="custo" value="${fmtC(x.custo)}" oninput="const b=+this.form.dataset.base;document.getElementById('meta-st-res').textContent=this.value>0?Math.round(b/this.value).toLocaleString('pt-BR'):'—'" autofocus></label>
@@ -2946,33 +2950,33 @@ function pgStatus(){
   const barraInv = (inv, total, esperado, moe) => { const mc0 = v => moedaCurta(v, moe);
     if (!total) return `<div class="stb-top"><b>${mc0(inv)}</b><span class="muted">consumido</span></div>${esperado?esp(mc0(esperado)):''}`;
     const fr = inv/total, ei = esperado!=null ? Math.min(1, esperado/total) : null, r = esperado ? inv/esperado : null;
-    return cel(mc0(inv), mc0(total).replace(/^[^\d]+/,''), Math.round(fr*100)+'%', fr, r==null ? 'verde' : Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar', ei!=null && ei<1 ? ei : null) + (esperado!=null ? esp(mc0(esperado)) : ''); };
+    return cel(mc0(inv), mc0(total).replace(/^[^\d]+/,''), Math.round(fr*100)+'%', fr, r==null ? 'verde' : corDev(r), ei!=null && ei<1 ? ei : null) + (esperado!=null ? esp(mc0(esperado)) : ''); };
   const invGer = mc => { const pl = +mc.budgetDiario||0, ini = (mc.inicio||'').slice(0,10), fim = (mc.fim||'').slice(0,10); if (!pl || !ini) return {inv:+mc.investido||0};
     const tot = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(0, Math.min(tot||1e9, difDias(ini, HOJE)+1)); const fp = tot ? fracPlano(mc.id, ini, fim, pl*tot) : null; return {inv:+mc.investido||0, total: tot ? pl*tot : null, esperado: fp ? fp.esperado : pl*dec}; };
   // custo: preenchimento = custo atual, traço = meta (verde abaixo da meta)
   const barraCusto = m => { if (m.vazio) return '<span class="muted small">—</span>'; if (m.custo==null) return `<span class="muted small">sem resultado</span>${m.custoMeta?esp('≤ '+mcusto(m.custoMeta,m.moe), 'esperado'):''}`;
     if (!m.custoMeta) return `<div class="stb-top"><b>${mcusto(m.custo,m.moe)}</b><span class="muted">/ meta a definir</span></div>`;
-    const r = m.custo/m.custoMeta, esc = Math.max(r, 1)*1.15; return cel(mcusto(m.custo,m.moe), curto(m.custoMeta,m.moe), Math.round(r*100)+'%', r/esc, r<=1?'verde':r<=1.1?'amar':'verm', 1/esc) + esp('≤ '+mcusto(m.custoMeta,m.moe), 'esperado'); };
+    const r = m.custo/m.custoMeta, esc = Math.max(r, 1)*1.15; return cel(mcusto(m.custo,m.moe), curto(m.custoMeta,m.moe), Math.round(r*100)+'%', r/esc, corCusto(r), 1/esc) + esp('≤ '+mcusto(m.custoMeta,m.moe), 'esperado'); };
   // resultado: preenchimento = atingido da meta, traço = esperado hoje (cor pelo ritmo)
   const barraRes = (m, mc) => { if (m.vazio) return '<span class="muted small">—</span>'; const fpR = mc ? fracPlano(mc.id, m.S2.ini, m.S2.fim, m.bud) : null;
     if (!m.meta) return `<div class="stb-top"><b>${numCurto(m.real)}</b><span class="muted">/ meta a definir</span></div>`;
-    const r = m.real/m.meta, fe = fpR && fpR.frac!=null ? fpR.frac : Math.min(1, m.S2.frac), rit = fe ? r/fe : r; return cel(numCurto(m.real), numCurto(m.meta), Math.round(r*100)+'%', r, rit>=1?'verde':rit>=0.85?'amar':'verm', fe<1?fe:null) + esp(numCurto(Math.round(m.meta*fe))); };
+    const r = m.real/m.meta, fe = fpR && fpR.frac!=null ? fpR.frac : Math.min(1, m.S2.frac), rit = fe ? r/fe : r; return cel(numCurto(m.real), numCurto(m.meta), Math.round(r*100)+'%', r, corRes(rit), fe<1?fe:null) + esp(numCurto(Math.round(m.meta*fe))); };
   // budget diário: média real de 7 dias × planejado (traço)
   const barraDiario = (m, mc) => { if (m.vazio) return '<span class="muted small">—</span>'; const g = gastoDiario(m.S2, m.S2.linhas), man = mc && budDiaManual(mc), fpD = mc && !man ? fracPlano(mc.id, m.S2.ini, m.S2.fim, m.bud) : null; if (man) g.plano = man; else if (fpD && fpD.atual) g.plano = diarioMes(mc, vinculosMeta()[mc.id], fpD);
     if (g.real!=null && fpD && fpD.atual && !g.plano) return `<div class="stb-top"><b>${moeda2(g.real, m.moe)}</b><span class="muted">/ dia</span></div>${notaMes(mc, vinculosMeta()[mc.id], fpD, m.moe)}`;
     if (g.real==null || !g.plano) return `<span class="muted small">sem dados</span>${man?'<div class="stb-esp">ajustado: <b>'+moeda2(man,m.moe)+'/dia</b></div>':''}`;
     const real = m.S2.frac>=1 ? m.inv/m.S2.total : g.real, r = real/g.plano, esc = Math.max(r, 1)*1.15;
-    return cel(moeda2(real,m.moe), curto(g.plano,m.moe), Math.round(r*100)+'%', r/esc, Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar', 1/esc) + (man ? '<div class="stb-esp">diário ajustado (pace)</div>' : notaMes(mc, vinculosMeta()[mc.id], fpD, m.moe)); };
+    return cel(moeda2(real,m.moe), curto(g.plano,m.moe), Math.round(r*100)+'%', r/esc, corDev(r), 1/esc) + (man ? '<div class="stb-esp">diário ajustado (pace)</div>' : notaMes(mc, vinculosMeta()[mc.id], fpD, m.moe)); };
   // frase objetiva: o problema mais importante do país e o que fazer
   const frase = m => { if (m.vazio) return ''; const S2 = m.S2, fim = S2.frac>=1, g = gastoDiario(S2, S2.linhas), d = [];
     const md = v => moeda2(v, m.moe).replace(',00','');
     if (fim) { if (m.meta) d.push(m.real>=m.meta ? ['verde', `Fase encerrada: meta batida (${ni(m.real)} de ${ni(m.meta)}).`] : ['amar', `Fase encerrada: ${ni(m.real)} de ${ni(m.meta)} da meta.`]); }
     else {
       const esp = Math.min(1, S2.frac), rit = m.meta && esp ? (m.real/m.meta)/esp : null;
-      if (rit!=null && rit<0.85) d.push([rit<0.6?'verm':'amar', `Resultado abaixo do ritmo: ${ni(m.real)} de ${ni(m.meta*esp)} esperados até hoje.`]);
+      if (rit!=null && rit<1) d.push([corRes(rit), `Resultado abaixo do ritmo: ${ni(m.real)} de ${ni(m.meta*esp)} esperados até hoje.`]);
       if (g.r!=null && g.r<0.85) d.push([g.r<0.5?'verm':'amar', `Investimento baixo: subir para ${md(g.precisa ?? g.plano)}/dia.`]);
       else if (g.r!=null && g.r>1.15) d.push(['amar', `Gasto acima do planejado: ${g.precisa!=null?`ajustar para ${md(g.precisa)}/dia`:'reduzir o diário'}.`]);
-      if (m.custo && m.custoMeta && m.custo/m.custoMeta>1.1) d.push([m.custo/m.custoMeta>1.3?'verm':'amar', `${m.rotCusto} de ${mcusto(m.custo, m.moe)}, acima da meta de ${mcusto(m.custoMeta, m.moe)}.`]);
+      if (m.custo && m.custoMeta && m.custo/m.custoMeta>1) d.push([corCusto(m.custo/m.custoMeta), `${m.rotCusto} de ${mcusto(m.custo, m.moe)}, acima da meta de ${mcusto(m.custoMeta, m.moe)}.`]);
       if (!m.meta || !m.custoMeta) d.push(['info', 'Meta a definir.']); }
     if (!d.length) return '<span class="muted">No ritmo.</span>';
     const ord = {verm:0, amar:1, info:2, verde:3}; d.sort((a,b)=>ord[a[0]]-ord[b[0]]);
@@ -2985,18 +2989,18 @@ function pgStatus(){
   const ultimaAtual = META_CONTAS.reduce((m,r)=>!m||r.atualizado_em>m?r.atualizado_em:m, null), horas = ultimaAtual ? (Date.now()-new Date(ultimaAtual).getTime())/36e5 : null;
   // linha de campanha não vinculada: números direto do Gerenciador (sem meta da plataforma)
   const celSemMeta = (val, sub) => `<div class="stb-top"><b>${val}</b><span class="muted">${sub}</span></div>`;
-  const linhaMeta = (mc, moe, conta) => { const A = conta ? metaAutoGer(mc, conta) : null; const real = mc.gasto7/7, pl = plDe(mc), r = pl ? real/pl : null, cls = r==null ? null : Math.abs(r-1)<=0.15?'verde':(r<0.5||r>1.3)?'verm':'amar';
+  const linhaMeta = (mc, moe, conta) => { const A = conta ? metaAutoGer(mc, conta) : null; const real = mc.gasto7/7, pl = plDe(mc), r = pl ? real/pl : null, cls = r==null ? null : corDev(r);
     const dias = mc.fim ? Math.max(0, difDias(HOJE, mc.fim.slice(0,10))) : null;
     const notas = []; if (r!=null && r<0.85) notas.push(['amar', `Gastando ${moeda2(real, moe)}/dia de ${moeda2(pl, moe)} do budget diário${budDiaManual(mc)?' ajustado':planoMensal(mc.id)?' para fechar o mês':' do Gerenciador'}.`]); if (r!=null && r>1.15) notas.push(['amar', `Gastando acima do budget diário: ${moeda2(real, moe)}/dia de ${moeda2(pl, moe)}.`]);
     if (!mc.resultados && mc.investido>0) notas.push(['verm', `Sem ${mc.tipoResultado} até agora.`]);
     const IG = invGer(mc), cel4 = barraInv(IG.inv, IG.total, IG.esperado, moe);
-    if (A) { const mT = A.metaTotal ?? A.meta, eFr = mT && A.modo!=='7d' ? A.esperado/mT : null, rr = mT ? A.real/mT : 0, corR = A.rit==null ? 'amar' : A.rit>=1?'verde':A.rit>=0.85?'amar':'verm';
+    if (A) { const mT = A.metaTotal ?? A.meta, eFr = mT && A.modo!=='7d' ? A.esperado/mT : null, rr = mT ? A.real/mT : 0, corR = A.rit==null ? 'amar' : corRes(A.rit);
       if (A.novo) { notas.length = 0; }
-      if (A.rit!=null && A.rit<0.85) notas.unshift([A.rit<0.6?'verm':'amar', `${A.modo==='7d'?'Últimos 7 dias':A.modo==='acum'?'Acumulado':'Resultado'} abaixo do ritmo: ${ni(A.real)} de ${ni(A.esperado)} esperados${A.modo==='7d'?' em 7 dias':' até hoje'}.`]);
-      if (!A.novo && A.custo && A.custo/A.custoMeta>1.1) notas.unshift([A.custo/A.custoMeta>1.3?'verm':'amar', `Custo de ${mcusto(A.custo, moe)}, acima ${A.manual?'da meta':'da média da conta'} (${mcusto(A.custoMeta, moe)}).`]);
+      if (A.rit!=null && A.rit<1) notas.unshift([corRes(A.rit), `${A.modo==='7d'?'Últimos 7 dias':A.modo==='acum'?'Acumulado':'Resultado'} abaixo do ritmo: ${ni(A.real)} de ${ni(A.esperado)} esperados${A.modo==='7d'?' em 7 dias':' até hoje'}.`]);
+      if (!A.novo && A.custo && A.custo/A.custoMeta>1) notas.unshift([corCusto(A.custo/A.custoMeta), `Custo de ${mcusto(A.custo, moe)}, acima ${A.manual?'da meta':'da média da conta'} (${mcusto(A.custoMeta, moe)}).`]);
       const rc = A.custo ? A.custo/A.custoMeta : null, escC = Math.max(rc||0, 1)*1.15;
       return {A, nivel: A.nivel ? A.nivel.t : null, cel1: cel(numCurto(A.real), numCurto(mT)+(A.modo==='7d'?' em 7 dias':A.metaTotal==null&&A.modo==='acum'?' até hoje':''), Math.round(rr*100)+'%', rr, corR, eFr!=null && eFr<1 ? eFr : null) + esp(numCurto(Math.round(A.esperado)), A.modo==='7d'?'esperado em 7 dias':'esperado hoje'), cel4,
-        cel2: (rc==null ? '<span class="muted small">sem resultado</span>' : cel(mcusto(A.custo, moe), curto(A.custoMeta, moe), Math.round(rc*100)+'%', rc/escC, rc<=1?'verde':rc<=1.1?'amar':'verm', 1/escC)) + esp('≤ '+mcusto(A.custoMeta, moe), 'esperado'),
+        cel2: (rc==null ? '<span class="muted small">sem resultado</span>' : cel(mcusto(A.custo, moe), curto(A.custoMeta, moe), Math.round(rc*100)+'%', rc/escC, corCusto(rc), 1/escC)) + esp('≤ '+mcusto(A.custoMeta, moe), 'esperado'),
         cel3: pl ? cel(moeda2(real, moe), curto(pl, moe), Math.round(r*100)+'%', r/(Math.max(r,1)*1.15), cls, 1/(Math.max(r,1)*1.15)) : `<div class="stb-top"><b>${moeda2(real, moe)}</b><span class="muted">/ dia</span></div>`,
         fr: notas.length ? notas.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join('') : '<span class="muted">No ritmo.</span>', cor: corN(A.nivel), dias}; }
     return {cel4, cel1: celSemMeta(numCurto(mc.resultados), mc.tipoResultado), cel2: mc.custoResultado!=null ? celSemMeta(mcusto(mc.custoResultado, moe), 'por '+(mc.tipoResultado==='alcance'?'pessoa':mc.tipoResultado.replace(/s$/,''))) : '<span class="muted small">—</span>',
@@ -3067,8 +3071,8 @@ function pgStatus(){
       <div class="stc-n"><b>${T.n}</b> campanha${T.n===1?'':'s'} no ar${T.pausada?` · ${T.pausada} pausada${T.pausada===1?'':'s'}`:''}</div>
       <div class="stc-far">${far || '<span class="muted">Nenhuma campanha desse tipo no ar.</span>'}</div>
       <div class="stc-rod"><span>Investido: <b>${moedaCurta(T.inv, moe)}</b></span><span>${!snap ? 'não sincronizada' : hs<1 ? 'atualizado há menos de 1 h' : 'atualizado há '+Math.round(hs)+' h'}</span><i data-lucide="chevron-right"></i></div></a>`; }).join('')}</div>`}
-  <div class="small muted" style="padding:14px 4px">Campanhas vinculadas: resultado e custo comparados com a meta da plataforma (o traço marca a meta ou o esperado para hoje). Campanhas só no Gerenciador: resultado conforme o objetivo e custo por resultado, sem meta. Investimento: consumido desde o início × budget total; o traço e o “esperado hoje” mostram quanto deveria ter sido consumido até hoje (budget × dias decorridos). Budget diário: média dos últimos 7 dias × budget diário planejado; verde até 15% de diferença. Abertas por padrão: campanhas em atenção ou críticas.</div>`; }
-const mcusto = (v, m) => v!=null && v<0.1 ? Number(v).toLocaleString('pt-BR',{style:'currency',currency:m||'BRL',minimumFractionDigits:4,maximumFractionDigits:4}) : moeda2(v, m);
+  <div class="small muted" style="padding:14px 4px">Campanhas vinculadas: resultado e custo comparados com a meta da plataforma (o traço marca a meta ou o esperado para hoje). Campanhas só no Gerenciador: resultado conforme o objetivo e custo por resultado, sem meta. Investimento: consumido desde o início × budget total; o traço e o “esperado hoje” mostram quanto deveria ter sido consumido até hoje (budget × dias decorridos). Budget diário: média dos últimos 7 dias × budget diário planejado. Cores: resultado verde no ritmo ou acima, amarelo até 50% abaixo do esperado e vermelho mais de 50% abaixo; custo verde até a meta, amarelo até 50% acima e vermelho mais de 50% acima; gasto verde até 15% de diferença, amarelo até 50% e vermelho acima disso. Em aprendizado: os 7 primeiros dias não são avaliados. Abertas por padrão: campanhas em atenção ou críticas.</div>`; }
+const mcusto = (v, m) => moeda2(v, m);   // padrão: 2 casas decimais
 
 /* =====================================================================
    11. CRONOGRAMA ANUAL
