@@ -153,8 +153,8 @@ Deno.serve(async (req) => {
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   // quem chamou: usuário da equipe (botão) ou o agendamento (sem usuário)
-  let apenas: string | null = null;
-  try { apenas = (await req.json())?.campanha ?? null; } catch { /* sem corpo */ }
+  let apenas: string | null = null, listar = false;
+  try { const corpo = await req.json(); apenas = corpo?.campanha ?? null; listar = !!corpo?.listarContas; } catch { /* sem corpo */ }
   const auth = req.headers.get("Authorization") || "";
   const { data: u } = await admin.auth.getUser(auth.replace("Bearer ", ""));
   if (u?.user) {
@@ -162,6 +162,13 @@ Deno.serve(async (req) => {
     if (!p || !["equipe", "admin"].includes(p.papel)) return json({ erro: "Sem permissão." }, 403);
   }
 
+  // lista as contas de anúncios que o token enxerga (para adicionar no Status pontual)
+  if (listar) {
+    if (!u?.user) return json({ erro: "Faça login." }, 401);
+    try { const cs = await graph("me/adaccounts", token, { fields: "name,account_id,currency,account_status,business_name", limit: "200" });
+      return json({ contas: cs.map((c) => ({ conta: c.account_id, nome: c.name, moeda: c.currency, ativa: c.account_status === 1, empresa: c.business_name || null })) });
+    } catch (e) { return json({ erro: String((e as Error).message || e) }, 500); }
+  }
   let q = admin.from("campanhas").select("id, dados");
   if (apenas) q = q.eq("id", apenas);
   const { data: campanhas, error } = await q;
