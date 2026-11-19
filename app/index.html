@@ -3114,26 +3114,25 @@ function discPainelHtml(d){ const L = ((d && d.disc) || []).slice().sort((a,b)=>
   return `<div class="dp"><div class="dp-h"><b>Comentários e sugestões</b><button type="button" class="dp-x" data-act="discPainel" title="Fechar"><i data-lucide="x"></i></button></div>
     <div class="dp-tabs"><button type="button" class="${ab==='abertas'?'on':''}" data-act="discAba" data-v="abertas">Abertas${nAb?` <span>${nAb}</span>`:''}</button><button type="button" class="${ab==='hist'?'on':''}" data-act="discAba" data-v="hist">Histórico${nHi?` <span>${nHi}</span>`:''}</button></div>
     <div class="dp-l">${ver.length ? ver.map(it).join('') : `<div class="dp-vz">${ab==='abertas' ? 'Nenhum comentário ou sugestão aberto. Selecione um trecho do texto e use Comentar ou Sugerir.' : 'Nada resolvido ainda.'}</div>`}</div></div>`; }
-/* modelos de estrutura da landing page: o time só preenche cada seção (o texto entre colchetes é a orientação) */
-const mdlSec = (t, guia, campos) => `<h2>${t}</h2>${guia?`<div class="callout"><span class="callout-ic" contenteditable="false"></span><div class="callout-tx">${guia}</div></div>`:''}${campos.map(([rot, ph])=>`<p><b>${rot}:</b> [${ph}]</p>`).join('')}`;
-const mdlItens = (n, rot, ph) => `<ol>${[...Array(n)].map((_,i)=>`<li><b>${rot} ${i+1}:</b> [${ph}]</li>`).join('')}</ol>`;
-const mdlForm = () => mdlSec('Formulário', '', [['Texto para preenchimento do formulário','Ex.: Preencha seus dados e um especialista entrará em contato']]);
+/* modelos de estrutura da landing page: tabela como no Notion (Seção | Texto | Links / observações); o time só preenche o texto entre colchetes.
+   Na página de tradução a tabela ganha a coluna do idioma traduzido. Linhas de botão ficam em amarelo. */
+const mdlTab = (linhas, cols) => { const td = (x, am) => `<td${am ? ' data-cor="amarelo"' : ''}>${x || '<br>'}</td>`, trad = cols.length===4;
+  return `<table data-cabl="1" data-cabc="1"><tbody><tr>${cols.map(c=>td('<b>'+c+'</b>')).join('')}</tr>${linhas.map(([sec, tx, lk, bt])=>'<tr>'+[sec, tx, ...(trad ? [''] : []), lk].map(x=>td(x, bt)).join('')+'</tr>').join('')}</tbody></table><p><br></p>`; };
+const mdlBotao = () => ['Botão (CTA)', '<b>[Texto do botão]</b>', '[Destino: formulário, WhatsApp, página do distribuidor…]', true];
+const mdlHero = () => ['1 - Hero<br>título:<br>subtítulo:', '<b>[Promessa principal em até 10 palavras]</b><br><br>[Complemento do título: para quem é e o que ganha]', '[Imagem ou vídeo de referência]'];
+const mdlComplemento = () => ['2 - Complemento<br>título:<br>texto:', '<b>[Título da seção]</b><br><br>[Texto de apoio: contexto da marca ou da solução em 2 ou 3 frases]', ''];
+const mdlLista = (n, rot, ph) => [...Array(n)].map((_,i)=>`<b>[${rot} ${i+1}]</b><br>[${ph}]`).join('<br><br>');
+const mdlForm = n => [`${n} - Formulário`, '[Texto para preenchimento do formulário]', ''];
 const LP_MODELOS = {
-  lead: {nome:'Lead Generation', ic:'user-plus', obj:'Captar contatos', estr:['Hero','Benefícios','Formulário'],
-    html: () => mdlSec('Hero', 'Primeira dobra: em poucos segundos a pessoa precisa entender a oferta e o próximo passo.', [['Título','Promessa principal em até 10 palavras'],['Subtítulo','Complemento do título: para quem é e o que ganha'],['Botão (CTA)','Ex.: Quero saber mais'],['Visual de referência','Imagem ou vídeo do hero']])
-      + `<h2>Benefícios</h2>` + mdlItens(3, 'Benefício', 'Título curto + uma frase explicando o ganho')
-      + mdlForm() },
-  produto: {nome:'Product Landing Page', ic:'package', obj:'Apresentar produto', estr:['Hero','Diferenciais','Funcionalidades','Demonstração','CTA'],
-    html: () => mdlSec('Hero', 'Nome do produto e a principal transformação que ele entrega.', [['Título','Nome do produto + promessa'],['Subtítulo','Para quem é e o problema que resolve'],['Botão (CTA)','Ex.: Conheça o produto'],['Visual de referência','Foto do produto em uso']])
-      + `<h2>Diferenciais</h2>` + mdlItens(3, 'Diferencial', 'O que torna o produto único frente às alternativas')
-      + `<h2>Funcionalidades</h2><table><tbody><tr><td><b>Funcionalidade</b></td><td><b>Como funciona</b></td><td><b>Benefício para o cliente</b></td></tr>${[1,2,3].map(i=>`<tr><td>[Funcionalidade ${i}]</td><td>[Descrição]</td><td>[Ganho]</td></tr>`).join('')}</tbody></table>`
-      + mdlSec('Demonstração', 'Mostre o produto funcionando: vídeo, GIF, passo a passo ou depoimento.', [['Formato','Vídeo, carrossel de imagens, passo a passo…'],['Roteiro ou legenda','O que aparece e o que é dito'],['Link do material','URL do vídeo ou das imagens']])
-      + mdlSec('CTA', 'Chamada final: reforce o benefício e diga claramente o próximo passo.', [['Título','Ex.: Pronto para aumentar sua produtividade?'],['Texto de apoio','Uma frase de reforço'],['Botão (CTA)','Ex.: Fale com um revendedor'],['Destino do botão','Formulário, WhatsApp, página do revendedor…']]) },
-  ebook: {nome:'Ebook / Material rico', ic:'book-open', obj:'Captar leads para download', estr:['Hero','Descrição do material','Benefícios','Formulário'],
-    html: () => mdlSec('Hero', 'Deixe claro que o material é gratuito e o que a pessoa vai aprender.', [['Título','Nome do material + promessa'],['Subtítulo','O que a pessoa vai aprender ou resolver'],['Botão (CTA)','Ex.: Baixar o e-book grátis'],['Capa do material','Imagem da capa']])
-      + mdlSec('Descrição do material', '', [['Sobre o material','Em 2 ou 3 frases, do que trata'],['Para quem é','Perfil de quem deve baixar'],['Formato','Ex.: PDF · 24 páginas']])
-      + `<h2>Benefícios</h2><p>O que você vai aprender:</p>` + mdlItens(4, 'Tópico', 'O que a pessoa leva deste capítulo')
-      + mdlForm() } };
+  lead: {nome:'Lead Generation', ic:'user-plus', obj:'Captar contatos', estr:['Hero','Complemento','Benefícios','Formulário'],
+    html: cols => mdlTab([mdlHero(), mdlBotao(), mdlComplemento(), mdlBotao(), ['3 - Benefícios', mdlLista(3, 'Benefício', 'Uma frase explicando o ganho'), ''], mdlBotao(), mdlForm(4)], cols) },
+  produto: {nome:'Product Landing Page', ic:'package', obj:'Apresentar produto', estr:['Hero','Complemento','Diferenciais','Funcionalidades','Demonstração','CTA'],
+    html: cols => mdlTab([mdlHero(), mdlBotao(), mdlComplemento(), ['3 - Diferenciais', mdlLista(3, 'Diferencial', 'O que torna o produto único frente às alternativas'), ''],
+      ['4 - Funcionalidades', mdlLista(3, 'Funcionalidade', 'Como funciona e qual o benefício para o cliente'), ''], ['5 - Demonstração', '[Roteiro ou legenda do vídeo, carrossel ou passo a passo]', '[Link do vídeo ou das imagens]'],
+      ['6 - CTA<br>título:<br>texto:', '<b>[Chamada final]</b><br><br>[Uma frase de reforço do benefício]', ''], mdlBotao()], cols) },
+  ebook: {nome:'Ebook / Material rico', ic:'book-open', obj:'Captar leads para download', estr:['Hero','Complemento','Descrição do material','Benefícios','Formulário'],
+    html: cols => mdlTab([mdlHero(), mdlBotao(), mdlComplemento(), ['3 - Descrição do material', '<b>[Nome do material]</b><br><br>[Do que trata, para quem é e o formato (ex.: PDF · 24 páginas)]', '[Capa do material]'],
+      ['4 - Benefícios<br>o que você vai aprender:', mdlLista(4, 'Tópico', 'O que a pessoa leva deste capítulo'), ''], mdlBotao(), mdlForm(5)], cols) } };
 /* comentários da página (sem trecho marcado), logo abaixo das propriedades, como no Notion */
 function lpComentPagina(d, ed){ const cs = d.coment || [], me = quemSou();
   return `<div class="npc"><div class="npc-t">Comentários${cs.length?` <span>${cs.length}</span>`:''}</div>
@@ -5291,7 +5290,8 @@ const ACT = {
   lpModelo: el => { const {c, d, et, idi} = discAlvo(), M = LP_MODELOS[el.dataset.v]; if (!d || !M) return; lpGuardarEdicao();
     if (lpTextoPuro(d.texto) && !confirm(`Aplicar o modelo ${M.nome}? O texto atual será substituído (dá para desfazer com Ctrl+Z).`)) return;
     const e = document.getElementById('lpe-edit'); if (e && e._snap) e._snap();
-    let nS = 0; d.texto = lpLimpa(M.html().replace(/<h2>/g, () => `<h2>${++nS}. `)); d.modelo = el.dataset.v; d.editadoEm = Date.now(); d.editadoPor = quemSou();
+    const base = c.idiomaBase || 'PT', cols = et==='trad' ? ['Seção', `Texto (${base})`, `Texto (${idi})`, 'Links / observações'] : ['Seção', `Texto (${base})`, 'Links / observações'];
+    d.texto = lpLimpa(M.html(cols)); d.modelo = el.dataset.v; d.editadoEm = Date.now(); d.editadoPor = quemSou();
     if (e) { e.innerHTML = d.texto; if (e._snap) e._snap(); }
     lpAtualizarPublico(c, d, et, idi); registrar(`Landing page de “${c.nome}” · ${et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base'}: modelo ${M.nome} aplicado`);
     salvar(); const m = document.getElementById('np-modelos'); if (m) m.hidden = true; toast(`Modelo ${M.nome} aplicado. Preencha o texto entre colchetes.`); },
