@@ -271,6 +271,15 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .lpe-doc h2{font-size:1.25rem;margin:.6em 0 .3em}.lpe-doc h2:not(:first-child){margin-top:2em;padding-top:1.1em;border-top:1px solid #efefed}.lpe-doc h3{font-size:1.05rem;margin:.6em 0 .3em}.lpe-doc p{margin:0 0 .6em}.lpe-doc ul,.lpe-doc ol{margin:0 0 .6em;padding-left:1.4em}.lpe-doc a{color:var(--azul)}
 .lpe-hist{margin-top:14px;border-top:1px solid var(--borda);padding-top:10px;display:flex;flex-direction:column;gap:6px;font-size:.82rem}.lpe-hist>div:not(.lpe-rot){display:flex;flex-wrap:wrap;gap:4px 10px}.lpe-hist span{color:var(--tx3)}.lpe-hist em{width:100%;font-style:normal;color:var(--tx2)}
 .lp-fluxo{display:flex;flex-direction:column;gap:6px}.lp-etapa{position:relative;padding-left:34px;padding-bottom:14px}
+.pc-lista{display:flex;flex-direction:column;gap:14px}.pc{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.pc-cab{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pc-nome{font:inherit;font-size:1rem;font-weight:700;border:1px solid transparent;border-radius:7px;padding:4px 8px;min-width:160px;flex:1;background:none}.pc-nome:hover,.pc-nome:focus{border-color:var(--borda);background:#fff;outline:0}
+.pc-fmt{font:inherit;font-size:.8rem;border:1px solid var(--borda);border-radius:20px;padding:4px 12px;width:190px;background:#fafafa}.pc-resp{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--tx3)}.pc-resp svg{width:14px;height:14px}.pc-resp select{font:inherit;font-size:.82rem;border:1px solid var(--borda);border-radius:7px;padding:4px 8px;background:#fff}
+.pc-corpo{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}@media (max-width:1000px){.pc-corpo{grid-template-columns:1fr}}
+.pc-tab-w{overflow-x:auto}.pc-tab{width:100%;border-collapse:collapse;table-layout:fixed}.pc-tab th,.pc-tab td{border:1px solid var(--borda);padding:6px 8px;vertical-align:top;font-size:.84rem;text-align:left}.pc-tab th:first-child,.pc-tab td:first-child{width:130px;background:#fafafa;color:var(--tx2);font-weight:600;font-size:.78rem}
+.pc-tab thead th{background:#f6f6f4;font-size:.8rem}.pc-tab th span{font-weight:400}.pc-tab th em{font-style:normal;font-weight:400;font-size:.7rem;color:var(--tx3)}.pc-st td{background:#fff}.pc-st select{width:100%}
+.pc-tab textarea{width:100%;border:0;outline:0;resize:none;font:inherit;font-size:.84rem;line-height:1.45;background:none;padding:2px 0;min-height:22px;overflow:hidden}.pc-tab textarea:disabled{color:var(--tx3)}.pc-tab td:focus-within{box-shadow:inset 0 0 0 2px rgba(47,124,246,.35)}
+.pc-prev{display:flex;flex-direction:column;gap:8px;position:sticky;top:10px}.pc-idis{display:flex;gap:4px}.pc-idis button{border:1px solid var(--borda);background:#fff;border-radius:7px;padding:4px 10px;font:inherit;font-size:.78rem;cursor:pointer;color:var(--tx2)}.pc-idis button.on{border-color:#262626;color:var(--tx);font-weight:600}
+.pcp{aspect-ratio:1/1;width:100%}.pcp-v{aspect-ratio:9/16;max-height:480px;width:auto;margin:0 auto}.pcp video{width:100%;height:100%;object-fit:contain;background:#000}.pcp img{width:100%;height:100%;object-fit:contain}.pc .kvm{margin-top:0}.pc-novo{align-self:flex-start;margin-top:12px;width:auto;padding:10px 16px}
 .lp-marcas{display:flex;gap:6px;margin:0 0 16px;flex-wrap:wrap}.lp-marcas button{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--borda);background:#fff;border-radius:9px;padding:8px 14px;font:inherit;font-size:.86rem;font-weight:600;color:var(--tx2);cursor:pointer}.lp-marcas button.on{border-color:#262626;color:var(--tx);box-shadow:inset 0 -2px 0 #e0a33a}.lp-marcas em{font-style:normal;font-weight:500;font-size:.74rem;color:var(--tx3)}.lp-marca-cor{width:9px;height:9px;border-radius:50%}.lp-mm{margin-top:8px}.lp-mm+.lp-mm{padding-top:8px;border-top:1px solid var(--borda)}.lp-mm-t{display:flex;align-items:center;gap:6px;margin-bottom:5px}.lp-mm-t b{font-size:.78rem;color:var(--tx2)}.lp-mm-t em{font-style:normal;font-size:.72rem;color:var(--tx3)}
 .lp-fluxo2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}.lp-fluxo2 .lp-fluxo{gap:0}.lp-fluxo2 .lp-etapa{padding-bottom:10px}.lp-fluxo2 .lp-etapa>.lp-col{max-width:none}.lp-fluxo2 .lp-passo{margin-bottom:8px}.lp-passo small{font-weight:400;font-size:.76rem;color:var(--tx3)}.lp-fluxo-lay{position:sticky;top:12px}.lp-fluxo-lay .lp-etapa::before{display:none}@media (max-width:1000px){.lp-fluxo2{grid-template-columns:1fr}.lp-fluxo-lay{position:static}}
 .lp-etapa:not(:last-child)::before{content:'';position:absolute;left:11px;top:26px;bottom:0;width:2px;background:var(--borda)}
@@ -2713,7 +2722,7 @@ function kvCards(c, da, ed){ const lista = da.length ? da : [null];
 function kvComentarios(c, e, ed){ const cs = (e && e.coment) || [], me = quemSou(), id = e ? e.id : '';
   return `<div class="kvm"><div class="kvm-h">Comentários${cs.length?` <span>${cs.length}</span>`:''}</div>
     ${cs.map((x,i)=>`<div class="kvm-i">${avatar(x.quem||'?','av av-s')}<div class="kvm-c"><div class="kvm-m"><b>${h(x.quem||'—')}</b><span>${x.t ? new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : fdm(x.q)}</span>${ed && x.quem===me?`<a href="javascript:void 0" data-act="kvComentDel" data-id="${c.id}" data-e="${id}" data-i="${i}" title="Excluir comentário"><i data-lucide="trash-2"></i></a>`:''}</div><div class="kvm-t">${comMencoes(x.o).replace(/\n/g,'<br>')}</div></div></div>`).join('')}
-    ${ed ? `<div class="kvm-novo">${avatar(me||'?','av av-s')}<div class="kvm-in"><textarea id="kvm-txt-${c.id}" rows="1" placeholder="Adicione um comentário · use @ para mencionar" oninput="sugMencao(this);this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!this.parentNode.querySelector('.menc-sug')){event.preventDefault();this.closest('.kvm-novo').querySelector('button').click()}"></textarea><button class="btn btn-s btn-p" data-act="kvComentar" data-id="${c.id}" data-e="${id}" title="Enviar (Enter)"><i data-lucide="send"></i></button></div></div>` : ''}</div>`; }
+    ${ed ? `<div class="kvm-novo">${avatar(me||'?','av av-s')}<div class="kvm-in"><textarea id="kvm-txt-${c.id}-${id}" rows="1" placeholder="Adicione um comentário · use @ para mencionar" oninput="sugMencao(this);this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!this.parentNode.querySelector('.menc-sug')){event.preventDefault();this.closest('.kvm-novo').querySelector('button').click()}"></textarea><button class="btn btn-s btn-p" data-act="kvComentar" data-id="${c.id}" data-e="${id}" title="Enviar (Enter)"><i data-lucide="send"></i></button></div></div>` : ''}</div>`; }
 /* ---------- Landing page: conteúdo base → aprovação → (traduções ‖ layout PT) → aprovação do layout → programação (tudo junto) ---------- */
 const LP_ST = {
   conteudo:['Em produção','Aguardando aprovação do cliente','Ajustes','Aprovado'],
@@ -3146,6 +3155,60 @@ const LP_MODELOS = {
   ebook: {nome:'Ebook / Material rico', ic:'book-open', obj:'Captar leads para download', estr:['Hero','Complemento','Descrição do material','Benefícios','Formulário'],
     html: cols => mdlTab([mdlHero(), mdlBotao(), mdlComplemento(), ['3 - Descrição do material', '<b>[Nome do material]</b><br><br>[Do que trata, para quem é e o formato (ex.: PDF · 24 páginas)]', '[Capa do material]'],
       ['4 - Benefícios<br>o que você vai aprender:', mdlLista(4, 'Tópico', 'O que a pessoa leva deste capítulo'), ''], mdlBotao(), mdlForm(5)], cols) } };
+/* =====================================================================
+   PEÇAS DE MÍDIA (Meta Ads): um card por peça, por marca. Copy em colunas por idioma, status do texto e do asset,
+   link do arquivo (vídeo ou PNG) com prévia ao lado e comentários. Cada coluna de idioma usa as peças dos países
+   desse idioma (o kit cria uma peça por país); a etapa de cada peça continua sendo a do resto do sistema.
+   ===================================================================== */
+const FORMATOS_PECA = ['Reels 1080×1920','Vídeo 1080×1920','Vídeo 16:9','Estático 1080×1080','Estático 1080×1920','Carrossel 1080×1080','Animação 1080×1920'];
+const PECA_CAMPOS = [['asset','Texto do asset'],['copy','Copy do anúncio'],['titulo','Título'],['cta','CTA'],['roteiro','Roteiro']];
+const ORD_ET = ['briefing','aprov_conteudo','ajuste_conteudo','producao','aprov_asset','ajuste_asset','concluido'];
+const ST_TXT = ['Em produção','Aguardando aprovação','Ajustes','Aprovado'], ST_TRAD_PC = ['Traduzindo','Aguardando aprovação','Ajustes','Aprovado'], ST_ASSET = ['Em criação','Aguardando aprovação','Ajustes','Aprovado'];
+const ET_TXT = {'Em produção':'briefing','Traduzindo':'briefing','Aguardando aprovação':'aprov_conteudo','Ajustes':'ajuste_conteudo','Aprovado':'producao'}, ET_ASSET = {'Em criação':'producao','Aguardando aprovação':'aprov_asset','Ajustes':'ajuste_asset','Aprovado':'concluido'};
+const idiomaPeca = (c, e) => e.idioma || ((c.paises||[]).find(p=>p.cod===(e.paises||[])[0])||{}).idioma || c.idiomaBase || 'PT';
+const stTextoPeca = et => ({briefing:'Em produção', aprov_conteudo:'Aguardando aprovação', ajuste_conteudo:'Ajustes'})[et] || 'Aprovado';
+const stAssetPeca = et => ({producao:'Em criação', aprov_asset:'Aguardando aprovação', ajuste_asset:'Ajustes', concluido:'Aprovado'})[et] || 'Aguardando texto';
+function previaArquivo(link, vertical){ const cls = 'pcp' + (vertical ? ' pcp-v' : '');
+  if (!link) return `<div class="${cls} kvp kvp-vz"><i data-lucide="clapperboard"></i><span>Cole o link do vídeo ou PNG para ver a prévia</span></div>`;
+  const u = String(link).trim(); let m;
+  if (/\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(u)) return `<div class="${cls} kvp"><video src="${h(u)}" controls preload="metadata"></video></div>`;
+  if ((m = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/))) return `<div class="${cls} kvp kvp-fr"><iframe src="https://drive.google.com/file/d/${m[1]}/preview" loading="lazy" allow="autoplay" allowfullscreen></iframe></div>`;
+  return previaKV(u).replace('class="kvp', `class="${cls} kvp`); }
+function pecasFluxo(c, canal, da, fase, ed){
+  const cols = colunasCanal(c, canal, fase), mks = [...new Set(cols.map(x=>x.mk).filter(Boolean))], kM = c.id+'|'+canal;
+  const mi = Math.min(+((UI.pecaMarca||{})[kM]) || 0, Math.max(mks.length-1, 0)), mk = mks[mi] || null;
+  const paisesMk = cols.filter(x=>!mk || x.mk===mk).map(x=>x.p);
+  const grupos = lista => { const G = new Map(); for (const e of lista) { if (!G.has(e.nome)) G.set(e.nome, []); G.get(e.nome).push(e); } return [...G.entries()]; };
+  const doMk = m => da.filter(e=>!m || e.marca===m || (!e.marca && mks.length<2));
+  const abas = mks.length > 1 ? `<div class="lp-marcas">${mks.map((m,i)=>{ const gs = grupos(doMk(m)), ok = gs.filter(([,pcs])=>pcs.every(e=>e.etapa==='concluido')).length;
+    return `<button class="${i===mi?'on':''}" data-act="pecaMarca" data-k="${h(kM)}" data-v="${i}"><span class="lp-marca-cor" style="background:${({'PTx Trimble':'#111111','Precision Planting':'#EF9F27'})[m]||'#d1d5db'}"></span>${h(m)}<em>${ok}/${gs.length} peças</em></button>`; }).join('')}</div>` : '';
+  const gs = grupos(doMk(mk));
+  return `${abas}<datalist id="pc-fmts">${FORMATOS_PECA.map(f=>`<option value="${f}">`).join('')}</datalist>
+    <div class="pc-lista">${gs.length ? gs.map(([nome, pcs])=>pecaCard(c, nome, pcs, ed)).join('') : '<div class="card vazio">Nenhuma peça ainda.</div>'}</div>
+    ${ed ? `<button class="ent-novo pc-novo" data-act="pecaNova" data-id="${c.id}" data-canal="${h(canal)}" data-marca="${h(mk||'')}" data-fase="${h(fase||'')}" data-paises="${paisesMk.join(',')}"><i data-lucide="plus"></i>Nova peça${mk?' · '+h(mk):''}</button>` : ''}`; }
+function pecaCard(c, nome, pcs, ed){ const base = c.idiomaBase || 'PT', porIdi = {};
+  for (const e of pcs) { const i = idiomaPeca(c, e); (porIdi[i] = porIdi[i] || []).push(e); }
+  const idis = Object.keys(porIdi).sort((a,b)=>(b===base)-(a===base) || a.localeCompare(b)), prim = i => porIdi[i][0], ids = i => porIdi[i].map(e=>e.id).join(','), todos = pcs.map(e=>e.id).join(',');
+  const e0 = prim(idis[0]), eb = porIdi[base] ? prim(base) : e0, baseOk = ORD_ET.indexOf(eb.etapa) >= 3, formato = e0.formato || '';
+  const vertical = /1920|reels|9:16/i.test(formato), video = /v[íi]deo|reels|anima/i.test(formato+' '+nome);
+  const campos = PECA_CAMPOS.filter(([k])=>k!=='roteiro' || video || idis.some(i=>((prim(i).textos||{}).roteiro)));
+  const bandeiras = i => [...new Set(porIdi[i].flatMap(e=>e.paises||[]))].map(p=>PAISES[p]?PAISES[p].f:p).join('');
+  const stT = i => { if (i!==base && !baseOk) return 'Aguardando conteúdo'; const s = stTextoPeca(prim(i).etapa); return i!==base && s==='Em produção' ? 'Traduzindo' : s; };
+  const libera = i => ed && (i===base || baseOk);
+  const ia = (UI.pecaIdi||{})[e0.id] && porIdi[(UI.pecaIdi||{})[e0.id]] ? UI.pecaIdi[e0.id] : idis[0], ea = prim(ia), stA = stAssetPeca(ea.etapa), txtOk = ORD_ET.indexOf(ea.etapa) >= 3;
+  return `<div class="card pc"><div class="pc-cab">
+      <input class="pc-nome" value="${h(nome)}" data-chg="pecaNome" data-ids="${todos}" ${ed?'':'disabled'} title="Nome da peça">
+      <input class="pc-fmt" list="pc-fmts" value="${h(formato)}" placeholder="Formato" data-chg="pecaFmt" data-ids="${todos}" ${ed?'':'disabled'}>
+      <label class="pc-resp"><i data-lucide="user"></i><select data-chg="pecaResp" data-ids="${todos}" ${ed?'':'disabled'}>${opts(optsResp(e0.resp), e0.resp||'', 'Responsável')}</select></label>
+      ${ed?`<button class="icone-btn pc-del" data-act="pecaDel" data-ids="${todos}" title="Excluir peça"><i data-lucide="trash-2"></i></button>`:''}</div>
+    <div class="pc-corpo"><div class="pc-tab-w"><table class="pc-tab"><thead><tr><th></th>${idis.map(i=>`<th>${h(IDIOMAS[i]||i)} <span>${bandeiras(i)}</span>${i!==base?' <em>tradução</em>':''}</th>`).join('')}</tr>
+        <tr class="pc-st"><td>Texto</td>${idis.map(i=>{ const st = stT(i); return `<td><select class="kvc-st kvc-${lpCor(st)}" data-chg="pecaSt" data-tipo="texto" data-ids="${ids(i)}" ${libera(i)?'':'disabled'}>${opts(st==='Aguardando conteúdo' ? [st] : (i===base ? ST_TXT : ST_TRAD_PC), st)}</select></td>`; }).join('')}</tr></thead>
+        <tbody>${campos.map(([k,t])=>`<tr><td>${t}</td>${idis.map(i=>`<td><textarea rows="${k==='roteiro'?5:k==='copy'?3:1}" data-chg="pecaTxt" data-k="${k}" data-ids="${ids(i)}" ${libera(i)?'':'disabled'} placeholder="${i===base ? (k==='roteiro'?'Cena 1: …':'') : (baseOk ? 'Tradução' : 'Depois da aprovação em '+h(IDIOMAS[base]||base))}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${h(((prim(i).textos||{})[k])||'')}</textarea></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="pc-prev">${idis.length>1 ? `<div class="pc-idis">${idis.map(i=>`<button class="${i===ia?'on':''}" data-act="pecaIdi" data-e="${e0.id}" data-v="${i}">${bandeiras(i)} ${h(i)}</button>`).join('')}</div>` : ''}
+        ${previaArquivo(ea.link, vertical)}
+        <div class="kvc-link"><input type="url" placeholder="Link do vídeo ou PNG${idis.length>1?' ('+h(ia)+')':''}" value="${h(ea.link||'')}" data-chg="pecaArq" data-ids="${ids(ia)}" ${ed?'':'disabled'}>${ea.link?`<a href="${h(ea.link)}" target="_blank" rel="noopener" class="btn btn-s"><i data-lucide="external-link"></i>Abrir</a>`:''}</div>
+        <label class="kvc-campo"><span><i data-lucide="circle-dot"></i>Status do asset${idis.length>1?' · '+h(ia):''}</span><select class="kvc-st kvc-${lpCor(stA)}" data-chg="pecaSt" data-tipo="asset" data-ids="${ids(ia)}" ${ed && txtOk?'':'disabled'}>${opts(txtOk ? ST_ASSET : ['Aguardando texto'], stA)}</select></label></div></div>
+    ${kvComentarios(c, eb, ed)}</div>`; }
 /* comentários de uma seção de entregáveis (Meta Ads, KV, Landing page…): ficam em c.secComent[seção], com @menção e notificação */
 function secComentarios(c, sec, ed){ const cs = ((c.secComent||{})[sec]) || [], me = quemSou();
   return `<div class="card sec-com"><div class="npc"><div class="npc-t"><i data-lucide="message-square"></i>Comentários da seção${cs.length?` <span>${cs.length}</span>`:''}</div>
@@ -3233,7 +3296,7 @@ function entregaveisSecoes(c){
   const grade = (nome, da) => faixa(nome, da).replace('</span>', '</span>'+(['KV',...TIPOS_GLOBAIS].includes(nome)?comum:'')) + `<div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(nome,'',null)}</div>`;
   if (tipos.includes('KV')) { const da = L.filter(e=>e.secao==='KV' || e.auto==='kv'); da.forEach(e=>usados.add(e.id)); secs.push({nome:'KV', da, comum:!!fase, kv:true, html:()=>`<div class="kv-lado"><div class="kv-lado-d">${kvBriefingBloco(c, ed)}</div><div class="kv-lado-p">${kvCards(c, da, ed)}</div></div>`}); }
   if (tipos.includes('Landing page') && fase!=='Awareness') { const f0 = e=>e.secao==='Landing page', da = L.filter(f0); secs.push({nome:'Landing page', da, lp:true, html:()=>lpFluxoBloco(c, ed)}); da.forEach(e=>usados.add(e.id)); }
-  for (const canal of (fase ? canaisDaFase(c, fase) : (c.canais||[]))) { const f0 = e=>e.secao===canal || (!e.secao && e.canal===canal), da = L.filter(f0); secs.push({nome:canal, da, html:()=>secaoColunas(canal, canal, f0)}); da.forEach(e=>usados.add(e.id)); }
+  for (const canal of (fase ? canaisDaFase(c, fase) : (c.canais||[]))) { const f0 = e=>e.secao===canal || (!e.secao && e.canal===canal), da = L.filter(f0); secs.push({nome:canal, da, html:()=>canal==='Meta Ads' ? pecasFluxo(c, canal, L.filter(f0), fase, ed) : secaoColunas(canal, canal, f0)}); da.forEach(e=>usados.add(e.id)); }
   for (const t of tipos.filter(t=>TIPOS_GLOBAIS.includes(t))) { const da = L.filter(e=>e.secao===t); da.forEach(e=>usados.add(e.id)); secs.push({nome:t, da, comum:!!fase, html:()=>grade(t, da)}); }
   const outras = L.filter(e=>!usados.has(e.id));
   if (outras.length) secs.push({nome:'Outras peças', da:outras, html:()=>faixa('Outras peças', outras) + `<div class="ent-grade">${outras.map(e=>cartaoEnt(c,e)).join('')}</div>`});
@@ -3242,7 +3305,7 @@ function entregaveisSecoes(c){
   // página de uma seção
   const aberta = ((UI.entSec||{})[c.id]) && secs.find(x=>x.nome===UI.entSec[c.id]);
   if (aberta) return seletorEtapa(c, false) + topo(`<a href="javascript:void 0" class="ent-voltar" data-act="entSec" data-id="${c.id}" data-v=""><i data-lucide="arrow-left"></i>Todas as seções</a>`)
-    + `<nav class="ent-tabs">${secs.map(x=>{ const et = x.lp ? (lpMarcas(c).length ? lpMarcas(c) : ['']).flatMap((_,i)=>lpEtapas(c, i)) : null, cc = et ? et.filter(e=>e[1]).length : x.da.filter(e=>e.etapa==='concluido').length, tt = et ? et.length : x.da.length; return `<button class="${x===aberta?'on':''}" data-act="entSec" data-id="${c.id}" data-v="${h(x.nome)}"><i data-lucide="${ICONE_SECAO[x.nome]||'package'}"></i>${h(x.nome)}<span>${cc}/${tt}</span></button>`; }).join('')}</nav>` + `<div class="ent-sec-pg">${aberta.html()}${aberta.lp ? '' : secComentarios(c, aberta.nome, ehEquipe())}</div>`;
+    + `<nav class="ent-tabs">${secs.map(x=>{ const et = x.lp ? (lpMarcas(c).length ? lpMarcas(c) : ['']).flatMap((_,i)=>lpEtapas(c, i)) : null, cc = et ? et.filter(e=>e[1]).length : x.da.filter(e=>e.etapa==='concluido').length, tt = et ? et.length : x.da.length; return `<button class="${x===aberta?'on':''}" data-act="entSec" data-id="${c.id}" data-v="${h(x.nome)}"><i data-lucide="${ICONE_SECAO[x.nome]||'package'}"></i>${h(x.nome)}<span>${cc}/${tt}</span></button>`; }).join('')}</nav>` + `<div class="ent-sec-pg">${aberta.html()}${aberta.lp || aberta.nome==='Meta Ads' ? '' : secComentarios(c, aberta.nome, ehEquipe())}</div>`;
   // cards das seções
   const resumo = da => { const n = k => da.filter(e=>k.includes(e.etapa)).length, atr = da.filter(e=>e.etapa!=='concluido' && e.prazo && e.prazo < HOJE).length;
     const prox = da.filter(e=>e.etapa!=='concluido' && e.prazo && e.prazo >= HOJE).map(e=>e.prazo).sort()[0];
@@ -5319,6 +5382,16 @@ const ACT = {
     registrar(`Landing page de “${c.nome}” · ${et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base'}: comentário na página${menc.length?' (mencionou '+menc.join(', ')+')':''}`);
     salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
   lpComentPgDel: el => { const {d} = discAlvo(), i = +el.dataset.i; if (!d || !d.coment || !d.coment[i] || d.coment[i].quem!==quemSou() || !confirm('Excluir este comentário?')) return; lpGuardarEdicao(); d.coment.splice(i, 1); salvar(); render(); },
+  pecaMarca: el => { UI.pecaMarca = UI.pecaMarca || {}; UI.pecaMarca[el.dataset.k] = +el.dataset.v || 0; render(); },
+  pecaIdi: el => { UI.pecaIdi = UI.pecaIdi || {}; UI.pecaIdi[el.dataset.e] = el.dataset.v; render(); },
+  pecaNova: el => { const c = camp(el.dataset.id); if (!c) return; const {canal, marca, fase} = el.dataset, paises = (el.dataset.paises||'').split(',').filter(Boolean);
+    const nomes = new Set(c.entregaveis.filter(e=>(e.secao||e.canal)===canal && (e.marca||'')===marca && (e.fase||'')===fase).map(e=>e.nome)); let n = nomes.size + 1; while (nomes.has('Peça '+n)) n++;
+    for (const p of (paises.length ? paises : c.paises.map(x=>x.cod))) c.entregaveis.push({id:novoId('e'), nome:'Peça '+n, secao:canal, canal, paises:[p], ...(marca?{marca}:{}), ...(fase?{fase}:{}), etapa:'briefing', formato:'Estático 1080×1080', link:'', versoes:[], aprovacoes:[], briefing:{}, idioma:'', objetivo:'', prazo:null, textos:{}});
+    registrar(`Nova peça de ${canal} em “${c.nome}”${marca?' ('+marca+')':''}`); salvar(); render(); },
+  pecaDel: el => { const ids = el.dataset.ids.split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return; const es = c.entregaveis.filter(e=>ids.includes(e.id));
+    if (!confirm(`Excluir a peça “${es[0].nome}”${es.length>1?` (${es.length} países)`:''}? O texto, os links e os comentários dela também saem.`)) return;
+    c.entAutoIgnorar = [...new Set([...(c.entAutoIgnorar||[]), ...es.map(e=>e.auto).filter(Boolean)])]; c.entregaveis = c.entregaveis.filter(e=>!ids.includes(e.id));
+    registrar(`Peça “${es[0].nome}” excluída de “${c.nome}”`); salvar(); render(); toast('Peça excluída.'); },
   secComent: el => { const c = camp(el.dataset.id), sec = el.dataset.v, ta = document.getElementById('secc-txt'), txt = (ta && ta.value || '').trim(); if (!c || !txt) return;
     if (document.getElementById('lpe-edit')) lpGuardarEdicao();
     c.secComent = c.secComent || {}; (c.secComent[sec] = c.secComent[sec] || []).push({q:HOJE, t:Date.now(), quem:quemSou(), o:txt}); const menc = RESPONSAVEIS.filter(n=>txt.includes('@'+n));
@@ -5339,7 +5412,7 @@ const ACT = {
     salvar(); render(); toast(v==='aceita' ? 'Sugestão aceita: o texto foi substituído.' : v==='recusada' ? 'Sugestão recusada.' : 'Comentário resolvido. Ele fica no histórico.'); },
   discExcluir: el => { const {c, d, et, idi} = discAlvo(); if (!d) return; const x = (d.disc||[]).find(y=>y.id===el.dataset.d); if (!x || !confirm(x.tipo==='s' ? 'Excluir esta sugestão? O texto original fica como estava.' : 'Excluir este comentário e as respostas?')) return;
     lpGuardarEdicao(); d.disc = d.disc.filter(y=>y.id!==x.id); d.texto = discAplicarTexto(d.texto, x.id, false); lpAtualizarPublico(c, d, et, idi); salvar(); render(); toast(x.tipo==='s' ? 'Sugestão excluída.' : 'Comentário excluído.'); },
-  kvComentar: el => { const c = camp(el.dataset.id), ta = document.getElementById('kvm-txt-'+el.dataset.id), txt = (ta && ta.value || '').trim(); if (!c || !txt) return;
+  kvComentar: el => { const c = camp(el.dataset.id), ta = document.getElementById('kvm-txt-'+el.dataset.id+'-'+(el.dataset.e||'')), txt = (ta && ta.value || '').trim(); if (!c || !txt) return;
     let e = c.entregaveis.find(x=>x.id===el.dataset.e) || c.entregaveis.find(x=>x.secao==='KV' || x.auto==='kv');
     if (!e) { e = {id:novoId('e'), secao:'KV', auto:'kv', nome:'KV da campanha', canal:'', paises:c.paises.map(p=>p.cod), formato:'Key visual', etapa:'briefing', versoes:[], aprovacoes:[], link:''}; c.entregaveis.push(e); }
     (e.coment = e.coment || []).push({q:HOJE, t:Date.now(), quem:quemSou(), o:txt});
@@ -5753,6 +5826,18 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
     gravarInvoice(x).then(ok=>{ if (!ok) { x.status = ant; render(); } else registrar(`Invoice ${x.numero||''} (${cliente(x.clienteId).nome}): ${ant} → ${v}`); }); return render(); }
   if (k==='gaSel') { const set = new Set(UI.gaSel||[]); el.checked ? set.add(el.dataset.k) : set.delete(el.dataset.k); UI.gaSel = [...set]; UI.selUlt = el.checked ? '[data-chg="gaSel"][data-k="'+el.dataset.k+'"]' : null; return render(); }
   if (k==='gaLoteStatus' || k==='gaLotePessoa') { if (!v) return; return gaLote(k==='gaLoteStatus'?'status':'pessoa', v); }
+  if (/^peca(Txt|Nome|Fmt|Resp|Arq|St)$/.test(k)) { const ids = (el.dataset.ids||'').split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return;
+    const es = c.entregaveis.filter(e=>ids.includes(e.id)), v = (el.value||'').trim();
+    if (k==='pecaTxt') { es.forEach(e=>{ e.textos = e.textos || {}; e.textos[el.dataset.k] = el.value; }); salvar(); return; }
+    if (k==='pecaNome') { if (!v) return render(); es.forEach(e=>e.nome = v); }
+    if (k==='pecaFmt') es.forEach(e=>e.formato = v);
+    if (k==='pecaResp') es.forEach(e=>e.resp = v);
+    if (k==='pecaArq') { es.forEach(e=>{ if ((e.link||'')===v) return; e.link = v; if (v) (e.versoes = e.versoes || []).push({n:(e.versoes||[]).length+1, link:v, data:HOJE, obs:''}); }); registrar(`Arquivo da peça “${es[0].nome}” atualizado em “${c.nome}”`); }
+    if (k==='pecaSt') { const asset = el.dataset.tipo==='asset', alvo = (asset ? ET_ASSET : ET_TXT)[v]; if (!alvo) return render();
+      es.forEach(e=>{ if (!asset && v==='Aprovado' && ORD_ET.indexOf(e.etapa) >= 3) return; e.etapa = alvo;
+        if (v==='Aprovado' || v==='Ajustes') (e.aprovacoes = e.aprovacoes || []).push({tipo: asset ? 'Asset' : 'Conteúdo', resultado: v==='Aprovado' ? 'Aprovado' : 'Ajustes solicitados', coment:'', data:HOJE, quem:quemSou()}); });
+      registrar(`Peça “${es[0].nome}” de “${c.nome}”: ${asset?'asset':'texto'} ${v.toLowerCase()}`); }
+    salvar(); render(); return; }
   if (k==='lpAprovado') { const c = camp(el.dataset.id); if (!c) return; const {f} = lpDados(c, el.dataset.mi), et = el.dataset.et, idi = el.dataset.idi, alvo = et==='trad' ? f.trad[idi] : f[et]; if (!alvo) return; lpGuardarEdicao();
     const ant = alvo.status, novo = el.checked ? 'Aprovado' : (et==='trad' ? 'Traduzindo' : 'Em produção'); if (ant===novo) return; alvo.status = novo;
     (alvo.hist = alvo.hist || []).push({t:Date.now(), quem:quemSou(), o: el.checked ? 'Cliente aprovou' : 'Aprovação desmarcada', coment:''});
