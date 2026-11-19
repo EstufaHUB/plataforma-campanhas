@@ -50,7 +50,9 @@ async function graph(path: string, token: string, params: Record<string, string>
   const out: Record<string, unknown>[] = [];
   let u: string | null = (() => { const x = new URL(`${GRAPH}/${path}`); x.searchParams.set("access_token", token); for (const [k, v] of Object.entries(params)) x.searchParams.set(k, v); return x.toString(); })();
   for (let i = 0; u && i < 20; i++) {
-    const r = await fetch(u); const j = await r.json();
+    let r = await fetch(u), j = await r.json();
+    // limite de chamadas do Meta (códigos 4, 17, 613, 80004): espera 2s e tenta uma vez de novo (mais que isso estoura o tempo da função)
+    if (j.error && [4, 17, 613, 80000, 80004].includes(+j.error.code)) { await new Promise((ok) => setTimeout(ok, 2000)); r = await fetch(u); j = await r.json(); }
     if (!r.ok || j.error) throw new Error(`${path.split('/').pop()}: ${j.error?.error_user_msg || j.error?.message || 'Meta respondeu ' + r.status}`);
     if (Array.isArray(j.data)) out.push(...j.data); else return [j];
     u = j.paging?.next || null;
@@ -114,8 +116,10 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
       const [info] = await graph(act, token, { fields: "name,currency" });
       const camps = await graph(`${act}/campaigns`, token, { fields: "id,name,objective,start_time,stop_time,daily_budget,lifetime_budget,effective_status,updated_time", effective_status: '["ACTIVE","PAUSED"]', limit: "200" }).then((l) => l.filter((c) => ehEstufa(c.name)));
       const ids = new Set(camps.map((c) => c.id as string));
-      let adsets: Record<string, unknown>[] = [];
-      if (camps.some((c) => !c.daily_budget && !c.lifetime_budget)) adsets = await graph(`${act}/adsets`, token, { fields: "campaign_id,daily_budget,lifetime_budget,end_time,start_time", effective_status: '["ACTIVE","CAMPAIGN_PAUSED"]', limit: "500" });
+      // conjuntos (uma chamada só, apenas das campanhas da Estufa): budget quando a campanha não tem, e evento de otimização
+      let conjs: Record<string, unknown>[] = [];
+      try { for (let i = 0; i < camps.length; i += 100) conjs.push(...await graph(`${act}/adsets`, token, { fields: "campaign_id,daily_budget,lifetime_budget,end_time,start_time,effective_status,promoted_object", effective_status: '["ACTIVE","PAUSED","CAMPAIGN_PAUSED"]', filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: camps.slice(i, i + 100).map((c) => c.id) }]), limit: "500" })); } catch (_) { conjs = []; /* sem conjuntos nesta rodada: segue com o que tem */ }
+      const adsets = conjs.filter((a) => a.effective_status !== "PAUSED");
       const filtro = JSON.stringify([{ field: "campaign.effective_status", operator: "IN", value: ["ACTIVE", "PAUSED"] }]);
       const porId = (lista: Record<string, unknown>[]) => Object.fromEntries(lista.map((x) => [x.campaign_id as string, x]));
       const sete = await graph(`${act}/insights`, token, { level: "campaign", date_preset: "last_7d", fields: "campaign_id,spend,actions,reach", filtering: filtro, limit: "500" });
@@ -130,8 +134,7 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
       const ativas = camps.filter((c) => ids.has(c.id as string) && noAr(c)), total: Record<string, unknown>[] = [];
       // evento de otimização dos conjuntos de cada campanha (o "resultado" do Gerenciador)
       const evento: Record<string, string[] | null> = {};
-      try { const conj = await graph(`${act}/adsets`, token, { fields: "campaign_id,promoted_object", effective_status: '["ACTIVE","PAUSED","CAMPAIGN_PAUSED"]', limit: "500" });
-        for (const c of ativas) evento[c.id as string] = acaoDosConjuntos(conj.filter((a) => a.campaign_id === c.id)); } catch (_) { /* sem evento: tipos de lead padrão */ }
+      for (const c of ativas) { const cj = conjs.filter((a) => a.campaign_id === c.id); evento[c.id as string] = cj.length ? acaoDosConjuntos(cj) : null; }
       // total desde o início, só das campanhas no ar (em lotes, para contas com muito histórico)
       for (let i = 0; i < ativas.length; i += 25) total.push(...await graph(`${act}/insights`, token, { level: "campaign", date_preset: "maximum", fields: "campaign_id,spend,impressions,reach,clicks,actions", filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: ativas.slice(i, i + 25).map((c) => c.id) }]), limit: "100" }));
       const T = porId(total);
