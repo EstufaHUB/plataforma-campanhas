@@ -211,6 +211,12 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .lpe-doc details{margin:.3em 0}.lpe-doc summary{cursor:pointer;font-weight:600}.lpe-doc details>*:not(summary){margin-left:20px}
 .lpe-doc .callout{display:flex;gap:10px;background:#f4f5f6;border-radius:8px;padding:12px 14px;margin:.5em 0}.lpe-doc .callout-ic{flex:none}.lpe-doc .callout-tx{flex:1;min-width:0}
 .lpe-doc table{border-collapse:collapse;width:100%;margin:.5em 0}.lpe-doc td{border:1px solid var(--borda-f);padding:6px 8px;min-width:60px;vertical-align:top}
+.tbl-h{position:absolute;z-index:40;width:22px;height:22px;border:1px solid var(--borda);background:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tx3);padding:0;box-shadow:0 1px 3px rgba(0,0,0,.08)}.tbl-h:hover{color:#2383e2;border-color:#2383e2}.tbl-h svg{width:14px;height:14px}.tbl-h[hidden]{display:none}
+.lpe-doc td.tbl-sel{box-shadow:inset 0 0 0 2px #2383e2;background-color:rgba(35,131,226,.06)}
+.tbl-menu{position:absolute;z-index:60;width:230px;background:#fff;border:1px solid var(--borda);border-radius:10px;box-shadow:0 12px 32px rgba(15,15,15,.16);padding:6px}.tbl-menu[hidden]{display:none}.tbl-busca{width:100%;box-sizing:border-box;border:1.5px solid #2383e2;border-radius:6px;padding:6px 8px;font:inherit;font-size:.84rem;margin-bottom:4px;outline:none}
+.tbl-it-l>button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;padding:6px 8px;border-radius:6px;cursor:pointer;font:inherit;font-size:.86rem;text-align:left;color:var(--tx)}.tbl-it-l>button:hover{background:#f1f3f4}.tbl-it-l>button svg{width:15px;height:15px;color:var(--tx2)}.tbl-it-l>button[data-a="excluir"]{color:var(--verm)}.tbl-it-l>button[data-a="excluir"] svg{color:var(--verm)}
+.tbl-sep{border-top:1px solid var(--borda);margin:5px 0}.tbl-cor-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:2px 8px 4px}.tbl-cores{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 4px}.tbl-cores button{border:0;background:none;padding:2px;border-radius:5px;cursor:pointer}.tbl-cores button:hover{background:#f1f3f4}.tbl-cor{display:block;width:20px;height:20px;border-radius:4px;border:1px solid var(--borda)}
+[data-cor="cinza"]{background:#f1f1ef!important}[data-cor="azul"]{background:#e7f0fa!important}[data-cor="verde"]{background:#e8f3ec!important}[data-cor="amarelo"]{background:#fbf3db!important}[data-cor="laranja"]{background:#fbecdd!important}[data-cor="vermelho"]{background:#fbe4e4!important}[data-cor="roxo"]{background:#efe8f8!important}.tbl-cor[data-cor=""]{background:#fff}
 .blk-menu{position:absolute;z-index:50;width:290px;max-height:330px;overflow:auto;background:#fff;border:1px solid var(--borda);border-radius:10px;box-shadow:0 12px 32px rgba(15,15,15,.16);padding:6px}.blk-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:6px 8px 4px}
 .blk-menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:6px 8px;border-radius:7px;cursor:pointer;text-align:left;font:inherit}.blk-menu button.sel,.blk-menu button:hover{background:#f1f3f4}.blk-ic{width:32px;height:32px;border:1px solid var(--borda);border-radius:6px;display:flex;align-items:center;justify-content:center;background:#fff;flex:none}.blk-ic svg{width:16px;height:16px;color:var(--tx2)}.blk-n{flex:1;display:flex;flex-direction:column}.blk-n b{font-size:.84rem;font-weight:500}.blk-n em{font-style:normal;font-size:.72rem;color:var(--tx3)}.blk-menu kbd{font-family:inherit;font-size:.7rem;color:var(--tx3)}
 .lpe-edit p:only-child:has(br:only-child)::before{content:'Escreva aqui… digite / para inserir blocos';color:var(--tx3);position:absolute;pointer-events:none}
@@ -2693,10 +2699,10 @@ function lpFluxoBloco(c, ed){ const {f, idis} = lpDados(c), et = lpEtapas(c), po
       <div class="kvc-2"><label class="kvc-campo"><span><i data-lucide="user"></i>Responsável</span>${resp('prog', '', f.prog.resp)}</label><label class="kvc-campo"><span><i data-lucide="circle-dot"></i>Status</span>${sel('prog', 'status', '', LP_ST.prog, f.prog.status)}</label></div></div></div></div>
   </div>`; }
 /* texto da LP: editor simples (negrito, itálico, títulos, listas, link) e aprovação do cliente dentro do card */
-const lpTextoPuro = html => { if (!html) return ''; const d = document.createElement('div'); d.innerHTML = String(html).replace(/<\/(p|h\d|li|div)>|<br\s*\/?>/gi, m=>m+' '); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
+const lpTextoPuro = html => { if (!html) return ''; const d = document.createElement('div'); d.innerHTML = String(html).replace(/<\/(p|h\d|li|div|td|th|tr|summary)>|<br\s*\/?>/gi, m=>m+' '); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
 function lpLimpa(html){ const d = document.createElement('div'); d.innerHTML = html || '';
   d.querySelectorAll('script,style,iframe,object,embed,meta,link').forEach(n=>n.remove());
-  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|open|contenteditable)$/i.test(a.name) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v));
+  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|open|contenteditable)$/i.test(a.name) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v));
       if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(v)) || !ok) n.removeAttribute(a.name); } if (n.tagName==='A') { n.setAttribute('target','_blank'); n.setAttribute('rel','noopener'); } });
   return d.innerHTML; }
 function lpAlvo(c, et, idi){ const {f} = lpDados(c); return et==='trad' ? f.trad[idi] : f[et]; }
@@ -2765,7 +2771,52 @@ function editorBlocos(ed){ if (!ed || ed._blocos) return; ed._blocos = true; try
     if (e.key==='Enter' && !e.shiftKey) { const b = blocoAtual(); if (b && /^H[1-4]$/.test(b.tagName)) { e.preventDefault(); const p = document.createElement('p'); p.innerHTML = '<br>'; b.after(p); cursorEm(p); } }
   });
   ed.addEventListener('click', e => { const li = e.target.closest('ul.todo > li'); if (li && e.offsetX < 22) { li.dataset.check = li.dataset.check==='1' ? '0' : '1'; } });
-  ed.addEventListener('blur', () => setTimeout(fechar, 150)); }
+  ed.addEventListener('blur', () => setTimeout(fechar, 150));
+  tabelaAlcas(ed); }
+/* tabela: alças de linha e de coluna (como no Notion) com inserir, duplicar, limpar, excluir e cor */
+const CORES_TAB = [['','Padrão'],['cinza','Cinza'],['azul','Azul'],['verde','Verde'],['amarelo','Amarelo'],['laranja','Laranja'],['vermelho','Vermelho'],['roxo','Roxo']];
+function tabelaAlcas(ed){ const box = ed.parentNode;
+  const hr = document.createElement('button'), hc = document.createElement('button'), menu = document.createElement('div');
+  hr.type = hc.type = 'button'; hr.className = 'tbl-h tbl-hr'; hc.className = 'tbl-h tbl-hc'; hr.title = 'Opções da linha'; hc.title = 'Opções da coluna';
+  hr.innerHTML = '<i data-lucide="grip-vertical"></i>'; hc.innerHTML = '<i data-lucide="grip-horizontal"></i>'; menu.className = 'tbl-menu'; menu.hidden = true; hr.hidden = hc.hidden = true;
+  box.append(hr, hc, menu); if (window.lucide) lucide.createIcons();
+  let td = null, alvo = null;
+  const pos = cel => { const tr = cel.parentNode, tb = cel.closest('table'), P = box.getBoundingClientRect(), R = tr.getBoundingClientRect(), T = tb.getBoundingClientRect(), C = cel.getBoundingClientRect();
+    hr.style.top = (R.top - P.top + R.height/2 - 11) + 'px'; hr.style.left = (T.left - P.left - 20) + 'px'; hc.style.left = (C.left - P.left + C.width/2 - 11) + 'px'; hc.style.top = (T.top - P.top - 12) + 'px'; hr.hidden = hc.hidden = false; };
+  ed.addEventListener('mousemove', e => { const c = e.target.closest('td'); if (c && ed.contains(c) && menu.hidden) { td = c; pos(c); } });
+  box.addEventListener('mouseleave', () => { if (menu.hidden) hr.hidden = hc.hidden = true; });
+  const celulas = () => { if (!alvo) return []; const tb = alvo.td.closest('table'); if (!tb) return []; return alvo.tipo==='linha' ? [...alvo.td.parentNode.cells] : [...tb.rows].map(r=>r.cells[alvo.idx]).filter(Boolean); };
+  const marcar = on => { ed.querySelectorAll('td.tbl-sel').forEach(x=>x.classList.remove('tbl-sel')); if (on) celulas().forEach(x=>x.classList.add('tbl-sel')); };
+  const vazia = () => { const c = document.createElement('td'); c.innerHTML = '<br>'; return c; };
+  const ACOES = {
+    linha: [['acima','arrow-up','Inserir acima'],['abaixo','arrow-down','Inserir abaixo'],['dup','copy','Duplicar'],['limpar','circle-x','Limpar conteúdo'],['excluir','trash-2','Excluir linha']],
+    coluna: [['esq','arrow-left','Inserir à esquerda'],['dir','arrow-right','Inserir à direita'],['dup','copy','Duplicar'],['limpar','circle-x','Limpar conteúdo'],['excluir','trash-2','Excluir coluna']] };
+  const fazer = a => { const tb = alvo.td.closest('table'), tr = alvo.td.parentNode, idx = alvo.idx;
+    if (a.startsWith('cor:')) { const cor = a.slice(4); celulas().forEach(x=>{ if (cor) x.dataset.cor = cor; else delete x.dataset.cor; }); }
+    else if (alvo.tipo==='linha') {
+      if (a==='acima' || a==='abaixo') { const n = document.createElement('tr'); [...tr.cells].forEach(()=>n.appendChild(vazia())); a==='acima' ? tr.before(n) : tr.after(n); }
+      if (a==='dup') tr.after(tr.cloneNode(true));
+      if (a==='limpar') [...tr.cells].forEach(x=>x.innerHTML='<br>');
+      if (a==='excluir') { if (tb.rows.length<=1) tb.remove(); else tr.remove(); } }
+    else {
+      if (a==='esq' || a==='dir') [...tb.rows].forEach(r=>{ const c = r.cells[idx]; if (c) a==='esq' ? c.before(vazia()) : c.after(vazia()); });
+      if (a==='dup') [...tb.rows].forEach(r=>{ const c = r.cells[idx]; if (c) c.after(c.cloneNode(true)); });
+      if (a==='limpar') celulas().forEach(x=>x.innerHTML='<br>');
+      if (a==='excluir') { if (tb.rows[0].cells.length<=1) tb.remove(); else [...tb.rows].forEach(r=>{ const c = r.cells[idx]; if (c) c.remove(); }); } }
+    fecharM(); };
+  const fecharM = () => { menu.hidden = true; marcar(false); alvo = null; hr.hidden = hc.hidden = true; };
+  const abrirM = (tipo, botao) => { if (!td) return; alvo = {tipo, td, idx: td.cellIndex}; marcar(true);
+    const L = ACOES[tipo];
+    menu.innerHTML = `<input class="tbl-busca" placeholder="Buscar ações…"><div class="tbl-it-l">${L.map(([k,ic,t])=>`<button type="button" data-a="${k}" data-t="${normNome(t)}"><i data-lucide="${ic}"></i>${t}</button>`).join('')}
+      <div class="tbl-sep" data-t="cor"></div><div class="tbl-cor-t" data-t="cor">Cor de fundo</div><div class="tbl-cores" data-t="cor">${CORES_TAB.map(([k,t])=>`<button type="button" data-a="cor:${k}" title="${t}" data-t="cor ${normNome(t)}"><span class="tbl-cor" data-cor="${k}"></span></button>`).join('')}</div></div>`;
+    if (window.lucide) lucide.createIcons();
+    const P = box.getBoundingClientRect(), B = botao.getBoundingClientRect(); menu.style.left = Math.max(0, B.right - P.left + 4) + 'px'; menu.style.top = (B.top - P.top) + 'px'; menu.hidden = false;
+    const inp = menu.querySelector('input'); inp.focus();
+    inp.oninput = () => { const q = normNome(inp.value); menu.querySelectorAll('[data-t]').forEach(x=>{ x.hidden = q && !x.dataset.t.includes(q) && !(x.dataset.t.startsWith('cor') && 'cor'.includes(q)); }); };
+    inp.onkeydown = e => { if (e.key==='Escape') { e.preventDefault(); fecharM(); } if (e.key==='Enter') { const b = [...menu.querySelectorAll('button[data-a]')].find(x=>!x.hidden && !x.closest('[hidden]')); if (b) { e.preventDefault(); fazer(b.dataset.a); } } };
+    menu.querySelectorAll('button[data-a]').forEach(b=>b.onmousedown = ev => { ev.preventDefault(); fazer(b.dataset.a); }); };
+  hr.onmousedown = e => { e.preventDefault(); abrirM('linha', hr); }; hc.onmousedown = e => { e.preventDefault(); abrirM('coluna', hc); };
+  document.addEventListener('mousedown', e => { if (!menu.hidden && !menu.contains(e.target) && e.target!==hr && e.target!==hc && !hr.contains(e.target) && !hc.contains(e.target)) fecharM(); }); }
 function lpCmd(cmd){ const ed = document.getElementById('lpe-edit'); if (!ed) return; ed.focus();
   if (cmd==='link') { const u = prompt('Endereço do link (https://…)'); if (u && /^https?:\/\//i.test(u.trim())) document.execCommand('createLink', false, u.trim()); return; }
   const [c, v] = cmd.split(':'); document.execCommand(c, false, v ? '<'+v+'>' : null); }
