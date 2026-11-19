@@ -205,6 +205,11 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .kvm{border-top:1px solid var(--borda);padding-top:12px;margin-top:2px;display:flex;flex-direction:column;gap:10px}.kvm-h{font-size:.8rem;font-weight:700;color:var(--tx2)}.kvm-h span{font-size:.7rem;background:var(--cinza-f);border-radius:20px;padding:1px 7px;margin-left:4px}
 .kvm-i,.kvm-novo{display:flex;gap:9px;align-items:flex-start}.kvm-i .av,.kvm-novo .av{flex:none;margin-top:2px}.kvm-c{flex:1;min-width:0}.kvm-m{display:flex;align-items:center;gap:8px;font-size:.78rem}.kvm-m span{color:var(--tx3)}.kvm-m a{margin-left:auto;color:var(--tx3);opacity:0}.kvm-i:hover .kvm-m a{opacity:1}.kvm-m a svg{width:13px;height:13px}.kvm-t{font-size:.86rem;line-height:1.45;margin-top:1px;word-break:break-word}.kvm-t .menc{color:var(--azul);font-weight:600}
 .kvm-in{flex:1;display:flex;gap:6px;align-items:flex-end;position:relative}.kvm-in textarea{flex:1;resize:none;min-height:34px;max-height:160px;border:1px solid transparent;background:transparent;padding:7px 8px;border-radius:8px;font:inherit;font-size:.86rem}.kvm-in textarea:hover{background:#f6f7f8}.kvm-in textarea:focus{background:#fff;border-color:var(--borda-f);outline:none}.kvm-in .btn{padding:6px 9px}
+.lp-fluxo{display:flex;flex-direction:column;gap:6px}.lp-etapa{position:relative;padding-left:34px;padding-bottom:14px}.lp-etapa:not(:last-child)::before{content:'';position:absolute;left:11px;top:26px;bottom:0;width:2px;background:var(--borda)}
+.lp-passo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95rem;margin:0 0 10px -34px}.lp-passo>span{width:24px;height:24px;border-radius:50%;background:var(--pet-800);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.76rem;flex:none}.lp-passo.ok>span{background:#2e9d55}.lp-passo>span svg{width:14px;height:14px}
+.lp-par{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}@media (max-width:1000px){.lp-par{grid-template-columns:1fr}}.lp-col{display:flex;flex-direction:column;gap:10px;min-width:0}.lp-sub{font-size:.8rem;font-weight:700;color:var(--tx2)}.lp-sub small{font-weight:400;color:var(--tx3);margin-left:4px}
+.lp-c{padding:14px 16px;display:flex;flex-direction:column;gap:10px}.lp-c-cab b{display:block;font-size:.95rem}.lp-c-cab span{font-size:.76rem;color:var(--tx3)}.lp-bloq{opacity:.6}.lp-etapa>.lp-col{max-width:640px}
+.lp-check,.lp-mini{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.78rem;color:var(--tx3)}.lp-check span,.lp-mini span{display:inline-flex;align-items:center;gap:5px}.lp-check svg,.lp-mini svg{width:14px;height:14px}.lp-check .ok,.lp-mini .ok{color:var(--verde);font-weight:600}.lp-mini{flex-direction:column;gap:5px}
 .kvc{padding:16px 18px;display:flex;flex-direction:column;gap:12px;margin-bottom:12px}.kvc-cab{display:flex;align-items:center;gap:12px}.kvc-cab>div{flex:1}.kvc-cab b{display:block;font-size:1rem}.kvc-cab span{font-size:.78rem;color:var(--tx3)}.kvc-ic{width:40px;height:40px;border-radius:11px;background:var(--pet-50);color:var(--pet-800);display:flex;align-items:center;justify-content:center;flex:none}.kvc-ic svg{width:19px;height:19px}
 .kvc-det{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;font-weight:600;color:var(--tx2);text-decoration:none}.kvc-det svg{width:15px;height:15px}.kvc-det:hover{color:var(--tx)}
 .kvc-campo{display:flex;flex-direction:column;gap:5px;font-size:.84rem}.kvc-campo>span{display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--tx3)}.kvc-campo>span svg{width:13px;height:13px}.kvc-campo input,.kvc-campo select{width:100%}
@@ -1397,7 +1402,7 @@ function buscaTecla(e){ const its = [...document.querySelectorAll('#busca-res .b
 document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==='k') { const i = $('#busca-global'); if (i) { e.preventDefault(); document.body.classList.remove('menu-oculto'); i.focus(); i.select(); } } });
 document.addEventListener('focusout', e => { if (e.target && e.target.id==='busca-global') setTimeout(()=>{ const b = $('#busca-res'); if (b && !b.matches(':hover')) b.hidden = true; }, 150); });
 function notificacoes(){
-  const N = new Map(); const add = (chave, n) => { if (N.has(chave)) return; const o = Object.assign({chave, lida:!!S.notifLidas[chave]}, n); o.ts = n.ts || notifVistaEm(chave, n.q); o.cat = /^(menc|mencent|mencst|resp)-/.test(chave) ? 'mim' : 'alerta'; if (!(UI.notifArq||{})[chave]) N.set(chave, o); };
+  const N = new Map(); const add = (chave, n) => { if (N.has(chave)) return; const o = Object.assign({chave, lida:!!S.notifLidas[chave]}, n); o.ts = n.ts || notifVistaEm(chave, n.q); o.cat = /^(menc|mencent|menclp|mencst|resp)-/.test(chave) ? 'mim' : 'alerta'; if (!(UI.notifArq||{})[chave]) N.set(chave, o); };
   for (const c of ativas()) {
     if (c.status==='Concluída') continue;
     const ini = inicioPlan(c), dIni = difDias(HOJE, ini), cl = cliente(c.clienteId).nome;
@@ -1430,6 +1435,8 @@ function notificacoes(){
         add('resp-'+c.id+'-'+t.id+'-'+x.q, {tipo:'pet', ic:'user-plus', t:`${x.por} definiu você como responsável: ${t.nome}${t.pais?' ('+t.pais+')':''}`, d:`${c.nome} · prazo ${fd(t.EF)}`, link:`#/campanha/${c.id}/acoes`, q:x.q});
       for (const x of (t.coment||[])) if (x.q>=desde && mencionaMe(x.o))
         add('menc-'+c.id+'-'+t.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em “${t.nome}”`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/acoes`, q:x.q}); }
+    for (const c of ativas()) for (const x of ((((c.lpFluxo||{}).layout||{}).coment)||[])) if (x.q>=desde && mencionaMe(x.o))
+      add('menclp-'+c.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} no layout da landing page`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
     for (const c of ativas()) for (const e of (c.entregaveis||[])) for (const x of (e.coment||[])) if (x.q>=desde && mencionaMe(x.o))
       add('mencent-'+c.id+'-'+e.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} no ${e.nome}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
     for (const [mid, rs] of Object.entries(S.registrosStatus||{})) for (const x of rs) if (x.tipo==='coment' && (x.q||'')>='' && mencionaMe(x.o)) {
@@ -2606,6 +2613,7 @@ function previaKV(link){ if (!link) return `<div class="kvp kvp-vz"><i data-luci
   if ((m = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/)) || (m = u.match(/[?&]id=([\w-]{10,})/)) && /drive\.google/.test(u))
     return `<div class="kvp"><img src="https://drive.google.com/thumbnail?id=${m[1]}&sz=w1600" alt="Prévia do KV" loading="lazy" onerror="this.parentNode.classList.add('kvp-erro')"><em>Se a prévia não aparecer, o arquivo precisa estar compartilhado com quem vê o link.</em></div>`;
   if ((m = u.match(/canva\.com\/design\/([\w-]+)(?:\/([\w-]+))?/))) return `<div class="kvp kvp-fr"><iframe src="https://www.canva.com/design/${m[1]}/${m[2]||'view'}/view?embed" loading="lazy" allowfullscreen></iframe></div>`;
+  if ((m = u.match(/xd\.adobe\.com\/(?:view|embed)\/([\w-]+)/))) return `<div class="kvp kvp-fr"><iframe src="https://xd.adobe.com/embed/${m[1]}/" loading="lazy" allowfullscreen></iframe></div>`;
   if (/figma\.com\/(file|design|proto)\//.test(u)) return `<div class="kvp kvp-fr"><iframe src="https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(u)}" loading="lazy" allowfullscreen></iframe></div>`;
   if ((m = u.match(/docs\.google\.com\/presentation\/d\/([\w-]+)/))) return `<div class="kvp kvp-fr"><iframe src="https://docs.google.com/presentation/d/${m[1]}/embed?start=false&loop=false" loading="lazy" allowfullscreen></iframe></div>`;
   return `<div class="kvp kvp-vz"><i data-lucide="eye-off"></i><span>Prévia indisponível para este tipo de link. Use “Abrir” para ver o arquivo.</span></div>`; }
@@ -2624,6 +2632,53 @@ function kvComentarios(c, e, ed){ const cs = (e && e.coment) || [], me = quemSou
   return `<div class="kvm"><div class="kvm-h">Comentários${cs.length?` <span>${cs.length}</span>`:''}</div>
     ${cs.map((x,i)=>`<div class="kvm-i">${avatar(x.quem||'?','av av-s')}<div class="kvm-c"><div class="kvm-m"><b>${h(x.quem||'—')}</b><span>${x.t ? new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : fdm(x.q)}</span>${ed && x.quem===me?`<a href="javascript:void 0" data-act="kvComentDel" data-id="${c.id}" data-e="${id}" data-i="${i}" title="Excluir comentário"><i data-lucide="trash-2"></i></a>`:''}</div><div class="kvm-t">${comMencoes(x.o).replace(/\n/g,'<br>')}</div></div></div>`).join('')}
     ${ed ? `<div class="kvm-novo">${avatar(me||'?','av av-s')}<div class="kvm-in"><textarea id="kvm-txt-${c.id}" rows="1" placeholder="Adicione um comentário · use @ para mencionar" oninput="sugMencao(this);this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!this.parentNode.querySelector('.menc-sug')){event.preventDefault();this.closest('.kvm-novo').querySelector('button').click()}"></textarea><button class="btn btn-s btn-p" data-act="kvComentar" data-id="${c.id}" data-e="${id}" title="Enviar (Enter)"><i data-lucide="send"></i></button></div></div>` : ''}</div>`; }
+/* ---------- Landing page: conteúdo base → aprovação → (traduções ‖ layout PT) → aprovação do layout → programação (tudo junto) ---------- */
+const LP_ST = {
+  conteudo:['Em produção','Aguardando aprovação do cliente','Ajustes','Aprovado'],
+  trad:['Aguardando conteúdo','Traduzindo','Aguardando aprovação do cliente','Ajustes','Aprovado'],
+  layout:['Aguardando conteúdo','Em criação','Aguardando aprovação do cliente','Ajustes','Aprovado'],
+  prog:['Aguardando','Em programação','Em revisão','No ar']};
+const lpCor = st => /Aprovado|No ar/.test(st) ? 'verde' : /Aguardando aprovação|Em revisão/.test(st) ? 'amar' : /Ajustes/.test(st) ? 'verm' : /Em produção|Traduzindo|Em criação|Em programação/.test(st) ? 'azul' : 'cinza';
+function lpDados(c){ const f = c.lpFluxo = c.lpFluxo || {}; f.conteudo = f.conteudo || {status:'Em produção'}; f.layout = f.layout || {}; f.prog = f.prog || {status:'Aguardando'}; f.trad = f.trad || {};
+  const idis = [...new Set((c.paises||[]).map(p=>p.idioma).filter(i=>i && i!==c.idiomaBase))]; for (const i of idis) f.trad[i] = f.trad[i] || {};
+  const base = f.conteudo.status === 'Aprovado';
+  for (const i of idis) if (!f.trad[i].status || (f.trad[i].status==='Aguardando conteúdo' && base)) f.trad[i].status = base ? (f.trad[i].status && f.trad[i].status!=='Aguardando conteúdo' ? f.trad[i].status : 'Traduzindo') : 'Aguardando conteúdo';
+  if (!f.layout.status || (f.layout.status==='Aguardando conteúdo' && base)) f.layout.status = base ? 'Em criação' : 'Aguardando conteúdo';
+  return {f, idis, base}; }
+function lpEtapas(c){ const {f, idis} = lpDados(c), tradOk = idis.every(i=>f.trad[i].status==='Aprovado');
+  return [['Conteúdo aprovado', f.conteudo.status==='Aprovado'], ['Traduções aprovadas', tradOk], ['Layout aprovado', f.layout.status==='Aprovado'], ['LP no ar', f.prog.status==='No ar']]; }
+function lpCardResumo(c, x){ const et = lpEtapas(c), ok = et.filter(e=>e[1]).length, pct = Math.round(ok/et.length*100), prox = et.find(e=>!e[1]);
+  const R = 19, C = 2*Math.PI*R;
+  return `<a href="javascript:void 0" class="ent-sc2" data-act="entSec" data-id="${c.id}" data-v="Landing page">
+    <div class="ent-sc2-cab"><span class="ent-sc2-ic"><i data-lucide="globe"></i></span><div class="ent-sc2-t"><b>Landing page</b><span>${ok} de ${et.length} etapas${prox?` · próxima: ${prox[0].toLowerCase()}`:' · no ar'}</span></div>
+      <svg class="ent-anel" viewBox="0 0 48 48"><circle cx="24" cy="24" r="${R}" class="tr"/><circle cx="24" cy="24" r="${R}" class="vl ${pct===100?'ok':''}" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/><text x="24" y="28">${pct}%</text></svg></div>
+    <div class="lp-mini">${et.map(([t,v])=>`<span class="${v?'ok':''}"><i data-lucide="${v?'check-circle-2':'circle'}"></i>${t}</span>`).join('')}</div></a>`; }
+function lpFluxoBloco(c, ed){ const {f, idis} = lpDados(c), et = lpEtapas(c), podeProg = et[1][1] && et[2][1];
+  const sel = (et_, k, idi, lista, val) => `<select class="kvc-st kvc-${lpCor(val)}" data-chg="lpCampo" data-id="${c.id}" data-et="${et_}" data-idi="${idi||''}" data-k="${k}" ${ed?'':'disabled'}>${opts(lista, val)}</select>`;
+  const resp = (et_, idi, val) => `<select data-chg="lpCampo" data-id="${c.id}" data-et="${et_}" data-idi="${idi||''}" data-k="resp" ${ed?'':'disabled'}>${opts(optsResp(val), val||'', 'Selecione')}</select>`;
+  const link = (et_, idi, k, val, ph) => `<div class="kvc-link"><input type="url" placeholder="${ph}" value="${h(val||'')}" data-chg="lpCampo" data-id="${c.id}" data-et="${et_}" data-idi="${idi||''}" data-k="${k}" ${ed?'':'disabled'}>${val?`<a href="${h(val)}" target="_blank" rel="noopener" class="btn btn-s"><i data-lucide="external-link"></i>Abrir</a>`:''}</div>`;
+  const cardConteudo = (titulo, sub, et_, idi, d, lista, bloqueado) => `<div class="card lp-c ${bloqueado?'lp-bloq':''}"><div class="lp-c-cab"><b>${titulo}</b><span>${sub}</span></div>
+    <div class="kvc-2"><label class="kvc-campo"><span><i data-lucide="user"></i>Responsável</span>${resp(et_, idi, d.resp)}</label><label class="kvc-campo"><span><i data-lucide="circle-dot"></i>Status</span>${sel(et_, 'status', idi, lista, d.status)}</label></div>
+    <label class="kvc-campo"><span><i data-lucide="globe"></i>LP programada</span>${link(et_, idi, 'lpUrl', d.lpUrl, 'Link da landing page no ar neste idioma')}</label></div>`;
+  const passo = (n, t, ok) => `<div class="lp-passo ${ok?'ok':''}"><span>${ok?'<i data-lucide="check"></i>':n}</span>${t}</div>`;
+  return `<div class="lp-fluxo">
+    <div class="lp-etapa">${passo(1, 'Conteúdo base', et[0][1])}<div class="lp-col">${cardConteudo(`Conteúdo · ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)}`, 'idioma base · aprovado pelo cliente', 'conteudo', '', f.conteudo, LP_ST.conteudo)}</div></div>
+    <div class="lp-etapa">${passo(2, 'Traduções e layout, ao mesmo tempo', et[1][1] && et[2][1])}
+      <div class="lp-par"><div class="lp-col"><div class="lp-sub">Traduções <small>time de conteúdo · cliente aprova cada idioma</small></div>${idis.length ? idis.map(i=>cardConteudo(`Tradução · ${h(IDIOMAS[i]||i)}`, (c.paises||[]).filter(p=>p.idioma===i).map(p=>PAISES[p.cod]?PAISES[p.cod].f+' '+p.cod:p.cod).join(' '), 'trad', i, f.trad[i], LP_ST.trad, f.trad[i].status==='Aguardando conteúdo')).join('') : '<div class="card lp-c lp-bloq"><span class="small muted">Campanha em um idioma só: não há traduções.</span></div>'}</div>
+        <div class="lp-col"><div class="lp-sub">Layout em ${h(c.idiomaBase)} <small>designer · cliente aprova</small></div>
+          <div class="card kvc lp-lay ${f.layout.status==='Aguardando conteúdo'?'lp-bloq':''}"><div class="kvc-cab"><span class="kvc-ic"><i data-lucide="layout-template"></i></span><div><b>Layout da landing page</b><span>Adobe XD</span></div></div>
+            ${previaKV(f.layout.link)}
+            <label class="kvc-campo"><span><i data-lucide="link-2"></i>Link do Adobe XD</span>${link('layout', '', 'link', f.layout.link, 'Cole o link compartilhado do XD (xd.adobe.com/view/…)')}</label>
+            <div class="kvc-2"><label class="kvc-campo"><span><i data-lucide="user"></i>Responsável</span>${resp('layout', '', f.layout.resp)}</label><label class="kvc-campo"><span><i data-lucide="circle-dot"></i>Status</span>${sel('layout', 'status', '', LP_ST.layout, f.layout.status)}</label></div>
+            ${lpComentarios(c, ed)}</div></div></div></div>
+    <div class="lp-etapa">${passo(3, 'Programação · todas as línguas juntas', et[3][1])}<div class="lp-col"><div class="card lp-c ${podeProg?'':'lp-bloq'}"><div class="lp-c-cab"><b>Envio para programação</b><span>${podeProg ? 'layout e traduções aprovados: pode enviar' : 'libera quando o layout e todas as traduções estiverem aprovados'}</span></div>
+      <div class="lp-check">${et.slice(0,3).map(([t,v])=>`<span class="${v?'ok':''}"><i data-lucide="${v?'check-circle-2':'circle'}"></i>${t}</span>`).join('')}</div>
+      <div class="kvc-2"><label class="kvc-campo"><span><i data-lucide="user"></i>Responsável</span>${resp('prog', '', f.prog.resp)}</label><label class="kvc-campo"><span><i data-lucide="circle-dot"></i>Status</span>${sel('prog', 'status', '', LP_ST.prog, f.prog.status)}</label></div></div></div></div>
+  </div>`; }
+function lpComentarios(c, ed){ const cs = ((c.lpFluxo||{}).layout||{}).coment || [], me = quemSou();
+  return `<div class="kvm"><div class="kvm-h">Comentários${cs.length?` <span>${cs.length}</span>`:''}</div>
+    ${cs.map((x,i)=>`<div class="kvm-i">${avatar(x.quem||'?','av av-s')}<div class="kvm-c"><div class="kvm-m"><b>${h(x.quem||'—')}</b><span>${x.t ? new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : fdm(x.q)}</span>${ed && x.quem===me?`<a href="javascript:void 0" data-act="lpComentDel" data-id="${c.id}" data-i="${i}" title="Excluir comentário"><i data-lucide="trash-2"></i></a>`:''}</div><div class="kvm-t">${comMencoes(x.o).replace(/\n/g,'<br>')}</div></div></div>`).join('')}
+    ${ed ? `<div class="kvm-novo">${avatar(me||'?','av av-s')}<div class="kvm-in"><textarea id="lpm-txt-${c.id}" rows="1" placeholder="Adicione um comentário · use @ para mencionar" oninput="sugMencao(this);this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!this.parentNode.querySelector('.menc-sug')){event.preventDefault();this.closest('.kvm-novo').querySelector('button').click()}"></textarea><button class="btn btn-s btn-p" data-act="lpComentar" data-id="${c.id}" title="Enviar (Enter)"><i data-lucide="send"></i></button></div></div>` : ''}</div>`; }
 /* direcionamento do KV (opcional): norteia a criação do key visual */
 const KV_CAMPOS = [
   ['headline','Chamada principal (headline ou selling line)','Frase de maior destaque que resume o conceito, a oferta ou o tema central da campanha.','Estrutura textual'],
@@ -2664,7 +2719,7 @@ function entregaveisSecoes(c){
   const tipos = c.entregaveisTipos||[], comum = fase ? ' <span class="ent-comum">comum às duas fases</span>' : '', secs = [];
   const grade = (nome, da) => faixa(nome, da).replace('</span>', '</span>'+(['KV',...TIPOS_GLOBAIS].includes(nome)?comum:'')) + `<div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(nome,'',null)}</div>`;
   if (tipos.includes('KV')) { const da = L.filter(e=>e.secao==='KV' || e.auto==='kv'); da.forEach(e=>usados.add(e.id)); secs.push({nome:'KV', da, comum:!!fase, kv:true, html:()=>`<div class="kv-lado"><div class="kv-lado-d">${kvBriefingBloco(c, ed)}</div><div class="kv-lado-p">${kvCards(c, da, ed)}</div></div>`}); }
-  if (tipos.includes('Landing page') && fase!=='Awareness') { const f0 = e=>e.secao==='Landing page', da = L.filter(f0); secs.push({nome:'Landing page', da, html:()=>secaoColunas('Landing page', null, f0)}); da.forEach(e=>usados.add(e.id)); }
+  if (tipos.includes('Landing page') && fase!=='Awareness') { const f0 = e=>e.secao==='Landing page', da = L.filter(f0); secs.push({nome:'Landing page', da, lp:true, html:()=>lpFluxoBloco(c, ed)}); da.forEach(e=>usados.add(e.id)); }
   for (const canal of (fase ? canaisDaFase(c, fase) : (c.canais||[]))) { const f0 = e=>e.secao===canal || (!e.secao && e.canal===canal), da = L.filter(f0); secs.push({nome:canal, da, html:()=>secaoColunas(canal, canal, f0)}); da.forEach(e=>usados.add(e.id)); }
   for (const t of tipos.filter(t=>TIPOS_GLOBAIS.includes(t))) { const da = L.filter(e=>e.secao===t); da.forEach(e=>usados.add(e.id)); secs.push({nome:t, da, comum:!!fase, html:()=>grade(t, da)}); }
   const outras = L.filter(e=>!usados.has(e.id));
@@ -2674,7 +2729,7 @@ function entregaveisSecoes(c){
   // página de uma seção
   const aberta = ((UI.entSec||{})[c.id]) && secs.find(x=>x.nome===UI.entSec[c.id]);
   if (aberta) return seletorEtapa(c, false) + topo(`<a href="javascript:void 0" class="ent-voltar" data-act="entSec" data-id="${c.id}" data-v=""><i data-lucide="arrow-left"></i>Todas as seções</a>`)
-    + `<nav class="ent-tabs">${secs.map(x=>{ const cc = x.da.filter(e=>e.etapa==='concluido').length; return `<button class="${x===aberta?'on':''}" data-act="entSec" data-id="${c.id}" data-v="${h(x.nome)}"><i data-lucide="${ICONE_SECAO[x.nome]||'package'}"></i>${h(x.nome)}<span>${cc}/${x.da.length}</span></button>`; }).join('')}</nav>` + `<div class="ent-sec-pg">${aberta.html()}</div>`;
+    + `<nav class="ent-tabs">${secs.map(x=>{ const et = x.lp ? lpEtapas(c) : null, cc = et ? et.filter(e=>e[1]).length : x.da.filter(e=>e.etapa==='concluido').length, tt = et ? et.length : x.da.length; return `<button class="${x===aberta?'on':''}" data-act="entSec" data-id="${c.id}" data-v="${h(x.nome)}"><i data-lucide="${ICONE_SECAO[x.nome]||'package'}"></i>${h(x.nome)}<span>${cc}/${tt}</span></button>`; }).join('')}</nav>` + `<div class="ent-sec-pg">${aberta.html()}</div>`;
   // cards das seções
   const resumo = da => { const n = k => da.filter(e=>k.includes(e.etapa)).length, atr = da.filter(e=>e.etapa!=='concluido' && e.prazo && e.prazo < HOJE).length;
     const prox = da.filter(e=>e.etapa!=='concluido' && e.prazo && e.prazo >= HOJE).map(e=>e.prazo).sort()[0];
@@ -2683,7 +2738,7 @@ function entregaveisSecoes(c){
   const GRP = [['concluido',['concluido'],'concluída','#2e9d55'],['aprov',['aprov_conteudo','aprov_asset'],'em aprovação','#e0a100'],['ajuste',['ajuste_conteudo','ajuste_asset'],'em ajuste','#e8833a'],['prod',['producao'],'em produção','#3b82c4'],['ini',['briefing'],'não iniciada','#cfd5d9']];
   const plT = (n, t) => n===1 ? t : t.replace(/^(concluída|não iniciada)$/, m=>m+'s');
   const anel = pct => { const R = 19, C = 2*Math.PI*R; return `<svg class="ent-anel" viewBox="0 0 48 48"><circle cx="24" cy="24" r="${R}" class="tr"/><circle cx="24" cy="24" r="${R}" class="vl ${pct===100?'ok':''}" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/><text x="24" y="28">${pct}%</text></svg>`; };
-  const card = x => { const tot = x.da.length, conc = x.da.filter(e=>e.etapa==='concluido').length, r = resumo(x.da), pct = tot ? Math.round(conc/tot*100) : 0;
+  const card = x => { if (x.lp) return lpCardResumo(c, x); const tot = x.da.length, conc = x.da.filter(e=>e.etapa==='concluido').length, r = resumo(x.da), pct = tot ? Math.round(conc/tot*100) : 0;
     const paises = [...new Set(x.da.flatMap(e=>e.paises||[]))], segs = GRP.map(([k, ets, t, cor])=>({t, cor, n: x.da.filter(e=>ets.includes(e.etapa)).length})).filter(g=>g.n);
     return `<a href="javascript:void 0" class="ent-sc2 ${!tot?'vazio':''}" data-act="entSec" data-id="${c.id}" data-v="${h(x.nome)}">
       <div class="ent-sc2-cab"><span class="ent-sc2-ic"><i data-lucide="${ICONE_SECAO[x.nome]||'package'}"></i></span>
@@ -4742,6 +4797,10 @@ const ACT = {
     (e.coment = e.coment || []).push({q:HOJE, t:Date.now(), quem:quemSou(), o:txt});
     const menc = RESPONSAVEIS.filter(n=>txt.includes('@'+n)); registrar(`Comentário no KV de “${c.nome}”${menc.length?' (mencionou '+menc.join(', ')+')':''}`);
     salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
+  lpComentar: el => { const c = camp(el.dataset.id), ta = document.getElementById('lpm-txt-'+el.dataset.id), txt = (ta && ta.value || '').trim(); if (!c || !txt) return; const {f} = lpDados(c);
+    (f.layout.coment = f.layout.coment || []).push({q:HOJE, t:Date.now(), quem:quemSou(), o:txt}); const menc = RESPONSAVEIS.filter(n=>txt.includes('@'+n));
+    registrar(`Comentário no layout da landing page de “${c.nome}”${menc.length?' (mencionou '+menc.join(', ')+')':''}`); salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
+  lpComentDel: el => { const c = camp(el.dataset.id), L = (((c||{}).lpFluxo||{}).layout||{}).coment; if (!L || !confirm('Excluir este comentário?')) return; L.splice(+el.dataset.i, 1); salvar(); render(); },
   kvComentDel: el => { const c = camp(el.dataset.id), e = c && c.entregaveis.find(x=>x.id===el.dataset.e); if (!e || !confirm('Excluir este comentário?')) return; e.coment.splice(+el.dataset.i, 1); salvar(); render(); },
   kvBriefingSalvar: el => { const c = camp(el.dataset.id), v = ler($('#f-kvb')), b = {}; for (const [k] of KV_CAMPOS) if (String(v[k]||'').trim()) b[k] = String(v[k]).trim();
     if (Object.keys(b).length) c.kvBriefing = b; else delete c.kvBriefing; registrar(`Direcionamento do KV atualizado: ${c.nome}`); salvar(); fecharModal(); render(); toast('Direcionamento do KV salvo.'); },
@@ -5139,6 +5198,10 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
     gravarInvoice(x).then(ok=>{ if (!ok) { x.status = ant; render(); } else registrar(`Invoice ${x.numero||''} (${cliente(x.clienteId).nome}): ${ant} → ${v}`); }); return render(); }
   if (k==='gaSel') { const set = new Set(UI.gaSel||[]); el.checked ? set.add(el.dataset.k) : set.delete(el.dataset.k); UI.gaSel = [...set]; UI.selUlt = el.checked ? '[data-chg="gaSel"][data-k="'+el.dataset.k+'"]' : null; return render(); }
   if (k==='gaLoteStatus' || k==='gaLotePessoa') { if (!v) return; return gaLote(k==='gaLoteStatus'?'status':'pessoa', v); }
+  if (k==='lpCampo') { const c = camp(el.dataset.id); if (!c) return; const {f} = lpDados(c), et = el.dataset.et, alvo = et==='trad' ? f.trad[el.dataset.idi] : f[et], campo = el.dataset.k, val = (el.value||'').trim();
+    if (!alvo || (alvo[campo]||'')===val) return; alvo[campo] = val;
+    const nome = et==='conteudo' ? 'conteúdo base' : et==='trad' ? 'tradução '+(IDIOMAS[el.dataset.idi]||el.dataset.idi) : et==='layout' ? 'layout' : 'programação';
+    registrar(`Landing page de “${c.nome}” · ${nome}: ${campo==='status'?val:campo==='resp'?'responsável '+(val||'—'):campo==='link'?'link do XD atualizado':'link da LP programada atualizado'}`); salvar(); render(); toast('Salvo.'); return; }
   if (k==='kvCampo') { const c = camp(el.dataset.id); if (!c) return; let e = c.entregaveis.find(x=>x.id===el.dataset.e);
     if (!e) { e = {id:novoId('e'), secao:'KV', auto:'kv', nome:'KV da campanha', canal:'', paises:c.paises.map(p=>p.cod), formato:'Key visual', etapa:'briefing', versoes:[], aprovacoes:[], link:''}; c.entregaveis.push(e); }
     const campo = el.dataset.k, val = (el.value||'').trim(), ant = e[campo] || '';
