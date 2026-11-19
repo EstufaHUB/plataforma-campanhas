@@ -74,7 +74,10 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .tab tr.a-fase td{background:#f4f7f8;font-weight:700;color:var(--pet-900)}.tab tr.a-pais td:nth-child(2){padding-left:42px}
 .tab tr.a-grupo td:nth-child(2),.tab tr.a-fase td:first-child{white-space:nowrap}
 .tab.com-sel tr.a-pais td:nth-child(3){padding-left:42px}.tab.com-sel tr.a-pais td:nth-child(2){padding-left:8px}
-.tab td.c-sel,.tab th.c-sel{width:34px;padding-right:0}.sel-hov>input[type=checkbox]{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hov:hover>input[type=checkbox],.sel-hov>input:checked,.sel-hov.tem-sel>input[type=checkbox]{opacity:1}.sel-hover .c-sel input{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hover tr:hover .c-sel input,.sel-hover .c-sel input:checked,.sel-hover .c-sel input[data-parcial],.sel-hover.tem-sel .c-sel input,.sel-hover .c-sel input:focus-visible{opacity:1}.lote-flut{position:sticky;top:8px;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.18)}.tab td.c-sel input,.tab th.c-sel input{width:16px;height:16px;accent-color:var(--pet-700);cursor:pointer;vertical-align:middle}
+.tab td.c-sel,.tab th.c-sel{width:34px;padding-right:0}.sel-hov>input[type=checkbox]{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hov:hover>input[type=checkbox],.sel-hov>input:checked,.sel-hov.tem-sel>input[type=checkbox]{opacity:1}.sel-hover .c-sel input{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hover tr:hover .c-sel input,.sel-hover .c-sel input:checked,.sel-hover .c-sel input[data-parcial],.sel-hover.tem-sel .c-sel input,.sel-hover .c-sel input:focus-visible{opacity:1}.sel-barra-w{position:sticky;top:8px;z-index:20;padding:0 16px 8px;pointer-events:none}.sel-barra{pointer-events:auto;display:inline-flex;align-items:stretch;background:#fff;border:1px solid #e3e6ea;border-radius:8px;box-shadow:0 4px 14px rgba(15,15,15,.1);font-size:.84rem;overflow:hidden}
+.sel-barra .sb-n{display:flex;align-items:center;padding:0 12px;color:#2383e2;font-weight:500;border-right:1px solid #eef0f2;white-space:nowrap}.sb-b{position:relative;display:flex;align-items:center;gap:6px;padding:7px 11px;background:none;border:0;border-right:1px solid #eef0f2;font:inherit;color:#37352f;cursor:pointer;white-space:nowrap}.sb-b:last-child{border-right:0}.sb-b:hover{background:#f5f5f4}.sb-b svg{width:15px;height:15px;color:#6b6b68}.sb-ic{padding:7px 9px}
+.sb-b select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.tab tr.sel td,.ga-lin.sel{background:#e8f1fb!important}.tab td.c-sel input,.tab th.c-sel input{width:16px;height:16px;accent-color:var(--pet-700);cursor:pointer;vertical-align:middle}
 .tab tr.sel td{background:#eef0f3}
 .lote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--pet-900);color:#fff;border-radius:10px;margin:0 16px 12px}
 .lote b{font-weight:600}.lote select{padding:5px 8px;font-size:.85rem;border-radius:8px;border:0;color:#1b2a2f;background:#fff;width:auto;min-width:170px}
@@ -1854,14 +1857,12 @@ function listaAcoes(c, L, ed){
     }
     daFase.filter(t=>!vistos.has(t.id)).forEach(t=>corpo += linha(t,false));
   }
-  const loteBar = modoSel && sel.size ? `<div class="lote lote-flut">${sel.size?`<b>${sel.size} ação(ões) selecionada(s)</b>
-      <select data-chg="loteStatus" data-id="${c.id}"><option value="">Mudar status…</option>${opts(ST_ACAO,'__')}</select>
-      <select data-chg="lotePessoa" data-id="${c.id}"><option value="">Mudar responsável…</option>${opts(RESPONSAVEIS,'__')}</select>
-      <button class="btn btn-s" data-act="loteConcluir" data-id="${c.id}"><i data-lucide="check"></i>Concluir</button>
-      <button class="btn btn-s btn-perigo" data-act="loteExcluir" data-id="${c.id}"><i data-lucide="trash-2"></i>Excluir</button>
-      <span class="sep"></span><button class="btn btn-s" data-act="loteLimpar">Limpar seleção</button>`
-      : `<span>Marque as ações na lista (ou a caixa da etapa para pegar todas dela) para mudar várias de uma vez.</span><span class="sep"></span>`}
-</div>` : '';
+  const loteBar = modoSel && sel.size ? `<div class="sel-barra-w"><div class="sel-barra"><span class="sb-n">${sel.size} selecionada${sel.size===1?'':'s'}</span>
+      <label class="sb-b" title="Mudar status"><i data-lucide="circle-dot"></i>Status<select data-chg="loteStatus" data-id="${c.id}"><option value="">Status…</option>${opts(ST_ACAO,'__')}</select></label>
+      <label class="sb-b" title="Mudar responsável"><i data-lucide="users"></i>Responsável<select data-chg="lotePessoa" data-id="${c.id}"><option value="">Responsável…</option>${opts(RESPONSAVEIS,'__')}</select></label>
+      <button class="sb-b" data-act="loteConcluir" data-id="${c.id}" title="Marcar como concluídas"><i data-lucide="check"></i>Concluir</button>
+      <button class="sb-b sb-ic" data-act="loteExcluir" data-id="${c.id}" title="Excluir"><i data-lucide="trash-2"></i></button>
+      <button class="sb-b sb-ic" data-act="loteLimpar" title="Limpar seleção"><i data-lucide="x"></i></button></div></div>` : '';
   return `${loteBar}<div class="tabela-wrap"><table class="tab ${modoSel?'com-sel sel-hover':''} ${sel.size?'tem-sel':''}"><thead><tr>${modoSel?`<th class="c-sel"><input type="checkbox" data-chg="aSel" data-ids="${L.map(t=>t.id).join(',')}" ${L.length&&sel.size===L.length?'checked':''} ${sel.size&&sel.size<L.length?'data-parcial="1"':''} title="Selecionar todas"></th>`:''}<th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th></th></tr></thead><tbody>
     ${corpo || `<tr><td colspan="${nCol}" class="vazio">Nenhuma ação com esses filtros.</td></tr>`}</tbody></table></div>
     <div class="legenda-farol"><span><i style="background:#2e9d55"></i>Concluída</span><span><i style="background:#2f80b8"></i>Em andamento</span><span><i style="background:#e0a100"></i>Aguardando / em revisão</span><span><i style="background:#d0443a"></i>Atrasada ou bloqueada</span><span><i style="background:#9aa9ae"></i>Não iniciada / cancelada</span></div>`;
@@ -1923,8 +1924,12 @@ function pgAcoes(){
       || '<div class="card vazio">Nenhuma ação com esses filtros.</div>';
     const conc = L.filter(x=>!aberta(x)).length;
     corpo += `<div class="small muted" style="padding:4px 2px">${f.conc ? `<a href="javascript:void 0" data-act="ui" data-k="ga.conc" data-v="">Ocultar concluídas</a>` : `Concluídas ficam ocultas · <a href="javascript:void 0" data-act="ui" data-k="ga.conc" data-v="1">mostrar${conc?' ('+conc+')':''}</a>`}</div>`;
-    const lote = !ed || !sel.size ? '' :
-      `<div class="lote ga-lote lote-flut">${sel.size ? `<b>${sel.size} selecionada(s)</b><select data-chg="gaLoteStatus"><option value="">Mudar status…</option>${opts(ST_ACAO,'__')}</select><select data-chg="gaLotePessoa"><option value="">Mudar responsável…</option>${opts(RESPONSAVEIS,'__')}</select><button class="btn btn-s" data-act="gaLoteConcluir"><i data-lucide="check"></i>Concluir</button><button class="btn btn-s" data-act="gaSelTodas">Selecionar todas (${L.filter(aberta).length})</button><span class="sep"></span><button class="btn btn-s" data-act="gaLoteLimpar">Limpar seleção</button>` : ''}</div>`;
+    const lote = !ed || !sel.size ? '' : `<div class="sel-barra-w"><div class="sel-barra"><span class="sb-n">${sel.size} selecionada${sel.size===1?'':'s'}</span>
+      <label class="sb-b" title="Mudar status"><i data-lucide="circle-dot"></i>Status<select data-chg="gaLoteStatus"><option value="">Status…</option>${opts(ST_ACAO,'__')}</select></label>
+      <label class="sb-b" title="Mudar responsável"><i data-lucide="users"></i>Responsável<select data-chg="gaLotePessoa"><option value="">Responsável…</option>${opts(RESPONSAVEIS,'__')}</select></label>
+      <button class="sb-b" data-act="gaLoteConcluir" title="Marcar como concluídas"><i data-lucide="check"></i>Concluir</button>
+      <button class="sb-b" data-act="gaSelTodas" title="Selecionar todas as abertas">Todas (${L.filter(aberta).length})</button>
+      <button class="sb-b sb-ic" data-act="gaLoteLimpar" title="Limpar seleção"><i data-lucide="x"></i></button></div></div>`;
     corpo = lote + corpo;
   } else if (f.visao==='kanban') {
     const xs = L.filter(x=>f.conc || aberta(x));
