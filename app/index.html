@@ -220,13 +220,32 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .lpe-doc table:has(colgroup){table-layout:fixed}.lpe-edit.tbl-rz-ok,.lpe-edit.tbl-rz-ok td{cursor:col-resize}body.tbl-rz,body.tbl-rz *{cursor:col-resize!important;user-select:none}.lpe-doc td{position:relative}
 .tbl-sep{border-top:1px solid var(--borda);margin:5px 0}.tbl-cor-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:2px 8px 4px}.tbl-cores{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 4px}.tbl-cores button{border:0;background:none;padding:2px;border-radius:5px;cursor:pointer}.tbl-cores button:hover{background:#f1f3f4}.tbl-cor{display:block;width:20px;height:20px;border-radius:4px;border:1px solid var(--borda)}
 [data-cor="cinza"]{background:#f1f1ef!important}[data-cor="azul"]{background:#e7f0fa!important}[data-cor="verde"]{background:#e8f3ec!important}[data-cor="amarelo"]{background:#fbf3db!important}[data-cor="laranja"]{background:#fbecdd!important}[data-cor="vermelho"]{background:#fbe4e4!important}[data-cor="roxo"]{background:#efe8f8!important}.tbl-cor[data-cor=""]{background:#fff}
-.sel-bar{position:absolute;z-index:60;display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--borda);border-radius:9px;box-shadow:0 8px 26px rgba(15,15,15,.16);padding:4px}.sel-bar[hidden],.sel-cores[hidden]{display:none!important}.sel-bar>button{border:0;background:none;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tx2)}.sel-bar>button:hover{background:#f1f3f4}.sel-bar>button.on{color:#2f7cf6}.sel-bar svg{width:16px;height:16px}.sel-sep{width:1px;height:20px;background:var(--borda);margin:0 3px}
+.sel-bar{position:absolute;z-index:60;display:flex;flex-direction:column;gap:0;background:#fff;border:1px solid var(--borda);border-radius:9px;box-shadow:0 8px 26px rgba(15,15,15,.16);padding:4px}.sel-bar[hidden],.sel-cores[hidden]{display:none!important}.sel-l1{display:flex;align-items:center;gap:2px}.sel-l2{display:flex;gap:2px;border-top:1px solid var(--borda);margin-top:4px;padding-top:4px}.sel-l2 button{flex:1;display:flex;align-items:center;gap:7px;border:0;background:none;padding:6px 8px;border-radius:6px;cursor:pointer;font:inherit;font-size:.82rem;color:var(--tx)}.sel-l2 button:hover{background:#f1f3f4}.sel-l2 svg{width:15px;height:15px;color:var(--tx2)}.sel-l1>button{border:0;background:none;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tx2)}.sel-l1>button:hover{background:#f1f3f4}.sel-l1>button.on{color:#2f7cf6}.sel-bar svg{width:16px;height:16px}.sel-sep{width:1px;height:20px;background:var(--borda);margin:0 3px}
 .sel-cores{position:absolute;top:calc(100% + 6px);left:0;width:236px;background:#fff;border:1px solid var(--borda);border-radius:9px;box-shadow:0 8px 26px rgba(15,15,15,.16);padding:6px 8px 8px}.sel-ct{font-size:.7rem;font-weight:700;color:var(--tx3);padding:4px 2px}.sel-cg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.sel-cg button{border:0;background:none;height:32px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}.sel-cg button:hover{background:#f1f3f4}.sel-cg span{width:22px;height:22px;border:1px solid var(--borda);border-radius:5px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.85rem}
 .lpe-doc code{background:rgba(135,131,120,.15);color:#eb5757;border-radius:4px;padding:.1em .35em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em}
 .blk-menu{position:absolute;z-index:50;width:290px;max-height:330px;overflow:auto;background:#fff;border:1px solid var(--borda);border-radius:10px;box-shadow:0 12px 32px rgba(15,15,15,.16);padding:6px}.blk-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:6px 8px 4px}
 .blk-menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:6px 8px;border-radius:7px;cursor:pointer;text-align:left;font:inherit}.blk-menu button.sel,.blk-menu button:hover{background:#f1f3f4}.blk-ic{width:32px;height:32px;border:1px solid var(--borda);border-radius:6px;display:flex;align-items:center;justify-content:center;background:#fff;flex:none}.blk-ic svg{width:16px;height:16px;color:var(--tx2)}.blk-n{flex:1;display:flex;flex-direction:column}.blk-n b{font-size:.84rem;font-weight:500}.blk-n em{font-style:normal;font-size:.72rem;color:var(--tx3)}.blk-menu kbd{font-family:inherit;font-size:.7rem;color:var(--tx3)}
 .lpe-edit p:only-child:has(br:only-child)::before{content:'Escreva aqui… digite / para inserir blocos';color:var(--tx3);position:absolute;pointer-events:none}
-.np{max-width:900px;margin:0 auto}.np-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:-4px 0 18px}.np-top-d{display:flex;align-items:center;gap:8px}.np-salvo{font-size:.78rem;color:var(--tx3)}.np-pub{color:#1f7a47;border-color:#cfe6d2}
+.np{max-width:900px;margin:0 auto}
+.np.np-dg{max-width:1260px}.np-grade{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}.np-disc{position:relative}.np-disc .dc{position:absolute;left:0;right:0}
+@media (max-width:1180px){.np-grade{grid-template-columns:1fr}.np-disc .dc{position:static;margin-bottom:10px}}
+.dc{position:relative;background:#fff;border:1px solid var(--borda);border-radius:12px;box-shadow:0 3px 12px rgba(15,15,15,.05);padding:10px 12px;font-size:.84rem;transition:top .15s,box-shadow .15s;cursor:default}.dc.ativo{box-shadow:0 8px 24px rgba(15,15,15,.13);border-color:#d5dbe5;z-index:2}
+.dc-m{display:flex;align-items:center;gap:7px;min-height:24px}.dc-m b{font-weight:600;font-size:.82rem}.dc-m span{font-size:.72rem;color:var(--tx3)}.dc .av-s,.dp .av-s{width:22px;height:22px;font-size:.6rem;flex:none}
+.dc-t{margin:3px 0 0 29px;line-height:1.45;word-break:break-word}.dc-msg+.dc-msg,.dc-s+.dc-msg{margin-top:10px}.dc-s{margin:4px 0 0 29px;line-height:1.45;color:var(--tx2)}.dc-s del,.dp-tx del{color:var(--tx3)}.dc-s ins,.dp-tx ins{color:#2f7cf6;text-decoration:none;font-weight:500}
+.dc-ac{position:absolute;top:8px;right:8px;display:none;gap:2px;background:#fff;border:1px solid var(--borda);border-radius:8px;padding:2px;box-shadow:0 2px 8px rgba(15,15,15,.08)}.dc:hover .dc-ac,.dc.ativo .dc-ac{display:flex}.dc-ac button{border:0;background:none;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tx2)}.dc-ac button:hover{background:#f1f3f4;color:var(--tx)}.dc-ac svg{width:15px;height:15px}
+.dc-r{display:flex;gap:7px;align-items:flex-start;margin-top:10px}.dc-in{flex:1;position:relative;display:flex;align-items:flex-end;gap:4px;border:1px solid var(--borda);border-radius:8px;padding:4px 4px 4px 8px;background:#fff}.dc-in:focus-within{border-color:#2f7cf6;box-shadow:0 0 0 2px rgba(47,124,246,.15)}.dc-in textarea{flex:1;border:0;outline:0;resize:none;overflow:hidden;font:inherit;font-size:.82rem;padding:3px 0;min-height:20px;background:none}.dc-env{border:0;background:#e9ecef;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}.dc-in:focus-within .dc-env{background:#2f7cf6}.dc-env svg{width:14px;height:14px}
+.dc-novo .dc-in{margin:8px 0 0}.dc-bt{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}.dc-novo{border-color:#2f7cf6}.dc-sug .dc-m b::after{content:''}
+.disc-c{background:rgba(255,212,0,.14);border-bottom:2px solid rgba(240,190,0,.75);cursor:pointer;transition:background .15s}.disc-c.ativo{background:rgba(255,212,0,.38)}
+.disc-s{cursor:pointer;border-radius:3px}.disc-s del{color:var(--tx3);text-decoration:line-through;margin-right:3px}.disc-s ins{color:#2f7cf6;text-decoration:underline;text-decoration-color:rgba(47,124,246,.45);text-underline-offset:3px}.disc-s.ativo{background:rgba(47,124,246,.1)}
+::highlight(disc-novo){background-color:rgba(255,212,0,.4)}
+.dp-w{position:relative}.dp-bt{position:relative}.dp-bt.on{background:#f1f3f4}.dp-cnt{background:#e0a33a;color:#2b1a00;font-size:.68rem;font-weight:700;border-radius:20px;padding:0 6px;line-height:16px;margin-left:2px}
+.dp{position:absolute;right:0;top:calc(100% + 6px);z-index:70;width:400px;max-height:70vh;display:flex;flex-direction:column;background:#fff;border:1px solid var(--borda);border-radius:12px;box-shadow:0 14px 40px rgba(15,15,15,.18);text-align:left}
+.dp-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px}.dp-h b{font-size:.92rem}.dp-x{border:0;background:none;cursor:pointer;color:var(--tx3);width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center}.dp-x:hover{background:#f1f3f4}.dp-x svg{width:16px;height:16px}
+.dp-tabs{display:flex;gap:4px;padding:0 10px 8px;border-bottom:1px solid var(--borda)}.dp-tabs button{border:0;background:none;padding:5px 10px;border-radius:6px;cursor:pointer;font:inherit;font-size:.8rem;color:var(--tx2)}.dp-tabs button.on{background:#f1f3f4;color:var(--tx);font-weight:600}.dp-tabs span{color:var(--tx3);font-weight:500}
+.dp-l{overflow:auto;padding:6px}.dp-i{display:flex;gap:9px;padding:9px 8px;border-radius:8px;font-size:.82rem}.dp-ab{cursor:pointer}.dp-ab:hover{background:#f7f7f5}.dp-c{flex:1;min-width:0}.dp-m{display:flex;gap:7px;align-items:baseline}.dp-m b{font-weight:600}.dp-m span,.dp-r span{font-size:.72rem;color:var(--tx3)}.dp-r span{margin-left:6px}
+.dp-tx{margin-top:2px;line-height:1.45;word-break:break-word}.dp-q{display:block;color:var(--tx3);border-left:2px solid #f0be00;padding-left:7px;margin:2px 0 4px;font-size:.78rem}.dp-r{margin-top:5px;padding-left:9px;border-left:2px solid var(--borda);line-height:1.4}
+.dp-st{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:.74rem;font-weight:600;border-radius:20px;padding:2px 9px;background:#edf3ec;color:#2f6b3f}.dp-st svg{width:12px;height:12px}.dp-recusada{background:#fdebec;color:#a33a35}.dp-vz{padding:22px 14px;text-align:center;color:var(--tx3);font-size:.84rem}
+.np-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:-4px 0 18px}.np-top-d{display:flex;align-items:center;gap:8px}.np-salvo{font-size:.78rem;color:var(--tx3)}.np-pub{color:#1f7a47;border-color:#cfe6d2}
 .np-doc{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:44px 64px 56px}@media (max-width:760px){.np-doc{padding:28px 20px}}.np-ic{width:52px;height:52px;border-radius:12px;background:var(--pet-50);color:var(--pet-800);display:flex;align-items:center;justify-content:center;margin-bottom:14px}.np-ic svg{width:28px;height:28px}.np-tit{font-size:2.1rem;font-weight:800;letter-spacing:-.02em;margin:0 0 16px;line-height:1.15}
 .np-props{display:flex;flex-direction:column;gap:4px;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--borda)}.np-props>div{display:grid;grid-template-columns:160px 1fr;align-items:center;gap:10px;font-size:.88rem;min-height:30px}.np-props span{display:flex;align-items:center;gap:7px;color:var(--tx3)}.np-props span svg{width:15px;height:15px}.np-props b{font-weight:500}.np-props a{color:var(--azul);word-break:break-all}.np-sel{justify-self:start;border:1px solid transparent;background-color:transparent;border-radius:6px;padding:3px 6px;font:inherit;font-size:.88rem;cursor:pointer;max-width:320px}.np-sel:hover{background-color:#f1f3f4}select.np-st{padding:2px 10px;font-size:.78rem;width:auto!important;min-width:0;field-sizing:content}.np-sel{field-sizing:content}select.np-st:hover{filter:brightness(.97)}.np-chk{display:flex;align-items:center;gap:8px;justify-self:start;cursor:pointer}.np-chk input{width:16px;height:16px;accent-color:var(--verde);cursor:pointer;margin:0}.np-chk em{font-style:normal;font-size:.8rem;color:var(--verde);font-weight:600}
 .np-st{justify-self:start;font-size:.78rem;font-weight:700;border-radius:20px;padding:2px 10px;border:1px solid transparent}
@@ -1473,6 +1492,14 @@ function notificacoes(){
         add('menc-'+c.id+'-'+t.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em “${t.nome}”`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/acoes`, q:x.q}); }
     for (const c of ativas()) for (const x of ((((c.lpFluxo||{}).layout||{}).coment)||[])) if (x.q>=desde && mencionaMe(x.o))
       add('menclp-'+c.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} no layout da landing page`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
+    // comentários e sugestões no texto da landing page: menção, resposta ao seu e desfecho do seu
+    for (const c of ativas()) { const F = c.lpFluxo || {}, alvos = [['conteudo','',F.conteudo], ...Object.entries(F.trad||{}).map(([i,v])=>['trad',i,v])];
+      for (const [et, idi, d] of alvos) for (const x of ((d||{}).disc||[])) { const link = `#/lp/${c.id}/${et}${idi?'/'+idi:''}`, onde = et==='trad' ? 'na tradução '+(IDIOMAS[idi]||idi)+' da landing page' : 'no texto da landing page', seu = x.tipo==='s' ? 'sua sugestão' : 'seu comentário';
+        (x.msgs||[]).forEach((m,i)=>{ const q = new Date(m.t).toISOString().slice(0,10); if (q < desde) return;
+          if (mencionaMe(m.o)) add('menclp-d-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'at-sign', t:`${m.quem===me?'Você se mencionou':(m.quem||'Alguém')+' mencionou você'} ${onde}`, d:`${c.nome} · ${m.o.slice(0,90)}`, link, q});
+          else if (x.quem===me && m.quem!==me && (i>0 || x.tipo==='s')) add('menclp-r-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'message-circle', t:`${m.quem||'Alguém'} respondeu ${seu} ${onde}`, d:`${c.nome} · ${m.o.slice(0,90)}`, link, q}); });
+        if (x.quem===me && x.st!=='aberta' && x.fimPor && x.fimPor!==me && x.fimEm) { const q = new Date(x.fimEm).toISOString().slice(0,10); if (q >= desde)
+          add('menclp-f-'+x.id, {ts:x.fimEm, tipo:'azul', ic: x.st==='recusada' ? 'x-circle' : 'check-circle-2', t:`${x.fimPor} ${x.st==='aceita'?'aceitou':x.st==='recusada'?'recusou':'resolveu'} ${seu} ${onde}`, d:`${c.nome} · “${(x.trecho||'').slice(0,80)}”`, link, q}); } } }
     for (const c of ativas()) for (const e of (c.entregaveis||[])) for (const x of (e.coment||[])) if (x.q>=desde && mencionaMe(x.o))
       add('mencent-'+c.id+'-'+e.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} no ${e.nome}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
     for (const [mid, rs] of Object.entries(S.registrosStatus||{})) for (const x of rs) if (x.tipo==='coment' && (x.q||'')>='' && mencionaMe(x.o)) {
@@ -2713,10 +2740,11 @@ function lpFluxoBloco(c, ed){ const {f, idis} = lpDados(c), et = lpEtapas(c), po
       <div class="kvc-2"><label class="kvc-campo"><span><i data-lucide="user"></i>Responsável</span>${resp('prog', '', f.prog.resp)}</label><label class="kvc-campo"><span><i data-lucide="circle-dot"></i>Status</span>${sel('prog', 'status', '', LP_ST.prog, f.prog.status)}</label></div></div></div></div>
   </div>`; }
 /* texto da LP: editor simples (negrito, itálico, títulos, listas, link) e aprovação do cliente dentro do card */
-const lpTextoPuro = html => { if (!html) return ''; const d = document.createElement('div'); d.innerHTML = String(html).replace(/<\/(p|h\d|li|div|td|th|tr|summary)>|<br\s*\/?>/gi, m=>m+' '); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
+const lpTextoPuro = html => { if (!html) return ''; const d = document.createElement('div'); d.innerHTML = lpSemDisc(String(html)).replace(/<\/(p|h\d|li|div|td|th|tr|summary)>|<br\s*\/?>/gi, m=>m+' '); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
 function lpLimpa(html){ const d = document.createElement('div'); d.innerHTML = html || '';
   d.querySelectorAll('script,style,iframe,object,embed,meta,link').forEach(n=>n.remove());
-  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable|colspan|rowspan)$/i.test(a.name) || (n.tagName==='COL' && a.name==='style' && /^width:\s*\d+(\.\d+)?px;?$/.test(v.trim())) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v)) || (/^(SPAN|B|STRONG|I|EM|U|S|STRIKE|CODE|A|FONT)$/.test(n.tagName) && a.name==='style' && /^(\s*(background-)?color:\s*(#[0-9a-f]{3,8}|rgba?\([\d.,\s]+\)|transparent)\s*;?)+$/i.test(v));
+  d.querySelectorAll('*').forEach(n=>{ if (n.hasAttribute('class')) { const ks = n.getAttribute('class').split(/\s+/).filter(k=>/^(todo|callout|callout-ic|callout-tx|disc-c|disc-s)$/.test(k)); if (ks.length) n.setAttribute('class', ks[0]); else n.removeAttribute('class'); }
+    for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable|colspan|rowspan)$/i.test(a.name) || (n.tagName==='COL' && a.name==='style' && /^width:\s*\d+(\.\d+)?px;?$/.test(v.trim())) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx|disc-c|disc-s)$/.test(v)) || a.name==='data-disc' || (/^(SPAN|B|STRONG|I|EM|U|S|STRIKE|CODE|A|FONT)$/.test(n.tagName) && a.name==='style' && /^(\s*(background-)?color:\s*(#[0-9a-f]{3,8}|rgba?\([\d.,\s]+\)|transparent)\s*;?)+$/i.test(v));
       if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(v)) || !ok) n.removeAttribute(a.name); } if (n.tagName==='A') { n.setAttribute('target','_blank'); n.setAttribute('rel','noopener'); } });
   return d.innerHTML; }
 function lpAlvo(c, et, idi){ const {f} = lpDados(c); return et==='trad' ? f.trad[idi] : f[et]; }
@@ -2810,7 +2838,8 @@ const CORES_TX = [['','Padrão'],['#787774','Cinza'],['#9f6b53','Marrom'],['#d97
 const CORES_FD = [['','Padrão'],['#f1f1ef','Cinza'],['#f4eeee','Marrom'],['#fbecdd','Laranja'],['#fbf3db','Amarelo'],['#edf3ec','Verde'],['#e7f3f8','Azul'],['#f6f3f9','Roxo'],['#faf1f5','Rosa'],['#fdebec','Vermelho']];
 function barraSelecao(ed){ const box = ed.parentNode, bar = document.createElement('div'); bar.className = 'sel-bar'; bar.hidden = true; box.appendChild(bar);
   const B = [['cor','baseline','Cor do texto'],['|'],['bold','bold','Negrito (Ctrl+B)'],['italic','italic','Itálico (Ctrl+I)'],['underline','underline','Sublinhado (Ctrl+U)'],['strikeThrough','strikethrough','Tachado'],['code','code','Código'],['|'],['link','link','Link'],['removeFormat','remove-formatting','Limpar formatação']];
-  bar.innerHTML = B.map(([a,ic,t])=>a==='|' ? '<span class="sel-sep"></span>' : `<button type="button" data-a="${a}" title="${t}"><i data-lucide="${ic}"></i></button>`).join('')
+  bar.innerHTML = '<div class="sel-l1">' + B.map(([a,ic,t])=>a==='|' ? '<span class="sel-sep"></span>' : `<button type="button" data-a="${a}" title="${t}"><i data-lucide="${ic}"></i></button>`).join('') + '</div>'
+    + (ed.dataset.disc==='1' ? `<div class="sel-l2"><button type="button" data-a="comentar"><i data-lucide="message-square"></i>Comentar</button><button type="button" data-a="sugerir"><i data-lucide="pencil-line"></i>Sugerir</button></div>` : '')
     + `<div class="sel-cores" hidden><div class="sel-ct">Cor do texto</div><div class="sel-cg">${CORES_TX.map(([c,t])=>`<button type="button" data-tx="${c}" title="${t}"><span style="color:${c||'var(--tx)'}">A</span></button>`).join('')}</div>
       <div class="sel-ct">Cor de fundo</div><div class="sel-cg">${CORES_FD.map(([c,t])=>`<button type="button" data-fd="${c}" title="${t}"><span style="background:${c||'#fff'}"></span></button>`).join('')}</div></div>`;
   if (window.lucide) lucide.createIcons();
@@ -2840,7 +2869,8 @@ function barraSelecao(ed){ const box = ed.parentNode, bar = document.createEleme
   bar.addEventListener('mousedown', e => { e.preventDefault(); const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tx != null) { pintar('foreColor', b.dataset.tx); cores.hidden = true; return; }
     if (b.dataset.fd != null) { pintar('hiliteColor', b.dataset.fd); cores.hidden = true; return; }
-    const a = b.dataset.a; if (a==='cor') { cores.hidden = !cores.hidden; return; } cores.hidden = true; if (ed._snap) ed._snap(); volta();
+    const a = b.dataset.a; if (a==='cor') { cores.hidden = !cores.hidden; return; } cores.hidden = true;
+    if (a==='comentar' || a==='sugerir') { const r = faixa && faixa.cloneRange(); esconder(); if (r) discNovo(a, ed, r); return; } if (ed._snap) ed._snap(); volta();
     if (a==='code') { const s = getSelection(), r = s.getRangeAt(0), n = r.commonAncestorContainer, c = (n.nodeType===3 ? n.parentNode : n).closest('code');
       if (c && ed.contains(c)) { const fil = [...c.childNodes]; c.replaceWith(...fil); const nr = document.createRange(); nr.setStartBefore(fil[0]); nr.setEndAfter(fil[fil.length-1]); s.removeAllRanges(); s.addRange(nr); }
       else { const el = document.createElement('code'); el.appendChild(r.extractContents()); r.insertNode(el); const nr = document.createRange(); nr.selectNodeContents(el); s.removeAllRanges(); s.addRange(nr); } }
@@ -2952,32 +2982,128 @@ function pgLpPagina(r){ const c = camp(r[1]), et = r[2], idi = r[3] || '';
   const {f} = lpDados(c), d = lpAlvo(c, et, idi); if (!d) return '<div class="vazio">Idioma não encontrado.</div>';
   const ed = ehEquipe(), trad = et==='trad', nomeIdi = IDIOMAS[trad ? idi : c.idiomaBase] || '', titulo = `Texto landing page · ${nomeIdi}`, st = d.status || '';
   migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,`#/clientes/${c.clienteId}`],[c.nome,`#/campanha/${c.id}/entregaveis`],['Landing page',`#/campanha/${c.id}/entregaveis`],[nomeIdi]]);
-  UI.lpTxt = {id:c.id, et, idi}; posRender.push(()=>{ const e = document.getElementById('lpe-edit'); if (e && ed) { editorBlocos(e); lpAutoSalvar(e); } });
+  UI.lpTxt = {id:c.id, et, idi}; posRender.push(()=>{ const e = document.getElementById('lpe-edit'); if (!e) return; if (ed) { editorBlocos(e); lpAutoSalvar(e); }
+    let tp; e.addEventListener('click', ev => { const a = ev.target.closest('[data-disc]'); if (a) discAtivar(a.dataset.disc); });
+    e.addEventListener('input', () => { clearTimeout(tp); tp = setTimeout(discPosicionar, 150); });
+    requestAnimationFrame(() => { discAtivar(UI.discAtivo, true); discPosicionar(); if (UI.discRolar) { const an = e.querySelector(`[data-disc="${UI.discRolar}"]`); if (an) an.scrollIntoView({block:'center', behavior:'smooth'}); UI.discRolar = null; } }); });
+  const abertas = discAbertas(d);
   const hist = (d.hist||[]).slice().reverse();
   const acoes = !ed ? '' : st==='Aguardando aprovação do cliente' ? `<button class="btn btn-s" data-act="lpTextoAjustes"><i data-lucide="message-square-warning"></i>Cliente pediu ajustes</button><button class="btn btn-s btn-p" data-act="lpTextoAprovar"><i data-lucide="check"></i>Cliente aprovou</button>`
     : st==='Aprovado' ? '' : `<button class="btn btn-s btn-p" data-act="lpTextoEnviar"><i data-lucide="send"></i>Enviar para aprovação</button>`;
-  return `<div class="np"><div class="np-top"><a href="#/campanha/${c.id}/entregaveis" class="ent-voltar" onclick="UI.entSec=UI.entSec||{};UI.entSec['${c.id}']='Landing page'"><i data-lucide="arrow-left"></i>Landing page</a>
-      <div class="np-top-d"><span class="np-salvo" id="np-salvo"></span>${ed?`<button class="btn btn-s ${d.publico?'np-pub':''}" data-act="lpCompartilhar"><i data-lucide="${d.publico?'globe':'share-2'}"></i>${d.publico?'Publicada na web':'Compartilhar'}</button>`:''}${acoes}</div></div>
-    <article class="np-doc"><div class="np-ic"><i data-lucide="file-text"></i></div><h1 class="np-tit">${h(titulo)}</h1>
+  return `<div class="np np-dg"><div class="np-top"><a href="#/campanha/${c.id}/entregaveis" class="ent-voltar" onclick="UI.entSec=UI.entSec||{};UI.entSec['${c.id}']='Landing page'"><i data-lucide="arrow-left"></i>Landing page</a>
+      <div class="np-top-d"><span class="np-salvo" id="np-salvo"></span><div class="dp-w"><button class="btn btn-s dp-bt ${UI.discPainel?'on':''}" data-act="discPainel" title="Comentários e sugestões"><i data-lucide="message-square-text"></i>${abertas.length?`<span class="dp-cnt">${abertas.length}</span>`:''}</button>${UI.discPainel ? discPainelHtml(d) : ''}</div>${ed?`<button class="btn btn-s ${d.publico?'np-pub':''}" data-act="lpCompartilhar"><i data-lucide="${d.publico?'globe':'share-2'}"></i>${d.publico?'Publicada na web':'Compartilhar'}</button>`:''}${acoes}</div></div>
+    <div class="np-grade"><article class="np-doc"><div class="np-ic"><i data-lucide="file-text"></i></div><h1 class="np-tit">${h(titulo)}</h1>
       <div class="np-props"><div><span><i data-lucide="megaphone"></i>Campanha</span><b>${h(c.nome)} · ${h(cliente(c.clienteId).nome)}</b></div>
         <div><span><i data-lucide="user"></i>Responsável</span>${ed ? `<select class="np-sel" data-chg="lpCampo" data-id="${c.id}" data-et="${et}" data-idi="${idi}" data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>
         <div><span><i data-lucide="circle-dot"></i>Status</span>${ed ? `<select class="kvc-st kvc-${lpCor(st)} np-st np-sel" data-chg="lpCampo" data-id="${c.id}" data-et="${et}" data-idi="${idi}" data-k="status">${opts(LP_ST[trad?'trad':'conteudo'], st)}</select>` : `<b class="kvc-st kvc-${lpCor(st)} np-st">${h(st)}</b>`}</div>
         <div><span><i data-lucide="check-square"></i>Conteúdo aprovado</span><label class="np-chk"><input type="checkbox" data-chg="lpAprovado" data-id="${c.id}" data-et="${et}" data-idi="${idi}" ${st==='Aprovado'?'checked':''} ${ed?'':'disabled'}><em>${st==='Aprovado' ? 'Aprovado pelo cliente' : ''}</em></label></div>
         ${d.publico?`<div><span><i data-lucide="globe"></i>Link público</span><b><a href="${lpLinkPublico(d.publico)}" target="_blank" rel="noopener">${lpLinkPublico(d.publico).replace(/^https?:\/\//,'').slice(0,60)}…</a></b></div>`:''}</div>
-      ${trad ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)} (aprovado)</summary><div class="lpe-doc">${lpLimpa(f.conteudo.texto) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
-      <div class="lpe-doc np-corpo ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true"':''}>${lpLimpa(d.texto)}</div>
+      ${trad ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)} (aprovado)</summary><div class="lpe-doc">${lpSemDisc(lpLimpa(f.conteudo.texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
+      <div class="lpe-doc np-corpo ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
       ${hist.length ? `<div class="lpe-hist"><div class="lpe-rot">Histórico da aprovação</div>${hist.map(x=>`<div><b>${h(x.o)}</b><span>${new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ${h(x.quem||'')}</span>${x.coment?`<em>“${h(x.coment)}”</em>`:''}</div>`).join('')}</div>` : ''}
-    </article></div>`; }
+    </article><aside class="np-disc" id="np-disc">${abertas.map(x=>discCard(x, ed)).join('')}</aside></div></div>`; }
 /* salva sozinho enquanto escreve (e atualiza a versão pública, se houver) */
 function lpAutoSalvar(ed){ let t; ed.addEventListener('input', () => { const el = document.getElementById('np-salvo'); if (el) el.textContent = 'Salvando…'; clearTimeout(t);
-  t = setTimeout(() => { const {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi); d.texto = lpLimpa(ed.innerHTML); d.editadoEm = Date.now(); d.editadoPor = quemSou(); salvar(); lpAtualizarPublico(c, d, et, idi);
+  t = setTimeout(() => { if (!ed.isConnected) return; const {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi); d.texto = lpLimpa(ed.innerHTML); d.editadoEm = Date.now(); d.editadoPor = quemSou(); salvar(); lpAtualizarPublico(c, d, et, idi);
     if (el) el.textContent = 'Salvo'; const u = document.getElementById('np-ult'); if (u) u.textContent = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' · '+quemSou(); }, 900); }); }
+/* =====================================================================
+   COMENTÁRIOS E SUGESTÕES NO TEXTO (como no Notion)
+   d.disc = [{id, tipo:'c'|'s', trecho, novo, quem, t, st:'aberta'|'resolvida'|'aceita'|'recusada', fimPor, fimEm, msgs:[{quem,t,o}]}]
+   No texto: comentário = <span class="disc-c" data-disc>; sugestão = <span class="disc-s" data-disc contenteditable=false><del>antigo</del><ins>novo</ins></span>
+   ===================================================================== */
+const discAlvo = () => { const {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!c) return {}; return {c, d: lpAlvo(c, et, idi), et, idi}; };
+const discAbertas = d => ((d && d.disc) || []).filter(x=>x.st==='aberta');
+const discQuando = t => t ? new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+const discDesfaz = (s, aceitar) => { if (s.classList.contains('disc-s')) { const del = s.querySelector('del'), ins = s.querySelector('ins'); if (aceitar) s.replaceWith(document.createTextNode(ins ? ins.textContent : '')); else s.replaceWith(...(del ? [...del.childNodes] : [])); } else s.replaceWith(...s.childNodes); };
+/* versão limpa (página pública, resumo, original da tradução): sem marcas; sugestões abertas mostram o texto original */
+function lpSemDisc(html){ if (!html || !/data-disc/.test(html)) return html || ''; const t = document.createElement('div'); t.innerHTML = html; t.querySelectorAll('span[data-disc]').forEach(s=>discDesfaz(s, false)); return t.innerHTML; }
+/* tira as marcas das discussões que não estão abertas (resolvidas, ou rascunho abandonado) */
+function lpDiscSoAbertas(html, d){ if (!html || !/data-disc/.test(html)) return html || ''; const ok = new Set(discAbertas(d).map(x=>x.id)), t = document.createElement('div'); t.innerHTML = html;
+  t.querySelectorAll('span[data-disc]').forEach(s=>{ if (!ok.has(s.dataset.disc)) discDesfaz(s, false); }); return t.innerHTML; }
+function discAplicarTexto(html, id, aceitar){ const t = document.createElement('div'); t.innerHTML = html || ''; t.querySelectorAll(`span[data-disc="${id}"]`).forEach(s=>discDesfaz(s, aceitar)); return t.innerHTML; }
+/* marca o trecho comentado (pode atravessar parágrafos: marca cada pedaço de texto) */
+function discEnvolver(r, id){ const raiz = r.commonAncestorContainer.nodeType===3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer, nos = [];
+  const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (r.intersectsNode(n) && n.textContent.trim() && !n.parentNode.closest('.disc-s')) nos.push(n);
+  const sc = r.startContainer, so = r.startOffset, ec = r.endContainer, eo = r.endOffset; let prim = null;
+  for (let t of nos) { const ini = t===sc ? so : 0, fim = t===ec ? eo : t.length; if (fim <= ini) continue;
+    if (fim < t.length) t.splitText(fim); if (ini > 0) t = t.splitText(ini); if (!t.textContent.trim()) continue;
+    const sp = document.createElement('span'); sp.className = 'disc-c'; sp.dataset.disc = id; t.replaceWith(sp); sp.appendChild(t); prim = prim || sp; }
+  return prim; }
+function discSugerirDom(r, id, novo){ const sp = document.createElement('span'); sp.className = 'disc-s'; sp.dataset.disc = id; sp.setAttribute('contenteditable', 'false');
+  const del = document.createElement('del'), ins = document.createElement('ins'); del.appendChild(r.extractContents()); ins.textContent = novo; sp.append(del, ins); r.insertNode(sp); return sp; }
+let DISC_RASC = null;
+function discNovo(tipo, ed, r){ const aside = document.getElementById('np-disc'); if (!aside) return; discCancelar();
+  const trecho = r.toString().replace(/\s+/g,' ').trim(); if (!trecho) return;
+  if (tipo==='sugerir') { const blk = n => (n.nodeType===3 ? n.parentNode : n).closest('p,h1,h2,h3,h4,li,td,th,blockquote,summary,.callout-tx');
+    if (blk(r.startContainer) !== blk(r.endContainer)) return toast('Para sugerir, selecione um trecho dentro do mesmo parágrafo.');
+    const tmp = document.createElement('div'); tmp.appendChild(r.cloneContents()); if (tmp.querySelector('.disc-s')) return toast('Esse trecho já tem uma sugestão.'); }
+  const me = quemSou(), id = novoId('d'); DISC_RASC = {tipo, id, r, ed, trecho};
+  try { if (window.CSS && CSS.highlights && window.Highlight) CSS.highlights.set('disc-novo', new Highlight(r)); } catch(e){}
+  const card = document.createElement('div'); card.className = 'dc dc-novo ativo' + (tipo==='sugerir' ? ' dc-sug' : ''); card.dataset.card = id;
+  card.innerHTML = `<div class="dc-m">${avatar(me||'?','av av-s')}<b>${h(me||'')}</b>${tipo==='sugerir'?'<span>sugestão</span>':''}</div>
+    ${tipo==='sugerir' ? `<div class="dc-s">Substituir <del>${h(trecho.slice(0,300))}</del> por:</div>` : ''}
+    <div class="dc-in"><textarea rows="2" placeholder="${tipo==='sugerir' ? 'Texto sugerido' : 'Adicione um comentário… use @ para mencionar'}"></textarea></div>
+    <div class="dc-bt"><button type="button" class="btn btn-s" onclick="discCancelar()">Cancelar</button><button type="button" class="btn btn-s btn-p" onclick="discConfirmar()">${tipo==='sugerir'?'Sugerir':'Comentar'}</button></div>`;
+  aside.appendChild(card); const ta = card.querySelector('textarea'); if (tipo==='sugerir') ta.value = trecho;
+  const cresce = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+  ta.oninput = () => { if (tipo==='comentar') sugMencao(ta); cresce(); };
+  ta.onkeydown = e => { if (e.key==='Escape') { e.preventDefault(); discCancelar(); } else if (e.key==='Enter' && !e.shiftKey && !ta.parentNode.querySelector('.menc-sug')) { e.preventDefault(); discConfirmar(); } };
+  aside.querySelectorAll('.dc.ativo:not(.dc-novo)').forEach(k=>k.classList.remove('ativo'));
+  cresce(); discPosicionar(); ta.focus(); if (tipo==='sugerir') ta.select(); }
+function discCancelar(){ try { if (window.CSS && CSS.highlights) CSS.highlights.delete('disc-novo'); } catch(e){} const k = document.querySelector('.dc-novo'); if (k) k.remove(); DISC_RASC = null; discPosicionar(); }
+function discConfirmar(){ const R = DISC_RASC, card = document.querySelector('.dc-novo'); if (!R || !card) return; const txt = card.querySelector('textarea').value.trim(), {c, d, et, idi} = discAlvo(); if (!d) return;
+  if (!txt) return toast(R.tipo==='comentar' ? 'Escreva o comentário.' : 'Escreva o texto sugerido.');
+  if (R.tipo==='sugerir' && txt===R.trecho) return toast('O texto sugerido é igual ao original.');
+  if (!R.ed.isConnected) return discCancelar(); if (R.ed._snap) R.ed._snap();
+  const me = quemSou(), x = {id:R.id, tipo: R.tipo==='comentar' ? 'c' : 's', trecho:R.trecho, quem:me, t:Date.now(), st:'aberta', msgs:[]};
+  if (x.tipo==='c') { if (!discEnvolver(R.r, R.id)) return toast('Não foi possível marcar esse trecho.'); x.msgs.push({quem:me, t:x.t, o:txt}); }
+  else { discSugerirDom(R.r, R.id, txt); x.novo = txt; }
+  (d.disc = d.disc || []).push(x); try { CSS.highlights && CSS.highlights.delete('disc-novo'); } catch(e){} DISC_RASC = null;
+  UI.discAtivo = x.id; lpGuardarEdicao(); const menc = x.tipo==='c' ? RESPONSAVEIS.filter(n=>txt.includes('@'+n)) : [];
+  registrar(`Landing page de “${c.nome}” · ${et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base'}: ${x.tipo==='c' ? 'comentário' : 'sugestão'} em “${R.trecho.slice(0,60)}”${menc.length?' (mencionou '+menc.join(', ')+')':''}`);
+  salvar(); render(); toast(x.tipo==='c' ? (menc.length ? `Comentário adicionado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário adicionado.') : 'Sugestão adicionada.'); }
+function discAtivar(id, semRolar){ UI.discAtivo = id || null; const ed = document.getElementById('lpe-edit'), aside = document.getElementById('np-disc'); if (!aside) return;
+  aside.querySelectorAll('.dc:not(.dc-novo)').forEach(k=>k.classList.toggle('ativo', k.dataset.card===id));
+  if (ed) ed.querySelectorAll('[data-disc]').forEach(a=>a.classList.toggle('ativo', a.dataset.disc===id));
+  if (!semRolar) discPosicionar(); }
+/* coloca cada balão na altura do trecho dele; os seguintes descem para não sobrepor */
+function discPosicionar(){ const aside = document.getElementById('np-disc'), ed = document.getElementById('lpe-edit'); if (!aside || !ed) return;
+  const cards = [...aside.querySelectorAll('.dc')]; if (!cards.length) { aside.style.minHeight = ''; return; }
+  if (getComputedStyle(cards[0]).position !== 'absolute') { cards.forEach(k=>k.style.top = ''); aside.style.minHeight = ''; return; }
+  const A = aside.getBoundingClientRect().top;
+  const pos = cards.map(k=>{ let y = null; if (k.classList.contains('dc-novo')) { if (DISC_RASC) y = DISC_RASC.r.getBoundingClientRect().top; } else { const an = ed.querySelector(`[data-disc="${k.dataset.card}"]`); if (an) y = an.getBoundingClientRect().top; }
+    return {k, y: y==null ? Infinity : y - A}; }).sort((a,b)=>a.y-b.y);
+  let fim = 0; for (const p of pos) { const top = Math.max(p.y===Infinity ? fim : p.y, fim); p.k.style.top = top + 'px'; fim = top + p.k.offsetHeight + 10; }
+  aside.style.minHeight = fim + 'px'; }
+window.addEventListener('resize', () => { clearTimeout(window._dp); window._dp = setTimeout(discPosicionar, 120); });
+function discCard(x, ed){ const me = quemSou(), msgs = x.msgs || [], resp = x.tipo==='c' ? msgs.slice(1) : msgs;
+  const ac = !ed ? '' : `<div class="dc-ac">${x.tipo==='s' ? `<button type="button" title="Aceitar a sugestão" data-act="discFim" data-d="${x.id}" data-v="aceita"><i data-lucide="check"></i></button><button type="button" title="Recusar a sugestão" data-act="discFim" data-d="${x.id}" data-v="recusada"><i data-lucide="x"></i></button>`
+    : `<button type="button" title="Resolver" data-act="discFim" data-d="${x.id}" data-v="resolvida"><i data-lucide="check"></i></button>`}${x.quem===me ? `<button type="button" title="Excluir" data-act="discExcluir" data-d="${x.id}"><i data-lucide="trash-2"></i></button>` : ''}</div>`;
+  const cab = (quem, t, extra) => `<div class="dc-m">${avatar(quem||'?','av av-s')}<b>${h(quem||'—')}</b><span>${discQuando(t)}</span>${extra||''}</div>`;
+  const msg = m => `<div class="dc-msg">${cab(m.quem, m.t)}<div class="dc-t">${comMencoes(m.o).replace(/\n/g,'<br>')}</div></div>`;
+  return `<div class="dc ${x.tipo==='s'?'dc-sug':''} ${UI.discAtivo===x.id?'ativo':''}" data-card="${x.id}" onclick="if(!event.target.closest('button,textarea,a'))discAtivar('${x.id}')">${ac}
+    ${x.tipo==='c' ? `<div class="dc-msg">${cab(x.quem, x.t)}<div class="dc-t">${comMencoes((msgs[0]||{}).o||'').replace(/\n/g,'<br>')}</div></div>`
+      : `${cab(x.quem, x.t)}<div class="dc-s">Substituir <del>${h(x.trecho)}</del> por <ins>${h(x.novo||'')}</ins></div>`}
+    ${resp.map(msg).join('')}
+    ${ed ? `<div class="dc-r">${avatar(me||'?','av av-s')}<div class="dc-in"><textarea id="dcr-${x.id}" rows="1" placeholder="Responder… use @ para mencionar" onfocus="discAtivar('${x.id}', true)" oninput="sugMencao(this);this.style.height='auto';this.style.height=this.scrollHeight+'px';discPosicionar()" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!this.parentNode.querySelector('.menc-sug')){event.preventDefault();this.parentNode.querySelector('.dc-env').click()}"></textarea><button type="button" class="dc-env" data-act="discResp" data-d="${x.id}" title="Responder (Enter)"><i data-lucide="arrow-up"></i></button></div></div>` : ''}</div>`; }
+/* painel com todas as discussões: abertas e histórico (resolvidas, aceitas, recusadas) */
+function discPainelHtml(d){ const L = ((d && d.disc) || []).slice().sort((a,b)=>b.t-a.t), ab = UI.discAba || 'abertas', ver = L.filter(x=> ab==='abertas' ? x.st==='aberta' : x.st!=='aberta');
+  const nAb = L.filter(x=>x.st==='aberta').length, nHi = L.length - nAb;
+  const fim = x => x.st==='aberta' ? '' : `<div class="dp-st dp-${x.st}"><i data-lucide="${x.st==='recusada'?'x':'check'}"></i>${x.st==='aceita'?'Aceita':x.st==='recusada'?'Recusada':'Resolvido'} por ${h(x.fimPor||'—')} · ${discQuando(x.fimEm)}</div>`;
+  const it = x => { const msgs = x.msgs || [], resp = x.tipo==='c' ? msgs.slice(1) : msgs;
+    return `<div class="dp-i ${x.st==='aberta'?'dp-ab':''}" ${x.st==='aberta'?`data-act="discIr" data-d="${x.id}"`:''}>${avatar(x.quem||'?','av av-s')}<div class="dp-c">
+      <div class="dp-m"><b>${h(x.quem||'—')}</b><span>${discQuando(x.t)}</span></div>
+      <div class="dp-tx">${x.tipo==='s' ? `Substituir <del>${h(x.trecho.slice(0,90))}</del> por <ins>${h((x.novo||'').slice(0,90))}</ins>` : `<span class="dp-q">${h(x.trecho.slice(0,80))}</span>${comMencoes((msgs[0]||{}).o||'')}`}</div>
+      ${resp.map(m=>`<div class="dp-r"><b>${h(m.quem||'—')}</b> ${comMencoes(m.o)}<span>${discQuando(m.t)}</span></div>`).join('')}${fim(x)}</div></div>`; };
+  return `<div class="dp"><div class="dp-h"><b>Comentários e sugestões</b><button type="button" class="dp-x" data-act="discPainel" title="Fechar"><i data-lucide="x"></i></button></div>
+    <div class="dp-tabs"><button type="button" class="${ab==='abertas'?'on':''}" data-act="discAba" data-v="abertas">Abertas${nAb?` <span>${nAb}</span>`:''}</button><button type="button" class="${ab==='hist'?'on':''}" data-act="discAba" data-v="hist">Histórico${nHi?` <span>${nHi}</span>`:''}</button></div>
+    <div class="dp-l">${ver.length ? ver.map(it).join('') : `<div class="dp-vz">${ab==='abertas' ? 'Nenhum comentário ou sugestão aberto. Selecione um trecho do texto e use Comentar ou Sugerir.' : 'Nada resolvido ainda.'}</div>`}</div></div>`; }
 /* antes de re-renderizar a página, guarda o que está no editor (o salvar automático espera 900 ms) */
 function lpGuardarEdicao(){ const e = document.getElementById('lpe-edit'), {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!e || !c || !e.isContentEditable) return; const d = lpAlvo(c, et, idi); if (!d) return;
   const t = lpLimpa(e.innerHTML); if (t !== (d.texto||'')) { d.texto = t; d.editadoEm = Date.now(); d.editadoPor = quemSou(); lpAtualizarPublico(c, d, et, idi); } }
 const lpLinkPublico = tok => location.origin + location.pathname + '#/publico/' + tok;
 async function lpAtualizarPublico(c, d, et, idi){ if (!d.publico || !sb) return; const nomeIdi = IDIOMAS[et==='trad' ? idi : c.idiomaBase] || '';
-  const r = await sb.from('paginas_publicas').upsert({token:d.publico, campanha_id:c.id, chave:et+(idi?':'+idi:''), titulo:`${c.nome} · Texto landing page · ${nomeIdi}`, html:lpLimpa(d.texto), atualizado_em:new Date().toISOString()});
+  const r = await sb.from('paginas_publicas').upsert({token:d.publico, campanha_id:c.id, chave:et+(idi?':'+idi:''), titulo:`${c.nome} · Texto landing page · ${nomeIdi}`, html:lpSemDisc(lpLimpa(d.texto)), atualizado_em:new Date().toISOString()});
   if (r.error) toast('Não foi possível atualizar a página pública: '+r.error.message); }
 function lpCompartilharAbrir(){ const {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi), u = d.publico ? lpLinkPublico(d.publico) : '';
   abrirModal('Compartilhar', `<div class="np-share"><div class="np-share-l"><i data-lucide="globe"></i><div><b>Publicar na web</b><span>Qualquer pessoa com o link pode ler o texto, sem login. Ninguém consegue editar pelo link.</span></div>
@@ -5120,6 +5246,20 @@ const ACT = {
   budStSalvar: () => gravarBudStatus(false),
   budStAuto: () => gravarBudStatus(true),
   kvBriefing: el => formKvBriefing(el.dataset.id),
+  discPainel: () => { lpGuardarEdicao(); UI.discPainel = !UI.discPainel; render(); },
+  discAba: el => { lpGuardarEdicao(); UI.discAba = el.dataset.v; render(); },
+  discIr: el => { lpGuardarEdicao(); UI.discPainel = false; UI.discAtivo = el.dataset.d; UI.discRolar = el.dataset.d; render(); },
+  discResp: el => { const {c, d, et, idi} = discAlvo(); if (!d) return; const x = (d.disc||[]).find(y=>y.id===el.dataset.d), ta = document.getElementById('dcr-'+el.dataset.d), txt = (ta && ta.value || '').trim(); if (!x || !txt) return;
+    lpGuardarEdicao(); (x.msgs = x.msgs || []).push({quem:quemSou(), t:Date.now(), o:txt}); UI.discAtivo = x.id; const menc = RESPONSAVEIS.filter(n=>txt.includes('@'+n));
+    registrar(`Landing page de “${c.nome}” · ${et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base'}: resposta em “${(x.trecho||'').slice(0,60)}”${menc.length?' (mencionou '+menc.join(', ')+')':''}`);
+    salvar(); render(); toast(menc.length ? `Resposta enviada. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Resposta enviada.'); },
+  discFim: el => { const {c, d, et, idi} = discAlvo(); if (!d) return; const x = (d.disc||[]).find(y=>y.id===el.dataset.d); if (!x) return; const v = el.dataset.v;
+    lpGuardarEdicao(); Object.assign(x, {st:v, fimPor:quemSou(), fimEm:Date.now()}); d.texto = discAplicarTexto(d.texto, x.id, v==='aceita'); d.editadoEm = Date.now(); d.editadoPor = quemSou(); lpAtualizarPublico(c, d, et, idi);
+    if (UI.discAtivo===x.id) UI.discAtivo = null;
+    registrar(`Landing page de “${c.nome}” · ${et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base'}: ${v==='aceita' ? `sugestão aceita (“${(x.trecho||'').slice(0,40)}” → “${(x.novo||'').slice(0,40)}”)` : v==='recusada' ? 'sugestão recusada' : 'comentário resolvido'}`);
+    salvar(); render(); toast(v==='aceita' ? 'Sugestão aceita: o texto foi substituído.' : v==='recusada' ? 'Sugestão recusada.' : 'Comentário resolvido. Ele fica no histórico.'); },
+  discExcluir: el => { const {c, d, et, idi} = discAlvo(); if (!d) return; const x = (d.disc||[]).find(y=>y.id===el.dataset.d); if (!x || !confirm(x.tipo==='s' ? 'Excluir esta sugestão? O texto original fica como estava.' : 'Excluir este comentário e as respostas?')) return;
+    lpGuardarEdicao(); d.disc = d.disc.filter(y=>y.id!==x.id); d.texto = discAplicarTexto(d.texto, x.id, false); lpAtualizarPublico(c, d, et, idi); salvar(); render(); toast(x.tipo==='s' ? 'Sugestão excluída.' : 'Comentário excluído.'); },
   kvComentar: el => { const c = camp(el.dataset.id), ta = document.getElementById('kvm-txt-'+el.dataset.id), txt = (ta && ta.value || '').trim(); if (!c || !txt) return;
     let e = c.entregaveis.find(x=>x.id===el.dataset.e) || c.entregaveis.find(x=>x.secao==='KV' || x.auto==='kv');
     if (!e) { e = {id:novoId('e'), secao:'KV', auto:'kv', nome:'KV da campanha', canal:'', paises:c.paises.map(p=>p.cod), formato:'Key visual', etapa:'briefing', versoes:[], aprovacoes:[], link:''}; c.entregaveis.push(e); }
