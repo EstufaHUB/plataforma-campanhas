@@ -256,6 +256,8 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .at-ev{position:absolute;display:flex;gap:6px;align-items:flex-start;background:var(--c);color:var(--cf);border-radius:6px;padding:4px 6px;font-size:11.5px;line-height:1.25;overflow:hidden;cursor:pointer;box-sizing:border-box;border:1px solid rgba(255,255,255,.6)}.at-ev:hover{filter:brightness(.95);z-index:3}
 .at-ev-t{flex:1;min-width:0;font-weight:600;word-break:break-word}.at-ev-t small{display:block;font-weight:400;opacity:.9}.at-ev.at-feito .at-ev-t{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.7)}.at-rep{width:12px;height:12px;flex:none;opacity:.8}
 .at-curto{align-items:center;padding:2px 6px}.at-curto .at-ev-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.at-curto .at-ev-t small{display:none}
+.at-alca{position:absolute;left:0;right:0;bottom:0;height:7px;cursor:ns-resize}.at-alca::after{content:'';position:absolute;left:50%;bottom:2px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:rgba(255,255,255,.75);opacity:0}.at-ev:hover .at-alca::after,.at-esticando .at-alca::after{opacity:1}.at-dia-topo .at-alca{display:none}
+.at-esticando{z-index:6;box-shadow:0 4px 14px rgba(0,0,0,.18)}body.at-redim{cursor:ns-resize;user-select:none}
 .at-agora{position:absolute;left:0;right:0;border-top:2px solid #d0443a;z-index:4;pointer-events:none}.at-agora::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:#d0443a}
 .at-sobre{background-color:#e8f0fe!important}.at-fantasma{position:absolute;left:2px;right:2px;height:24px;border:2px dashed #1a73e8;border-radius:6px;background:rgba(26,115,232,.08);font-size:11px;color:#1a73e8;padding:2px 6px;pointer-events:none;z-index:5}
 body.at-arrastando .at-ev{pointer-events:none}
@@ -1033,7 +1035,7 @@ async function carregar(){
   RESULTADOS = {}; for (const r of rm) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r);
   NOTION = {}; for (const r of rn) (NOTION[r.campanha_id] = NOTION[r.campanha_id] || []).push(r);
   INVOICES = (inv || []).map(r=>Object.assign({id:r.id}, r.dados));
-  META_CONTAS = mc || []; CONTAS_STATUS = ((cf.find(r=>r.chave==='contasStatus')||{}).valor) || [];
+  META_CONTAS = soEstufa(mc); CONTAS_STATUS = ((cf.find(r=>r.chave==='contasStatus')||{}).valor) || [];
   RECORRENTES = new Set(((cf.find(r=>r.chave==='campanhasRecorrentes')||{}).valor) || []);
   /* se uma página aberta antiga salvou por cima e apagou os vínculos, recupera a partir dos resultados gravados */
   const vincRecup = [];
@@ -2570,6 +2572,9 @@ function fasesNoAr(c){ if (!faseada(c)) return [null];
   const noAr = FASES_CAMP.filter(f=>{ const p = periodoFase(c,f); return p.ini && p.fim && p.ini<=HOJE && HOJE<=p.fim; });
   if (noAr.length) return noAr; const ja = FASES_CAMP.filter(f=>{ const p = periodoFase(c,f); return p.ini && p.ini<=HOJE; }); return ja.length ? [ja[ja.length-1]] : [FASES_CAMP[0]]; }
 /* ---------- Status pontual: agrupamento das campanhas do Gerenciador (tela e exportação) ---------- */
+// só as campanhas veiculadas pela Estufa ("ESTUFA" no nome, como [ESTUFA] ou Estufa_); as outras da conta de anúncios são do cliente
+const ehEstufa = nome => /(^|[\[\s_\-|])estufa($|[\]\s_\-|])/i.test(String(nome||''));
+const soEstufa = mc => (mc || []).map(m=>({...m, dados:{...(m.dados||{}), campanhas:(((m.dados||{}).campanhas)||[]).filter(c=>ehEstufa(c.nome))}}));
 const PAIS_RX = new RegExp('^('+Object.keys(PAISES).join('|')+'|UK|KZ|UA|TR|TK|PL|NL|BE|AT|CZ|HU|RO|PT|IE|DK|SE|NO|FI|ZA)$');
 const partes = nome => (String(nome).match(/\[([^\]]+)\]/g)||[]).map(x=>x.slice(1,-1).trim());
 const paisDe = nome => { const ps = [...partes(nome), ...String(nome).split(/[_\s-]+/)]; return ps.find(x=>PAIS_RX.test(x)) || null; };
@@ -3584,7 +3589,7 @@ function atLateral(grupos){ const A = atDados(), atr = atAtrasadas();
   return `<aside class="at-lat"><div class="at-lat-h">Pendências <span class="at-n ${grupos.length?'':'zero'}">${grupos.length}</span></div>
     ${grupos.length ? `<div class="small muted" style="margin:-4px 0 8px">arraste para o calendário</div>${grupos.map(card).join('')}` : '<div class="small muted">Nenhuma pendência do Gerenciador.</div>'}
     ${atr.length ? `<div class="at-lat-h" style="margin-top:16px;color:#a32d2d">Atrasadas <span class="at-n verm">${atr.length}</span></div>${atr.map(x=>`<div class="at-atr" data-act="atAbrir" data-k="${h(x.k)}" draggable="true" data-atdrag="${h(x.k)}"><button class="at-ck" data-act="atCheck" data-k="${h(x.k)}"></button><div><small>prazo ${AT_DSEM[dow(x.prazo)].toLowerCase()} ${fdm(x.prazo)}</small><span>${h(atTitulo(x))}</span></div></div>`).join('')}` : ''}</aside>`; }
-const atBloco = (x, extra='', cls='') => `<div class="at-ev ${atCor(x)} ${cls}" data-act="atAbrir" data-k="${h(x.k)}" draggable="true" data-atdrag="${h(x.k)}" ${extra}><button class="at-ck" data-act="atCheck" data-k="${h(x.k)}" title="${x.feito?'Desmarcar':'Concluir'}"></button><span class="at-ev-t">${h(atTitulo(x))}${x.hora?`<small>${x.hora} – ${hmTxt(hm(x.hora)+x.dur/60)}</small>`:''}</span>${x.rec?'<i data-lucide="repeat" class="at-rep"></i>':x.auto?'<i data-lucide="zap" class="at-rep"></i>':''}</div>`;
+const atBloco = (x, extra='', cls='') => `<div class="at-ev ${atCor(x)} ${cls}" data-act="atAbrir" data-k="${h(x.k)}" draggable="true" data-atdrag="${h(x.k)}" ${extra}><button class="at-ck" data-act="atCheck" data-k="${h(x.k)}" title="${x.feito?'Desmarcar':'Concluir'}"></button><span class="at-ev-t">${h(atTitulo(x))}${x.hora?`<small>${x.hora} – ${hmTxt(hm(x.hora)+x.dur/60)}</small>`:''}</span>${x.rec?'<i data-lucide="repeat" class="at-rep"></i>':x.auto?'<i data-lucide="zap" class="at-rep"></i>':''}${x.hora?'<i class="at-alca" title="Arraste para mudar a duração"></i>':''}</div>`;
 function atSemana(sem){ const dias = [...Array(5)].map((_,i)=>addDias(sem, i)), L = atOcorrencias(sem, addDias(sem, 4)), H = AT_H1 - AT_H0;
   const cab = dias.map(d=>`<div class="at-dc ${d===HOJE?'hoje':''} ${ctx().util(d,'AG')?'':'fds'}"><span>${AT_DSEM[dow(d)]}</span><b>${+d.slice(8)}</b></div>`).join('');
   const topo = dias.map(d=>`<div class="at-dia-topo" data-atdia="${d}" data-atall="1">${L.filter(x=>x.data===d && !x.hora).map(x=>atBloco(x)).join('')}</div>`).join('');
@@ -3695,6 +3700,19 @@ function atRecSalvar(){ const f = $('#f-rec'), v = ler(f), A = atDados(); const 
 function atRecExcluir(){ const A = atDados(), r = A.recs.find(x=>x.id===UI.atRec); if (!r || !confirm(`Excluir a recorrência “${r.cliente} - ${r.nome}”? Ela some da agenda em todos os dias, inclusive os já concluídos.`)) return;
   A.recs = A.recs.filter(x=>x!==r); for (const k of Object.keys(A.ocor)) if (k.startsWith('r:'+r.id+':')) delete A.ocor[k];
   salvar(); fecharModal(); render(); toast('Recorrência excluída.'); }
+/* esticar o bloco pela borda de baixo (como no Google Agenda): muda a duração, de 15 em 15 minutos */
+let atEst = null;
+document.addEventListener('mousedown', e => { const al = e.target.closest && e.target.closest('.at-alca'); if (!al) return; e.preventDefault(); e.stopPropagation();
+  const ev = al.closest('.at-ev'), x = atOcor(ev.dataset.k); if (!x) return;
+  atEst = {ev, k:ev.dataset.k, y0:e.clientY, h0:ev.offsetHeight, ini:hm(x.hora), dur:x.dur}; ev.classList.add('at-esticando'); document.body.classList.add('at-redim'); });
+document.addEventListener('mousemove', e => { if (!atEst) return; const passos = Math.round((e.clientY - atEst.y0)/AT_PX*4), dur = Math.max(15, Math.min((AT_H1 - atEst.ini)*60, atEst.dur + passos*15));
+  atEst.nova = dur; atEst.ev.style.height = (dur/60*AT_PX - 2)+'px'; let t = atEst.ev.querySelector('.at-ev-t small'); if (t) t.textContent = `${hmTxt(atEst.ini)} – ${hmTxt(atEst.ini + dur/60)} · ${durTxt(dur)}`; });
+document.addEventListener('mouseup', () => { if (!atEst) return; const {k, nova, dur, ev} = atEst; atEst = null; document.body.classList.remove('at-redim'); ev.classList.remove('at-esticando');
+  atSemClique = Date.now();
+  if (!nova || nova===dur) return render(); const A = atDados();
+  if (k.startsWith('i:')) { const it = A.itens.find(x=>'i:'+x.id===k); if (it) it.dur = nova; } else A.ocor[k] = {...(A.ocor[k]||{}), dur:nova};
+  salvar(); render(); toast(`Duração: ${durTxt(nova)}.`); });
+let atSemClique = 0;   // o clique que termina o esticar não abre o detalhe
 /* arrastar: pendências e blocos para um dia/horário do calendário */
 let atArr = null;
 document.addEventListener('dragstart', e => { const el = e.target.closest && e.target.closest('[data-atdrag]'); if (!el) return; atArr = el.dataset.atdrag; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', atArr); } catch(_){} setTimeout(()=>document.body.classList.add('at-arrastando'), 0); });
@@ -4299,7 +4317,7 @@ const ACT = {
   atAba: el => { UI.atAba = el.dataset.v; render(); },
   atSem: el => { const v = +el.dataset.v; UI.atSem = v ? addDias(UI.atSem || semDom(HOJE), v) : semDom(HOJE); render(); },
   atAutoTog: () => { const A = atDados(); A.autoConferir = A.autoConferir === false; salvar(); render(); toast(A.autoConferir ? 'Conferência 24h ligada.' : 'Conferência 24h pausada.'); },
-  atNova: () => atNova(), atAbrir: el => atAbrir(el.dataset.k), atSalvar: () => atSalvar(), atExcluir: () => atExcluir(),
+  atNova: () => atNova(), atAbrir: el => { if (Date.now() - atSemClique < 300) return; atAbrir(el.dataset.k); }, atSalvar: () => atSalvar(), atExcluir: () => atExcluir(),
   atCheck: el => atCheck(el.dataset.k), atPendCk: el => atPendCk(el.dataset.ch), atPendOk: () => atPendOk(),
   atRecForm: el => atRecForm(el.dataset.id), atRecSalvar: () => atRecSalvar(), atRecExcluir: () => atRecExcluir(),
   dshPend: () => { const el = document.getElementById('dsh-pend'); if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('pisca'); setTimeout(()=>el.classList.remove('pisca'), 1200); } },
@@ -4351,7 +4369,7 @@ const ACT = {
   sincContas: async el => { el.disabled = true; toast('Buscando as campanhas no Gerenciador do Meta… (leva alguns segundos)');
     try { const { data, error } = await sb.functions.invoke('meta-sync', { body: {} }); if (error) throw error;
       const [{ data: mc }, { data: rm }] = await Promise.all([sb.from('meta_contas').select('*'), sb.from('resultados_meta').select('*')]);
-      META_CONTAS = mc || []; RESULTADOS = {}; for (const r of (rm||[])) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r); aplicarCustosAuto();
+      META_CONTAS = soEstufa(mc); RESULTADOS = {}; for (const r of (rm||[])) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r); aplicarCustosAuto();
       try { const { data: ab } = await sb.from('config').select('valor').eq('chave','alertasBudget').maybeSingle(); ALERTAS_BUDGET = (ab && ab.valor) || {}; } catch(_){}
       const falhas = (data.contas||[]).filter(x=>!x.ok); render(); toast(falhas.length ? 'Algumas contas falharam: '+falhas.map(x=>x.conta+' ('+x.erro+')').join('; ') : 'Campanhas atualizadas.'); }
     catch (e) { let msg = e.message||String(e); try { const b = await e.context.json(); msg = b.erro || msg; } catch(_){} toast('Não foi possível atualizar: '+msg); el.disabled = false; } },

@@ -43,6 +43,8 @@ async function insights(campanhaId: string, token: string, extra: Record<string,
   return j.data as Record<string, unknown>[];
 }
 
+// só entram as campanhas veiculadas pela Estufa: "ESTUFA" no nome, como [ESTUFA] ou Estufa_ (as outras da conta são do cliente)
+const ehEstufa = (nome: unknown) => /(^|[\[\s_\-|])estufa($|[\]\s_\-|])/i.test(String(nome || ""));
 // ---------- retrato das contas: todas as campanhas ativas de cada conta (Status pontual) ----------
 async function graph(path: string, token: string, params: Record<string, string>) {
   const out: Record<string, unknown>[] = [];
@@ -83,7 +85,7 @@ const METRICAS: Record<string, { objs: string[]; res: (a: Acao[] | undefined, re
 };
 async function referencia(act: string, token: string) {
   const ate = new Date(), desde = new Date(ate.getTime() - 182 * 864e5), d = (x: Date) => x.toISOString().slice(0, 10);
-  const linhas = await graph(`${act}/insights`, token, { level: "campaign", time_range: JSON.stringify({ since: d(desde), until: d(ate) }), fields: "campaign_id,campaign_name,objective,spend,reach,actions", limit: "500" });
+  const linhas = await graph(`${act}/insights`, token, { level: "campaign", time_range: JSON.stringify({ since: d(desde), until: d(ate) }), fields: "campaign_id,campaign_name,objective,spend,reach,actions", limit: "500" }).then((l) => l.filter((x) => ehEstufa(x.campaign_name)));
   const porObj: Record<string, Record<string, { gasto: number; res: number; n: number; custo?: number }>> = {};
   // contribuição de cada campanha (para a plataforma tirar a própria campanha da média dela)
   const porCamp: Record<string, Record<string, { gasto: number; res: number; pais: string | null }>> = {};
@@ -110,7 +112,7 @@ async function retratoContas(admin: ReturnType<typeof createClient>, token: stri
     try {
       const act = `act_${ct.conta}`;
       const [info] = await graph(act, token, { fields: "name,currency" });
-      const camps = await graph(`${act}/campaigns`, token, { fields: "id,name,objective,start_time,stop_time,daily_budget,lifetime_budget,effective_status,updated_time", effective_status: '["ACTIVE","PAUSED"]', limit: "200" });
+      const camps = await graph(`${act}/campaigns`, token, { fields: "id,name,objective,start_time,stop_time,daily_budget,lifetime_budget,effective_status,updated_time", effective_status: '["ACTIVE","PAUSED"]', limit: "200" }).then((l) => l.filter((c) => ehEstufa(c.name)));
       const ids = new Set(camps.map((c) => c.id as string));
       let adsets: Record<string, unknown>[] = [];
       if (camps.some((c) => !c.daily_budget && !c.lifetime_budget)) adsets = await graph(`${act}/adsets`, token, { fields: "campaign_id,daily_budget,lifetime_budget,end_time,start_time", effective_status: '["ACTIVE","CAMPAIGN_PAUSED"]', limit: "500" });
