@@ -1408,11 +1408,11 @@ function render(){
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida).length;
   const nAtr = acoesGlobais().filter(x=>statusExib(x.t)==='Atrasada').length;
-  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','bell','Notificações',nN],['config','settings','Configurações']];
+  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','bell','Notificações',nN]];
   const sec = r[0]==='campanha' ? 'clientes' : r[0];
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
-  const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões']].filter(([k])=>pode(k));
+  const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações']].filter(([k])=>pode(k));
   $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
   $('#hoje-txt').textContent = fd(HOJE);
   const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
@@ -3542,7 +3542,7 @@ function pgNotificacoes(){
    ===================================================================== */
 function pgConfig(r){
   const aba = r[1] || 'modelo';
-  migalha([['Configurações']]);
+  migalha([['Administrativo'],['Configurações']]);
   const abas = [['modelo','gantt-chart','Modelo de cronograma'],['feriados','calendar-x','Feriados'],['idiomas','languages','Idiomas por região'],['alertas','bell-ring','Alertas por e-mail'],['log','history','Histórico de alterações']];
   const corpo = {modelo:cfgModelo,feriados:cfgFeriados,idiomas:cfgIdiomas,alertas:cfgAlertas,usuarios:cfgUsuarios,log:cfgLog}[aba]();
   return `<div class="cab"><div><h1>Configurações</h1></div></div><nav class="abas">${abas.map(([k,ic,t])=>`<a href="#/config/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`;
