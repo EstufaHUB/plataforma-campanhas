@@ -1375,11 +1375,11 @@ function notificacoes(){
   if (me) { for (const c of ativas()) for (const t of ((c.crono||{}).tarefas||[])) {
       if (t.pessoa===me) for (const x of (t.hist||[])) if (x.q>=desde && x.por && x.por!==me && /^Responsável:|; Responsável:/.test(x.o) && x.o.includes('→ '+me))
         add('resp-'+c.id+'-'+t.id+'-'+x.q, {tipo:'pet', ic:'user-plus', t:`${x.por} definiu você como responsável: ${t.nome}${t.pais?' ('+t.pais+')':''}`, d:`${c.nome} · prazo ${fd(t.EF)}`, link:`#/campanha/${c.id}/acoes`, q:x.q});
-      for (const x of (t.coment||[])) if (x.q>=desde && x.quem!==me && mencionaMe(x.o))
+      for (const x of (t.coment||[])) if (x.q>=desde && mencionaMe(x.o))
         add('menc-'+c.id+'-'+t.id+'-'+(x.t||x.q), {tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em “${t.nome}”`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/acoes`, q:x.q}); }
-    for (const c of ativas()) for (const e of (c.entregaveis||[])) for (const x of (e.coment||[])) if (x.q>=desde && x.quem!==me && mencionaMe(x.o))
-      add('mencent-'+c.id+'-'+e.id+'-'+(x.t||x.q), {tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você no ${e.nome}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
-    for (const [mid, rs] of Object.entries(S.registrosStatus||{})) for (const x of rs) if (x.tipo==='coment' && (x.q||'')>='' && x.quem!==me && mencionaMe(x.o)) {
+    for (const c of ativas()) for (const e of (c.entregaveis||[])) for (const x of (e.coment||[])) if (x.q>=desde && mencionaMe(x.o))
+      add('mencent-'+c.id+'-'+e.id+'-'+(x.t||x.q), {tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} no ${e.nome}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
+    for (const [mid, rs] of Object.entries(S.registrosStatus||{})) for (const x of rs) if (x.tipo==='coment' && (x.q||'')>='' && mencionaMe(x.o)) {
       const mc = META_CONTAS.flatMap(m=>((m.dados||{}).campanhas)||[]).find(z=>z.id===mid);
       add('mencst-'+mid+'-'+(x.t||x.q), {tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em Digital › Campanhas${mc?': '+titulo(mc.nome):''}`, d:x.o.slice(0,90), link:'#/status'}); } }
   return [...N.values()];
