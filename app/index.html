@@ -3109,13 +3109,12 @@ function discPainelHtml(d){ const L = ((d && d.disc) || []).slice().sort((a,b)=>
 /* modelos de estrutura da landing page: o time só preenche cada seção (o texto entre colchetes é a orientação) */
 const mdlSec = (t, guia, campos) => `<h2>${t}</h2>${guia?`<div class="callout"><span class="callout-ic" contenteditable="false"></span><div class="callout-tx">${guia}</div></div>`:''}${campos.map(([rot, ph])=>`<p><b>${rot}:</b> [${ph}]</p>`).join('')}`;
 const mdlItens = (n, rot, ph) => `<ol>${[...Array(n)].map((_,i)=>`<li><b>${rot} ${i+1}:</b> [${ph}]</li>`).join('')}</ol>`;
-const mdlForm = () => mdlSec('Formulário', 'Peça só o necessário: cada campo a mais reduz a conversão.', [['Título do formulário','Ex.: Fale com um especialista'],['Campos','Nome, e-mail, telefone, empresa, país…'],['Texto do botão','Ex.: Quero ser contatado'],['Consentimento (LGPD/GDPR)','Texto do aceite de privacidade'],['Mensagem após o envio','Ex.: Obrigado! Em breve entraremos em contato.']]);
+const mdlForm = () => mdlSec('Formulário', '', [['Texto para preenchimento do formulário','Ex.: Preencha seus dados e um especialista entrará em contato']]);
 const LP_MODELOS = {
-  lead: {nome:'Lead Generation', ic:'user-plus', obj:'Captar contatos', estr:['Hero','Benefícios','Formulário','FAQ'],
+  lead: {nome:'Lead Generation', ic:'user-plus', obj:'Captar contatos', estr:['Hero','Benefícios','Formulário'],
     html: () => mdlSec('Hero', 'Primeira dobra: em poucos segundos a pessoa precisa entender a oferta e o próximo passo.', [['Título','Promessa principal em até 10 palavras'],['Subtítulo','Complemento do título: para quem é e o que ganha'],['Botão (CTA)','Ex.: Quero saber mais'],['Visual de referência','Imagem ou vídeo do hero']])
       + `<h2>Benefícios</h2>` + mdlItens(3, 'Benefício', 'Título curto + uma frase explicando o ganho')
-      + mdlForm()
-      + `<h2>FAQ</h2>` + [1,2,3].map(i=>`<details open><summary>[Pergunta ${i}]</summary><p>[Resposta ${i}]</p></details>`).join('') },
+      + mdlForm() },
   produto: {nome:'Product Landing Page', ic:'package', obj:'Apresentar produto', estr:['Hero','Diferenciais','Funcionalidades','Demonstração','CTA'],
     html: () => mdlSec('Hero', 'Nome do produto e a principal transformação que ele entrega.', [['Título','Nome do produto + promessa'],['Subtítulo','Para quem é e o problema que resolve'],['Botão (CTA)','Ex.: Conheça o produto'],['Visual de referência','Foto do produto em uso']])
       + `<h2>Diferenciais</h2>` + mdlItens(3, 'Diferencial', 'O que torna o produto único frente às alternativas')
