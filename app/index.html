@@ -3309,7 +3309,7 @@ function pgStatus(){
       const chave = 'g|'+g.linhas.map(l=>l.mc.id).join(','); chaves.push(chave);
       const aprendTudo = !g.pausada && nAp>0 && nAp===g.linhas.length;
       const budAlto = D.some(x=>x.chave===chaveG && x.tot && x.inv>=x.tot*0.9), trata = !g.pausada && (pior==='Crítica' || pior==='Atenção' || budAlto);
-      const aberto = chave in abertos ? abertos[chave] : (!foco && !g.pausada && (pior==='Crítica' || pior==='Atenção'));
+      const aberto = chave in abertos ? abertos[chave] : false;   // todas recolhidas por padrão
       const pill = pior ? `<span class="stp-pill n-${({Saudável:'s',Atenção:'a',Crítica:'c'})[pior]}">${pior}</span>` : '';
       if (g.pausada) T.pausada++; else { T.n++; T[pior||'sem']++; } T.inv += inv;
       const nivelCamp = g.pausada ? 'pausada' : aprendTudo ? 'aprend' : (pior || 'sem'); contC[nivelCamp]++;
@@ -3340,7 +3340,7 @@ function pgStatus(){
       <div class="stc-n"><b>${T.n}</b> campanha${T.n===1?'':'s'} no ar${T.pausada?` · ${T.pausada} pausada${T.pausada===1?'':'s'}`:''}</div>
       <div class="stc-far">${far || '<span class="muted">Nenhuma campanha desse tipo no ar.</span>'}</div>
       <div class="stc-rod"><span>Investido: <b>${moedaCurta(T.inv, moe)}</b></span><span>${!snap ? 'não sincronizada' : hs<1 ? 'atualizado há menos de 1 h' : 'atualizado há '+Math.round(hs)+' h'}</span><i data-lucide="chevron-right"></i></div></a>`; }).join('')}</div>`}
-  <div class="small muted" style="padding:14px 4px">Campanhas vinculadas: resultado e custo comparados com a meta da plataforma (o traço marca a meta ou o esperado para hoje). Campanhas só no Gerenciador: resultado conforme o objetivo e custo por resultado, sem meta. Investimento: consumido desde o início × budget total; o traço e o “esperado hoje” mostram quanto deveria ter sido consumido até hoje (budget × dias decorridos). Budget diário: média dos últimos 7 dias × budget diário planejado. Cores: resultado verde no ritmo ou acima, amarelo até 50% abaixo do esperado e vermelho mais de 50% abaixo; custo verde até a meta, amarelo até 50% acima e vermelho mais de 50% acima; gasto verde até 15% de diferença, amarelo até 50% e vermelho acima disso. Em aprendizado: os 7 primeiros dias não são avaliados. Abertas por padrão: campanhas em atenção ou críticas.</div>`; }
+  <div class="small muted" style="padding:14px 4px">Campanhas vinculadas: resultado e custo comparados com a meta da plataforma (o traço marca a meta ou o esperado para hoje). Campanhas só no Gerenciador: resultado conforme o objetivo e custo por resultado, sem meta. Investimento: consumido desde o início × budget total; o traço e o “esperado hoje” mostram quanto deveria ter sido consumido até hoje (budget × dias decorridos). Budget diário: média dos últimos 7 dias × budget diário planejado. Cores: resultado verde no ritmo ou acima, amarelo até 50% abaixo do esperado e vermelho mais de 50% abaixo; custo verde até a meta, amarelo até 50% acima e vermelho mais de 50% acima; gasto verde até 15% de diferença, amarelo até 50% e vermelho acima disso. Em aprendizado: os 7 primeiros dias não são avaliados. As campanhas abrem recolhidas: clique para ver os países.</div>`; }
 const mcusto = (v, m) => moeda2(v, m);   // padrão: 2 casas decimais
 
 /* =====================================================================
