@@ -74,7 +74,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .tab tr.a-fase td{background:#f4f7f8;font-weight:700;color:var(--pet-900)}.tab tr.a-pais td:nth-child(2){padding-left:42px}
 .tab tr.a-grupo td:nth-child(2),.tab tr.a-fase td:first-child{white-space:nowrap}
 .tab.com-sel tr.a-pais td:nth-child(3){padding-left:42px}.tab.com-sel tr.a-pais td:nth-child(2){padding-left:8px}
-.tab td.c-sel,.tab th.c-sel{width:34px;padding-right:0}.sel-hov>input[type=checkbox]{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hov:hover>input[type=checkbox],.sel-hov>input:checked,.sel-hov.tem-sel>input[type=checkbox]{opacity:1}.sel-hover .c-sel input{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hover tr:hover .c-sel input,.sel-hover .c-sel input:checked,.sel-hover .c-sel input[data-parcial],.sel-hover.tem-sel .c-sel input,.sel-hover .c-sel input:focus-visible{opacity:1}.sel-barra-w{position:sticky;top:8px;z-index:20;padding:0 16px 8px;pointer-events:none}.sel-barra{pointer-events:auto;display:inline-flex;align-items:stretch;background:#fff;border:1px solid #e3e6ea;border-radius:8px;box-shadow:0 4px 14px rgba(15,15,15,.1);font-size:.84rem;overflow:hidden}
+.tab td.c-sel,.tab th.c-sel{width:34px;padding-right:0}.sel-hov>input[type=checkbox]{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hov:hover>input[type=checkbox],.sel-hov>input:checked,.sel-hov.tem-sel>input[type=checkbox]{opacity:1}.sel-hover .c-sel input{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hover tr:hover .c-sel input,.sel-hover .c-sel input:checked,.sel-hover .c-sel input[data-parcial],.sel-hover.tem-sel .c-sel input,.sel-hover .c-sel input:focus-visible{opacity:1}.sel-ctx{position:relative}.sel-barra-w{position:absolute;left:40px;top:0;z-index:30;pointer-events:none}.sel-barra{pointer-events:auto;display:inline-flex;align-items:stretch;background:#fff;border:1px solid #e3e6ea;border-radius:8px;box-shadow:0 4px 14px rgba(15,15,15,.1);font-size:.84rem;overflow:hidden}
 .sel-barra .sb-n{display:flex;align-items:center;padding:0 12px;color:#2383e2;font-weight:500;border-right:1px solid #eef0f2;white-space:nowrap}.sb-b{position:relative;display:flex;align-items:center;gap:6px;padding:7px 11px;background:none;border:0;border-right:1px solid #eef0f2;font:inherit;color:#37352f;cursor:pointer;white-space:nowrap}.sb-b:last-child{border-right:0}.sb-b:hover{background:#f5f5f4}.sb-b svg{width:15px;height:15px;color:#6b6b68}.sb-ic{padding:7px 9px}
 .sb-b select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
 .tab tr.sel td,.ga-lin.sel{background:#e8f1fb!important}.tab td.c-sel input,.tab th.c-sel input{width:16px;height:16px;accent-color:var(--pet-700);cursor:pointer;vertical-align:middle}
@@ -1823,6 +1823,12 @@ function aplicarLote(c, campo, v){ const ids = new Set(UI.aSel||[]), alvo = c.cr
   let n = 0; for (const t of alvo) { if ((t[campo]||'')===v) continue; (t.hist = t.hist||[]).push({q:HOJE,por:quemSou(),o:`${campo==='status'?'Status':'Responsável'}: ${t[campo]||'—'} → ${v}`}); t[campo] = v; n++; }
   registrar(`${campo==='status'?'Status':'Responsável'} de ${alvo.length} ação(ões) em “${c.nome}”: ${v}`);
   render(); toast(n ? `${n} ação(ões) atualizada(s): ${v}.` : 'Nada mudou: as ações já estavam assim.'); }
+/* barra de seleção: flutua logo acima da ação marcada por último (ou da primeira marcada), como no Notion */
+function posSelBarra(){ const w = document.querySelector('.sel-ctx'), b = w && w.querySelector('.sel-barra-w'); if (!b) return;
+  let el = UI.selUlt ? w.querySelector(UI.selUlt) : null; el = el && el.closest('tr, .ga-lin'); if (!el) el = w.querySelector('tr.sel, .ga-lin.sel'); if (!el) return;
+  const rw = w.getBoundingClientRect(), re = el.getBoundingClientRect(), hb = b.offsetHeight || 36;
+  let top = re.top - rw.top - hb - 4; if (top < 0) top = re.bottom - rw.top + 4;
+  b.style.top = top + 'px'; }
 function listaAcoes(c, L, ed){
   const ab = UI.aAberto || (UI.aAberto = {}), ff = UI.aFase || (UI.aFase = {});
   const vis = new Set(L.map(t=>t.id));
@@ -1863,8 +1869,9 @@ function listaAcoes(c, L, ed){
       <button class="sb-b" data-act="loteConcluir" data-id="${c.id}" title="Marcar como concluídas"><i data-lucide="check"></i>Concluir</button>
       <button class="sb-b sb-ic" data-act="loteExcluir" data-id="${c.id}" title="Excluir"><i data-lucide="trash-2"></i></button>
       <button class="sb-b sb-ic" data-act="loteLimpar" title="Limpar seleção"><i data-lucide="x"></i></button></div></div>` : '';
-  return `${loteBar}<div class="tabela-wrap"><table class="tab ${modoSel?'com-sel sel-hover':''} ${sel.size?'tem-sel':''}"><thead><tr>${modoSel?`<th class="c-sel"><input type="checkbox" data-chg="aSel" data-ids="${L.map(t=>t.id).join(',')}" ${L.length&&sel.size===L.length?'checked':''} ${sel.size&&sel.size<L.length?'data-parcial="1"':''} title="Selecionar todas"></th>`:''}<th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th></th></tr></thead><tbody>
-    ${corpo || `<tr><td colspan="${nCol}" class="vazio">Nenhuma ação com esses filtros.</td></tr>`}</tbody></table></div>
+  if (loteBar) posRender.push(posSelBarra);
+  return `<div class="sel-ctx">${loteBar}<div class="tabela-wrap"><table class="tab ${modoSel?'com-sel sel-hover':''} ${sel.size?'tem-sel':''}"><thead><tr>${modoSel?`<th class="c-sel"><input type="checkbox" data-chg="aSel" data-ids="${L.map(t=>t.id).join(',')}" ${L.length&&sel.size===L.length?'checked':''} ${sel.size&&sel.size<L.length?'data-parcial="1"':''} title="Selecionar todas"></th>`:''}<th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th></th></tr></thead><tbody>
+    ${corpo || `<tr><td colspan="${nCol}" class="vazio">Nenhuma ação com esses filtros.</td></tr>`}</tbody></table></div></div>
     <div class="legenda-farol"><span><i style="background:#2e9d55"></i>Concluída</span><span><i style="background:#2f80b8"></i>Em andamento</span><span><i style="background:#e0a100"></i>Aguardando / em revisão</span><span><i style="background:#d0443a"></i>Atrasada ou bloqueada</span><span><i style="background:#9aa9ae"></i>Não iniciada / cancelada</span></div>`;
 }
 /* =====================================================================
@@ -1930,7 +1937,8 @@ function pgAcoes(){
       <button class="sb-b" data-act="gaLoteConcluir" title="Marcar como concluídas"><i data-lucide="check"></i>Concluir</button>
       <button class="sb-b" data-act="gaSelTodas" title="Selecionar todas as abertas">Todas (${L.filter(aberta).length})</button>
       <button class="sb-b sb-ic" data-act="gaLoteLimpar" title="Limpar seleção"><i data-lucide="x"></i></button></div></div>`;
-    corpo = lote + corpo;
+    if (lote) posRender.push(posSelBarra);
+    corpo = `<div class="sel-ctx">${lote}${corpo}</div>`;
   } else if (f.visao==='kanban') {
     const xs = L.filter(x=>f.conc || aberta(x));
     corpo = `<div class="kanban ga-kanban">${ST_ACAO.filter(v=>v!=='Cancelada' && (f.conc || v!=='Concluída')).map(st=>{ const cs = xs.filter(x=>x.t.status===st);
@@ -4944,9 +4952,9 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
   if (k==='cliArq') { UI.cliArq = v; return render(); }
   if (k==='statusInv') { const x = INVOICES.find(i=>i.id===el.dataset.id); if (!x) return; const ant = x.status; x.status = v; if (v==='Enviada' && !x.envio) x.envio = HOJE; if (v==='Paga' && !x.pagamento) x.pagamento = HOJE;
     gravarInvoice(x).then(ok=>{ if (!ok) { x.status = ant; render(); } else registrar(`Invoice ${x.numero||''} (${cliente(x.clienteId).nome}): ${ant} → ${v}`); }); return render(); }
-  if (k==='gaSel') { const set = new Set(UI.gaSel||[]); el.checked ? set.add(el.dataset.k) : set.delete(el.dataset.k); UI.gaSel = [...set]; return render(); }
+  if (k==='gaSel') { const set = new Set(UI.gaSel||[]); el.checked ? set.add(el.dataset.k) : set.delete(el.dataset.k); UI.gaSel = [...set]; UI.selUlt = el.checked ? '[data-chg="gaSel"][data-k="'+el.dataset.k+'"]' : null; return render(); }
   if (k==='gaLoteStatus' || k==='gaLotePessoa') { if (!v) return; return gaLote(k==='gaLoteStatus'?'status':'pessoa', v); }
-  if (k==='aSel') { const ids = el.dataset.ids ? el.dataset.ids.split(',') : [], set = new Set(UI.aSel||[]); ids.forEach(id=> el.checked ? set.add(id) : set.delete(id)); UI.aSel = [...set]; return render(); }
+  if (k==='aSel') { const ids = el.dataset.ids ? el.dataset.ids.split(',') : [], set = new Set(UI.aSel||[]); ids.forEach(id=> el.checked ? set.add(id) : set.delete(id)); UI.aSel = [...set]; UI.selUlt = el.checked && !el.closest('thead') ? '[data-chg="aSel"][data-ids="'+el.dataset.ids+'"]' : null; return render(); }
   if (k==='loteStatus' || k==='lotePessoa') { if (!v) return; return aplicarLote(camp(el.dataset.id), k==='loteStatus'?'status':'pessoa', v); }
   if (k==='pessoaTarefa' || k==='pessoaGrupo' || k==='statusGrupo') { if (!v) return render(); const c = camp(el.dataset.id);
     const alvo = k==='pessoaTarefa' ? c.crono.tarefas.filter(t=>t.id===el.dataset.t) : c.crono.tarefas.filter(t=>t.tid===el.dataset.t);
