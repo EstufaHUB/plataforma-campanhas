@@ -272,6 +272,15 @@ body.at-arrastando .at-ev{pointer-events:none}
 .at-dias{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.at-dia-op input{display:none}.at-dia-op span{display:inline-block;padding:5px 11px;border:1px solid #d5dbde;border-radius:20px;font-size:12.5px;cursor:pointer}.at-dia-op input:checked+span{background:#1a73e8;border-color:#1a73e8;color:#fff}
 .at-paises{display:flex;flex-direction:column;gap:6px}.at-paises label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid #e3e6e8;border-radius:8px;cursor:pointer}.at-paises label span{display:flex;flex-direction:column}.at-paises em{font-style:normal;font-size:12px;color:var(--tx2)}.at-pais-todos{background:#f7f9fa}
 .at-pausada{opacity:.55}.at-auto{display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid #eef0f1;background:#f7f9fd}.at-auto>svg{width:18px;height:18px;color:#1a73e8;flex:none}.at-auto>div{flex:1}.at-desc-1{max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acg-k{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}@media (max-width:900px){.acg-k{grid-template-columns:repeat(2,minmax(0,1fr))}}.acg-kc{background:#fff;border:1px solid #e3e6e8;border-radius:12px;padding:14px 16px}.acg-kc span{font-size:12px;color:var(--tx2)}.acg-kc b{display:block;font-size:26px;font-weight:700;margin:4px 0 2px;letter-spacing:-.02em}.acg-kc em{font-style:normal;font-size:12px;color:var(--tx2)}
+:is(.acg-k,.acg-card) .ok{color:#1f7a47!important}:is(.acg-k,.acg-card) .at{color:#8a5d00!important}:is(.acg-k,.acg-card) .bad{color:#b3392f!important}
+.acg-card{padding:14px 18px;margin-bottom:16px}.acg-h{font-weight:700;font-size:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px}.acg-h small{font-weight:400;color:var(--tx3,#8a959a);font-size:12px}
+.acg-ex{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #eef0f1;font-size:13px}.acg-ex .muted{flex:1}.acg-ir{color:var(--tx2)}.acg-ir svg{width:15px;height:15px}
+.acg-row{display:grid;grid-template-columns:minmax(150px,1.2fr) minmax(0,1.4fr) minmax(0,1.4fr) 90px 70px;gap:16px;align-items:center;padding:9px 0;border-top:1px solid #eef0f1;font-size:13px}.acg-cab{border:0;color:var(--tx3,#8a959a);font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:2px 0}
+.acg-nm a{color:inherit;font-weight:600;text-decoration:none}.acg-nm a:hover{text-decoration:underline}.acg-bar{position:relative;height:9px;background:#eef1f2;border-radius:5px}.acg-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}.acg-bar s{position:absolute;top:-3px;bottom:-3px;width:2px;background:#1b2a2f;border-radius:1px}.acg-lb{font-size:11.5px;color:var(--tx2);margin-top:4px}
+.acg-cpl{font-weight:700;display:flex;flex-direction:column}.acg-cpl small{font-weight:400;font-size:11px;color:var(--tx3,#8a959a)}
+.acg-seg button{font-size:12px}.acg-mapa{border-top:1px solid #eef0f1;padding:6px 0}.acg-mapa-h{display:flex;align-items:center;gap:8px;background:none;border:0;padding:6px 0;cursor:pointer;font-size:13px;width:100%;text-align:left}.acg-mapa-h svg{width:15px;height:15px;color:var(--tx2)}
+.acg-hm{display:grid;gap:3px;margin:2px 0 8px 22px;font-size:12px}.acg-hm .hm{padding:6px 4px;text-align:center;border-radius:4px;font-variant-numeric:tabular-nums;cursor:default}.acg-hm .hm.n{background:#f4f6f7;color:#9aa4a8;font-size:11px}.acg-hm .hm-h{text-align:center;font-size:11px;color:var(--tx2);text-transform:capitalize}.acg-hm .hm-h.atual{color:#1a73e8;font-weight:700}.acg-hm .hm-p{padding:6px 0;font-size:12.5px}.ac-parc-hm{outline:1px dashed rgba(0,0,0,.25);outline-offset:-1px}
 .ac-card{padding:0;overflow:hidden;margin-bottom:18px}.ac-tit{display:flex;align-items:baseline;gap:10px;padding:14px 18px 10px}.ac-tit b{font-size:16px}.ac-tit span{font-style:italic;font-weight:700;color:#0b2d55}
 .ac-tab{border-collapse:collapse;width:100%;font-size:12.5px}.ac-tab th,.ac-tab td{border:1px solid #d9dee1;padding:5px 9px;white-space:nowrap}.ac-tab thead th{background:#0b2d55;color:#fff;font-weight:700;text-align:center}.ac-tab thead .ac-sub{background:#1f5a96;font-size:11.5px}.ac-tab thead .ac-mes.atual{background:#1a73e8}
 .ac-tab .ac-camp{text-align:left;min-width:200px;position:sticky;left:0;background:#fff;z-index:1}.ac-tab thead .ac-camp{background:#0b2d55;font-size:13px}.ac-tab td.ac-camp a{color:#1d7a3c;text-decoration:none}.ac-tab tr.ac-enc td.ac-camp,.ac-tab tr.ac-enc td.ac-camp a{color:#9aa4a8}
@@ -3833,6 +3842,78 @@ function acKpis(grupo, ano, fmt){ const A = S.acompanhamento, atual = mesAtual()
     <thead><tr><th rowspan="2" class="ac-camp">Campanha</th><th rowspan="2">KPI</th><th rowspan="2">País</th><th rowspan="2">Budget<br>do mês</th><th colspan="2">Meta</th>${ms.map(m=>`<th colspan="3" class="ac-mes ${m===atual?'atual':''}">${NOMES_MES[+m.slice(5)-1].toLowerCase()}./${m.slice(2,4)}${m===atual?' <small>(parcial)</small>':''}</th>`).join('')}</tr>
     <tr><th class="ac-sub">Resultado</th><th class="ac-sub">Custo</th>${ms.map(()=>`<th class="ac-sub">Resultado</th><th class="ac-sub">Custo</th><th class="ac-sub">Investido</th>`).join('')}</tr></thead><tbody>${corpo}</tbody></table></div>
     <div class="small muted" style="padding:8px 18px 12px">Custo do mês × meta de custo da ficha: <span class="ac-leg ac-vd"></span>até a meta (+10%) <span class="ac-leg ac-am"></span>até 2× a meta <span class="ac-leg ac-vm"></span>acima de 2× ou sem resultado. Meta de resultado = budget do mês ÷ custo meta.</div></div>`; }
+/* ---------- Acompanhamento · visão geral: resumo do mês, atenção, campanhas e mapa de calor ---------- */
+const mesAnt = (m, n=1) => { let [y, mm] = m.split('-').map(Number); mm -= n; while (mm < 1) { mm += 12; y--; } return `${y}-${String(mm).padStart(2,'0')}`; };
+const nomeMes = m => MESES[+m.slice(5)-1];
+function acGeral(g, fmt){ const atual = mesAtual(), A = S.acompanhamento || {linhas:{}, kpis:{}}; A.kpis = A.kpis || {};
+  const B = acLinhas().filter(r=>r.grupo===g), K = acKpiLinhas().filter(x=>x.grupo===g); if (!B.length) return '<div class="card vazio">Nenhuma campanha deste cliente.</div>';
+  const moe = B[0].moeda, f = v => fmt(v, moe);
+  const kv = (x, m) => (A.kpis[x.k]||{})[m] || x.mes(m);   // mês fechado: valor guardado
+  const dia = +HOJE.slice(8), dm = diasNoMes(HOJE), decor = Math.max(0, dia-1), frac = decor/dm;   // o gasto do Meta vai até ontem
+  // 1) resumo
+  const prev = B.reduce((t,r)=>t+r.prev(atual),0), inv = B.reduce((t,r)=>t+(+r.real(atual)||0),0), esp = prev*frac, proj = decor ? inv/decor*dm : null;
+  const ritmo = !esp ? null : inv/esp, txtR = ritmo==null ? '' : ritmo > 1.1 ? '<span class="bad">acima do ritmo</span>' : ritmo < 0.9 ? '<span class="at">abaixo do ritmo</span>' : '<span class="ok">no ritmo</span>';
+  const kAt = K.map(x=>({x, v:kv(x, atual)||{r:0, inv:0}, bm:x.budMes(atual)})), leads = kAt.reduce((t,o)=>t+o.v.r,0), invK = kAt.reduce((t,o)=>t+o.v.inv,0);
+  const metaL = kAt.reduce((t,o)=>t+(o.x.custo>0 && o.bm ? o.bm/o.x.custo : 0),0), budK = kAt.reduce((t,o)=>t+(o.x.custo>0 ? o.bm : 0),0), cplMeta = metaL ? budK/metaL : null, cpl = leads ? invK/leads : null;
+  const cls = r => r==null ? '' : r >= 0.9 ? 'ok' : r >= 0.6 ? 'at' : 'bad';
+  const pj = proj!=null && prev ? proj/prev : null;
+  const resumo = `<div class="acg-k">
+    <div class="acg-kc"><span>Investido em ${nomeMes(atual)}</span><b>${f(inv)}</b><em>de ${f(prev)} previsto${txtR?' · '+txtR:''}</em></div>
+    <div class="acg-kc"><span>Projeção até ${fdm(addDias(atual+'-01', dm-1))}</span><b>${proj!=null?f(proj):'—'}</b><em class="${pj==null?'':pj>1.05?'bad':pj<0.9?'at':'ok'}">${pj==null?'sem dias suficientes':`${Math.round(pj*100)}% do previsto · ${proj>prev?'passa '+f(proj-prev):'sobram '+f(prev-proj)}`}</em></div>
+    <div class="acg-kc"><span>Leads no mês</span><b>${numero(leads)}</b><em class="${cls(metaL ? leads/(metaL*frac||1) : null)}">${metaL?`meta ${numero(Math.round(metaL))} · ${Math.round(leads/metaL*100)}% · esperado hoje ${numero(Math.round(metaL*frac))}`:'sem meta de custo na ficha'}</em></div>
+    <div class="acg-kc"><span>CPL médio</span><b>${cpl!=null?fmt(cpl, moe):'—'}</b><em class="${cpl==null||!cplMeta?'':cpl<=cplMeta*1.1?'ok':cpl<=cplMeta*2?'at':'bad'}">${cplMeta?`meta ${fmt(cplMeta, moe)}${cpl!=null?' · '+(cpl>cplMeta?'+':'')+Math.round((cpl/cplMeta-1)*100)+'%':''}`:'—'}</em></div></div>`;
+  // 2) precisa de atenção
+  const at = [], pn = cod => (PAISES[cod]||{}).n || cod, porCamp = fn => { const M = new Map(); for (const x of K) { const r = fn(x); if (r) { if (!M.has(x.c.id)) M.set(x.c.id, {c:x.c, it:[]}); M.get(x.c.id).it.push({x, ...r}); } } return [...M.values()]; };
+  if (decor >= 3) for (const o of porCamp(x=>{ const v = kv(x, atual); return v && v.inv > 0 && !v.r ? {inv:v.inv} : null; }))
+    at.push({n:3, cor:'verm', t:`${o.c.nome} · ${o.it.map(i=>pn(i.x.cod)).join(', ')}`, d:`gastou ${f(o.it.reduce((t,i)=>t+i.inv,0))} sem nenhum lead em ${nomeMes(atual)}`, c:o.c.id});
+  for (const m of [mesAnt(atual,1), mesAnt(atual,2), ...(decor>=5?[atual]:[])]) for (const o of porCamp(x=>{ const v = kv(x, m), outros = K.some(y=>y.c.id===x.c.id && y!==x && ((kv(y, m)||{}).inv>0));
+      return x.budMes(m) > 0 && outros && !((v||{}).inv > 0) && (!x.ini || x.ini <= mesInfo(m).fim) && (!x.fim || x.fim >= mesInfo(m).ini) ? {} : null; }))
+    at.push({n:3, cor:'verm', t:`${o.c.nome} · ${o.it.map(i=>i.x.cod).join(' e ')}`, d:`sem gasto em ${nomeMes(m)} nas campanhas vinculadas, mas com budget na ficha: o gasto pode estar numa campanha do Gerenciador que não está vinculada`, c:o.c.id});
+  for (const o of porCamp(x=>{ const ruim = m => { const v = kv(x, m); return v && v.inv > 0 && x.custo > 0 && (!v.r || v.inv/v.r > 2*x.custo); }; return ruim(mesAnt(atual,1)) && ruim(mesAnt(atual,2)) ? {} : null; }))
+    at.push({n:2, cor:'amar', t:`${o.c.nome} · ${o.it.map(i=>pn(i.x.cod)).join(', ')}`, d:`custo acima de 2× a meta em ${nomeMes(mesAnt(atual,2))} e ${nomeMes(mesAnt(atual,1))}`, c:o.c.id});
+  for (const r of B) { const p = r.prev(atual), a = +r.real(atual)||0; if (!(p > 0)) continue;
+    if (a > p) at.push({n:3, cor:'verm', t:r.nome, d:`budget de ${nomeMes(atual)} estourado: ${f(a)} de ${f(p)}`});
+    else if (decor >= 5 && a < p*frac*0.7) at.push({n:1, cor:'amar', t:r.nome, d:`abaixo do ritmo: ${f(a)} gastos, o esperado até hoje era ${f(p*frac)}`}); }
+  at.sort((a,b)=>b.n-a.n);
+  const atencao = `<div class="card acg-card"><div class="acg-h">Precisa de atenção <small>só o que fugiu da meta ou do plano</small></div>
+    ${at.length ? at.map(a=>`<div class="acg-ex"><span class="ponto-st" style="background:${a.cor==='verm'?'#d0443a':'#e0a100'}"></span><b>${h(a.t)}</b><span class="muted">${h(a.d)}</span>${a.c?`<a href="#/campanha/${a.c}/saude" class="acg-ir" title="Abrir a campanha"><i data-lucide="arrow-up-right"></i></a>`:''}</div>`).join('') : '<div class="small muted" style="padding:4px 0">Tudo dentro do plano neste mês.</div>'}</div>`;
+  // 3) campanhas no mês: barras + tendência do CPL
+  const ult6 = [...Array(6)].map((_,i)=>mesAnt(atual, 5-i));
+  const linhaC = r => { const p = r.prev(atual), a = +r.real(atual)||0, ks = r.k.startsWith('c:') ? K.filter(x=>'c:'+x.c.id===r.k) : [];
+    const pb = p ? Math.min(100, a/p*100) : 0, marca = p ? Math.min(100, frac*100) : null, corB = !p ? '#9aa4a8' : a > p ? '#d0443a' : (esp && a < p*frac*0.7) ? '#e0a100' : '#2e9d55';
+    const l = ks.reduce((t,x)=>t+((kv(x, atual)||{}).r||0),0), iK = ks.reduce((t,x)=>t+((kv(x, atual)||{}).inv||0),0), mL = ks.reduce((t,x)=>t+(x.custo>0 && x.budMes(atual) ? x.budMes(atual)/x.custo : 0),0), bK = ks.reduce((t,x)=>t+(x.custo>0 ? x.budMes(atual) : 0),0);
+    const cp = l ? iK/l : null, cm = mL ? bK/mL : null, rl = mL ? l/(mL*(frac||1)) : null;
+    const serie = ult6.map(m=>{ const s = ks.reduce((o,x)=>{ const v = kv(x, m)||{}; o.r += v.r||0; o.i += v.inv||0; return o; }, {r:0, i:0}); return s.r ? s.i/s.r : null; });
+    const vs = serie.filter(v=>v!=null), mx = Math.max(...vs, cm||0), mn = Math.min(...vs, cm||Infinity);
+    const pts = serie.map((v,i)=>v==null?null:`${i*12},${18 - (mx===mn ? 9 : (v-mn)/(mx-mn)*14) - 2}`).filter(Boolean).join(' ');
+    const tend = vs.length >= 2 ? (vs[vs.length-1] <= vs[0] ? '#2e9d55' : '#d0443a') : '#9aa4a8';
+    return `<div class="acg-row"><div class="acg-nm">${r.link?`<a href="${r.link.replace('/budget','/saude')}">${h(r.nome)}</a>`:h(r.nome)}${r.soGer?' <span class="ac-ger">Gerenciador</span>':''}</div>
+      <div><div class="acg-bar"><i style="width:${pb}%;background:${corB}"></i>${marca!=null?`<s style="left:${marca}%"></s>`:''}</div><div class="acg-lb">${f(a)} de ${p?f(p):'—'}${a>p&&p?' · estourou':''}</div></div>
+      <div>${mL ? `<div class="acg-bar"><i style="width:${Math.min(100, l/mL*100)}%;background:${rl>=0.9?'#2e9d55':rl>=0.6?'#e0a100':'#d0443a'}"></i>${frac?`<s style="left:${Math.min(100,frac*100)}%"></s>`:''}</div><div class="acg-lb">${numero(l)} de ${numero(Math.round(mL))} leads</div>` : `<div class="acg-lb">${ks.length ? numero(l)+' leads · sem meta' : '—'}</div>`}</div>
+      <div class="acg-cpl ${cp==null||!cm?'':cp<=cm*1.1?'ok':cp<=cm*2?'at':'bad'}">${cp!=null?fmt(cp, moe):'—'}${cm?`<small>meta ${fmt(cm, moe)}</small>`:''}</div>
+      <div>${pts ? `<svg width="62" height="20" viewBox="0 0 62 20" title="CPL dos últimos 6 meses"><polyline points="${pts}" fill="none" stroke="${tend}" stroke-width="1.6"/></svg>` : '<span class="muted small">—</span>'}</div></div>`; };
+  const ativos = B.filter(r=>r.prev(atual) > 0 || (+r.real(atual)||0) > 0).sort((a,b)=>(b.prev(atual)||0)-(a.prev(atual)||0));
+  const camps = `<div class="card acg-card"><div class="acg-h">Campanhas em ${nomeMes(atual)} <small>barra = consumido · traço = esperado até hoje · linha = CPL dos últimos 6 meses</small></div>
+    <div class="acg-row acg-cab"><span>Campanha</span><span>Budget do mês</span><span>Leads × meta</span><span>CPL</span><span>6 meses</span></div>${ativos.map(linhaC).join('') || '<div class="small muted">Nenhuma campanha com budget neste mês.</div>'}</div>`;
+  // 4) mapa de calor país × mês
+  const met = UI.acMet || 'cpl', segM = [['cpl','CPL'],['leads','Leads'],['inv','Investido']].map(([k,t])=>`<button class="${met===k?'on':''}" data-act="acMet" data-v="${k}">${t}</button>`).join('');
+  const porC = new Map(); for (const x of K) { if (!porC.has(x.c.id)) porC.set(x.c.id, []); porC.get(x.c.id).push(x); }
+  const m6 = ult6.filter(m=>m===atual || K.some(x=>((kv(x, m)||{}).inv||0) > 0));   // tira os meses sem nenhum gasto
+  const cel = (x, m) => { const v = kv(x, m), bm = x.budMes(m); if (!v || (!(v.inv>0) && !(v.r>0))) return `<div class="hm n">${bm>0 && m<=atual ? '<span title="Budget na ficha, sem gasto nas campanhas vinculadas">sem gasto</span>' : ''}</div>`;
+    const cu = v.r ? v.inv/v.r : null, mR = x.custo>0 && bm ? bm/x.custo : null, fr = m===atual ? (frac||1) : 1;
+    let txt, cor;
+    if (met==='cpl') { txt = cu!=null ? fmt(cu, moe) : 'sem lead'; cor = acCorCusto(cu, x.custo); }
+    else if (met==='leads') { txt = numero(v.r); const q = mR ? v.r/(mR*fr) : null; cor = q==null ? '' : q >= 0.9 ? 'ac-vd' : q >= 0.5 ? 'ac-am' : 'ac-vm'; }
+    else { txt = fmt(v.inv, moe); const q = bm ? v.inv/(bm*fr) : null; cor = q==null ? '' : q >= 0.85 && q <= 1.15 ? 'ac-vd' : q >= 0.5 && q <= 1.5 ? 'ac-am' : 'ac-vm'; }
+    return `<div class="hm ${cor} ${m===atual?'ac-parc-hm':''}" title="${h(nomeMes(m))}: ${numero(v.r)} leads · custo ${cu!=null?fmt(cu, moe):'—'}${x.custo>0?' (meta '+fmt(x.custo, moe)+')':''} · investido ${fmt(v.inv, moe)}${bm?' de '+fmt(bm, moe):''}${m===atual?' · parcial':''}">${txt}</div>`; };
+  const mapas = [...porC.values()].map(xs=>{ const c = xs[0].c, ab = (UI.acAberto||{})[c.id] ?? true;
+    return `<div class="acg-mapa"><button class="acg-mapa-h" data-act="acAbrir" data-id="${c.id}"><i data-lucide="${ab?'chevron-down':'chevron-right'}"></i><b>${h(c.nome)}</b><span class="muted small">${xs.length} ${xs.length===1?'país':'países'}</span></button>
+      ${ab ? `<div class="acg-hm" style="grid-template-columns:120px repeat(${m6.length},minmax(0,1fr))"><div></div>${m6.map(m=>`<div class="hm-h ${m===atual?'atual':''}">${NOMES_MES[+m.slice(5)-1].toLowerCase()}${m===atual?'*':''}</div>`).join('')}
+        ${xs.map(x=>`<div class="hm-p">${h(pn(x.cod))}</div>${m6.map(m=>cel(x, m)).join('')}`).join('')}</div>` : ''}</div>`; }).join('');
+  const mapa = K.length ? `<div class="card acg-card"><div class="acg-h"><span>Por país e mês</span><div class="seg acg-seg">${segM}</div></div>${mapas}
+    <div class="small muted" style="margin-top:8px">Passe o mouse numa célula para ver resultado, custo e investido. * mês atual, parcial (comparado com o esperado até hoje). ${met==='cpl'?'Cor: custo × meta de custo (verde até +10%, amarelo até 2×, vermelho acima ou sem lead).':met==='leads'?'Cor: leads × meta do mês (verde ≥ 90%, amarelo ≥ 50%).':'Cor: investido × budget do mês (verde entre 85% e 115%).'}</div></div>` : '';
+  return resumo + atencao + camps + mapa; }
+
 function pgAcompanhamento(){ migalha([['Digital'],['Acompanhamento']]);
   if (!ehEquipe()) return '<div class="vazio">Somente a equipe da agência acessa esta página.</div>';
   const ano = UI.acAno || HOJE.slice(0,4), meses = [...Array(12)].map((_,i)=>`${ano}-${String(i+1).padStart(2,'0')}`), atual = mesAtual(), vivas = acLinhas();
@@ -3861,11 +3942,15 @@ function pgAcompanhamento(){ migalha([['Digital'],['Acompanhamento']]);
           const dif = fech && v.p>0 && v.a!=null ? v.a/v.p : null, cls = fech ? 'ac-fech' : '';
           return `<td class="num ${cls}">${v.p>0?fmt(v.p, moe):''}</td><td class="num ${cls} ${v.parcial?'ac-parc':''}" ${v.parcial?`title="Parcial do mês (fecha no dia 1º do mês seguinte)"`:''} ${dif!=null?`title="${Math.round(dif*100)}% do previsto"`:''}>${v.parcial ? (v.a>0?fmt(v.a, moe):'') : fmt(v.a, moe)}</td>`; }).join('')}</tr>`).join('')}
       <tr class="ac-tot"><td class="ac-camp">Total</td>${mg.map(m=>{ const t = tot(m); return `<td class="num">${fmt(t.p, moe)}</td><td class="num ${m===atual?'ac-parc':''}">${m > atual ? fmt(0, moe) : fmt(t.a, moe)}</td>`; }).join('')}</tr></tbody></table></div></div>`; };
-  return `<div class="cab"><div><h1>Acompanhamento</h1><p>Budget previsto × realizado por mês em cada campanha do Meta Ads. O previsto vem da ficha da campanha; o realizado é o gasto no Gerenciador e fecha no dia 1º do mês seguinte. O mês atual aparece em cinza como parcial.</p></div></div>
-    <div class="at-barra"><div class="seg">${['', ...grupos].map(g=>`<button class="${filtro===g?'on':''}" data-act="acGrupo" data-v="${h(g)}">${g?h(g):'Todos'}</button>`).join('')}</div>
-      <span style="margin-left:auto" class="small muted">Ano</span><select class="ac-ano" onchange="UI.acAno=this.value;render()">${opts(anos, ano)}</select></div>
+  const vis = UI.acVis || 'geral', gG = filtro || UI.acGrupoG || grupos.find(g=>/ptx/i.test(g) && /emea/i.test(g)) || grupos[0];
+  const segV = [['geral','layout-dashboard','Visão geral'],['tabela','table-2','Tabela completa']].map(([k,ic,t])=>`<button class="${vis===k?'on':''}" data-act="acVis" data-v="${k}"><i data-lucide="${ic}"></i>${t}</button>`).join('');
+  const segG = (vis==='geral' ? grupos : ['', ...grupos]).map(g=>`<button class="${(vis==='geral' ? gG : filtro)===g?'on':''}" data-act="acGrupo" data-v="${h(g)}">${g?h(g):'Todos'}</button>`).join('');
+  return `<div class="cab"><div><h1>Acompanhamento</h1><p>${vis==='geral' ? 'Como cada cliente está no mês: ritmo do budget, leads e custo contra a meta, o que precisa de atenção e a evolução por país.' : 'Budget previsto × realizado por mês em cada campanha do Meta Ads. O previsto vem da ficha da campanha; o realizado é o gasto no Gerenciador e fecha no dia 1º do mês seguinte. O mês atual aparece em cinza como parcial.'}</p></div></div>
+    <div class="at-barra"><div class="seg at-seg">${segV}</div><div class="seg">${segG}</div>
+      ${vis==='tabela' ? `<span style="margin-left:auto" class="small muted">Ano</span><select class="ac-ano" onchange="UI.acAno=this.value;render()">${opts(anos, ano)}</select>` : ''}</div>
+    ${vis==='geral' ? (gG ? acGeral(gG, fmt) : '<div class="card vazio">Nenhuma campanha com budget do Meta Ads.</div>') : `
     ${ms.length ? (filtro ? [filtro] : grupos).map(g=>tabela(g) + acKpis(g, ano, fmt)).join('') || '<div class="card vazio">Nenhuma campanha com budget neste filtro.</div>' : '<div class="card vazio">Nenhuma campanha com budget do Meta Ads neste ano.</div>'}
-    <div class="small muted" style="padding:6px 4px"><span class="ac-leg ac-fech"></span>mês fechado · <span class="ac-leg"></span>mês atual e próximos (previsto) · <span class="ac-leg ac-vz"></span>sem budget no mês</div>`; }
+    <div class="small muted" style="padding:6px 4px"><span class="ac-leg ac-fech"></span>mês fechado · <span class="ac-leg"></span>mês atual e próximos (previsto) · <span class="ac-leg ac-vz"></span>sem budget no mês</div>`}`; }
 
 /* ---------- quem está com o sistema aberto agora (Supabase Realtime presence) ---------- */
 const PAG_NOME = {atividades:'Atividades', acompanhamento:'Acompanhamento', dashboard:'Início', clientes:'Clientes', campanha:'Campanha', acoes:'Gestão de ações', anual:'Cronograma anual', editorial:'Calendário editorial', notificacoes:'Notificações', config:'Configurações', status:'Campanhas', invoices:'Invoices', acessos:'Acessos e permissões', perfil:'Meu perfil'};
@@ -4447,7 +4532,9 @@ const ACT = {
   budStAbrir: (el, e) => { e && e.stopPropagation(); abrirBudStatus(el.dataset.mc, el.dataset.conta); },
   budStSalvar: () => gravarBudStatus(false),
   budStAuto: () => gravarBudStatus(true),
-  acGrupo: el => { UI.acGrupo = el.dataset.v; render(); },
+  acGrupo: el => { if ((UI.acVis||'geral')==='geral') UI.acGrupoG = el.dataset.v; else UI.acGrupo = el.dataset.v; render(); },
+  acVis: el => { UI.acVis = el.dataset.v; render(); }, acMet: el => { UI.acMet = el.dataset.v; render(); },
+  acAbrir: el => { UI.acAberto = UI.acAberto || {}; UI.acAberto[el.dataset.id] = !((UI.acAberto[el.dataset.id]) ?? true); render(); },
   atAba: el => { UI.atAba = el.dataset.v; render(); },
   atSem: el => { const v = +el.dataset.v; UI.atSem = v ? addDias(UI.atSem || semDom(HOJE), v) : semDom(HOJE); render(); },
   atMesTog: () => { const A = atDados(); A.autoMensal = A.autoMensal === false; salvar(); render(); toast(A.autoMensal ? 'Lembrete mensal ligado.' : 'Lembrete mensal pausado.'); },
