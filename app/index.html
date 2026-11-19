@@ -215,11 +215,19 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .lpe-doc td.tbl-sel{box-shadow:inset 0 0 0 2px #2383e2;background-color:rgba(35,131,226,.06)}
 .tbl-menu{position:absolute;z-index:60;width:230px;background:#fff;border:1px solid var(--borda);border-radius:10px;box-shadow:0 12px 32px rgba(15,15,15,.16);padding:6px}.tbl-menu[hidden]{display:none}.tbl-busca{width:100%;box-sizing:border-box;border:1.5px solid #2383e2;border-radius:6px;padding:6px 8px;font:inherit;font-size:.84rem;margin-bottom:4px;outline:none}
 .tbl-it-l>button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;padding:6px 8px;border-radius:6px;cursor:pointer;font:inherit;font-size:.86rem;text-align:left;color:var(--tx)}.tbl-it-l>button:hover{background:#f1f3f4}.tbl-it-l>button svg{width:15px;height:15px;color:var(--tx2)}.tbl-it-l>button[data-a="excluir"]{color:var(--verm)}.tbl-it-l>button[data-a="excluir"] svg{color:var(--verm)}
+.tbl-sw{margin-left:auto;width:28px;height:16px;border-radius:9px;background:#d5d9dc;position:relative;flex:none;transition:background .15s}.tbl-sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .15s}.tbl-sw.on{background:#2383e2}.tbl-sw.on::after{left:14px}
+.lpe-doc table[data-larg="0"]{width:auto}.lpe-doc table[data-cabl="1"] tr:first-child td{background:#f6f6f4;font-weight:600}.lpe-doc table[data-cabc="1"] td:first-child{background:#f6f6f4;font-weight:600}
 .tbl-sep{border-top:1px solid var(--borda);margin:5px 0}.tbl-cor-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:2px 8px 4px}.tbl-cores{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 4px}.tbl-cores button{border:0;background:none;padding:2px;border-radius:5px;cursor:pointer}.tbl-cores button:hover{background:#f1f3f4}.tbl-cor{display:block;width:20px;height:20px;border-radius:4px;border:1px solid var(--borda)}
 [data-cor="cinza"]{background:#f1f1ef!important}[data-cor="azul"]{background:#e7f0fa!important}[data-cor="verde"]{background:#e8f3ec!important}[data-cor="amarelo"]{background:#fbf3db!important}[data-cor="laranja"]{background:#fbecdd!important}[data-cor="vermelho"]{background:#fbe4e4!important}[data-cor="roxo"]{background:#efe8f8!important}.tbl-cor[data-cor=""]{background:#fff}
 .blk-menu{position:absolute;z-index:50;width:290px;max-height:330px;overflow:auto;background:#fff;border:1px solid var(--borda);border-radius:10px;box-shadow:0 12px 32px rgba(15,15,15,.16);padding:6px}.blk-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:6px 8px 4px}
 .blk-menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:6px 8px;border-radius:7px;cursor:pointer;text-align:left;font:inherit}.blk-menu button.sel,.blk-menu button:hover{background:#f1f3f4}.blk-ic{width:32px;height:32px;border:1px solid var(--borda);border-radius:6px;display:flex;align-items:center;justify-content:center;background:#fff;flex:none}.blk-ic svg{width:16px;height:16px;color:var(--tx2)}.blk-n{flex:1;display:flex;flex-direction:column}.blk-n b{font-size:.84rem;font-weight:500}.blk-n em{font-style:normal;font-size:.72rem;color:var(--tx3)}.blk-menu kbd{font-family:inherit;font-size:.7rem;color:var(--tx3)}
 .lpe-edit p:only-child:has(br:only-child)::before{content:'Escreva aqui… digite / para inserir blocos';color:var(--tx3);position:absolute;pointer-events:none}
+.np{max-width:900px;margin:0 auto}.np-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:-4px 0 18px}.np-top-d{display:flex;align-items:center;gap:8px}.np-salvo{font-size:.78rem;color:var(--tx3)}.np-pub{color:#1f7a47;border-color:#cfe6d2}
+.np-doc{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:44px 64px 56px}@media (max-width:760px){.np-doc{padding:28px 20px}}.np-ic{font-size:2.6rem;line-height:1;margin-bottom:10px}.np-tit{font-size:2.1rem;font-weight:800;letter-spacing:-.02em;margin:0 0 16px;line-height:1.15}
+.np-props{display:flex;flex-direction:column;gap:4px;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--borda)}.np-props>div{display:grid;grid-template-columns:160px 1fr;align-items:center;gap:10px;font-size:.88rem;min-height:30px}.np-props span{display:flex;align-items:center;gap:7px;color:var(--tx3)}.np-props span svg{width:15px;height:15px}.np-props b{font-weight:500}.np-props a{color:var(--azul);word-break:break-all}.np-st{justify-self:start;font-size:.78rem;font-weight:700;border-radius:20px;padding:2px 10px;border:1px solid transparent}
+.np-corpo{border:0!important;padding:0!important;min-height:420px;max-height:none!important;overflow:visible!important;font-size:1rem;line-height:1.65}.np-orig{margin-bottom:18px;border:1px solid var(--borda);border-radius:10px;padding:8px 12px;background:#fafbfb}.np-orig summary{cursor:pointer;font-size:.86rem;font-weight:600;color:var(--tx2)}.np-orig .lpe-doc{border:0;background:none;max-height:none;min-height:0;padding:10px 4px 4px}
+.np-share{display:flex;flex-direction:column;gap:12px}.np-share-l{display:flex;align-items:center;gap:12px}.np-share-l>svg{width:22px;height:22px;color:var(--tx2);flex:none}.np-share-l>div{flex:1}.np-share-l b{display:block}.np-share-l span{font-size:.82rem;color:var(--tx3)}.np-share-u{display:flex;gap:6px}.np-share-u input{flex:1;font-size:.82rem}
+.pub{min-height:100vh;background:#f3f4f6;padding:0 16px 60px}.pub-cab{background:#111;margin:0 -16px 32px;padding:16px 24px}.pub-logo{width:120px;display:block}.pub-doc{max-width:860px;margin:0 auto;background:#fff;border:1px solid var(--borda);border-radius:14px;padding:44px 64px 56px}@media (max-width:760px){.pub-doc{padding:28px 20px}}.pub-meta{font-size:.82rem;color:var(--tx3);margin:-6px 0 24px}
 .lp-txt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--borda);border-radius:9px;background:#fafbfb;text-decoration:none;color:var(--tx);font-size:.84rem;line-height:1.4}.lp-txt:hover{border-color:var(--borda-f);background:#f5f6f7}.lp-txt>svg{width:17px;height:17px;color:var(--tx2);flex:none}.lp-txt span{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.lp-txt.vz span{color:var(--tx3)}.lp-txt b{display:flex;align-items:center;gap:2px;font-size:.78rem;color:var(--tx2);flex:none}.lp-txt b svg{width:14px;height:14px}
 .lpe-st{display:flex;align-items:center;gap:10px;margin:-4px 0 12px}.lpe-st .kvc-st{font-size:.76rem;font-weight:700;border-radius:20px;padding:3px 10px;border:1px solid transparent}
 .lpe-grade{display:grid;gap:16px}.lpe-grade.dupla{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}@media (max-width:900px){.lpe-grade.dupla{grid-template-columns:1fr}}.lpe-rot{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--tx3);margin-bottom:6px}
@@ -636,7 +644,7 @@ function nivelDe(p){ if (!p) return null; if (p.papel==='admin') return 'admin';
   const a = p.acessos || AC_PADRAO; for (const k of ['completo','operacional']) if (NIVEIS[k].areas.length===a.length && NIVEIS[k].areas.every(x=>a.includes(x))) return k; return 'pers'; }
 const pode = area => { if (!PERFIL) return false; if (PERFIL.papel==='admin') return true; if (area==='acessos') return false;
   if (PERFIL.papel==='cliente') return area==='campanhas'; if (PERFIL.papel!=='equipe') return false; return (PERFIL.acessos || AC_PADRAO).includes(area); };
-const AREA_ROTA = {clientes:'campanhas', campanha:'campanhas', acoes:'acoes', status:'status', atividades:'status', acompanhamento:'status', anual:'calendarios', editorial:'calendarios', config:'config', invoices:'invoices', acessos:'acessos'};
+const AREA_ROTA = {clientes:'campanhas', campanha:'campanhas', lp:'campanhas', acoes:'acoes', status:'status', atividades:'status', acompanhamento:'status', anual:'calendarios', editorial:'calendarios', config:'config', invoices:'invoices', acessos:'acessos'};
 const podeRota = r => !AREA_ROTA[r[0]] || pode(AREA_ROTA[r[0]]);
 const equipeAtiva = () => PERFIS.filter(p=>p.papel==='admin' || p.papel==='equipe');
 const nomeResp = p => String(p.nome || (p.email||'').split('@')[0]).trim();
@@ -1238,6 +1246,7 @@ async function iniciar(){
   try { if (localStorage.getItem('menu-oculto')) document.body.classList.add('menu-oculto'); } catch(e){}
   if (!window.supabase || !window.SUPA_URL) { document.body.innerHTML = '<p style="padding:24px">Não foi possível carregar a conexão com o banco. Recarregue a página.</p>'; return; }
   sb = window.supabase.createClient(window.SUPA_URL, window.SUPA_KEY);
+  if (/^#\/publico\//.test(location.hash)) return paginaPublica(location.hash.split('/')[2]);   // página publicada na web: abre sem login
   let recuperando = /type=recovery/.test(location.hash);
   sb.auth.onAuthStateChange((ev, sessao) => {
     if (ev==='PASSWORD_RECOVERY') { recuperando = true; SESSAO = sessao; telaLogin('nova'); return; }
@@ -1497,7 +1506,7 @@ function render(){
   const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações']].filter(([k])=>pode(k));
   $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
   $('#hoje-txt').textContent = fd(HOJE); { for (const id of ['#lat-badge','#topo-badge']) { const b = $(id); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
-  const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
+  const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
   try { $('#app').innerHTML = podeRota(r) ? pg(r) : (migalha([['Sem acesso']]), '<div class="card vazio" style="margin-top:20px"><i data-lucide="lock"></i><div style="margin-top:8px">Você não tem acesso a esta área. Fale com um administrador.</div></div>'); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
@@ -2702,7 +2711,7 @@ function lpFluxoBloco(c, ed){ const {f, idis} = lpDados(c), et = lpEtapas(c), po
 const lpTextoPuro = html => { if (!html) return ''; const d = document.createElement('div'); d.innerHTML = String(html).replace(/<\/(p|h\d|li|div|td|th|tr|summary)>|<br\s*\/?>/gi, m=>m+' '); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
 function lpLimpa(html){ const d = document.createElement('div'); d.innerHTML = html || '';
   d.querySelectorAll('script,style,iframe,object,embed,meta,link').forEach(n=>n.remove());
-  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|open|contenteditable)$/i.test(a.name) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v));
+  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable)$/i.test(a.name) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v));
       if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(v)) || !ok) n.removeAttribute(a.name); } if (n.tagName==='A') { n.setAttribute('target','_blank'); n.setAttribute('rel','noopener'); } });
   return d.innerHTML; }
 function lpAlvo(c, et, idi){ const {f} = lpDados(c); return et==='trad' ? f.trad[idi] : f[et]; }
@@ -2770,33 +2779,41 @@ function editorBlocos(ed){ if (!ed || ed._blocos) return; ed._blocos = true; try
       if (e.key==='Escape') { e.preventDefault(); fechar(); return; } }
     if (e.key==='Enter' && !e.shiftKey) { const b = blocoAtual(); if (b && /^H[1-4]$/.test(b.tagName)) { e.preventDefault(); const p = document.createElement('p'); p.innerHTML = '<br>'; b.after(p); cursorEm(p); } }
   });
-  ed.addEventListener('click', e => { const li = e.target.closest('ul.todo > li'); if (li && e.offsetX < 22) { li.dataset.check = li.dataset.check==='1' ? '0' : '1'; } });
+  ed.addEventListener('click', e => { const li = e.target.closest('ul.todo > li'); if (li && e.offsetX < 22) { li.dataset.check = li.dataset.check==='1' ? '0' : '1'; ed.dispatchEvent(new Event('input', {bubbles:true})); } });
   ed.addEventListener('blur', () => setTimeout(fechar, 150));
   tabelaAlcas(ed); }
 /* tabela: alças de linha e de coluna (como no Notion) com inserir, duplicar, limpar, excluir e cor */
 const CORES_TAB = [['','Padrão'],['cinza','Cinza'],['azul','Azul'],['verde','Verde'],['amarelo','Amarelo'],['laranja','Laranja'],['vermelho','Vermelho'],['roxo','Roxo']];
 function tabelaAlcas(ed){ const box = ed.parentNode;
-  const hr = document.createElement('button'), hc = document.createElement('button'), menu = document.createElement('div');
+  const hr = document.createElement('button'), hc = document.createElement('button'), ht = document.createElement('button'), menu = document.createElement('div');
   hr.type = hc.type = 'button'; hr.className = 'tbl-h tbl-hr'; hc.className = 'tbl-h tbl-hc'; hr.title = 'Opções da linha'; hc.title = 'Opções da coluna';
-  hr.innerHTML = '<i data-lucide="grip-vertical"></i>'; hc.innerHTML = '<i data-lucide="grip-horizontal"></i>'; menu.className = 'tbl-menu'; menu.hidden = true; hr.hidden = hc.hidden = true;
-  box.append(hr, hc, menu); if (window.lucide) lucide.createIcons();
+  hr.innerHTML = '<i data-lucide="grip-vertical"></i>'; hc.innerHTML = '<i data-lucide="grip-horizontal"></i>'; ht.type = 'button'; ht.className = 'tbl-h tbl-ht'; ht.title = 'Opções da tabela'; ht.innerHTML = '<i data-lucide="table"></i>'; menu.className = 'tbl-menu'; menu.hidden = true; hr.hidden = hc.hidden = ht.hidden = true;
+  box.append(hr, hc, ht, menu); if (window.lucide) lucide.createIcons();
   let td = null, alvo = null;
   const pos = cel => { const tr = cel.parentNode, tb = cel.closest('table'), P = box.getBoundingClientRect(), R = tr.getBoundingClientRect(), T = tb.getBoundingClientRect(), C = cel.getBoundingClientRect();
-    hr.style.top = (R.top - P.top + R.height/2 - 11) + 'px'; hr.style.left = (T.left - P.left - 20) + 'px'; hc.style.left = (C.left - P.left + C.width/2 - 11) + 'px'; hc.style.top = (T.top - P.top - 12) + 'px'; hr.hidden = hc.hidden = false; };
+    hr.style.top = (R.top - P.top + R.height/2 - 11) + 'px'; hr.style.left = (T.left - P.left - 20) + 'px'; hc.style.left = (C.left - P.left + C.width/2 - 11) + 'px'; hc.style.top = (T.top - P.top - 12) + 'px'; ht.style.left = (T.left - P.left - 20) + 'px'; ht.style.top = (T.top - P.top - 12) + 'px'; hr.hidden = hc.hidden = ht.hidden = false; };
   // as alças continuam visíveis enquanto o mouse vai da célula até elas; somem só longe da tabela
   const mover = e => { if (!box.isConnected) return document.removeEventListener('mousemove', mover); if (!menu.hidden) return;
     if (e.target.closest && e.target.closest('.tbl-h')) return;
     const c = e.target.closest && e.target.closest('td'); if (c && ed.contains(c)) { td = c; pos(c); return; }
     if (td && td.isConnected) { const T = td.closest('table').getBoundingClientRect(); if (e.clientX >= T.left - 34 && e.clientX <= T.right + 6 && e.clientY >= T.top - 26 && e.clientY <= T.bottom + 6) return; }
-    hr.hidden = hc.hidden = true; };
+    hr.hidden = hc.hidden = ht.hidden = true; };
   document.addEventListener('mousemove', mover);
-  const celulas = () => { if (!alvo) return []; const tb = alvo.td.closest('table'); if (!tb) return []; return alvo.tipo==='linha' ? [...alvo.td.parentNode.cells] : [...tb.rows].map(r=>r.cells[alvo.idx]).filter(Boolean); };
+  const celulas = () => { if (!alvo) return []; const tb = alvo.td.closest('table'); if (!tb) return []; if (alvo.tipo==='tabela') return [...tb.querySelectorAll('td')]; return alvo.tipo==='linha' ? [...alvo.td.parentNode.cells] : [...tb.rows].map(r=>r.cells[alvo.idx]).filter(Boolean); };
   const marcar = on => { ed.querySelectorAll('td.tbl-sel').forEach(x=>x.classList.remove('tbl-sel')); if (on) celulas().forEach(x=>x.classList.add('tbl-sel')); };
   const vazia = () => { const c = document.createElement('td'); c.innerHTML = '<br>'; return c; };
   const ACOES = {
     linha: [['acima','arrow-up','Inserir acima'],['abaixo','arrow-down','Inserir abaixo'],['dup','copy','Duplicar'],['limpar','circle-x','Limpar conteúdo'],['excluir','trash-2','Excluir linha']],
     coluna: [['esq','arrow-left','Inserir à esquerda'],['dir','arrow-right','Inserir à direita'],['dup','copy','Duplicar'],['limpar','circle-x','Limpar conteúdo'],['excluir','trash-2','Excluir coluna']] };
-  const fazer = a => { const tb = alvo.td.closest('table'), tr = alvo.td.parentNode, idx = alvo.idx;
+  const fazer = a => { setTimeout(()=>ed.dispatchEvent(new Event('input', {bubbles:true})), 0);   // salva as mudanças feitas pelo menu
+    const tb = alvo.td.closest('table'), tr = alvo.td.parentNode, idx = alvo.idx;
+    if (alvo.tipo==='tabela') { const tg = k => { if (tb.dataset[k]==='1') delete tb.dataset[k]; else tb.dataset[k] = '1'; };
+      if (a==='larg') { if (tb.dataset.larg==='0') delete tb.dataset.larg; else tb.dataset.larg = '0'; }
+      if (a==='cabl') tg('cabl'); if (a==='cabc') tg('cabc');
+      if (a==='dup') { const n = tb.cloneNode(true); n.querySelectorAll('.tbl-sel').forEach(x=>x.classList.remove('tbl-sel')); tb.after(n); }
+      if (a==='excluir') { const p = document.createElement('p'); p.innerHTML = '<br>'; tb.replaceWith(p); }
+      if (a.startsWith('cor:')) { const cor = a.slice(4); celulas().forEach(x=>{ if (cor) x.dataset.cor = cor; else delete x.dataset.cor; }); }
+      if (['larg','cabl','cabc'].includes(a)) { abrirM('tabela', ht); return; } return fecharM(); }
     if (a.startsWith('cor:')) { const cor = a.slice(4); celulas().forEach(x=>{ if (cor) x.dataset.cor = cor; else delete x.dataset.cor; }); }
     else if (alvo.tipo==='linha') {
       if (a==='acima' || a==='abaixo') { const n = document.createElement('tr'); [...tr.cells].forEach(()=>n.appendChild(vazia())); a==='acima' ? tr.before(n) : tr.after(n); }
@@ -2809,10 +2826,11 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
       if (a==='limpar') celulas().forEach(x=>x.innerHTML='<br>');
       if (a==='excluir') { if (tb.rows[0].cells.length<=1) tb.remove(); else [...tb.rows].forEach(r=>{ const c = r.cells[idx]; if (c) c.remove(); }); } }
     fecharM(); };
-  const fecharM = () => { menu.hidden = true; marcar(false); alvo = null; hr.hidden = hc.hidden = true; };
+  const fecharM = () => { menu.hidden = true; marcar(false); alvo = null; hr.hidden = hc.hidden = ht.hidden = true; };
   const abrirM = (tipo, botao) => { if (!td) return; alvo = {tipo, td, idx: td.cellIndex}; marcar(true);
-    const L = ACOES[tipo];
-    menu.innerHTML = `<input class="tbl-busca" placeholder="Buscar ações…"><div class="tbl-it-l">${L.map(([k,ic,t])=>`<button type="button" data-a="${k}" data-t="${normNome(t)}"><i data-lucide="${ic}"></i>${t}</button>`).join('')}
+    const tb = td.closest('table'), sw = (k, on) => `<span class="tbl-sw ${on?'on':''}"></span>`;
+    const L = tipo==='tabela' ? [['larg','move-horizontal','Ajustar à largura', tb.dataset.larg!=='0'],['cabl','panel-top','Linha de cabeçalho', tb.dataset.cabl==='1'],['cabc','panel-left','Coluna de cabeçalho', tb.dataset.cabc==='1'],['dup','copy','Duplicar tabela'],['excluir','trash-2','Excluir tabela']] : ACOES[tipo];
+    menu.innerHTML = `<input class="tbl-busca" placeholder="Buscar ações…"><div class="tbl-it-l">${L.map(([k,ic,t,on])=>`<button type="button" data-a="${k}" data-t="${normNome(t)}"><i data-lucide="${ic}"></i>${t}${on!==undefined?sw(k,on):''}</button>`).join('')}
       <div class="tbl-sep" data-t="cor"></div><div class="tbl-cor-t" data-t="cor">Cor de fundo</div><div class="tbl-cores" data-t="cor">${CORES_TAB.map(([k,t])=>`<button type="button" data-a="cor:${k}" title="${t}" data-t="cor ${normNome(t)}"><span class="tbl-cor" data-cor="${k}"></span></button>`).join('')}</div></div>`;
     if (window.lucide) lucide.createIcons();
     const P = box.getBoundingClientRect(), B = botao.getBoundingClientRect(); menu.style.left = Math.max(0, B.right - P.left + 4) + 'px'; menu.style.top = (B.top - P.top) + 'px'; menu.hidden = false;
@@ -2820,14 +2838,61 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
     inp.oninput = () => { const q = normNome(inp.value); menu.querySelectorAll('[data-t]').forEach(x=>{ x.hidden = q && !x.dataset.t.includes(q) && !(x.dataset.t.startsWith('cor') && 'cor'.includes(q)); }); };
     inp.onkeydown = e => { if (e.key==='Escape') { e.preventDefault(); fecharM(); } if (e.key==='Enter') { const b = [...menu.querySelectorAll('button[data-a]')].find(x=>!x.hidden && !x.closest('[hidden]')); if (b) { e.preventDefault(); fazer(b.dataset.a); } } };
     menu.querySelectorAll('button[data-a]').forEach(b=>b.onmousedown = ev => { ev.preventDefault(); fazer(b.dataset.a); }); };
-  hr.onmousedown = e => { e.preventDefault(); abrirM('linha', hr); }; hc.onmousedown = e => { e.preventDefault(); abrirM('coluna', hc); };
+  hr.onmousedown = e => { e.preventDefault(); abrirM('linha', hr); }; hc.onmousedown = e => { e.preventDefault(); abrirM('coluna', hc); }; ht.onmousedown = e => { e.preventDefault(); abrirM('tabela', ht); };
   // fecha ao clicar fora; usa o caminho do clique (o ícone da alça pode ser recriado durante o próprio clique)
-  document.addEventListener('mousedown', e => { if (menu.hidden) return; const cam = e.composedPath ? e.composedPath() : [e.target]; if (cam.includes(menu) || cam.includes(hr) || cam.includes(hc)) return; fecharM(); }); }
+  document.addEventListener('mousedown', e => { if (menu.hidden) return; const cam = e.composedPath ? e.composedPath() : [e.target]; if (cam.includes(menu) || cam.includes(hr) || cam.includes(hc) || cam.includes(ht)) return; fecharM(); }); }
+/* ---------- página do conteúdo da landing page (como uma página do Notion) ---------- */
+function pgLpPagina(r){ const c = camp(r[1]), et = r[2], idi = r[3] || '';
+  if (!c || !['conteudo','trad'].includes(et)) return '<div class="vazio">Página não encontrada.</div>';
+  const {f} = lpDados(c), d = lpAlvo(c, et, idi); if (!d) return '<div class="vazio">Idioma não encontrado.</div>';
+  const ed = ehEquipe(), trad = et==='trad', nomeIdi = IDIOMAS[trad ? idi : c.idiomaBase] || '', titulo = `Texto landing page · ${nomeIdi}`, st = d.status || '';
+  migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,`#/clientes/${c.clienteId}`],[c.nome,`#/campanha/${c.id}/entregaveis`],['Landing page',`#/campanha/${c.id}/entregaveis`],[nomeIdi]]);
+  UI.lpTxt = {id:c.id, et, idi}; posRender.push(()=>{ const e = document.getElementById('lpe-edit'); if (e && ed) { editorBlocos(e); lpAutoSalvar(e); } });
+  const hist = (d.hist||[]).slice().reverse(), ultima = (d.editadoEm ? `${new Date(d.editadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}${d.editadoPor?' · '+h(d.editadoPor):''}` : '—');
+  const acoes = !ed ? '' : st==='Aguardando aprovação do cliente' ? `<button class="btn btn-s" data-act="lpTextoAjustes"><i data-lucide="message-square-warning"></i>Cliente pediu ajustes</button><button class="btn btn-s btn-p" data-act="lpTextoAprovar"><i data-lucide="check"></i>Cliente aprovou</button>`
+    : st==='Aprovado' ? '' : `<button class="btn btn-s btn-p" data-act="lpTextoEnviar"><i data-lucide="send"></i>Enviar para aprovação</button>`;
+  return `<div class="np"><div class="np-top"><a href="#/campanha/${c.id}/entregaveis" class="ent-voltar" onclick="UI.entSec=UI.entSec||{};UI.entSec['${c.id}']='Landing page'"><i data-lucide="arrow-left"></i>Landing page</a>
+      <div class="np-top-d"><span class="np-salvo" id="np-salvo"></span>${ed?`<button class="btn btn-s ${d.publico?'np-pub':''}" data-act="lpCompartilhar"><i data-lucide="${d.publico?'globe':'share-2'}"></i>${d.publico?'Publicada na web':'Compartilhar'}</button>`:''}${acoes}</div></div>
+    <article class="np-doc"><div class="np-ic">📄</div><h1 class="np-tit">${h(titulo)}</h1>
+      <div class="np-props"><div><span><i data-lucide="circle-dot"></i>Status</span><b class="kvc-st kvc-${lpCor(st)} np-st">${h(st)}</b></div>
+        <div><span><i data-lucide="user"></i>Responsável</span><b>${h(d.resp||'—')}</b></div>
+        <div><span><i data-lucide="megaphone"></i>Campanha</span><b>${h(c.nome)} · ${h(cliente(c.clienteId).nome)}</b></div>
+        <div><span><i data-lucide="clock"></i>Última edição</span><b id="np-ult">${ultima}</b></div>
+        ${d.publico?`<div><span><i data-lucide="globe"></i>Link público</span><b><a href="${lpLinkPublico(d.publico)}" target="_blank" rel="noopener">${lpLinkPublico(d.publico).replace(/^https?:\/\//,'').slice(0,60)}…</a></b></div>`:''}</div>
+      ${trad ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)} (aprovado)</summary><div class="lpe-doc">${lpLimpa(f.conteudo.texto) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
+      <div class="lpe-doc np-corpo ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true"':''}>${lpLimpa(d.texto)}</div>
+      ${hist.length ? `<div class="lpe-hist"><div class="lpe-rot">Histórico da aprovação</div>${hist.map(x=>`<div><b>${h(x.o)}</b><span>${new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ${h(x.quem||'')}</span>${x.coment?`<em>“${h(x.coment)}”</em>`:''}</div>`).join('')}</div>` : ''}
+    </article></div>`; }
+/* salva sozinho enquanto escreve (e atualiza a versão pública, se houver) */
+function lpAutoSalvar(ed){ let t; ed.addEventListener('input', () => { const el = document.getElementById('np-salvo'); if (el) el.textContent = 'Salvando…'; clearTimeout(t);
+  t = setTimeout(() => { const {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi); d.texto = lpLimpa(ed.innerHTML); d.editadoEm = Date.now(); d.editadoPor = quemSou(); salvar(); lpAtualizarPublico(c, d, et, idi);
+    if (el) el.textContent = 'Salvo'; const u = document.getElementById('np-ult'); if (u) u.textContent = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' · '+quemSou(); }, 900); }); }
+const lpLinkPublico = tok => location.origin + location.pathname + '#/publico/' + tok;
+async function lpAtualizarPublico(c, d, et, idi){ if (!d.publico || !sb) return; const nomeIdi = IDIOMAS[et==='trad' ? idi : c.idiomaBase] || '';
+  const r = await sb.from('paginas_publicas').upsert({token:d.publico, campanha_id:c.id, chave:et+(idi?':'+idi:''), titulo:`${c.nome} · Texto landing page · ${nomeIdi}`, html:lpLimpa(d.texto), atualizado_em:new Date().toISOString()});
+  if (r.error) toast('Não foi possível atualizar a página pública: '+r.error.message); }
+function lpCompartilharAbrir(){ const {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi), u = d.publico ? lpLinkPublico(d.publico) : '';
+  abrirModal('Compartilhar', `<div class="np-share"><div class="np-share-l"><i data-lucide="globe"></i><div><b>Publicar na web</b><span>Qualquer pessoa com o link pode ler o texto, sem login. Ninguém consegue editar pelo link.</span></div>
+    ${d.publico ? `<button class="btn btn-s" data-act="lpDespublicar">Despublicar</button>` : `<button class="btn btn-s btn-p" data-act="lpPublicar">Publicar</button>`}</div>
+    ${d.publico ? `<div class="np-share-u"><input readonly value="${h(u)}" onclick="this.select()"><button class="btn btn-s" data-act="lpCopiar" data-u="${h(u)}"><i data-lucide="copy"></i>Copiar link</button><a class="btn btn-s" href="${h(u)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Abrir</a></div><div class="small muted">O link mostra sempre a versão mais recente: o que você editar aqui aparece lá.</div>` : ''}</div>`, '<button class="btn" data-act="fechar">Fechar</button>'); }
+async function lpPublicar(on){ const {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!c || !sb) return toast('Sem conexão com o banco.'); const d = lpAlvo(c, et, idi);
+  if (on) { d.publico = d.publico || (Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2,8)); await lpAtualizarPublico(c, d, et, idi); registrar(`Landing page de “${c.nome}”: texto publicado na web`); }
+  else { const tok = d.publico; delete d.publico; if (tok) { const r = await sb.from('paginas_publicas').delete().eq('token', tok); if (r.error) toast('Não foi possível despublicar: '+r.error.message); } registrar(`Landing page de “${c.nome}”: texto despublicado`); }
+  salvar(); render(); lpCompartilharAbrir(); }
+/* página publicada: abre sem login, só leitura */
+async function paginaPublica(tok){ document.title = 'Estufa · Texto';
+  document.body.innerHTML = '<div class="pub"><div class="pub-cab"><img src="logo-menu-300.png" alt="Estufa" class="pub-logo"></div><div class="pub-doc" id="pub-doc"><div class="muted">Carregando…</div></div></div>';
+  const {data, error} = await sb.from('paginas_publicas').select('titulo,html,atualizado_em').eq('token', tok||'').maybeSingle();
+  const box = document.getElementById('pub-doc');
+  if (error || !data) { box.innerHTML = '<h1 class="np-tit">Página não encontrada</h1><p class="muted">O link pode ter sido despublicado.</p>'; return; }
+  document.title = data.titulo || 'Estufa';
+  box.innerHTML = `<div class="np-ic">📄</div><h1 class="np-tit">${h(data.titulo||'')}</h1><div class="pub-meta">Atualizado em ${new Date(data.atualizado_em).toLocaleString('pt-BR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div><div class="lpe-doc np-corpo">${lpLimpa(data.html)}</div>`;
+  box.querySelectorAll('[contenteditable]').forEach(n=>n.removeAttribute('contenteditable')); }
 function lpCmd(cmd){ const ed = document.getElementById('lpe-edit'); if (!ed) return; ed.focus();
   if (cmd==='link') { const u = prompt('Endereço do link (https://…)'); if (u && /^https?:\/\//i.test(u.trim())) document.execCommand('createLink', false, u.trim()); return; }
   const [c, v] = cmd.split(':'); document.execCommand(c, false, v ? '<'+v+'>' : null); }
 function lpTextoGravar(novoStatus, registro, coment){ const {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi), ed = document.getElementById('lpe-edit');
-  if (ed) d.texto = lpLimpa(ed.innerHTML); if (novoStatus) d.status = novoStatus;
+  if (ed) { d.texto = lpLimpa(ed.innerHTML); d.editadoEm = Date.now(); d.editadoPor = quemSou(); lpAtualizarPublico(c, d, et, idi); } if (novoStatus) d.status = novoStatus;
   if (registro) (d.hist = d.hist || []).push({t:Date.now(), quem:quemSou(), o:registro, coment:coment||''});
   const nome = et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base';
   registrar(`Landing page de “${c.nome}” · ${nome}: ${registro || 'texto atualizado'}`); salvar(); fecharModal(); render(); toast(registro ? registro+'.' : 'Rascunho salvo.'); }
@@ -4953,7 +5018,8 @@ const ACT = {
     (e.coment = e.coment || []).push({q:HOJE, t:Date.now(), quem:quemSou(), o:txt});
     const menc = RESPONSAVEIS.filter(n=>txt.includes('@'+n)); registrar(`Comentário no KV de “${c.nome}”${menc.length?' (mencionou '+menc.join(', ')+')':''}`);
     salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
-  lpTexto: el => lpTextoAbrir(el.dataset.id, el.dataset.et, el.dataset.idi),
+  lpTexto: el => { location.hash = `#/lp/${el.dataset.id}/${el.dataset.et}${el.dataset.idi?'/'+el.dataset.idi:''}`; },
+  lpPublicar: () => lpPublicar(true), lpDespublicar: () => lpPublicar(false), lpCopiar: el => { navigator.clipboard.writeText(el.dataset.u).then(()=>toast('Link copiado.'), ()=>toast('Não foi possível copiar.')); }, lpCompartilhar: () => lpCompartilharAbrir(),
   lpTextoSalvar: () => lpTextoGravar(null, null),
   lpTextoEnviar: () => { const ed = document.getElementById('lpe-edit'); if (!lpTextoPuro(ed && ed.innerHTML)) return toast('Escreva o texto antes de enviar.'); lpTextoGravar('Aguardando aprovação do cliente', 'Enviado para aprovação do cliente'); },
   lpTextoAprovar: () => lpTextoGravar('Aprovado', 'Aprovado pelo cliente'),
