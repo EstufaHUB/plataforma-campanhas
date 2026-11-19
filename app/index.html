@@ -74,7 +74,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .tab tr.a-fase td{background:#f4f7f8;font-weight:700;color:var(--pet-900)}.tab tr.a-pais td:nth-child(2){padding-left:42px}
 .tab tr.a-grupo td:nth-child(2),.tab tr.a-fase td:first-child{white-space:nowrap}
 .tab.com-sel tr.a-pais td:nth-child(3){padding-left:42px}.tab.com-sel tr.a-pais td:nth-child(2){padding-left:8px}
-.tab td.c-sel,.tab th.c-sel{width:34px;padding-right:0}.tab td.c-sel input,.tab th.c-sel input{width:16px;height:16px;accent-color:var(--pet-700);cursor:pointer;vertical-align:middle}
+.tab td.c-sel,.tab th.c-sel{width:34px;padding-right:0}.sel-hov>input[type=checkbox]{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hov:hover>input[type=checkbox],.sel-hov>input:checked,.sel-hov.tem-sel>input[type=checkbox]{opacity:1}.sel-hover .c-sel input{opacity:0;transition:opacity .12s;cursor:pointer}.sel-hover tr:hover .c-sel input,.sel-hover .c-sel input:checked,.sel-hover .c-sel input[data-parcial],.sel-hover.tem-sel .c-sel input,.sel-hover .c-sel input:focus-visible{opacity:1}.lote-flut{position:sticky;top:8px;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.18)}.tab td.c-sel input,.tab th.c-sel input{width:16px;height:16px;accent-color:var(--pet-700);cursor:pointer;vertical-align:middle}
 .tab tr.sel td{background:#eef0f3}
 .lote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--pet-900);color:#fff;border-radius:10px;margin:0 16px 12px}
 .lote b{font-weight:600}.lote select{padding:5px 8px;font-size:.85rem;border-radius:8px;border:0;color:#1b2a2f;background:#fff;width:auto;min-width:170px}
@@ -1823,7 +1823,7 @@ function aplicarLote(c, campo, v){ const ids = new Set(UI.aSel||[]), alvo = c.cr
 function listaAcoes(c, L, ed){
   const ab = UI.aAberto || (UI.aAberto = {}), ff = UI.aFase || (UI.aFase = {});
   const vis = new Set(L.map(t=>t.id));
-  const modoSel = ed && UI.fac.sel, sel = new Set((UI.aSel||[]).filter(id=>vis.has(id))); UI.aSel = [...sel];
+  const modoSel = ed, sel = new Set((UI.aSel||[]).filter(id=>vis.has(id))); UI.aSel = [...sel];   // caixa de seleção aparece ao passar o mouse na linha
   const caixa = (ids, extra='') => { if (!modoSel) return ''; const n = ids.filter(id=>sel.has(id)).length;
     return `<td class="c-sel"><input type="checkbox" data-chg="aSel" data-ids="${ids.join(',')}" ${ids.length&&n===ids.length?'checked':''} ${n&&n<ids.length?'data-parcial="1"':''} ${extra}></td>`; };
   const nCol = modoSel ? 7 : 6;
@@ -1854,15 +1854,15 @@ function listaAcoes(c, L, ed){
     }
     daFase.filter(t=>!vistos.has(t.id)).forEach(t=>corpo += linha(t,false));
   }
-  const loteBar = modoSel ? `<div class="lote">${sel.size?`<b>${sel.size} ação(ões) selecionada(s)</b>
+  const loteBar = modoSel && sel.size ? `<div class="lote lote-flut">${sel.size?`<b>${sel.size} ação(ões) selecionada(s)</b>
       <select data-chg="loteStatus" data-id="${c.id}"><option value="">Mudar status…</option>${opts(ST_ACAO,'__')}</select>
       <select data-chg="lotePessoa" data-id="${c.id}"><option value="">Mudar responsável…</option>${opts(RESPONSAVEIS,'__')}</select>
       <button class="btn btn-s" data-act="loteConcluir" data-id="${c.id}"><i data-lucide="check"></i>Concluir</button>
       <button class="btn btn-s btn-perigo" data-act="loteExcluir" data-id="${c.id}"><i data-lucide="trash-2"></i>Excluir</button>
       <span class="sep"></span><button class="btn btn-s" data-act="loteLimpar">Limpar seleção</button>`
       : `<span>Marque as ações na lista (ou a caixa da etapa para pegar todas dela) para mudar várias de uma vez.</span><span class="sep"></span>`}
-      <button class="btn btn-s" data-act="loteSair"><i data-lucide="x"></i>Sair da seleção</button></div>` : '';
-  return `${loteBar}<div class="tabela-wrap"><table class="tab ${modoSel?'com-sel':''}"><thead><tr>${modoSel?`<th class="c-sel"><input type="checkbox" data-chg="aSel" data-ids="${L.map(t=>t.id).join(',')}" ${L.length&&sel.size===L.length?'checked':''} ${sel.size&&sel.size<L.length?'data-parcial="1"':''} title="Selecionar todas"></th>`:''}<th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th></th></tr></thead><tbody>
+</div>` : '';
+  return `${loteBar}<div class="tabela-wrap"><table class="tab ${modoSel?'com-sel sel-hover':''} ${sel.size?'tem-sel':''}"><thead><tr>${modoSel?`<th class="c-sel"><input type="checkbox" data-chg="aSel" data-ids="${L.map(t=>t.id).join(',')}" ${L.length&&sel.size===L.length?'checked':''} ${sel.size&&sel.size<L.length?'data-parcial="1"':''} title="Selecionar todas"></th>`:''}<th>Status</th><th>Ação / etapa</th><th>Responsável</th><th>Início</th><th>Prazo</th><th></th></tr></thead><tbody>
     ${corpo || `<tr><td colspan="${nCol}" class="vazio">Nenhuma ação com esses filtros.</td></tr>`}</tbody></table></div>
     <div class="legenda-farol"><span><i style="background:#2e9d55"></i>Concluída</span><span><i style="background:#2f80b8"></i>Em andamento</span><span><i style="background:#e0a100"></i>Aguardando / em revisão</span><span><i style="background:#d0443a"></i>Atrasada ou bloqueada</span><span><i style="background:#9aa9ae"></i>Não iniciada / cancelada</span></div>`;
 }
@@ -1908,9 +1908,9 @@ function pgAcoes(){
       <div class="small muted" style="margin-top:6px">Cada ação aparece no dia do prazo. Clique para abrir; para mudar o prazo, edite a ação ou o cronograma.</div>`;
   } else if (f.visao==='lista') {
     const sel = new Set((UI.gaSel||[]).filter(k=>L.some(x=>chaveGA(x)===k))); UI.gaSel = [...sel];
-    const modoSel = ed && f.sel;
+    const modoSel = ed;   // caixa de seleção aparece ao passar o mouse na linha
     const linha = x => { const k = chaveGA(x), a = atr(x);
-      return `<div class="ga-lin ${modoSel?'com-sel':''} ${a&&aberta(x)?'atr':''} ${sel.has(k)?'sel':''}">${modoSel?`<input type="checkbox" data-chg="gaSel" data-k="${k}" ${sel.has(k)?'checked':''}>`:''}
+      return `<div class="ga-lin ${modoSel?'com-sel sel-hov':''} ${sel.size?'tem-sel':''} ${a&&aberta(x)?'atr':''} ${sel.has(k)?'sel':''}">${modoSel?`<input type="checkbox" data-chg="gaSel" data-k="${k}" ${sel.has(k)?'checked':''}>`:''}
         <select class="farol ${farolDe(x.t)}" data-chg="statusTarefa" data-id="${x.c.id}" data-t="${x.t.id}" ${ed?'':'disabled'}>${opts(ST_ACAO, x.t.status)}</select>
         <a href="javascript:void 0" class="ga-nome" data-act="formAcao" data-id="${x.c.id}" data-a="${x.t.id}" title="${h(x.t.nome)}">${h(x.t.nome)}${(x.t.coment||[]).length?` <span class="small muted">· ${x.t.coment.length} coment.</span>`:''}</a>
         ${campChip(x)}<span class="small">${x.t.pais ? (PAISES[x.t.pais] ? PAISES[x.t.pais].f+' '+x.t.pais : x.t.pais) : '<span class="muted">—</span>'}</span>
@@ -1923,8 +1923,8 @@ function pgAcoes(){
       || '<div class="card vazio">Nenhuma ação com esses filtros.</div>';
     const conc = L.filter(x=>!aberta(x)).length;
     corpo += `<div class="small muted" style="padding:4px 2px">${f.conc ? `<a href="javascript:void 0" data-act="ui" data-k="ga.conc" data-v="">Ocultar concluídas</a>` : `Concluídas ficam ocultas · <a href="javascript:void 0" data-act="ui" data-k="ga.conc" data-v="1">mostrar${conc?' ('+conc+')':''}</a>`}</div>`;
-    const lote = !ed ? '' : !f.sel ? `<button class="btn btn-s" data-act="ui" data-k="ga.sel" data-v="1"><i data-lucide="check-square"></i>Selecionar ações</button>` :
-      `<div class="lote ga-lote">${sel.size ? `<b>${sel.size} selecionada(s)</b><select data-chg="gaLoteStatus"><option value="">Mudar status…</option>${opts(ST_ACAO,'__')}</select><select data-chg="gaLotePessoa"><option value="">Mudar responsável…</option>${opts(RESPONSAVEIS,'__')}</select><button class="btn btn-s" data-act="gaLoteConcluir"><i data-lucide="check"></i>Concluir</button><span class="sep"></span><button class="btn btn-s" data-act="gaLoteLimpar">Limpar seleção</button>` : `<span>Marque as ações para mudar várias de uma vez.</span><button class="btn btn-s" data-act="gaSelTodas">Selecionar todas (${L.filter(aberta).length})</button><span class="sep"></span>`}<button class="btn btn-s" data-act="gaSair"><i data-lucide="x"></i>Sair da seleção</button></div>`;
+    const lote = !ed || !sel.size ? '' :
+      `<div class="lote ga-lote lote-flut">${sel.size ? `<b>${sel.size} selecionada(s)</b><select data-chg="gaLoteStatus"><option value="">Mudar status…</option>${opts(ST_ACAO,'__')}</select><select data-chg="gaLotePessoa"><option value="">Mudar responsável…</option>${opts(RESPONSAVEIS,'__')}</select><button class="btn btn-s" data-act="gaLoteConcluir"><i data-lucide="check"></i>Concluir</button><button class="btn btn-s" data-act="gaSelTodas">Selecionar todas (${L.filter(aberta).length})</button><span class="sep"></span><button class="btn btn-s" data-act="gaLoteLimpar">Limpar seleção</button>` : ''}</div>`;
     corpo = lote + corpo;
   } else if (f.visao==='kanban') {
     const xs = L.filter(x=>f.conc || aberta(x));
@@ -1963,7 +1963,7 @@ function abaAcoes(c){
   return seletorEtapa(c) + `<div class="alerta azul"><i data-lucide="info"></i><div>As ações são as <b>mesmas etapas do cronograma</b>. Mudar status, responsável, datas ou nome aqui muda o cronograma, e vice-versa. Para criar uma ação nova, use “Incluir item”.</div></div>
   <div class="card"><div class="card-cab"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="seg"><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="lista"><i data-lucide="list"></i>Lista</button><button class="${f.visao==='kanban'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="kanban"><i data-lucide="kanban"></i>Kanban</button></div>
    <div style="min-width:160px"><div class="small muted">${pc}% concluído · ${todas.filter(atr).length} atrasada(s)</div><div class="barra" style="margin-top:4px"><i style="width:${pc}%"></i></div></div></div>
-   <div class="filtros">${multiSel('fac.status', [...ST_ACAO,'Atrasada'].map(v=>[v,v]), f.status, 'Todos os status', 'status')}${multiSel('fac.pessoa', [...RESPONSAVEIS,'—'].map(v=>[v, v==='—'?'Sem responsável':v]), f.pessoa, 'Todos os responsáveis', 'responsáveis')}${multiSel('fac.area', AREAS.map(v=>[v,v]), f.area, 'Todas as áreas', 'áreas')}${multiSel('fac.pais', [['global','Itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].f+' '+PAISES[p.cod].n])], f.pais, 'Todos os países', 'países')}${(f.status.length||f.pessoa.length||f.area.length||f.pais.length)?`<button class="btn btn-s btn-g" data-act="limparFiltrosAcoes"><i data-lucide="x"></i>Limpar filtros</button>`:''}${ed&&f.visao==='lista'?`<button class="btn ${f.sel?'btn-ativo':''}" data-act="loteModo"><i data-lucide="list-checks"></i>Selecionar ações</button>`:''}${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
+   <div class="filtros">${multiSel('fac.status', [...ST_ACAO,'Atrasada'].map(v=>[v,v]), f.status, 'Todos os status', 'status')}${multiSel('fac.pessoa', [...RESPONSAVEIS,'—'].map(v=>[v, v==='—'?'Sem responsável':v]), f.pessoa, 'Todos os responsáveis', 'responsáveis')}${multiSel('fac.area', AREAS.map(v=>[v,v]), f.area, 'Todas as áreas', 'áreas')}${multiSel('fac.pais', [['global','Itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].f+' '+PAISES[p.cod].n])], f.pais, 'Todos os países', 'países')}${(f.status.length||f.pessoa.length||f.area.length||f.pais.length)?`<button class="btn btn-s btn-g" data-act="limparFiltrosAcoes"><i data-lucide="x"></i>Limpar filtros</button>`:''}${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
   ${f.visao==='lista' ? listaAcoes(c, L, ed) : ''}
   ${f.visao!=='lista' ? `<div class="card-p"><div class="kanban">${ST_ACAO.map(st=>{ const cs = L.filter(t=>t.status===st); return `<div class="kcol" data-drop="acao" data-s="${st}" data-id="${c.id}"><h4><span>${st}</span><span>${cs.length}</span></h4>${cs.map(t=>`<div class="kcard ${atr(t)?'atr':''}" ${ed?`draggable="true" data-drag="${t.id}"`:''} data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><div style="font-weight:500">${nomeT(t)}</div><div class="small muted" style="margin-top:4px">${h(respTarefa(c,t))}${t.pais?' · '+t.pais:''} · ${fdc(t.EF)}</div></div>`).join('')}</div>`; }).join('')}</div><div class="small muted">${ed?'Arraste os cartões entre as colunas para mudar o status.':''}</div></div>` : ''}
   </div>`;
