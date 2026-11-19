@@ -1111,6 +1111,7 @@ async function carregar(){
   S.campanhas = ca.map(r=>r.dados);
   S.log = lg.map(l=>({q:new Date(l.quando).toLocaleString('pt-BR'), quem:l.quem, o:l.texto}));
   try { S.notifLidas = JSON.parse(localStorage.getItem(CHAVE+'-lidas-'+SESSAO.user.id)||'{}'); } catch(e){}
+  await carregarNotifEstado();   // lido/não lido e hora de cada aviso, iguais em qualquer aparelho
   PERFIS = pf;
   RESULTADOS = {}; for (const r of rm) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r);
   NOTION = {}; for (const r of rn) (NOTION[r.campanha_id] = NOTION[r.campanha_id] || []).push(r);
@@ -1349,9 +1350,23 @@ const ler = form => Object.fromEntries(new FormData(form).entries());
    6. NOTIFICAÇÕES (geradas a partir dos dados, sem duplicar)
    ===================================================================== */
 /* quando o aviso apareceu pela primeira vez (avisos calculados não têm hora própria) */
-function notifVistaEm(chave, q){ const k = 'campanhas-notif-vistas-'+((PERFIL||{}).id||''); if (!UI.notifVistas) { try { UI.notifVistas = JSON.parse(localStorage.getItem(k)||'{}'); } catch(e) { UI.notifVistas = {}; } }
-  if (!UI.notifVistas[chave]) { UI.notifVistas[chave] = q ? Math.min(Date.now(), new Date(q+'T12:00:00').getTime()) : Date.now(); try { localStorage.setItem(k, JSON.stringify(UI.notifVistas)); } catch(e){} }
+/* estado das notificações por pessoa no banco (tabela notif_estado): quando o aviso apareceu e quando foi lido */
+async function carregarNotifEstado(){ UI.notifVistas = UI.notifVistas || {}; if (!sb || !PERFIL) return;
+  try { const {data, error} = await sb.from('notif_estado').select('chave,visto_em,lida_em'); if (error) throw error;
+    const lidasLocal = {...(S.notifLidas||{})}; S.notifLidas = {};
+    for (const r of data||[]) { UI.notifVistas[r.chave] = new Date(r.visto_em).getTime(); if (r.lida_em) S.notifLidas[r.chave] = true; }
+    // o que já tinha sido lido neste navegador (antes da sincronização) vai para o banco uma vez
+    const migrar = Object.keys(lidasLocal).filter(k=>lidasLocal[k] && !S.notifLidas[k]); for (const k of migrar) { S.notifLidas[k] = true; notifGravar(k, 'lida'); }
+    UI.notifSinc = true; } catch(e) { console.warn('notif_estado', e); UI.notifSinc = false; } }
+const NOTIF_FILA = {visto:new Map(), lida:new Map()};
+function notifGravar(chave, tipo, quando){ if (!sb || !PERFIL || UI.notifSinc===false) return; const em = new Date(quando || Date.now()).toISOString();
+  NOTIF_FILA[tipo].set(chave, tipo==='lida' ? {user_id:PERFIL.id, chave, lida_em:em} : {user_id:PERFIL.id, chave, visto_em:em});
+  clearTimeout(notifGravar._t); notifGravar._t = setTimeout(async ()=>{ for (const t of ['visto','lida']) { const rows = [...NOTIF_FILA[t].values()]; NOTIF_FILA[t].clear(); if (!rows.length) continue;
+    const r = await sb.from('notif_estado').upsert(rows, {onConflict:'user_id,chave', ignoreDuplicates: t==='visto'}); if (r.error) console.warn('notif_estado', r.error.message); } }, 800); }
+function notifVistaEm(chave, q){ UI.notifVistas = UI.notifVistas || {};
+  if (!UI.notifVistas[chave]) { UI.notifVistas[chave] = q ? Math.min(Date.now(), new Date(q+'T12:00:00').getTime()) : Date.now(); notifGravar(chave, 'visto', UI.notifVistas[chave]); }
   return UI.notifVistas[chave]; }
+const notifLer = chaves => { for (const k of chaves) if (!S.notifLidas[k]) { S.notifLidas[k] = true; notifGravar(k, 'lida'); } };
 /* pesquisa global (⌘K): campanhas, clientes, ações, peças, atividades e páginas */
 function buscaIndice(){ const L = [], cl = id => (S.clientes.find(c=>c.id===id)||{}).nome || '';
   for (const c of S.clientes) if (!c.arquivado) L.push({tipo:'Cliente', ic:'building-2', t:c.nome, d:'', link:`#/clientes/${c.id}`});
@@ -5029,9 +5044,9 @@ const ACT = {
     if (!p) { p = {id:novoId('p')}; c.posts.push(p); } delete v.campId; Object.assign(p, v, {idioma:PAISES[v.pais].i}); registrar(`Publicação salva: ${p.tema} (${fd(p.data)})`); fecharModal(); render(); },
   delPost: el => { const c = camp(el.dataset.id); c.posts = c.posts.filter(x=>x.id!==el.dataset.p); registrar('Publicação excluída'); fecharModal(); render(); },
   /* notificações */
-  lerNotif: el => { S.notifLidas[el.dataset.k] = true; salvar(); render(); },
-  abrirNotif: el => { S.notifLidas[el.dataset.k] = true; salvar(); },
-  lerTodas: () => { notificacoes().forEach(n=>S.notifLidas[n.chave]=true); salvar(); render(); },
+  lerNotif: el => { notifLer([el.dataset.k]); salvar(); render(); },
+  abrirNotif: el => { notifLer([el.dataset.k]); salvar(); },
+  lerTodas: () => { notifLer(notificacoes().map(n=>n.chave)); salvar(); render(); },
   /* configurações */
   salvarModelo: () => { const fm = $('#form-modelo'), v = ler(fm), T = JSON.parse(JSON.stringify(S.modelo.tarefas)), ids = new Set(T.map(t=>t.id)), err = [];
     T.forEach((t,i)=>{ t.nome = v['nome_'+i]; t.area = v['area_'+i]; t.dur = Math.max(1, Math.round(+v['dur_'+i]||1));
