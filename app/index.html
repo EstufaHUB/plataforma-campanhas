@@ -220,6 +220,9 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .lpe-doc table:has(colgroup){table-layout:fixed}.lpe-edit.tbl-rz-ok,.lpe-edit.tbl-rz-ok td{cursor:col-resize}body.tbl-rz,body.tbl-rz *{cursor:col-resize!important;user-select:none}.lpe-doc td{position:relative}
 .tbl-sep{border-top:1px solid var(--borda);margin:5px 0}.tbl-cor-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:2px 8px 4px}.tbl-cores{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 4px}.tbl-cores button{border:0;background:none;padding:2px;border-radius:5px;cursor:pointer}.tbl-cores button:hover{background:#f1f3f4}.tbl-cor{display:block;width:20px;height:20px;border-radius:4px;border:1px solid var(--borda)}
 [data-cor="cinza"]{background:#f1f1ef!important}[data-cor="azul"]{background:#e7f0fa!important}[data-cor="verde"]{background:#e8f3ec!important}[data-cor="amarelo"]{background:#fbf3db!important}[data-cor="laranja"]{background:#fbecdd!important}[data-cor="vermelho"]{background:#fbe4e4!important}[data-cor="roxo"]{background:#efe8f8!important}.tbl-cor[data-cor=""]{background:#fff}
+.sel-bar{position:absolute;z-index:60;display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--borda);border-radius:9px;box-shadow:0 8px 26px rgba(15,15,15,.16);padding:4px}.sel-bar>button{border:0;background:none;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tx2)}.sel-bar>button:hover{background:#f1f3f4}.sel-bar>button.on{color:#2f7cf6}.sel-bar svg{width:16px;height:16px}.sel-sep{width:1px;height:20px;background:var(--borda);margin:0 3px}
+.sel-cores{position:absolute;top:calc(100% + 6px);left:0;width:236px;background:#fff;border:1px solid var(--borda);border-radius:9px;box-shadow:0 8px 26px rgba(15,15,15,.16);padding:6px 8px 8px}.sel-ct{font-size:.7rem;font-weight:700;color:var(--tx3);padding:4px 2px}.sel-cg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.sel-cg button{border:0;background:none;height:32px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}.sel-cg button:hover{background:#f1f3f4}.sel-cg span{width:22px;height:22px;border:1px solid var(--borda);border-radius:5px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.85rem}
+.lpe-doc code{background:rgba(135,131,120,.15);color:#eb5757;border-radius:4px;padding:.1em .35em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em}
 .blk-menu{position:absolute;z-index:50;width:290px;max-height:330px;overflow:auto;background:#fff;border:1px solid var(--borda);border-radius:10px;box-shadow:0 12px 32px rgba(15,15,15,.16);padding:6px}.blk-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:6px 8px 4px}
 .blk-menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:6px 8px;border-radius:7px;cursor:pointer;text-align:left;font:inherit}.blk-menu button.sel,.blk-menu button:hover{background:#f1f3f4}.blk-ic{width:32px;height:32px;border:1px solid var(--borda);border-radius:6px;display:flex;align-items:center;justify-content:center;background:#fff;flex:none}.blk-ic svg{width:16px;height:16px;color:var(--tx2)}.blk-n{flex:1;display:flex;flex-direction:column}.blk-n b{font-size:.84rem;font-weight:500}.blk-n em{font-style:normal;font-size:.72rem;color:var(--tx3)}.blk-menu kbd{font-family:inherit;font-size:.7rem;color:var(--tx3)}
 .lpe-edit p:only-child:has(br:only-child)::before{content:'Escreva aqui… digite / para inserir blocos';color:var(--tx3);position:absolute;pointer-events:none}
@@ -2712,7 +2715,7 @@ function lpFluxoBloco(c, ed){ const {f, idis} = lpDados(c), et = lpEtapas(c), po
 const lpTextoPuro = html => { if (!html) return ''; const d = document.createElement('div'); d.innerHTML = String(html).replace(/<\/(p|h\d|li|div|td|th|tr|summary)>|<br\s*\/?>/gi, m=>m+' '); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
 function lpLimpa(html){ const d = document.createElement('div'); d.innerHTML = html || '';
   d.querySelectorAll('script,style,iframe,object,embed,meta,link').forEach(n=>n.remove());
-  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable|colspan|rowspan)$/i.test(a.name) || (n.tagName==='COL' && a.name==='style' && /^width:\s*\d+(\.\d+)?px;?$/.test(v.trim())) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v));
+  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable|colspan|rowspan)$/i.test(a.name) || (n.tagName==='COL' && a.name==='style' && /^width:\s*\d+(\.\d+)?px;?$/.test(v.trim())) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v)) || (/^(SPAN|B|STRONG|I|EM|U|S|STRIKE|CODE|A|FONT)$/.test(n.tagName) && a.name==='style' && /^(\s*(background-)?color:\s*(#[0-9a-f]{3,8}|rgba?\([\d.,\s]+\)|transparent)\s*;?)+$/i.test(v));
       if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(v)) || !ok) n.removeAttribute(a.name); } if (n.tagName==='A') { n.setAttribute('target','_blank'); n.setAttribute('rel','noopener'); } });
   return d.innerHTML; }
 function lpAlvo(c, et, idi){ const {f} = lpDados(c); return et==='trad' ? f.trad[idi] : f[et]; }
@@ -2750,7 +2753,7 @@ function editorBlocos(ed){ if (!ed || ed._blocos) return; ed._blocos = true; try
     menu.style.left = Math.max(0, (r.left||pr.left+16) - pr.left) + 'px'; menu.style.top = ((r.bottom||pr.top+40) - pr.top + 6) + 'px'; menu.hidden = false;
     menu.querySelectorAll('button').forEach(bt=>bt.onmousedown = ev => { ev.preventDefault(); aplicar(bt.dataset.b, true); }); };
   const cursorEm = el => { const r = document.createRange(); r.selectNodeContents(el); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
-  const aplicar = (tipo, removerBarra) => { const b = blocoAtual(); if (!b) return fechar();
+  const aplicar = (tipo, removerBarra) => { const b = blocoAtual(); if (!b) return fechar(); if (ed._snap) ed._snap();
     if (removerBarra && st) { const sel = getSelection(), n = sel.anchorNode, off = sel.getRangeAt(0).startOffset, txt = n.textContent, ini = txt.lastIndexOf('/', off-1); if (ini>=0) { n.textContent = txt.slice(0, ini) + txt.slice(off); } }
     fechar(); const vazio = !b.textContent.trim(), conteudo = vazio ? '<br>' : b.innerHTML;
     let novo, foco;
@@ -2767,7 +2770,7 @@ function editorBlocos(ed){ if (!ed || ed._blocos) return; ed._blocos = true; try
     if (tipo==='hr' || tipo==='table') { if (vazio) b.replaceWith(novo); else b.after(novo); const p = document.createElement('p'); p.innerHTML = '<br>'; novo.after(p); if (!foco) foco = p; }
     else b.replaceWith(novo);
     cursorEm(foco); };
-  ed.addEventListener('input', () => { const t = textoAteCursor(), m = t.match(/(?:^|\s)\/([^\s\/]{0,20})$/);
+  ed.addEventListener('input', () => { if (ed._restaurando) return; const t = textoAteCursor(), m = t.match(/(?:^|\s)\/([^\s\/]{0,20})$/);
     if (m) { st = st || {i:0}; abrir(m[1]); return; } fechar();
     // atalhos tipo Markdown no começo da linha
     const b = blocoAtual(); if (!b || !/^(P|DIV)$/.test(b.tagName)) return; const tx = b.textContent;
@@ -2780,9 +2783,69 @@ function editorBlocos(ed){ if (!ed || ed._blocos) return; ed._blocos = true; try
       if (e.key==='Escape') { e.preventDefault(); fechar(); return; } }
     if (e.key==='Enter' && !e.shiftKey) { const b = blocoAtual(); if (b && /^H[1-4]$/.test(b.tagName)) { e.preventDefault(); const p = document.createElement('p'); p.innerHTML = '<br>'; b.after(p); cursorEm(p); } }
   });
-  ed.addEventListener('click', e => { const li = e.target.closest('ul.todo > li'); if (li && e.offsetX < 22) { li.dataset.check = li.dataset.check==='1' ? '0' : '1'; ed.dispatchEvent(new Event('input', {bubbles:true})); } });
+  ed.addEventListener('click', e => { const li = e.target.closest('ul.todo > li'); if (li && e.offsetX < 22) { if (ed._snap) ed._snap(); li.dataset.check = li.dataset.check==='1' ? '0' : '1'; ed.dispatchEvent(new Event('input', {bubbles:true})); } });
   ed.addEventListener('blur', () => setTimeout(fechar, 150));
-  tabelaAlcas(ed); }
+  tabelaAlcas(ed); historicoEd(ed); barraSelecao(ed); }
+/* desfazer / refazer do editor (Ctrl+Z, Ctrl+Shift+Z ou Ctrl+Y): guarda o texto e o cursor a cada pausa na digitação e antes de cada bloco, tabela ou formatação */
+function historicoEd(ed){ const H = [], LIM = 200; let pos = -1, tm;
+  const offDe = (no, off) => { const r = document.createRange(); r.selectNodeContents(ed); try { r.setEnd(no, off); } catch(e){ return 0; } return r.toString().length; };
+  const noEm = n => { const w = document.createTreeWalker(ed, NodeFilter.SHOW_TEXT); let t, ult = null; while ((t = w.nextNode())) { ult = t; if (n <= t.length) return [t, n]; n -= t.length; } return ult ? [ult, ult.length] : [ed, 0]; };
+  const html = () => ed.innerHTML.replace(/ class="tbl-sel"/g, '').replace(/ tbl-sel/g, '');
+  const cursor = () => { const s = getSelection(); if (!s.rangeCount || !ed.contains(s.anchorNode)) return null; return [offDe(s.anchorNode, s.anchorOffset), offDe(s.focusNode, s.focusOffset)]; };
+  const snap = () => { clearTimeout(tm); const x = html(); if (pos >= 0 && H[pos].h === x) { H[pos].c = cursor() || H[pos].c; return; }
+    H.splice(pos + 1); H.push({h:x, c:cursor()}); if (H.length > LIM) H.shift(); pos = H.length - 1; };
+  const ir = d => { snap(); const n = pos + d; if (n < 0 || n >= H.length) return; pos = n; const e = H[pos];
+    ed._restaurando = true; ed.innerHTML = e.h; ed.focus();
+    if (e.c) { const [a, ao] = noEm(e.c[0]), [f, fo] = noEm(e.c[1]), s = getSelection(); s.removeAllRanges(); const r = document.createRange(); r.setStart(a, ao); r.collapse(true); s.addRange(r); try { s.extend(f, fo); } catch(_){} }
+    ed.dispatchEvent(new Event('input', {bubbles:true})); ed._restaurando = false; };
+  ed._snap = snap; snap();
+  ed.addEventListener('input', () => { if (ed._restaurando) return; clearTimeout(tm); tm = setTimeout(snap, 500); });
+  ed.addEventListener('keydown', e => { if (!(e.ctrlKey || e.metaKey) || e.altKey) return; const k = e.key.toLowerCase();
+    if (k==='z') { e.preventDefault(); ir(e.shiftKey ? 1 : -1); } else if (k==='y') { e.preventDefault(); ir(1); }
+    else if (k==='b' || k==='i' || k==='u') snap(); });
+  ed.addEventListener('beforeinput', e => { if (e.inputType==='historyUndo' || e.inputType==='historyRedo') { e.preventDefault(); ir(e.inputType==='historyUndo' ? -1 : 1); } }); }
+/* barra de formatação ao selecionar texto (como no Notion): cor, negrito, itálico, sublinhado, tachado, código, link e limpar */
+const CORES_TX = [['','Padrão'],['#787774','Cinza'],['#9f6b53','Marrom'],['#d9730d','Laranja'],['#cb912f','Amarelo'],['#448361','Verde'],['#337ea9','Azul'],['#9065b0','Roxo'],['#c14c8a','Rosa'],['#d44c47','Vermelho']];
+const CORES_FD = [['','Padrão'],['#f1f1ef','Cinza'],['#f4eeee','Marrom'],['#fbecdd','Laranja'],['#fbf3db','Amarelo'],['#edf3ec','Verde'],['#e7f3f8','Azul'],['#f6f3f9','Roxo'],['#faf1f5','Rosa'],['#fdebec','Vermelho']];
+function barraSelecao(ed){ const box = ed.parentNode, bar = document.createElement('div'); bar.className = 'sel-bar'; bar.hidden = true; box.appendChild(bar);
+  const B = [['cor','baseline','Cor do texto'],['|'],['bold','bold','Negrito (Ctrl+B)'],['italic','italic','Itálico (Ctrl+I)'],['underline','underline','Sublinhado (Ctrl+U)'],['strikeThrough','strikethrough','Tachado'],['code','code','Código'],['|'],['link','link','Link'],['removeFormat','remove-formatting','Limpar formatação']];
+  bar.innerHTML = B.map(([a,ic,t])=>a==='|' ? '<span class="sel-sep"></span>' : `<button type="button" data-a="${a}" title="${t}"><i data-lucide="${ic}"></i></button>`).join('')
+    + `<div class="sel-cores" hidden><div class="sel-ct">Cor do texto</div><div class="sel-cg">${CORES_TX.map(([c,t])=>`<button type="button" data-tx="${c}" title="${t}"><span style="color:${c||'var(--tx)'}">A</span></button>`).join('')}</div>
+      <div class="sel-ct">Cor de fundo</div><div class="sel-cg">${CORES_FD.map(([c,t])=>`<button type="button" data-fd="${c}" title="${t}"><span style="background:${c||'#fff'}"></span></button>`).join('')}</div></div>`;
+  if (window.lucide) lucide.createIcons();
+  const cores = bar.querySelector('.sel-cores'); let arrastando = false, faixa = null;
+  const selOk = () => { const s = getSelection(); if (!s.rangeCount || s.isCollapsed) return null; const r = s.getRangeAt(0); if (!ed.contains(r.commonAncestorContainer) || !r.toString().trim()) return null; return r; };
+  const estado = () => bar.querySelectorAll('button[data-a]').forEach(b=>{ let on = false; const a = b.dataset.a;
+    try { if (/^(bold|italic|underline|strikeThrough)$/.test(a)) on = document.queryCommandState(a); } catch(e){}
+    if (a==='code' || a==='link') { const s = getSelection(), n = s.anchorNode; const el = n && (n.nodeType===3 ? n.parentNode : n); on = !!(el && el.closest && el.closest(a==='code'?'code':'a') && ed.contains(el)); }
+    b.classList.toggle('on', on); });
+  const mostrar = () => { const r = selOk(); if (!r) { bar.hidden = true; cores.hidden = true; return; }
+    faixa = r.cloneRange(); const R = r.getBoundingClientRect(), P = box.getBoundingClientRect(); bar.hidden = false; estado();
+    const w = bar.offsetWidth, hh = bar.offsetHeight; let x = R.left - P.left + R.width/2 - w/2; x = Math.max(0, Math.min(x, P.width - w));
+    let y = R.top - P.top - hh - 8; if (R.top - hh - 8 < 60) y = R.bottom - P.top + 8; bar.style.left = x + 'px'; bar.style.top = y + 'px'; };
+  ed.addEventListener('mousedown', () => { arrastando = true; bar.hidden = true; cores.hidden = true; });
+  document.addEventListener('mouseup', () => { if (!arrastando) return; arrastando = false; setTimeout(mostrar, 0); });
+  ed.addEventListener('keyup', e => { if (e.shiftKey || /^(Arrow|Home|End)/.test(e.key) || ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='a')) mostrar(); else if (!selOk()) bar.hidden = true; });
+  document.addEventListener('selectionchange', () => { if (!box.isConnected || arrastando || bar.contains(document.activeElement)) return; if (!selOk()) { bar.hidden = true; cores.hidden = true; } });
+  const volta = () => { if (!faixa) return; ed.focus(); const s = getSelection(); s.removeAllRanges(); s.addRange(faixa); };
+  const feito = () => { ed.dispatchEvent(new Event('input', {bubbles:true})); const s = getSelection(); if (s.rangeCount) faixa = s.getRangeAt(0).cloneRange(); estado(); };
+  const pintar = (cmd, cor) => { if (ed._snap) ed._snap(); volta(); document.execCommand('styleWithCSS', false, true);
+    document.execCommand(cmd, false, cor || (cmd==='foreColor' ? getComputedStyle(ed).color : 'transparent')); document.execCommand('styleWithCSS', false, false); feito(); };
+  bar.addEventListener('mousedown', e => { e.preventDefault(); const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.tx != null) { pintar('foreColor', b.dataset.tx); cores.hidden = true; return; }
+    if (b.dataset.fd != null) { pintar('hiliteColor', b.dataset.fd); cores.hidden = true; return; }
+    const a = b.dataset.a; if (a==='cor') { cores.hidden = !cores.hidden; return; } cores.hidden = true; if (ed._snap) ed._snap(); volta();
+    if (a==='code') { const s = getSelection(), r = s.getRangeAt(0), n = r.commonAncestorContainer, c = (n.nodeType===3 ? n.parentNode : n).closest('code');
+      if (c && ed.contains(c)) { const fil = [...c.childNodes]; c.replaceWith(...fil); const nr = document.createRange(); nr.setStartBefore(fil[0]); nr.setEndAfter(fil[fil.length-1]); s.removeAllRanges(); s.addRange(nr); }
+      else { const el = document.createElement('code'); el.appendChild(r.extractContents()); r.insertNode(el); const nr = document.createRange(); nr.selectNodeContents(el); s.removeAllRanges(); s.addRange(nr); } }
+    else if (a==='link') { const s = getSelection(), n = s.anchorNode, at = n && (n.nodeType===3 ? n.parentNode : n).closest('a');
+      const u = prompt('Endereço do link (deixe vazio para remover):', at ? at.getAttribute('href') : 'https://'); volta();
+      if (u === null) return; if (!u.trim() || u.trim()==='https://') document.execCommand('unlink'); else document.execCommand('createLink', false, /^(https?:|mailto:|#)/i.test(u.trim()) ? u.trim() : 'https://' + u.trim()); }
+    else if (a==='removeFormat') { document.execCommand('removeFormat'); document.execCommand('unlink'); const s = getSelection(), r = s.getRangeAt(0);
+      ed.querySelectorAll('code').forEach(c=>{ if (r.intersectsNode(c)) c.replaceWith(...c.childNodes); }); }
+    else document.execCommand(a);
+    feito(); });
+  ed._fecharBarra = () => { bar.hidden = true; cores.hidden = true; }; }
 /* tabela: alças de linha e de coluna (como no Notion) com inserir, duplicar, limpar, excluir e cor */
 const CORES_TAB = [['','Padrão'],['cinza','Cinza'],['azul','Azul'],['verde','Verde'],['amarelo','Amarelo'],['laranja','Laranja'],['vermelho','Vermelho'],['roxo','Roxo']];
 function tabelaAlcas(ed){ const box = ed.parentNode;
@@ -2806,7 +2869,7 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
   const ACOES = {
     linha: [['acima','arrow-up','Inserir acima'],['abaixo','arrow-down','Inserir abaixo'],['dup','copy','Duplicar'],['limpar','circle-x','Limpar conteúdo'],['excluir','trash-2','Excluir linha']],
     coluna: [['esq','arrow-left','Inserir à esquerda'],['dir','arrow-right','Inserir à direita'],['dup','copy','Duplicar'],['limpar','circle-x','Limpar conteúdo'],['excluir','trash-2','Excluir coluna']] };
-  const fazer = a => { setTimeout(()=>ed.dispatchEvent(new Event('input', {bubbles:true})), 0);   // salva as mudanças feitas pelo menu
+  const fazer = a => { if (ed._snap) ed._snap(); setTimeout(()=>ed.dispatchEvent(new Event('input', {bubbles:true})), 0);   // salva as mudanças feitas pelo menu
     const tb = alvo.td.closest('table'), tr = alvo.td.parentNode, idx = alvo.idx;
     if (alvo.tipo==='celulas') { const cs = celulas();
       if (a==='mesclar' && cs.length > 1) { const rs = cs.map(x=>x.parentNode.rowIndex), ci = cs.map(x=>x.cellIndex), r1 = Math.min(...rs), r2 = Math.max(...rs), c1 = Math.min(...ci), c2 = Math.max(...ci), alvoC = cs.find(x=>x.parentNode.rowIndex===r1 && x.cellIndex===c1) || cs[0];
@@ -2863,7 +2926,7 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
   const bordaEm = e => { const c = e.target.closest && e.target.closest('td'); if (!c || !ed.contains(c)) return null; const R = c.getBoundingClientRect();
     if (R.right - e.clientX <= 6) return c; if (e.clientX - R.left <= 4 && c.previousElementSibling) return c.previousElementSibling; return null; };
   ed.addEventListener('mousedown', e => { rzAlvo = bordaEm(e);
-    if (rzAlvo) { e.preventDefault(); const tb = rzAlvo.closest('table'), cg = garantirCols(tb), col = cg.children[rzAlvo.cellIndex]; if (!col) return; rz = {col, x0:e.clientX, w0:parseFloat(col.style.width)||rzAlvo.getBoundingClientRect().width}; document.body.classList.add('tbl-rz'); return; }
+    if (rzAlvo) { e.preventDefault(); if (ed._snap) ed._snap(); const tb = rzAlvo.closest('table'), cg = garantirCols(tb), col = cg.children[rzAlvo.cellIndex]; if (!col) return; rz = {col, x0:e.clientX, w0:parseFloat(col.style.width)||rzAlvo.getBoundingClientRect().width}; document.body.classList.add('tbl-rz'); return; }
     const c = e.target.closest('td'); if (!c || !ed.contains(c)) { limparSel(); return; }
     if (e.shiftKey && ultIni && ultIni.isConnected) { e.preventDefault(); retangulo(ultIni, c); if (selCels.length > 1) mostrarHs(); return; }
     limparSel(); selIni = c; ultIni = c; });
