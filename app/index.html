@@ -2783,8 +2783,13 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
   let td = null, alvo = null;
   const pos = cel => { const tr = cel.parentNode, tb = cel.closest('table'), P = box.getBoundingClientRect(), R = tr.getBoundingClientRect(), T = tb.getBoundingClientRect(), C = cel.getBoundingClientRect();
     hr.style.top = (R.top - P.top + R.height/2 - 11) + 'px'; hr.style.left = (T.left - P.left - 20) + 'px'; hc.style.left = (C.left - P.left + C.width/2 - 11) + 'px'; hc.style.top = (T.top - P.top - 12) + 'px'; hr.hidden = hc.hidden = false; };
-  ed.addEventListener('mousemove', e => { const c = e.target.closest('td'); if (c && ed.contains(c) && menu.hidden) { td = c; pos(c); } });
-  box.addEventListener('mouseleave', () => { if (menu.hidden) hr.hidden = hc.hidden = true; });
+  // as alças continuam visíveis enquanto o mouse vai da célula até elas; somem só longe da tabela
+  const mover = e => { if (!box.isConnected) return document.removeEventListener('mousemove', mover); if (!menu.hidden) return;
+    if (e.target.closest && e.target.closest('.tbl-h')) return;
+    const c = e.target.closest && e.target.closest('td'); if (c && ed.contains(c)) { td = c; pos(c); return; }
+    if (td && td.isConnected) { const T = td.closest('table').getBoundingClientRect(); if (e.clientX >= T.left - 34 && e.clientX <= T.right + 6 && e.clientY >= T.top - 26 && e.clientY <= T.bottom + 6) return; }
+    hr.hidden = hc.hidden = true; };
+  document.addEventListener('mousemove', mover);
   const celulas = () => { if (!alvo) return []; const tb = alvo.td.closest('table'); if (!tb) return []; return alvo.tipo==='linha' ? [...alvo.td.parentNode.cells] : [...tb.rows].map(r=>r.cells[alvo.idx]).filter(Boolean); };
   const marcar = on => { ed.querySelectorAll('td.tbl-sel').forEach(x=>x.classList.remove('tbl-sel')); if (on) celulas().forEach(x=>x.classList.add('tbl-sel')); };
   const vazia = () => { const c = document.createElement('td'); c.innerHTML = '<br>'; return c; };
@@ -2816,7 +2821,8 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
     inp.onkeydown = e => { if (e.key==='Escape') { e.preventDefault(); fecharM(); } if (e.key==='Enter') { const b = [...menu.querySelectorAll('button[data-a]')].find(x=>!x.hidden && !x.closest('[hidden]')); if (b) { e.preventDefault(); fazer(b.dataset.a); } } };
     menu.querySelectorAll('button[data-a]').forEach(b=>b.onmousedown = ev => { ev.preventDefault(); fazer(b.dataset.a); }); };
   hr.onmousedown = e => { e.preventDefault(); abrirM('linha', hr); }; hc.onmousedown = e => { e.preventDefault(); abrirM('coluna', hc); };
-  document.addEventListener('mousedown', e => { if (!menu.hidden && !menu.contains(e.target) && e.target!==hr && e.target!==hc && !hr.contains(e.target) && !hc.contains(e.target)) fecharM(); }); }
+  // fecha ao clicar fora; usa o caminho do clique (o ícone da alça pode ser recriado durante o próprio clique)
+  document.addEventListener('mousedown', e => { if (menu.hidden) return; const cam = e.composedPath ? e.composedPath() : [e.target]; if (cam.includes(menu) || cam.includes(hr) || cam.includes(hc)) return; fecharM(); }); }
 function lpCmd(cmd){ const ed = document.getElementById('lpe-edit'); if (!ed) return; ed.focus();
   if (cmd==='link') { const u = prompt('Endereço do link (https://…)'); if (u && /^https?:\/\//i.test(u.trim())) document.execCommand('createLink', false, u.trim()); return; }
   const [c, v] = cmd.split(':'); document.execCommand(c, false, v ? '<'+v+'>' : null); }
