@@ -435,6 +435,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 .txtbox{background:#fafbfb;border:1px solid var(--borda);border-radius:8px;padding:10px;font-size:.85rem;white-space:pre-wrap;min-height:60px}
 .hist{font-size:.78rem;color:var(--tx2);border-left:2px solid var(--borda);padding-left:10px;margin-top:8px}
 .hist div{margin:4px 0}
+.notif-abas{margin:4px 0 14px}.notif-n{background:#e5484d!important;color:#fff!important}.notif-n.alerta{background:var(--cinza-f)!important;color:var(--tx2)!important}
 .notif-g{font-size:.74rem;font-weight:700;color:var(--tx3);padding:14px 18px 6px;border-bottom:1px solid var(--borda);background:#fafbfb}.notif-lado{display:flex;align-items:center;gap:8px;flex:none}.notif-t{font-size:.76rem;color:var(--tx3);white-space:nowrap}.notif-pt{width:8px;height:8px;border-radius:50%;background:#2383e2;flex:none}
 .notif{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid var(--borda);align-items:flex-start}
 .notif.nova{background:#f7fbfc}.notif .ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
@@ -1392,7 +1393,7 @@ function buscaTecla(e){ const its = [...document.querySelectorAll('#busca-res .b
 document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==='k') { const i = $('#busca-global'); if (i) { e.preventDefault(); document.body.classList.remove('menu-oculto'); i.focus(); i.select(); } } });
 document.addEventListener('focusout', e => { if (e.target && e.target.id==='busca-global') setTimeout(()=>{ const b = $('#busca-res'); if (b && !b.matches(':hover')) b.hidden = true; }, 150); });
 function notificacoes(){
-  const N = new Map(); const add = (chave, n) => { if (N.has(chave)) return; const o = Object.assign({chave, lida:!!S.notifLidas[chave]}, n); o.ts = n.ts || notifVistaEm(chave, n.q); N.set(chave, o); };
+  const N = new Map(); const add = (chave, n) => { if (N.has(chave)) return; const o = Object.assign({chave, lida:!!S.notifLidas[chave]}, n); o.ts = n.ts || notifVistaEm(chave, n.q); o.cat = /^(menc|mencent|mencst|resp)-/.test(chave) ? 'mim' : 'alerta'; N.set(chave, o); };
   for (const c of ativas()) {
     if (c.status==='Concluída') continue;
     const ini = inicioPlan(c), dIni = difDias(HOJE, ini), cl = cliente(c.clienteId).nome;
@@ -1454,7 +1455,7 @@ function render(){
   let mudouSt = false; for (const c of S.campanhas) { const st = statusCampanha(c); if (c.status!==st) { c.status = st; mudouSt = true; } } if (mudouSt && ehEquipe()) salvar();
   fecharMenuBarra();
   const r = rota(); document.body.classList.remove('menu-aberto');
-  const nN = notificacoes().filter(n=>!n.lida).length;
+  const nN = notificacoes().filter(n=>!n.lida && n.cat==='mim').length;   // o contador do sino conta só o que é para você
   const nAtr = acoesGlobais().filter(x=>statusExib(x.t)==='Atrasada').length;
   const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial']];
   const sec = r[0]==='campanha' ? 'clientes' : r[0];
@@ -3579,16 +3580,17 @@ function calendarioEditorial(cs, campId){
    ===================================================================== */
 function pgNotificacoes(){
   migalha([['Notificações']]);
-  const L = notificacoes(), novas = L.filter(n=>!n.lida).length;
+  const T = notificacoes(), aba = UI.notifAba || 'mim', L = T.filter(n=>n.cat===aba), novas = L.filter(n=>!n.lida).length, nao = c => T.filter(n=>n.cat===c && !n.lida).length;
   const cor = {verm:['var(--verm-f)','var(--verm)'],amar:['var(--amar-f)','var(--amar)'],azul:['var(--azul-f)','var(--azul)'],pet:['var(--pet-50)','var(--pet-700)']};
-  return `<div class="cab"><div><h1>Notificações</h1><p>${novas} não lida(s). Geradas automaticamente a partir dos prazos e aprovações — cada aviso aparece uma vez só.</p></div><button class="btn" data-act="lerTodas" ${novas?'':'disabled'}><i data-lucide="check-check"></i>Marcar todas como lidas</button></div>
+  return `<div class="cab"><div><h1>Notificações</h1><p>${aba==='mim' ? 'Menções e quando alguém define você como responsável.' : 'Prazos, atrasos e aprovações das campanhas, gerados automaticamente.'}</p></div><button class="btn" data-act="lerTodas" ${novas?'':'disabled'}><i data-lucide="check-check"></i>Marcar tudo como lido</button></div>
+  <nav class="ent-tabs notif-abas">${[['mim','at-sign','Para mim'],['alerta','bell','Alertas']].map(([k,ic,t])=>`<button class="${aba===k?'on':''}" data-act="notifAba" data-v="${k}"><i data-lucide="${ic}"></i>${t}${nao(k)?`<span class="notif-n ${k}">${nao(k)}</span>`:''}</button>`).join('')}</nav>
   <div class="card">${(()=>{ const ord = [...L].sort((a,b)=>(b.ts||0)-(a.ts||0)), agora = Date.now(), d0 = new Date(); d0.setHours(0,0,0,0); const hoje = d0.getTime(), ontem = hoje - 864e5, semana = hoje - 6*864e5;
       const grupo = t => t >= hoje ? 'Hoje' : t >= ontem ? 'Ontem' : t >= semana ? 'Esta semana' : 'Mais antigas';
       const rel = t => { const m = Math.round((agora - t)/6e4); return m < 1 ? 'agora' : m < 60 ? m+' min' : m < 1440 ? Math.round(m/60)+' h' : m < 10080 ? Math.round(m/1440)+' d' : new Date(t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); };
       let ultimo = '';
       return ord.map(n=>{ const g = grupo(n.ts||0), cab = g!==ultimo ? `<div class="notif-g">${g}</div>` : ''; ultimo = g;
         return cab + `<div class="notif ${n.lida?'':'nova'}"><div class="ic" style="background:${cor[n.tipo][0]};color:${cor[n.tipo][1]}"><i data-lucide="${n.ic}"></i></div><div style="flex:1;min-width:0"><a href="${n.link}" data-act="abrirNotif" data-k="${h(n.chave)}" style="color:var(--tx);text-decoration:none;font-weight:${n.lida?400:600}">${h(n.t)}</a><div class="small muted">${h(n.d)}</div></div>
-          <div class="notif-lado"><span class="notif-t" title="${new Date(n.ts||0).toLocaleString('pt-BR')}">${rel(n.ts||0)}</span>${n.lida?'':`<span class="notif-pt" title="Não lida"></span>`}${n.lida?'':`<button class="btn btn-s btn-g" data-act="lerNotif" data-k="${h(n.chave)}">Marcar como lida</button>`}</div></div>`; }).join(''); })() || '<div class="vazio">Nenhuma notificação.</div>'}</div>`;
+          <div class="notif-lado"><span class="notif-t" title="${new Date(n.ts||0).toLocaleString('pt-BR')}">${rel(n.ts||0)}</span>${n.lida?'':`<span class="notif-pt" title="Não lida"></span>`}${n.lida?'':`<button class="btn btn-s btn-g" data-act="lerNotif" data-k="${h(n.chave)}">Marcar como lida</button>`}</div></div>`; }).join(''); })() || `<div class="vazio">${aba==='mim' ? 'Nada para você por aqui. Quando alguém mencionar você ou definir você como responsável, aparece nesta aba.' : 'Nenhum alerta.'}</div>`}</div>`;
 }
 
 /* =====================================================================
@@ -5046,7 +5048,8 @@ const ACT = {
   /* notificações */
   lerNotif: el => { notifLer([el.dataset.k]); salvar(); render(); },
   abrirNotif: el => { notifLer([el.dataset.k]); salvar(); },
-  lerTodas: () => { notifLer(notificacoes().map(n=>n.chave)); salvar(); render(); },
+  lerTodas: () => { const aba = UI.notifAba || 'mim'; notifLer(notificacoes().filter(n=>n.cat===aba).map(n=>n.chave)); salvar(); render(); },
+  notifAba: el => { UI.notifAba = el.dataset.v; render(); },
   /* configurações */
   salvarModelo: () => { const fm = $('#form-modelo'), v = ler(fm), T = JSON.parse(JSON.stringify(S.modelo.tarefas)), ids = new Set(T.map(t=>t.id)), err = [];
     T.forEach((t,i)=>{ t.nome = v['nome_'+i]; t.area = v['area_'+i]; t.dur = Math.max(1, Math.round(+v['dur_'+i]||1));
