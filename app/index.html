@@ -227,6 +227,12 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .blk-menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:6px 8px;border-radius:7px;cursor:pointer;text-align:left;font:inherit}.blk-menu button.sel,.blk-menu button:hover{background:#f1f3f4}.blk-ic{width:32px;height:32px;border:1px solid var(--borda);border-radius:6px;display:flex;align-items:center;justify-content:center;background:#fff;flex:none}.blk-ic svg{width:16px;height:16px;color:var(--tx2)}.blk-n{flex:1;display:flex;flex-direction:column}.blk-n b{font-size:.84rem;font-weight:500}.blk-n em{font-style:normal;font-size:.72rem;color:var(--tx3)}.blk-menu kbd{font-family:inherit;font-size:.7rem;color:var(--tx3)}
 .lpe-edit p:only-child:has(br:only-child)::before{content:'Escreva aqui… digite / para inserir blocos';color:var(--tx3);position:absolute;pointer-events:none}
 .np{max-width:900px;margin:0 auto}
+.np-resp{display:flex;align-items:center;gap:6px}.np-resp .av-s{width:22px;height:22px;font-size:.6rem;flex:none}
+.mdl{border:1px dashed #d9dde3;border-radius:12px;padding:16px;margin:4px 0 18px;background:#fafafa}.mdl-t{font-weight:700;font-size:.9rem;margin-bottom:12px}.mdl-t span{font-weight:400;color:var(--tx3);font-size:.8rem;margin-left:6px}
+.mdl-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media (max-width:760px){.mdl-g{grid-template-columns:1fr}}
+.mdl-c{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--borda);background:#fff;border-radius:10px;padding:12px;cursor:pointer;font:inherit;transition:border-color .15s,box-shadow .15s}.mdl-c:hover{border-color:#e0a33a;box-shadow:0 4px 14px rgba(15,15,15,.08)}
+.mdl-ic{width:30px;height:30px;border-radius:8px;background:#fdf3e1;color:#b9771a;display:flex;align-items:center;justify-content:center;margin-bottom:4px}.mdl-ic svg{width:16px;height:16px}.mdl-c b{font-size:.86rem}.mdl-c em{font-style:normal;font-size:.76rem;color:var(--tx3)}
+.mdl-e{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.mdl-e i{font-style:normal;font-size:.68rem;background:#f1f1ef;color:var(--tx2);border-radius:5px;padding:2px 6px}.mdl-ou{text-align:center;font-size:.76rem;color:var(--tx3);margin-top:12px}
 .np.np-dg{max-width:1260px}.np-grade{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}.np-disc{position:relative}.np-disc .dc{position:absolute;left:0;right:0}
 @media (max-width:1180px){.np-grade{grid-template-columns:1fr}.np-disc .dc{position:static;margin-bottom:10px}}
 .dc{position:relative;background:#fff;border:1px solid var(--borda);border-radius:12px;box-shadow:0 3px 12px rgba(15,15,15,.05);padding:10px 12px;font-size:.84rem;transition:top .15s,box-shadow .15s;cursor:default}.dc.ativo{box-shadow:0 8px 24px rgba(15,15,15,.13);border-color:#d5dbe5;z-index:2}
@@ -2984,21 +2990,23 @@ function pgLpPagina(r){ const c = camp(r[1]), et = r[2], idi = r[3] || '';
   migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,`#/clientes/${c.clienteId}`],[c.nome,`#/campanha/${c.id}/entregaveis`],['Landing page',`#/campanha/${c.id}/entregaveis`],[nomeIdi]]);
   UI.lpTxt = {id:c.id, et, idi}; posRender.push(()=>{ const e = document.getElementById('lpe-edit'); if (!e) return; if (ed) { editorBlocos(e); lpAutoSalvar(e); }
     let tp; e.addEventListener('click', ev => { const a = ev.target.closest('[data-disc]'); if (a) discAtivar(a.dataset.disc); });
-    e.addEventListener('input', () => { clearTimeout(tp); tp = setTimeout(discPosicionar, 150); });
+    e.addEventListener('input', () => { clearTimeout(tp); tp = setTimeout(discPosicionar, 150); const m = document.getElementById('np-modelos'); if (m) m.hidden = !!lpTextoPuro(e.innerHTML); });
     requestAnimationFrame(() => { discAtivar(UI.discAtivo, true); discPosicionar(); if (UI.discRolar) { const an = e.querySelector(`[data-disc="${UI.discRolar}"]`); if (an) an.scrollIntoView({block:'center', behavior:'smooth'}); UI.discRolar = null; } }); });
   const abertas = discAbertas(d);
   const hist = (d.hist||[]).slice().reverse();
   const acoes = !ed ? '' : st==='Aguardando aprovação do cliente' ? `<button class="btn btn-s" data-act="lpTextoAjustes"><i data-lucide="message-square-warning"></i>Cliente pediu ajustes</button><button class="btn btn-s btn-p" data-act="lpTextoAprovar"><i data-lucide="check"></i>Cliente aprovou</button>`
     : st==='Aprovado' ? '' : `<button class="btn btn-s btn-p" data-act="lpTextoEnviar"><i data-lucide="send"></i>Enviar para aprovação</button>`;
   return `<div class="np np-dg"><div class="np-top"><a href="#/campanha/${c.id}/entregaveis" class="ent-voltar" onclick="UI.entSec=UI.entSec||{};UI.entSec['${c.id}']='Landing page'"><i data-lucide="arrow-left"></i>Landing page</a>
-      <div class="np-top-d"><span class="np-salvo" id="np-salvo"></span><div class="dp-w"><button class="btn btn-s dp-bt ${UI.discPainel?'on':''}" data-act="discPainel" title="Comentários e sugestões"><i data-lucide="message-square-text"></i>${abertas.length?`<span class="dp-cnt">${abertas.length}</span>`:''}</button>${UI.discPainel ? discPainelHtml(d) : ''}</div>${ed?`<button class="btn btn-s ${d.publico?'np-pub':''}" data-act="lpCompartilhar"><i data-lucide="${d.publico?'globe':'share-2'}"></i>${d.publico?'Publicada na web':'Compartilhar'}</button>`:''}${acoes}</div></div>
+      <div class="np-top-d"><span class="np-salvo" id="np-salvo"></span>${ed ? `<button class="btn btn-s" data-act="lpModelos" title="Aplicar um modelo de estrutura"><i data-lucide="layout-template"></i>Modelos</button>` : ''}<div class="dp-w"><button class="btn btn-s dp-bt ${UI.discPainel?'on':''}" data-act="discPainel" title="Comentários e sugestões"><i data-lucide="message-square-text"></i>${abertas.length?`<span class="dp-cnt">${abertas.length}</span>`:''}</button>${UI.discPainel ? discPainelHtml(d) : ''}</div>${ed?`<button class="btn btn-s ${d.publico?'np-pub':''}" data-act="lpCompartilhar"><i data-lucide="${d.publico?'globe':'share-2'}"></i>${d.publico?'Publicada na web':'Compartilhar'}</button>`:''}${acoes}</div></div>
     <div class="np-grade"><article class="np-doc"><div class="np-ic"><i data-lucide="file-text"></i></div><h1 class="np-tit">${h(titulo)}</h1>
       <div class="np-props"><div><span><i data-lucide="megaphone"></i>Campanha</span><b>${h(c.nome)} · ${h(cliente(c.clienteId).nome)}</b></div>
-        <div><span><i data-lucide="user"></i>Responsável</span>${ed ? `<select class="np-sel" data-chg="lpCampo" data-id="${c.id}" data-et="${et}" data-idi="${idi}" data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>
+        <div><span><i data-lucide="user"></i>Responsável</span><div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="lpCampo" data-id="${c.id}" data-et="${et}" data-idi="${idi}" data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div></div>
+        ${d.modelo && LP_MODELOS[d.modelo] ? `<div><span><i data-lucide="layout-template"></i>Modelo</span><b>${h(LP_MODELOS[d.modelo].nome)}</b></div>` : ''}
         <div><span><i data-lucide="circle-dot"></i>Status</span>${ed ? `<select class="kvc-st kvc-${lpCor(st)} np-st np-sel" data-chg="lpCampo" data-id="${c.id}" data-et="${et}" data-idi="${idi}" data-k="status">${opts(LP_ST[trad?'trad':'conteudo'], st)}</select>` : `<b class="kvc-st kvc-${lpCor(st)} np-st">${h(st)}</b>`}</div>
         <div><span><i data-lucide="check-square"></i>Conteúdo aprovado</span><label class="np-chk"><input type="checkbox" data-chg="lpAprovado" data-id="${c.id}" data-et="${et}" data-idi="${idi}" ${st==='Aprovado'?'checked':''} ${ed?'':'disabled'}><em>${st==='Aprovado' ? 'Aprovado pelo cliente' : ''}</em></label></div>
         ${d.publico?`<div><span><i data-lucide="globe"></i>Link público</span><b><a href="${lpLinkPublico(d.publico)}" target="_blank" rel="noopener">${lpLinkPublico(d.publico).replace(/^https?:\/\//,'').slice(0,60)}…</a></b></div>`:''}</div>
       ${trad ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)} (aprovado)</summary><div class="lpe-doc">${lpSemDisc(lpLimpa(f.conteudo.texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
+      ${ed ? `<div class="mdl" id="np-modelos" ${lpTextoPuro(d.texto) ? 'hidden' : ''}><div class="mdl-t">Começar com um modelo de estrutura <span>o time só preenche cada seção</span></div><div class="mdl-g">${Object.entries(LP_MODELOS).map(([k,m])=>`<button type="button" class="mdl-c" data-act="lpModelo" data-v="${k}"><span class="mdl-ic"><i data-lucide="${m.ic}"></i></span><b>${h(m.nome)}</b><em>${h(m.obj)}</em><span class="mdl-e">${m.estr.map(x=>`<i>${h(x)}</i>`).join('')}</span></button>`).join('')}</div><div class="mdl-ou">ou comece a escrever abaixo</div></div>` : ''}
       <div class="lpe-doc np-corpo ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
       ${hist.length ? `<div class="lpe-hist"><div class="lpe-rot">Histórico da aprovação</div>${hist.map(x=>`<div><b>${h(x.o)}</b><span>${new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ${h(x.quem||'')}</span>${x.coment?`<em>“${h(x.coment)}”</em>`:''}</div>`).join('')}</div>` : ''}
     </article><aside class="np-disc" id="np-disc">${abertas.map(x=>discCard(x, ed)).join('')}</aside></div></div>`; }
@@ -3098,6 +3106,30 @@ function discPainelHtml(d){ const L = ((d && d.disc) || []).slice().sort((a,b)=>
   return `<div class="dp"><div class="dp-h"><b>Comentários e sugestões</b><button type="button" class="dp-x" data-act="discPainel" title="Fechar"><i data-lucide="x"></i></button></div>
     <div class="dp-tabs"><button type="button" class="${ab==='abertas'?'on':''}" data-act="discAba" data-v="abertas">Abertas${nAb?` <span>${nAb}</span>`:''}</button><button type="button" class="${ab==='hist'?'on':''}" data-act="discAba" data-v="hist">Histórico${nHi?` <span>${nHi}</span>`:''}</button></div>
     <div class="dp-l">${ver.length ? ver.map(it).join('') : `<div class="dp-vz">${ab==='abertas' ? 'Nenhum comentário ou sugestão aberto. Selecione um trecho do texto e use Comentar ou Sugerir.' : 'Nada resolvido ainda.'}</div>`}</div></div>`; }
+/* modelos de estrutura da landing page: o time só preenche cada seção (o texto entre colchetes é a orientação) */
+const mdlSec = (t, guia, campos) => `<h2>${t}</h2>${guia?`<div class="callout"><span class="callout-ic" contenteditable="false"></span><div class="callout-tx">${guia}</div></div>`:''}${campos.map(([rot, ph])=>`<p><b>${rot}:</b> [${ph}]</p>`).join('')}`;
+const mdlItens = (n, rot, ph) => `<ol>${[...Array(n)].map((_,i)=>`<li><b>${rot} ${i+1}:</b> [${ph}]</li>`).join('')}</ol>`;
+const mdlForm = () => mdlSec('Formulário', 'Peça só o necessário: cada campo a mais reduz a conversão.', [['Título do formulário','Ex.: Fale com um especialista'],['Campos','Nome, e-mail, telefone, empresa, país…'],['Texto do botão','Ex.: Quero ser contatado'],['Consentimento (LGPD/GDPR)','Texto do aceite de privacidade'],['Mensagem após o envio','Ex.: Obrigado! Em breve entraremos em contato.']]);
+const LP_MODELOS = {
+  lead: {nome:'Lead Generation', ic:'user-plus', obj:'Captar contatos', estr:['Hero','Benefícios','Formulário','FAQ'],
+    html: () => `<div class="callout"><span class="callout-ic" contenteditable="false"></span><div class="callout-tx"><b>Modelo Lead Generation</b> · objetivo: captar contatos. Preencha cada seção substituindo o texto entre colchetes.</div></div>`
+      + mdlSec('Hero', 'Primeira dobra: em poucos segundos a pessoa precisa entender a oferta e o próximo passo.', [['Título','Promessa principal em até 10 palavras'],['Subtítulo','Complemento do título: para quem é e o que ganha'],['Botão (CTA)','Ex.: Quero saber mais'],['Visual de referência','Imagem ou vídeo do hero']])
+      + `<h2>Benefícios</h2>` + mdlItens(3, 'Benefício', 'Título curto + uma frase explicando o ganho')
+      + mdlForm()
+      + `<h2>FAQ</h2>` + [1,2,3].map(i=>`<details open><summary>[Pergunta ${i}]</summary><p>[Resposta ${i}]</p></details>`).join('') },
+  produto: {nome:'Product Landing Page', ic:'package', obj:'Apresentar produto', estr:['Hero','Diferenciais','Funcionalidades','Demonstração','CTA'],
+    html: () => `<div class="callout"><span class="callout-ic" contenteditable="false"></span><div class="callout-tx"><b>Modelo Product Landing Page</b> · objetivo: apresentar o produto. Preencha cada seção substituindo o texto entre colchetes.</div></div>`
+      + mdlSec('Hero', 'Nome do produto e a principal transformação que ele entrega.', [['Título','Nome do produto + promessa'],['Subtítulo','Para quem é e o problema que resolve'],['Botão (CTA)','Ex.: Conheça o produto'],['Visual de referência','Foto do produto em uso']])
+      + `<h2>Diferenciais</h2>` + mdlItens(3, 'Diferencial', 'O que torna o produto único frente às alternativas')
+      + `<h2>Funcionalidades</h2><table><tbody><tr><td><b>Funcionalidade</b></td><td><b>Como funciona</b></td><td><b>Benefício para o cliente</b></td></tr>${[1,2,3].map(i=>`<tr><td>[Funcionalidade ${i}]</td><td>[Descrição]</td><td>[Ganho]</td></tr>`).join('')}</tbody></table>`
+      + mdlSec('Demonstração', 'Mostre o produto funcionando: vídeo, GIF, passo a passo ou depoimento.', [['Formato','Vídeo, carrossel de imagens, passo a passo…'],['Roteiro ou legenda','O que aparece e o que é dito'],['Link do material','URL do vídeo ou das imagens']])
+      + mdlSec('CTA', 'Chamada final: reforce o benefício e diga claramente o próximo passo.', [['Título','Ex.: Pronto para aumentar sua produtividade?'],['Texto de apoio','Uma frase de reforço'],['Botão (CTA)','Ex.: Fale com um revendedor'],['Destino do botão','Formulário, WhatsApp, página do revendedor…']]) },
+  ebook: {nome:'Ebook / Material rico', ic:'book-open', obj:'Captar leads para download', estr:['Hero','Descrição do material','Benefícios','Formulário'],
+    html: () => `<div class="callout"><span class="callout-ic" contenteditable="false"></span><div class="callout-tx"><b>Modelo Ebook / Material rico</b> · objetivo: captar leads em troca do download. Preencha cada seção substituindo o texto entre colchetes.</div></div>`
+      + mdlSec('Hero', 'Deixe claro que o material é gratuito e o que a pessoa vai aprender.', [['Título','Nome do material + promessa'],['Subtítulo','O que a pessoa vai aprender ou resolver'],['Botão (CTA)','Ex.: Baixar o e-book grátis'],['Capa do material','Imagem da capa']])
+      + mdlSec('Descrição do material', '', [['Sobre o material','Em 2 ou 3 frases, do que trata'],['Para quem é','Perfil de quem deve baixar'],['Formato','Ex.: PDF · 24 páginas']])
+      + `<h2>Benefícios</h2><p>O que você vai aprender:</p>` + mdlItens(4, 'Tópico', 'O que a pessoa leva deste capítulo')
+      + mdlForm() } };
 /* antes de re-renderizar a página, guarda o que está no editor (o salvar automático espera 900 ms) */
 function lpGuardarEdicao(){ const e = document.getElementById('lpe-edit'), {id, et, idi} = UI.lpTxt || {}, c = camp(id); if (!e || !c || !e.isContentEditable) return; const d = lpAlvo(c, et, idi); if (!d) return;
   const t = lpLimpa(e.innerHTML); if (t !== (d.texto||'')) { d.texto = t; d.editadoEm = Date.now(); d.editadoPor = quemSou(); lpAtualizarPublico(c, d, et, idi); } }
@@ -5246,6 +5278,14 @@ const ACT = {
   budStSalvar: () => gravarBudStatus(false),
   budStAuto: () => gravarBudStatus(true),
   kvBriefing: el => formKvBriefing(el.dataset.id),
+  lpModelos: () => { const m = document.getElementById('np-modelos'); if (!m) return; m.hidden = !m.hidden; if (!m.hidden) m.scrollIntoView({block:'center', behavior:'smooth'}); },
+  lpModelo: el => { const {c, d, et, idi} = discAlvo(), M = LP_MODELOS[el.dataset.v]; if (!d || !M) return; lpGuardarEdicao();
+    if (lpTextoPuro(d.texto) && !confirm(`Aplicar o modelo ${M.nome}? O texto atual será substituído (dá para desfazer com Ctrl+Z).`)) return;
+    const e = document.getElementById('lpe-edit'); if (e && e._snap) e._snap();
+    d.texto = lpLimpa(M.html()); d.modelo = el.dataset.v; d.editadoEm = Date.now(); d.editadoPor = quemSou();
+    if (e) { e.innerHTML = d.texto; if (e._snap) e._snap(); }
+    lpAtualizarPublico(c, d, et, idi); registrar(`Landing page de “${c.nome}” · ${et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base'}: modelo ${M.nome} aplicado`);
+    salvar(); const m = document.getElementById('np-modelos'); if (m) m.hidden = true; toast(`Modelo ${M.nome} aplicado. Preencha o texto entre colchetes.`); },
   discPainel: () => { lpGuardarEdicao(); UI.discPainel = !UI.discPainel; render(); },
   discAba: el => { lpGuardarEdicao(); UI.discAba = el.dataset.v; render(); },
   discIr: el => { lpGuardarEdicao(); UI.discPainel = false; UI.discAtivo = el.dataset.d; UI.discRolar = el.dataset.d; render(); },
