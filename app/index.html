@@ -436,7 +436,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 .hist{font-size:.78rem;color:var(--tx2);border-left:2px solid var(--borda);padding-left:10px;margin-top:8px}
 .hist div{margin:4px 0}
 .notif-abas{margin:4px 0 14px}.notif-n{background:#e5484d!important;color:#fff!important}.notif-n.alerta{background:var(--cinza-f)!important;color:var(--tx2)!important}
-.notif-g{font-size:.74rem;font-weight:700;color:var(--tx3);padding:14px 18px 6px;border-bottom:1px solid var(--borda);background:#fafbfb}.notif-lado{display:flex;align-items:center;gap:8px;flex:none}.notif-t{font-size:.76rem;color:var(--tx3);white-space:nowrap}.notif-pt{width:8px;height:8px;border-radius:50%;background:#2383e2;flex:none}
+.notif-g{font-size:.74rem;font-weight:700;color:var(--tx3);padding:14px 18px 6px;border-bottom:1px solid var(--borda);background:#fafbfb}.notif-lado{display:flex;align-items:center;gap:8px;flex:none}.notif-acoes{display:flex;gap:2px;opacity:0;transition:opacity .12s}.notif:hover .notif-acoes{opacity:1}.notif-acoes .icone-btn{width:28px;height:28px;border:1px solid var(--borda);background:#fff;border-radius:7px}.notif-acoes svg{width:15px;height:15px}.notif-t{font-size:.76rem;color:var(--tx3);white-space:nowrap}.notif-pt{width:8px;height:8px;border-radius:50%;background:#2383e2;flex:none}
 .notif{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid var(--borda);align-items:flex-start}
 .notif.nova{background:#f7fbfc}.notif .ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
 @media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -488,7 +488,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 }
 
 /* menu: recolher pelo próprio menu; o botão do topo só aparece com o menu recolhido (e no celular) */
-.lateral .marca{position:relative}.lat-notif{position:absolute;top:10px;right:44px;color:#8b8b8b;text-decoration:none}.lat-notif:hover,.lat-notif.ativo{color:#fff}.lat-badge{position:absolute;top:-3px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#e5484d;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #111;box-sizing:border-box}.lat-badge[hidden]{display:none}
+.lateral .marca{position:relative}.lat-notif{position:absolute;top:10px;right:44px;color:#8b8b8b;text-decoration:none}.lat-notif:hover,.lat-notif.ativo{color:#fff}.marca .lat-badge{position:absolute;top:-4px;right:-9px;background:none;color:var(--ambar);font-size:12px;font-weight:800;line-height:1;letter-spacing:-.02em}.lat-badge[hidden]{display:none}
 .lat-busca{position:relative;margin:12px 14px 4px;display:flex;align-items:center;gap:8px;background:#1d1d1d;border:1px solid #2c2c2c;border-radius:9px;padding:0 9px;height:36px}.lat-busca:focus-within{border-color:#4a4a4a;background:#222}.lat-busca>svg{width:15px;height:15px;color:#8b8b8b;flex:none}.lat-busca input{flex:1;min-width:0;background:none;border:0;outline:none;color:#eee;font:inherit;font-size:.86rem;padding:0}.lat-busca input::placeholder{color:#8b8b8b}.lat-busca input::-webkit-search-cancel-button{display:none}.lat-busca kbd{font-family:inherit;font-size:.68rem;color:#8b8b8b;border:1px solid #333;border-radius:5px;padding:1px 5px}
 .busca-res{position:absolute;top:calc(100% + 6px);left:0;width:440px;max-height:420px;overflow:auto;background:#fff;color:var(--tx);border:1px solid var(--borda);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.28);z-index:200;padding:6px}.busca-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;text-decoration:none;color:var(--tx)}.busca-it.sel,.busca-it:hover{background:#f1f3f4}.busca-it>svg{width:16px;height:16px;color:var(--tx2);flex:none}.busca-it span{flex:1;min-width:0;display:flex;flex-direction:column}.busca-it b{font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.busca-it em{font-style:normal;font-size:.74rem;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.busca-it small{font-size:.68rem;color:var(--tx3);background:#f1f3f4;border-radius:5px;padding:1px 6px;flex:none}.busca-vz{padding:12px;font-size:.84rem;color:var(--tx3)}
 .lat-recolher{position:absolute;top:10px;right:10px;color:#8b8b8b}.lat-recolher:hover{background:rgba(255,255,255,.08);color:#fff}
@@ -1353,21 +1353,23 @@ const ler = form => Object.fromEntries(new FormData(form).entries());
 /* quando o aviso apareceu pela primeira vez (avisos calculados não têm hora própria) */
 /* estado das notificações por pessoa no banco (tabela notif_estado): quando o aviso apareceu e quando foi lido */
 async function carregarNotifEstado(){ UI.notifVistas = UI.notifVistas || {}; if (!sb || !PERFIL) return;
-  try { const {data, error} = await sb.from('notif_estado').select('chave,visto_em,lida_em'); if (error) throw error;
+  try { const {data, error} = await sb.from('notif_estado').select('chave,visto_em,lida_em,arquivada_em'); if (error) throw error;
     const lidasLocal = {...(S.notifLidas||{})}; S.notifLidas = {};
-    for (const r of data||[]) { UI.notifVistas[r.chave] = new Date(r.visto_em).getTime(); if (r.lida_em) S.notifLidas[r.chave] = true; }
+    UI.notifArq = {}; for (const r of data||[]) { UI.notifVistas[r.chave] = new Date(r.visto_em).getTime(); if (r.lida_em) S.notifLidas[r.chave] = true; if (r.arquivada_em) UI.notifArq[r.chave] = true; }
     // o que já tinha sido lido neste navegador (antes da sincronização) vai para o banco uma vez
     const migrar = Object.keys(lidasLocal).filter(k=>lidasLocal[k] && !S.notifLidas[k]); for (const k of migrar) { S.notifLidas[k] = true; notifGravar(k, 'lida'); }
     UI.notifSinc = true; } catch(e) { console.warn('notif_estado', e); UI.notifSinc = false; } }
-const NOTIF_FILA = {visto:new Map(), lida:new Map()};
+const NOTIF_FILA = {visto:new Map(), lida:new Map(), arq:new Map()};
 function notifGravar(chave, tipo, quando){ if (!sb || !PERFIL || UI.notifSinc===false) return; const em = new Date(quando || Date.now()).toISOString();
-  NOTIF_FILA[tipo].set(chave, tipo==='lida' ? {user_id:PERFIL.id, chave, lida_em:em} : {user_id:PERFIL.id, chave, visto_em:em});
-  clearTimeout(notifGravar._t); notifGravar._t = setTimeout(async ()=>{ for (const t of ['visto','lida']) { const rows = [...NOTIF_FILA[t].values()]; NOTIF_FILA[t].clear(); if (!rows.length) continue;
+  NOTIF_FILA[tipo].set(chave, tipo==='lida' ? {user_id:PERFIL.id, chave, lida_em: quando===null ? null : em} : tipo==='arq' ? {user_id:PERFIL.id, chave, arquivada_em:em} : {user_id:PERFIL.id, chave, visto_em:em});
+  clearTimeout(notifGravar._t); notifGravar._t = setTimeout(async ()=>{ for (const t of ['visto','lida','arq']) { const rows = [...NOTIF_FILA[t].values()]; NOTIF_FILA[t].clear(); if (!rows.length) continue;
     const r = await sb.from('notif_estado').upsert(rows, {onConflict:'user_id,chave', ignoreDuplicates: t==='visto'}); if (r.error) console.warn('notif_estado', r.error.message); } }, 800); }
 function notifVistaEm(chave, q){ UI.notifVistas = UI.notifVistas || {};
   if (!UI.notifVistas[chave]) { UI.notifVistas[chave] = q ? Math.min(Date.now(), new Date(q+'T12:00:00').getTime()) : Date.now(); notifGravar(chave, 'visto', UI.notifVistas[chave]); }
   return UI.notifVistas[chave]; }
 const notifLer = chaves => { for (const k of chaves) if (!S.notifLidas[k]) { S.notifLidas[k] = true; notifGravar(k, 'lida'); } };
+const notifDesler = k => { delete S.notifLidas[k]; notifGravar(k, 'lida', null); };
+const notifArquivar = k => { UI.notifArq = UI.notifArq || {}; UI.notifArq[k] = true; S.notifLidas[k] = true; notifGravar(k, 'lida'); notifGravar(k, 'arq'); };
 /* pesquisa global (⌘K): campanhas, clientes, ações, peças, atividades e páginas */
 function buscaIndice(){ const L = [], cl = id => (S.clientes.find(c=>c.id===id)||{}).nome || '';
   for (const c of S.clientes) if (!c.arquivado) L.push({tipo:'Cliente', ic:'building-2', t:c.nome, d:'', link:`#/clientes/${c.id}`});
@@ -1393,7 +1395,7 @@ function buscaTecla(e){ const its = [...document.querySelectorAll('#busca-res .b
 document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==='k') { const i = $('#busca-global'); if (i) { e.preventDefault(); document.body.classList.remove('menu-oculto'); i.focus(); i.select(); } } });
 document.addEventListener('focusout', e => { if (e.target && e.target.id==='busca-global') setTimeout(()=>{ const b = $('#busca-res'); if (b && !b.matches(':hover')) b.hidden = true; }, 150); });
 function notificacoes(){
-  const N = new Map(); const add = (chave, n) => { if (N.has(chave)) return; const o = Object.assign({chave, lida:!!S.notifLidas[chave]}, n); o.ts = n.ts || notifVistaEm(chave, n.q); o.cat = /^(menc|mencent|mencst|resp)-/.test(chave) ? 'mim' : 'alerta'; N.set(chave, o); };
+  const N = new Map(); const add = (chave, n) => { if (N.has(chave)) return; const o = Object.assign({chave, lida:!!S.notifLidas[chave]}, n); o.ts = n.ts || notifVistaEm(chave, n.q); o.cat = /^(menc|mencent|mencst|resp)-/.test(chave) ? 'mim' : 'alerta'; if (!(UI.notifArq||{})[chave]) N.set(chave, o); };
   for (const c of ativas()) {
     if (c.status==='Concluída') continue;
     const ini = inicioPlan(c), dIni = difDias(HOJE, ini), cl = cliente(c.clienteId).nome;
@@ -3590,7 +3592,7 @@ function pgNotificacoes(){
       let ultimo = '';
       return ord.map(n=>{ const g = grupo(n.ts||0), cab = g!==ultimo ? `<div class="notif-g">${g}</div>` : ''; ultimo = g;
         return cab + `<div class="notif ${n.lida?'':'nova'}"><div class="ic" style="background:${cor[n.tipo][0]};color:${cor[n.tipo][1]}"><i data-lucide="${n.ic}"></i></div><div style="flex:1;min-width:0"><a href="${n.link}" data-act="abrirNotif" data-k="${h(n.chave)}" style="color:var(--tx);text-decoration:none;font-weight:${n.lida?400:600}">${h(n.t)}</a><div class="small muted">${h(n.d)}</div></div>
-          <div class="notif-lado"><span class="notif-t" title="${new Date(n.ts||0).toLocaleString('pt-BR')}">${rel(n.ts||0)}</span>${n.lida?'':`<span class="notif-pt" title="Não lida"></span>`}${n.lida?'':`<button class="btn btn-s btn-g" data-act="lerNotif" data-k="${h(n.chave)}">Marcar como lida</button>`}</div></div>`; }).join(''); })() || `<div class="vazio">${aba==='mim' ? 'Nada para você por aqui. Quando alguém mencionar você ou definir você como responsável, aparece nesta aba.' : 'Nenhum alerta.'}</div>`}</div>`;
+          <div class="notif-lado"><span class="notif-acoes"><button class="icone-btn" data-act="${n.lida?'deslerNotif':'lerNotif'}" data-k="${h(n.chave)}" title="${n.lida?'Marcar como não lida':'Marcar como lida'}"><i data-lucide="${n.lida?'mail':'mail-check'}"></i></button><button class="icone-btn" data-act="arqNotif" data-k="${h(n.chave)}" title="Arquivar"><i data-lucide="archive"></i></button></span><span class="notif-t" title="${new Date(n.ts||0).toLocaleString('pt-BR')}">${rel(n.ts||0)}</span>${n.lida?'':`<span class="notif-pt" title="Não lida"></span>`}</div></div>`; }).join(''); })() || `<div class="vazio">${aba==='mim' ? 'Nada para você por aqui. Quando alguém mencionar você ou definir você como responsável, aparece nesta aba.' : 'Nenhum alerta.'}</div>`}</div>`;
 }
 
 /* =====================================================================
@@ -5047,6 +5049,8 @@ const ACT = {
   delPost: el => { const c = camp(el.dataset.id); c.posts = c.posts.filter(x=>x.id!==el.dataset.p); registrar('Publicação excluída'); fecharModal(); render(); },
   /* notificações */
   lerNotif: el => { notifLer([el.dataset.k]); salvar(); render(); },
+  deslerNotif: el => { notifDesler(el.dataset.k); salvar(); render(); },
+  arqNotif: el => { notifArquivar(el.dataset.k); salvar(); render(); toast('Notificação arquivada.'); },
   abrirNotif: el => { notifLer([el.dataset.k]); salvar(); },
   lerTodas: () => { const aba = UI.notifAba || 'mim'; notifLer(notificacoes().filter(n=>n.cat===aba).map(n=>n.chave)); salvar(); render(); },
   notifAba: el => { UI.notifAba = el.dataset.v; render(); },
