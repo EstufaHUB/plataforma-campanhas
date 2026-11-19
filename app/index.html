@@ -435,6 +435,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 .txtbox{background:#fafbfb;border:1px solid var(--borda);border-radius:8px;padding:10px;font-size:.85rem;white-space:pre-wrap;min-height:60px}
 .hist{font-size:.78rem;color:var(--tx2);border-left:2px solid var(--borda);padding-left:10px;margin-top:8px}
 .hist div{margin:4px 0}
+.notif-g{font-size:.74rem;font-weight:700;color:var(--tx3);padding:14px 18px 6px;border-bottom:1px solid var(--borda);background:#fafbfb}.notif-lado{display:flex;align-items:center;gap:8px;flex:none}.notif-t{font-size:.76rem;color:var(--tx3);white-space:nowrap}.notif-pt{width:8px;height:8px;border-radius:50%;background:#2383e2;flex:none}
 .notif{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid var(--borda);align-items:flex-start}
 .notif.nova{background:#f7fbfc}.notif .ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
 @media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -1343,8 +1344,12 @@ const ler = form => Object.fromEntries(new FormData(form).entries());
 /* =====================================================================
    6. NOTIFICAÇÕES (geradas a partir dos dados, sem duplicar)
    ===================================================================== */
+/* quando o aviso apareceu pela primeira vez (avisos calculados não têm hora própria) */
+function notifVistaEm(chave, q){ const k = 'campanhas-notif-vistas-'+((PERFIL||{}).id||''); if (!UI.notifVistas) { try { UI.notifVistas = JSON.parse(localStorage.getItem(k)||'{}'); } catch(e) { UI.notifVistas = {}; } }
+  if (!UI.notifVistas[chave]) { UI.notifVistas[chave] = q ? Math.min(Date.now(), new Date(q+'T12:00:00').getTime()) : Date.now(); try { localStorage.setItem(k, JSON.stringify(UI.notifVistas)); } catch(e){} }
+  return UI.notifVistas[chave]; }
 function notificacoes(){
-  const N = new Map(); const add = (chave, n) => { if (!N.has(chave)) N.set(chave, Object.assign({chave, lida:!!S.notifLidas[chave]}, n)); };
+  const N = new Map(); const add = (chave, n) => { if (N.has(chave)) return; const o = Object.assign({chave, lida:!!S.notifLidas[chave]}, n); o.ts = n.ts || notifVistaEm(chave, n.q); N.set(chave, o); };
   for (const c of ativas()) {
     if (c.status==='Concluída') continue;
     const ini = inicioPlan(c), dIni = difDias(HOJE, ini), cl = cliente(c.clienteId).nome;
@@ -1376,12 +1381,12 @@ function notificacoes(){
       if (t.pessoa===me) for (const x of (t.hist||[])) if (x.q>=desde && x.por && x.por!==me && /^Responsável:|; Responsável:/.test(x.o) && x.o.includes('→ '+me))
         add('resp-'+c.id+'-'+t.id+'-'+x.q, {tipo:'pet', ic:'user-plus', t:`${x.por} definiu você como responsável: ${t.nome}${t.pais?' ('+t.pais+')':''}`, d:`${c.nome} · prazo ${fd(t.EF)}`, link:`#/campanha/${c.id}/acoes`, q:x.q});
       for (const x of (t.coment||[])) if (x.q>=desde && mencionaMe(x.o))
-        add('menc-'+c.id+'-'+t.id+'-'+(x.t||x.q), {tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em “${t.nome}”`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/acoes`, q:x.q}); }
+        add('menc-'+c.id+'-'+t.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em “${t.nome}”`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/acoes`, q:x.q}); }
     for (const c of ativas()) for (const e of (c.entregaveis||[])) for (const x of (e.coment||[])) if (x.q>=desde && mencionaMe(x.o))
-      add('mencent-'+c.id+'-'+e.id+'-'+(x.t||x.q), {tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} no ${e.nome}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
+      add('mencent-'+c.id+'-'+e.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} no ${e.nome}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
     for (const [mid, rs] of Object.entries(S.registrosStatus||{})) for (const x of rs) if (x.tipo==='coment' && (x.q||'')>='' && mencionaMe(x.o)) {
       const mc = META_CONTAS.flatMap(m=>((m.dados||{}).campanhas)||[]).find(z=>z.id===mid);
-      add('mencst-'+mid+'-'+(x.t||x.q), {tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em Digital › Campanhas${mc?': '+titulo(mc.nome):''}`, d:x.o.slice(0,90), link:'#/status'}); } }
+      add('mencst-'+mid+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em Digital › Campanhas${mc?': '+titulo(mc.nome):''}`, d:x.o.slice(0,90), link:'#/status'}); } }
   return [...N.values()];
 }
 function riscosPais(c){
@@ -3534,7 +3539,13 @@ function pgNotificacoes(){
   const L = notificacoes(), novas = L.filter(n=>!n.lida).length;
   const cor = {verm:['var(--verm-f)','var(--verm)'],amar:['var(--amar-f)','var(--amar)'],azul:['var(--azul-f)','var(--azul)'],pet:['var(--pet-50)','var(--pet-700)']};
   return `<div class="cab"><div><h1>Notificações</h1><p>${novas} não lida(s). Geradas automaticamente a partir dos prazos e aprovações — cada aviso aparece uma vez só.</p></div><button class="btn" data-act="lerTodas" ${novas?'':'disabled'}><i data-lucide="check-check"></i>Marcar todas como lidas</button></div>
-  <div class="card">${L.map(n=>`<div class="notif ${n.lida?'':'nova'}"><div class="ic" style="background:${cor[n.tipo][0]};color:${cor[n.tipo][1]}"><i data-lucide="${n.ic}"></i></div><div style="flex:1;min-width:0"><a href="${n.link}" data-act="abrirNotif" data-k="${h(n.chave)}" style="color:var(--tx);text-decoration:none;font-weight:${n.lida?400:600}">${h(n.t)}</a><div class="small muted">${h(n.d)}</div></div>${n.lida?'<span class="small muted">lida</span>':`<button class="btn btn-s btn-g" data-act="lerNotif" data-k="${h(n.chave)}">Marcar como lida</button>`}</div>`).join('') || '<div class="vazio">Nenhuma notificação.</div>'}</div>`;
+  <div class="card">${(()=>{ const ord = [...L].sort((a,b)=>(b.ts||0)-(a.ts||0)), agora = Date.now(), d0 = new Date(); d0.setHours(0,0,0,0); const hoje = d0.getTime(), ontem = hoje - 864e5, semana = hoje - 6*864e5;
+      const grupo = t => t >= hoje ? 'Hoje' : t >= ontem ? 'Ontem' : t >= semana ? 'Esta semana' : 'Mais antigas';
+      const rel = t => { const m = Math.round((agora - t)/6e4); return m < 1 ? 'agora' : m < 60 ? m+' min' : m < 1440 ? Math.round(m/60)+' h' : m < 10080 ? Math.round(m/1440)+' d' : new Date(t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); };
+      let ultimo = '';
+      return ord.map(n=>{ const g = grupo(n.ts||0), cab = g!==ultimo ? `<div class="notif-g">${g}</div>` : ''; ultimo = g;
+        return cab + `<div class="notif ${n.lida?'':'nova'}"><div class="ic" style="background:${cor[n.tipo][0]};color:${cor[n.tipo][1]}"><i data-lucide="${n.ic}"></i></div><div style="flex:1;min-width:0"><a href="${n.link}" data-act="abrirNotif" data-k="${h(n.chave)}" style="color:var(--tx);text-decoration:none;font-weight:${n.lida?400:600}">${h(n.t)}</a><div class="small muted">${h(n.d)}</div></div>
+          <div class="notif-lado"><span class="notif-t" title="${new Date(n.ts||0).toLocaleString('pt-BR')}">${rel(n.ts||0)}</span>${n.lida?'':`<span class="notif-pt" title="Não lida"></span>`}${n.lida?'':`<button class="btn btn-s btn-g" data-act="lerNotif" data-k="${h(n.chave)}">Marcar como lida</button>`}</div></div>`; }).join(''); })() || '<div class="vazio">Nenhuma notificação.</div>'}</div>`;
 }
 
 /* =====================================================================
