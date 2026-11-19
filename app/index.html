@@ -3180,9 +3180,9 @@ function dashStatus(D, resumoC, cont, nNoAr){
       <td class="small" style="white-space:nowrap">${a.fim ? `${fdm(a.fim)}<small class="muted" style="display:block">${d<0?'encerrada':d===0?'hoje':d===1?'1 dia':`${d} dias`}</small>` : '<span class="muted">sem fim</span>'}</td></tr>`; };
   const blocoAl = `<div class="card dsh-card dsh-bud-al"><div class="dsh-h"><span><i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:-3px;color:#b3392f"></i> Alertas de budget</span><small>a partir de 90% do budget total</small></div>
     ${alertas.length ? `<table class="tab dsh-al"><thead><tr><th>Campanha</th><th>País</th><th>Consumo do budget total</th><th>Fim</th></tr></thead><tbody>${alG.map(g=>g.xs.map((a,i)=>linhaAl(a, i, g)).join('')).join('')}</tbody></table>` : '<div class="muted small" style="padding:8px 0">Nenhuma campanha perto do limite do budget.</div>'}</div>`;
-  const agPend = ch => ((S.atividades||{}).itens||[]).find(it=>it.pend && it.pend.chave===ch && !it.feito);
+
   const blocoPend = `<div class="card dsh-card dsh-pend"><div class="dsh-h"><span>Pendências</span><a href="#/atividades" class="small">Ver em Atividades →</a></div>
-    ${pgs.length ? pgs.map(g=>{ const ag = agPend(g.chave); return `<div class="dsh-lin"><span class="ponto-st" style="background:${COR.verm}"></span><span class="dsh-c"><b>${h(PEND_TIPO[g.tipo]||g.tipo)} · ${h(g.campanha)}</b><small>${h(g.cliente)} · ${g.itens.length} ${g.itens.length===1?'país':'países'}: ${g.itens.map(i=>h(i.pais||'?')).join(', ')} · desde ${fdm(g.em)}${ag?` · agendada ${fdm(ag.data)}${ag.hora?' às '+ag.hora:''}`:''}</small></span>${ehEquipe()?`<button class="btn btn-s" data-act="atPendCk" data-ch="${h(g.chave)}"><i data-lucide="check"></i>Concluir</button>`:''}</div>`; }).join('') : '<div class="muted small" style="padding:8px 0">Nenhum ajuste pendente no Gerenciador.</div>'}</div>`;
+    ${pgs.length ? pgs.map(g=>{ const ag = itemDoGrupo(g, (S.atividades||{}).itens); return `<div class="dsh-lin"><span class="ponto-st" style="background:${COR.verm}"></span><span class="dsh-c"><b>${h(PEND_TIPO[g.tipo]||g.tipo)} · ${h(g.campanha)}</b><small>${h(g.cliente)} · ${g.itens.length} ${g.itens.length===1?'país':'países'}: ${g.itens.map(i=>h(i.pais||'?')).join(', ')} · desde ${fdm(g.em)}${ag?` · agendada ${fdm(ag.data)}${ag.hora?' às '+ag.hora:''}`:''}</small></span>${ehEquipe()?`<button class="btn btn-s" data-act="atPendCk" data-ch="${h(g.chave)}"><i data-lucide="check"></i>Concluir</button>`:''}</div>`; }).join('') : '<div class="muted small" style="padding:8px 0">Nenhum ajuste pendente no Gerenciador.</div>'}</div>`;
   const cliLat = `<aside class="dsh-lat"><div class="dsh-h" style="margin-bottom:6px">Clientes <small>clique para abrir</small></div>${blocoCli}</aside>`;
   return `<div class="dsh dsh-com-lat"><div class="dsh dsh-main">
     <div class="dsh-kpis dsh-k3">${kpi('Campanhas no ar', nNoAr, `${cont.aprend||0} em aprendizado · ${cont.pausada||0} pausada${cont.pausada===1?'':'s'}`)}${kpi('Precisam de atenção', nCrit+nAt, `${nCrit} crítica${nCrit===1?'':'s'} · ${nAt} em atenção · clique para tratar`, nCrit ? COR.verm : nAt ? COR.amar : COR.verde, 'data-act="stFoco" data-v="atencao"')}${kpi('Pendências', pgs.length, pgs.length ? `${pgs.length===1?'campanha':'campanhas'} · ${nPaisP} ${nPaisP===1?'país':'países'} para ajustar no Gerenciador` : 'nenhum ajuste pendente no Gerenciador', pgs.length ? COR.verm : COR.verde, `onclick="location.hash='#/atividades'"`)}</div>
@@ -3656,6 +3656,12 @@ function pendGrupos(){ const G = new Map(), vis = vinculosMeta(), mcs = META_CON
       const g = G.get(chave) || {chave, tipo, cliente:cli, campanha:cp, itens:[], em:p.em||HOJE};
       g.itens.push({mcId, p, pais:(vi && vi.v.pais) || paisDe(nomeMc) || '', conta:f && f.conta, nome:nomeMc}); if ((p.em||HOJE) < g.em) g.em = p.em; G.set(chave, g); } }
   return [...G.values()].sort((a,b)=>a.em.localeCompare(b.em)); }
+/* atividade de pendência: segue os ids das pendências de cada país, não o nome da campanha
+   (o nome pode mudar ou não ser encontrado numa página aberta há muito tempo) */
+const pendIdsAbertos = () => { const s = new Set(); for (const m of Object.values((S && S.metasStatus)||{})) for (const p of (m.pend||[])) if (!p.feito) s.add(String(p.id)); return s; };
+function grupoDoItem(it, gs){ gs = gs || pendGrupos(); const ids = (it.pend||{}).ids; return (ids && ids.length ? gs.find(g=>g.itens.some(i=>ids.includes(String(i.p.id)))) : null) || gs.find(g=>g.chave===it.pend.chave) || null; }
+function pendItemAberto(it, ab){ const ids = (it.pend||{}).ids; return ids && ids.length ? ids.some(id=>(ab||pendIdsAbertos()).has(String(id))) : !!grupoDoItem(it); }
+function itemDoGrupo(g, itens){ const ids = new Set(g.itens.map(i=>String(i.p.id))); return (itens||[]).find(it=>it.pend && !it.feito && (it.pend.ids && it.pend.ids.length ? it.pend.ids.some(id=>ids.has(String(id))) : it.pend.chave===g.chave)); }
 const paisTxt = p => p ? (PAISES[p] ? PAISES[p].f+' '+p : p) : 'sem país';
 /* ---------- página ---------- */
 function pgAtividades(){ migalha([['Digital'],['Atividades']]);
@@ -3663,7 +3669,13 @@ function pgAtividades(){ migalha([['Digital'],['Atividades']]);
   const A = atDados(), aba = UI.atAba || 'cal', sem = UI.atSem || semDom(HOJE), fimS = addDias(sem, 4);
   // pendência agendada cuja campanha já não tem nada pendente: conclui sozinha
   const grupos = pendGrupos(), chaves = new Set(grupos.map(g=>g.chave)); let mudou = false;
-  for (const it of A.itens) if (it.pend && !it.feito && !chaves.has(it.pend.chave)) { it.feito = HOJE; it.feitoPor = it.feitoPor || quemSouAt(); mudou = true; }
+  // atividade de pendência: concluída só quando as pendências dela (por país) foram feitas; reabre se ainda houver país pendente
+  const ab = pendIdsAbertos();
+  for (const it of A.itens) { if (!it.pend) continue;
+    if (!(it.pend.ids && it.pend.ids.length)) { const g = grupos.find(g=>g.chave===it.pend.chave); if (g) { it.pend.ids = g.itens.map(i=>String(i.p.id)); mudou = true; } }   // atividades antigas: guarda os ids
+    const aberto = pendItemAberto(it, ab);
+    if (!aberto && !it.feito) { it.feito = HOJE; it.feitoPor = it.feitoPor || quemSouAt(); mudou = true; }
+    else if (aberto && it.feito) { it.feito = null; it.feitoPor = ''; mudou = true; } }
   if (mudou) salvar();
   const seg = [['lista','list','Lista'],['cal','calendar-days','Calendário'],['rec','repeat','Recorrências']].map(([k,ic,t])=>`<button class="${aba===k?'on':''}" data-act="atAba" data-v="${k}"><i data-lucide="${ic}"></i>${t}</button>`).join('');
   const nav = aba==='rec' ? '' : `<div class="at-nav"><button class="btn btn-s" data-act="atSem" data-v="-7"><i data-lucide="chevron-left"></i></button><button class="btn btn-s" data-act="atSem" data-v="0">Hoje</button><button class="btn btn-s" data-act="atSem" data-v="7"><i data-lucide="chevron-right"></i></button><b>${+sem.slice(8)} ${sem.slice(5,7)!==fimS.slice(5,7) ? NOMES_MES[+sem.slice(5,7)-1].toLowerCase()+' ' : ''}– ${+fimS.slice(8)} ${NOMES_MES[+fimS.slice(5,7)-1].toLowerCase()} ${fimS.slice(0,4)}</b></div>`;
@@ -3672,8 +3684,7 @@ function pgAtividades(){ migalha([['Digital'],['Atividades']]);
     <div style="display:flex;gap:8px;align-items:center"><button class="btn btn-p" data-act="atNova"><i data-lucide="plus"></i>Nova atividade</button></div></div>
   <div class="at-barra"><div class="seg at-seg">${seg}</div>${nav}<span class="at-leg"><i class="at-az"></i>a fazer<i class="at-sem"></i>sem prazo (xxx)<i class="at-atras"></i>não concluída<i class="at-feito"></i>concluída</span></div>${corpo}`; }
 function atLateral(grupos){ const A = atDados(), atr = atAtrasadas();
-  const agendada = ch => A.itens.find(it=>it.pend && it.pend.chave===ch && !it.feito);
-  const card = g => { const ag = agendada(g.chave), n = g.itens.length;
+  const card = g => { const ag = itemDoGrupo(g, A.itens), n = g.itens.length;
     return `<div class="at-pend" draggable="true" data-atdrag="pend:${h(g.chave)}"><button class="at-ck" data-act="atPendCk" data-ch="${h(g.chave)}" title="Concluir"></button><div class="at-pend-t"><b>${h(PEND_TIPO[g.tipo]||g.tipo)}</b><span>${h(g.cliente)} · ${h(g.campanha)}</span>
       <small>${n} ${n===1?'país':'países'}: ${g.itens.map(i=>h(i.pais||'?')).join(', ')} · desde ${fdm(g.em)}</small>${ag ? `<em class="at-agend" data-act="atAbrir" data-k="i:${ag.id}"><i data-lucide="calendar-check"></i>agendada ${AT_DSEM[dow(ag.data)].toLowerCase()} ${fdm(ag.data)}${ag.hora?' às '+ag.hora:''}</em>` : ''}</div><i data-lucide="grip-vertical" class="at-grip"></i></div>`; };
   return `<aside class="at-lat"><div class="at-lat-h">Pendências <span class="at-n ${grupos.length?'':'zero'}">${grupos.length}</span></div>
@@ -3751,7 +3762,7 @@ function atExcluir(){ const k = UI.atK, A = atDados(); if (!k) return;
   else { if (!confirm(k.startsWith('a:') || k.startsWith('m:') ? 'Excluir este lembrete só neste mês?' : 'Excluir esta atividade só neste dia? A recorrência continua nos outros dias.')) return; A.ocor[k] = {...(A.ocor[k]||{}), removida:true}; }
   UI.atK = null; salvar(); fecharModal(); render(); toast('Atividade excluída.'); }
 function atCheck(k){ const A = atDados(), x = atOcor(k); if (!x) return;
-  if (x.item && x.item.pend && !x.feito) { const g = pendGrupos().find(g=>g.chave===x.item.pend.chave); if (g) return atPendCk(g.chave, k); }
+  if (x.item && x.item.pend && !x.feito) { const g = grupoDoItem(x.item); if (g) return atPendCk(g.chave, k); }
   const v = x.feito ? null : HOJE, por = v ? quemSouAt() : '';
   if (x.item) Object.assign(x.item, {feito:v, feitoPor:por}); else A.ocor[k] = {...(A.ocor[k]||{}), feito:v, feitoPor:por};
   salvar(); if (document.querySelector('#f-at')) fecharModal(); render(); toast(v ? 'Atividade concluída.' : 'Atividade reaberta.'); }
@@ -3821,9 +3832,9 @@ const atHoraDe = (e, z) => Math.min(AT_H1 - 0.5, Math.max(AT_H0, AT_H0 + Math.ro
 document.addEventListener('drop', e => { if (!atArr) return; const z = e.target.closest('[data-atdia]'); if (!z) return; e.preventDefault();
   const d = z.dataset.atdia, hora = z.dataset.atall ? '' : hmTxt(atHoraDe(e, z)), A = atDados(), k = atArr; atFimArr();
   if (k.startsWith('pend:')) { const ch = k.slice(5), g = pendGrupos().find(x=>x.chave===ch); if (!g) return;
-    const ja = A.itens.find(it=>it.pend && it.pend.chave===ch && !it.feito);
-    if (ja) Object.assign(ja, {data:d, hora}); else A.itens.push({id:'A'+Date.now().toString(36), data:d, hora, dur:30, cliente:g.cliente, campanha:g.campanha, nome:PEND_TIPO[g.tipo]||g.tipo,
-      desc:'Países: '+g.itens.map(i=>paisTxt(i.pais)+' ('+(i.p.o||'')+')').join('; '), prazo:d, pend:{chave:ch, tipo:g.tipo}, criadoEm:HOJE, criadoPor:quemSouAt()});
+    const ja = itemDoGrupo(g, A.itens), ids = g.itens.map(i=>String(i.p.id));
+    if (ja) { Object.assign(ja, {data:d, hora}); ja.pend.ids = [...new Set([...(ja.pend.ids||[]), ...ids])]; } else A.itens.push({id:'A'+Date.now().toString(36), data:d, hora, dur:30, cliente:g.cliente, campanha:g.campanha, nome:PEND_TIPO[g.tipo]||g.tipo,
+      desc:'Países: '+g.itens.map(i=>paisTxt(i.pais)+' ('+(i.p.o||'')+')').join('; '), prazo:d, pend:{chave:ch, tipo:g.tipo, ids}, criadoEm:HOJE, criadoPor:quemSouAt()});
     toast(`Pendência agendada para ${AT_DSEM[dow(d)].toLowerCase()} ${fdm(d)}${hora?' às '+hora:''}.`); }
   else if (k.startsWith('i:')) { const it = A.itens.find(x=>'i:'+x.id===k); if (!it) return; if (it.pend && it.prazo===it.data) it.prazo = d; Object.assign(it, {data:d, hora}); }
   else { A.ocor[k] = {...(A.ocor[k]||{}), data:d, hora}; }
