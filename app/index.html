@@ -233,6 +233,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .mdl-c{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--borda);background:#fff;border-radius:10px;padding:12px;cursor:pointer;font:inherit;transition:border-color .15s,box-shadow .15s}.mdl-c:hover{border-color:#e0a33a;box-shadow:0 4px 14px rgba(15,15,15,.08)}
 .mdl-ic{width:30px;height:30px;border-radius:8px;background:#fdf3e1;color:#b9771a;display:flex;align-items:center;justify-content:center;margin-bottom:4px}.mdl-ic svg{width:16px;height:16px}.mdl-c b{font-size:.86rem}.mdl-c em{font-style:normal;font-size:.76rem;color:var(--tx3)}
 .mdl-e{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.mdl-e i{font-style:normal;font-size:.68rem;background:#f1f1ef;color:var(--tx2);border-radius:5px;padding:2px 6px}.mdl-ou{text-align:center;font-size:.76rem;color:var(--tx3);margin-top:12px}
+.sec-com{margin-top:18px;padding:14px 18px}.sec-com .npc{border:0;margin:0;padding:0}.sec-com .npc-t{display:flex;align-items:center;gap:6px}.sec-com .npc-t svg{width:15px;height:15px}
 .np-props:has(+.npc){border-bottom:0;margin-bottom:4px;padding-bottom:6px}.npc{padding:6px 0 14px;margin-bottom:20px;border-bottom:1px solid var(--borda)}.npc-t{font-size:.8rem;font-weight:600;color:var(--tx2);margin-bottom:8px}.npc-t span{color:var(--tx3);font-weight:500}
 .npc-i{display:flex;gap:9px;padding:6px 0}.npc-c{flex:1;min-width:0}.npc-m{display:flex;align-items:center;gap:7px}.npc-m b{font-size:.84rem;font-weight:600}.npc-m span{font-size:.72rem;color:var(--tx3)}.npc-m button{margin-left:auto;border:0;background:none;color:var(--tx3);cursor:pointer;width:24px;height:24px;border-radius:6px;display:none;align-items:center;justify-content:center}.npc-i:hover .npc-m button{display:flex}.npc-m button:hover{background:#f1f3f4;color:var(--tx)}.npc-m svg{width:14px;height:14px}.npc-x{font-size:.86rem;line-height:1.45;margin-top:2px;word-break:break-word}
 .npc-novo{display:flex;gap:9px;align-items:center;padding-top:4px}.npc .av-s{width:24px;height:24px;font-size:.62rem;flex:none}.npc-in{flex:1;position:relative;display:flex;align-items:flex-end;gap:6px}.npc-in textarea{flex:1;border:0;outline:0;resize:none;overflow:hidden;font:inherit;font-size:.86rem;padding:4px 0;background:none;min-height:24px}.npc-in textarea::placeholder{color:var(--tx3)}.npc-in .dc-env{display:none}.npc-in.tem .dc-env,.npc-in:focus-within .dc-env{display:flex}
@@ -1516,6 +1517,8 @@ function notificacoes(){
           add('menclp-f-'+x.id, {ts:x.fimEm, tipo:'azul', ic: x.st==='recusada' ? 'x-circle' : 'check-circle-2', t:`${x.fimPor} ${x.st==='aceita'?'aceitou':x.st==='recusada'?'recusou':'resolveu'} ${seu} ${onde}`, d:`${c.nome} · “${(x.trecho||'').slice(0,80)}”`, link, q}); } } }
     for (const c of ativas()) for (const e of (c.entregaveis||[])) for (const x of (e.coment||[])) if (x.q>=desde && mencionaMe(x.o))
       add('mencent-'+c.id+'-'+e.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} no ${e.nome}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q});
+    for (const c of ativas()) for (const [sec, L] of Object.entries(c.secComent||{})) for (const x of (L||[])) if (x.q>=desde && mencionaMe(x.o))
+      add('mencent-s-'+c.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} na seção ${sec}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q, sec, cid:c.id});
     for (const [mid, rs] of Object.entries(S.registrosStatus||{})) for (const x of rs) if (x.tipo==='coment' && (x.q||'')>='' && mencionaMe(x.o)) {
       const mc = META_CONTAS.flatMap(m=>((m.dados||{}).campanhas)||[]).find(z=>z.id===mid);
       add('mencst-'+mid+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem||'Alguém'} mencionou você em Digital › Campanhas${mc?': '+titulo(mc.nome):''}`, d:x.o.slice(0,90), link:'#/status'}); } }
@@ -3135,6 +3138,11 @@ const LP_MODELOS = {
   ebook: {nome:'Ebook / Material rico', ic:'book-open', obj:'Captar leads para download', estr:['Hero','Complemento','Descrição do material','Benefícios','Formulário'],
     html: cols => mdlTab([mdlHero(), mdlBotao(), mdlComplemento(), ['3 - Descrição do material', '<b>[Nome do material]</b><br><br>[Do que trata, para quem é e o formato (ex.: PDF · 24 páginas)]', '[Capa do material]'],
       ['4 - Benefícios<br>o que você vai aprender:', mdlLista(4, 'Tópico', 'O que a pessoa leva deste capítulo'), ''], mdlBotao(), mdlForm(5)], cols) } };
+/* comentários de uma seção de entregáveis (Meta Ads, KV, Landing page…): ficam em c.secComent[seção], com @menção e notificação */
+function secComentarios(c, sec, ed){ const cs = ((c.secComent||{})[sec]) || [], me = quemSou();
+  return `<div class="card sec-com"><div class="npc"><div class="npc-t"><i data-lucide="message-square"></i>Comentários da seção${cs.length?` <span>${cs.length}</span>`:''}</div>
+    ${cs.map((x,i)=>`<div class="npc-i">${avatar(x.quem||'?','av av-s')}<div class="npc-c"><div class="npc-m"><b>${h(x.quem||'—')}</b><span>${discQuando(x.t)}</span>${ed && x.quem===me ? `<button type="button" data-act="secComentDel" data-id="${c.id}" data-v="${h(sec)}" data-i="${i}" title="Excluir comentário"><i data-lucide="trash-2"></i></button>` : ''}</div><div class="npc-x">${comMencoes(x.o).replace(/\n/g,'<br>')}</div></div></div>`).join('')}
+    ${ed ? `<div class="npc-novo">${avatar(me||'?','av av-s')}<div class="npc-in"><textarea id="secc-txt" rows="1" placeholder="Adicione um comentário… use @ para mencionar" oninput="sugMencao(this);this.style.height='auto';this.style.height=this.scrollHeight+'px';this.parentNode.classList.toggle('tem', !!this.value.trim())" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!this.parentNode.querySelector('.menc-sug')){event.preventDefault();this.parentNode.querySelector('.dc-env').click()}"></textarea><button type="button" class="dc-env" data-act="secComent" data-id="${c.id}" data-v="${h(sec)}" title="Enviar (Enter)"><i data-lucide="arrow-up"></i></button></div></div>` : ''}</div></div>`; }
 /* comentários da página (sem trecho marcado), logo abaixo das propriedades, como no Notion */
 function lpComentPagina(d, ed){ const cs = d.coment || [], me = quemSou();
   return `<div class="npc"><div class="npc-t">Comentários${cs.length?` <span>${cs.length}</span>`:''}</div>
@@ -3226,7 +3234,7 @@ function entregaveisSecoes(c){
   // página de uma seção
   const aberta = ((UI.entSec||{})[c.id]) && secs.find(x=>x.nome===UI.entSec[c.id]);
   if (aberta) return seletorEtapa(c, false) + topo(`<a href="javascript:void 0" class="ent-voltar" data-act="entSec" data-id="${c.id}" data-v=""><i data-lucide="arrow-left"></i>Todas as seções</a>`)
-    + `<nav class="ent-tabs">${secs.map(x=>{ const et = x.lp ? lpEtapas(c) : null, cc = et ? et.filter(e=>e[1]).length : x.da.filter(e=>e.etapa==='concluido').length, tt = et ? et.length : x.da.length; return `<button class="${x===aberta?'on':''}" data-act="entSec" data-id="${c.id}" data-v="${h(x.nome)}"><i data-lucide="${ICONE_SECAO[x.nome]||'package'}"></i>${h(x.nome)}<span>${cc}/${tt}</span></button>`; }).join('')}</nav>` + `<div class="ent-sec-pg">${aberta.html()}</div>`;
+    + `<nav class="ent-tabs">${secs.map(x=>{ const et = x.lp ? lpEtapas(c) : null, cc = et ? et.filter(e=>e[1]).length : x.da.filter(e=>e.etapa==='concluido').length, tt = et ? et.length : x.da.length; return `<button class="${x===aberta?'on':''}" data-act="entSec" data-id="${c.id}" data-v="${h(x.nome)}"><i data-lucide="${ICONE_SECAO[x.nome]||'package'}"></i>${h(x.nome)}<span>${cc}/${tt}</span></button>`; }).join('')}</nav>` + `<div class="ent-sec-pg">${aberta.html()}${secComentarios(c, aberta.nome, ehEquipe())}</div>`;
   // cards das seções
   const resumo = da => { const n = k => da.filter(e=>k.includes(e.etapa)).length, atr = da.filter(e=>e.etapa!=='concluido' && e.prazo && e.prazo < HOJE).length;
     const prox = da.filter(e=>e.etapa!=='concluido' && e.prazo && e.prazo >= HOJE).map(e=>e.prazo).sort()[0];
@@ -5302,6 +5310,12 @@ const ACT = {
     registrar(`Landing page de “${c.nome}” · ${et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base'}: comentário na página${menc.length?' (mencionou '+menc.join(', ')+')':''}`);
     salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
   lpComentPgDel: el => { const {d} = discAlvo(), i = +el.dataset.i; if (!d || !d.coment || !d.coment[i] || d.coment[i].quem!==quemSou() || !confirm('Excluir este comentário?')) return; lpGuardarEdicao(); d.coment.splice(i, 1); salvar(); render(); },
+  secComent: el => { const c = camp(el.dataset.id), sec = el.dataset.v, ta = document.getElementById('secc-txt'), txt = (ta && ta.value || '').trim(); if (!c || !txt) return;
+    if (document.getElementById('lpe-edit')) lpGuardarEdicao();
+    c.secComent = c.secComent || {}; (c.secComent[sec] = c.secComent[sec] || []).push({q:HOJE, t:Date.now(), quem:quemSou(), o:txt}); const menc = RESPONSAVEIS.filter(n=>txt.includes('@'+n));
+    registrar(`Comentário na seção ${sec} de “${c.nome}”${menc.length?' (mencionou '+menc.join(', ')+')':''}`);
+    salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
+  secComentDel: el => { const c = camp(el.dataset.id), sec = el.dataset.v, i = +el.dataset.i, L = c && (c.secComent||{})[sec]; if (!L || !L[i] || L[i].quem!==quemSou() || !confirm('Excluir este comentário?')) return; L.splice(i, 1); salvar(); render(); },
   discPainel: () => { lpGuardarEdicao(); UI.discPainel = !UI.discPainel; render(); },
   discAba: el => { lpGuardarEdicao(); UI.discAba = el.dataset.v; render(); },
   discIr: el => { lpGuardarEdicao(); UI.discPainel = false; UI.discAtivo = el.dataset.d; UI.discRolar = el.dataset.d; render(); },
@@ -5643,7 +5657,7 @@ const ACT = {
   lerNotif: el => { notifLer([el.dataset.k]); salvar(); render(); },
   deslerNotif: el => { notifDesler(el.dataset.k); salvar(); render(); },
   arqNotif: el => { notifArquivar(el.dataset.k); salvar(); render(); toast('Notificação arquivada.'); },
-  abrirNotif: el => { notifLer([el.dataset.k]); salvar(); },
+  abrirNotif: el => { const n = /^mencent-s-/.test(el.dataset.k||'') && notificacoes().find(x=>x.chave===el.dataset.k); if (n && n.sec) { UI.entSec = UI.entSec || {}; UI.entSec[n.cid] = n.sec; } notifLer([el.dataset.k]); salvar(); },
   lerTodas: () => { const aba = UI.notifAba || 'mim'; notifLer(notificacoes().filter(n=>n.cat===aba).map(n=>n.chave)); salvar(); render(); },
   notifAba: el => { UI.notifAba = el.dataset.v; render(); },
   /* configurações */
