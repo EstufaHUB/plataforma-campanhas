@@ -487,7 +487,10 @@ body.at-arrastando .at-ev{pointer-events:none}
 }
 
 /* menu: recolher pelo próprio menu; o botão do topo só aparece com o menu recolhido (e no celular) */
-.lateral .marca{position:relative}.lat-recolher{position:absolute;top:10px;right:10px;color:#8b8b8b}.lat-recolher:hover{background:rgba(255,255,255,.08);color:#fff}
+.lateral .marca{position:relative}.lat-notif{position:absolute;top:10px;right:44px;color:#8b8b8b;text-decoration:none}.lat-notif:hover,.lat-notif.ativo{color:#fff}.lat-badge{position:absolute;top:-3px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#e5484d;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #111;box-sizing:border-box}.lat-badge[hidden]{display:none}
+.lat-busca{position:relative;margin:12px 14px 4px;display:flex;align-items:center;gap:8px;background:#1d1d1d;border:1px solid #2c2c2c;border-radius:9px;padding:0 9px;height:36px}.lat-busca:focus-within{border-color:#4a4a4a;background:#222}.lat-busca>svg{width:15px;height:15px;color:#8b8b8b;flex:none}.lat-busca input{flex:1;min-width:0;background:none;border:0;outline:none;color:#eee;font:inherit;font-size:.86rem;padding:0}.lat-busca input::placeholder{color:#8b8b8b}.lat-busca input::-webkit-search-cancel-button{display:none}.lat-busca kbd{font-family:inherit;font-size:.68rem;color:#8b8b8b;border:1px solid #333;border-radius:5px;padding:1px 5px}
+.busca-res{position:absolute;top:calc(100% + 6px);left:0;width:440px;max-height:420px;overflow:auto;background:#fff;color:var(--tx);border:1px solid var(--borda);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.28);z-index:200;padding:6px}.busca-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;text-decoration:none;color:var(--tx)}.busca-it.sel,.busca-it:hover{background:#f1f3f4}.busca-it>svg{width:16px;height:16px;color:var(--tx2);flex:none}.busca-it span{flex:1;min-width:0;display:flex;flex-direction:column}.busca-it b{font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.busca-it em{font-style:normal;font-size:.74rem;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.busca-it small{font-size:.68rem;color:var(--tx3);background:#f1f3f4;border-radius:5px;padding:1px 6px;flex:none}.busca-vz{padding:12px;font-size:.84rem;color:var(--tx3)}
+.lat-recolher{position:absolute;top:10px;right:10px;color:#8b8b8b}.lat-recolher:hover{background:rgba(255,255,255,.08);color:#fff}
 .topo .btn-menu{display:none}body.menu-oculto .topo .btn-menu{display:inline-grid}
 @media (max-width:860px){.topo .btn-menu{display:inline-grid}}
 /* Status pontual em monitores menores: valores quebram em duas linhas em vez de se sobrepor */
@@ -517,7 +520,8 @@ body.at-arrastando .at-ev{pointer-events:none}
 </head>
 <body>
 <aside class="lateral">
-  <div class="marca"><img class="marca-img" src="logo-estufa.webp" alt="Estufa design & communication"><button class="icone-btn lat-recolher" data-act="menu" title="Recolher o menu"><i data-lucide="panel-left-close"></i></button></div>
+  <div class="marca"><img class="marca-img" src="logo-estufa.webp" alt="Estufa design & communication"><a href="#/notificacoes" class="icone-btn lat-notif" id="lat-notif" title="Notificações"><i data-lucide="inbox"></i><span class="lat-badge" id="lat-badge" hidden></span></a><button class="icone-btn lat-recolher" data-act="menu" title="Recolher o menu"><i data-lucide="panel-left-close"></i></button></div>
+  <div class="lat-busca"><i data-lucide="search"></i><input id="busca-global" type="search" placeholder="Pesquisar" autocomplete="off" oninput="buscaGlobal(this.value)" onfocus="buscaGlobal(this.value)" onkeydown="buscaTecla(event)"><kbd>⌘K</kbd><div class="busca-res" id="busca-res" hidden></div></div>
   <nav class="menu" id="menu"></nav>
   <div class="lat-rodape">Hoje: <span id="hoje-txt"></span></div>
 </aside>
@@ -1348,6 +1352,30 @@ const ler = form => Object.fromEntries(new FormData(form).entries());
 function notifVistaEm(chave, q){ const k = 'campanhas-notif-vistas-'+((PERFIL||{}).id||''); if (!UI.notifVistas) { try { UI.notifVistas = JSON.parse(localStorage.getItem(k)||'{}'); } catch(e) { UI.notifVistas = {}; } }
   if (!UI.notifVistas[chave]) { UI.notifVistas[chave] = q ? Math.min(Date.now(), new Date(q+'T12:00:00').getTime()) : Date.now(); try { localStorage.setItem(k, JSON.stringify(UI.notifVistas)); } catch(e){} }
   return UI.notifVistas[chave]; }
+/* pesquisa global (⌘K): campanhas, clientes, ações, peças, atividades e páginas */
+function buscaIndice(){ const L = [], cl = id => (S.clientes.find(c=>c.id===id)||{}).nome || '';
+  for (const c of S.clientes) if (!c.arquivado) L.push({tipo:'Cliente', ic:'building-2', t:c.nome, d:'', link:`#/clientes/${c.id}`});
+  for (const c of S.campanhas) if (!c.arquivada) { L.push({tipo:'Campanha', ic:'megaphone', t:c.nome, d:cl(c.clienteId)+(c.status?' · '+c.status:''), link:`#/campanha/${c.id}/visao`});
+    for (const t of ((c.crono||{}).tarefas||[])) L.push({tipo:'Ação', ic:'list-checks', t:t.nome+(t.pais?' ('+t.pais+')':''), d:c.nome+(t.pessoa?' · '+t.pessoa:''), link:`#/campanha/${c.id}/acoes`});
+    for (const e of (c.entregaveis||[])) L.push({tipo:'Peça', ic:'package', t:e.nome, d:c.nome+' · '+(ETAPAS_ENT[e.etapa]||''), link:`#/campanha/${c.id}/entregaveis`}); }
+  if (S.atividades) { for (const r of (S.atividades.recs||[])) L.push({tipo:'Atividade', ic:'repeat', t:`${r.cliente} - ${r.nome}`, d:'recorrência', link:'#/atividades'});
+    for (const it of (S.atividades.itens||[])) L.push({tipo:'Atividade', ic:'calendar-check', t:`${it.cliente} - ${it.nome}`, d:fd(it.data), link:'#/atividades'}); }
+  for (const [k,ic,t] of [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações'],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','inbox','Notificações'],['status','list-checks','Campanhas (Digital)'],['atividades','calendar-check','Atividades'],['acompanhamento','table-2','Acompanhamento'],['invoices','receipt','Invoices'],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações'],['perfil','user','Meu perfil']]) L.push({tipo:'Página', ic, t, d:'', link:'#/'+k});
+  return L; }
+function buscaGlobal(q){ const box = $('#busca-res'); if (!box) return; q = normNome(q||''); if (!q || !S) { box.hidden = true; return; }
+  const ps = q.split(/\s+/), ORD = {Página:0, Cliente:1, Campanha:2, Atividade:3, Peça:4, Ação:5};
+  const res = buscaIndice().map(x=>({x, n:normNome(x.t+' '+x.d)})).filter(o=>ps.every(p=>o.n.includes(p))).sort((a,b)=>(normNome(a.x.t).startsWith(q)?0:1)-(normNome(b.x.t).startsWith(q)?0:1) || ORD[a.x.tipo]-ORD[b.x.tipo]).slice(0, 14);
+  UI.buscaSel = 0; box.hidden = false;
+  box.innerHTML = res.length ? res.map((o,i)=>`<a href="${o.x.link}" class="busca-it ${i===0?'sel':''}" onmousedown="event.preventDefault()" onclick="buscaFechar()"><i data-lucide="${o.x.ic}"></i><span><b>${h(o.x.t)}</b>${o.x.d?`<em>${h(o.x.d)}</em>`:''}</span><small>${o.x.tipo}</small></a>`).join('') : '<div class="busca-vz">Nada encontrado.</div>';
+  if (window.lucide) lucide.createIcons(); }
+function buscaFechar(){ const i = $('#busca-global'), b = $('#busca-res'); if (b) b.hidden = true; if (i) { i.value = ''; i.blur(); } }
+function buscaTecla(e){ const its = [...document.querySelectorAll('#busca-res .busca-it')];
+  if (e.key==='Escape') { buscaFechar(); return; }
+  if (!its.length) return; let k = UI.buscaSel || 0;
+  if (e.key==='ArrowDown' || e.key==='ArrowUp') { e.preventDefault(); k = (k + (e.key==='ArrowDown'?1:-1) + its.length) % its.length; UI.buscaSel = k; its.forEach((a,i)=>a.classList.toggle('sel', i===k)); its[k].scrollIntoView({block:'nearest'}); }
+  if (e.key==='Enter') { e.preventDefault(); location.hash = its[k].getAttribute('href'); buscaFechar(); } }
+document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==='k') { const i = $('#busca-global'); if (i) { e.preventDefault(); document.body.classList.remove('menu-oculto'); i.focus(); i.select(); } } });
+document.addEventListener('focusout', e => { if (e.target && e.target.id==='busca-global') setTimeout(()=>{ const b = $('#busca-res'); if (b && !b.matches(':hover')) b.hidden = true; }, 150); });
 function notificacoes(){
   const N = new Map(); const add = (chave, n) => { if (N.has(chave)) return; const o = Object.assign({chave, lida:!!S.notifLidas[chave]}, n); o.ts = n.ts || notifVistaEm(chave, n.q); N.set(chave, o); };
   for (const c of ativas()) {
@@ -1413,13 +1441,13 @@ function render(){
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida).length;
   const nAtr = acoesGlobais().filter(x=>statusExib(x.t)==='Atrasada').length;
-  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial'],['notificacoes','bell','Notificações',nN]];
+  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial']];
   const sec = r[0]==='campanha' ? 'clientes' : r[0];
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
   const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações']].filter(([k])=>pode(k));
   $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
-  $('#hoje-txt').textContent = fd(HOJE);
+  $('#hoje-txt').textContent = fd(HOJE); { const b = $('#lat-badge'); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
   const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
   try { $('#app').innerHTML = podeRota(r) ? pg(r) : (migalha([['Sem acesso']]), '<div class="card vazio" style="margin-top:20px"><i data-lucide="lock"></i><div style="margin-top:8px">Você não tem acesso a esta área. Fale com um administrador.</div></div>'); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
