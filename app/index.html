@@ -452,7 +452,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 @media print{.lateral,.topo,.aviso-demo,.nao-imprimir{display:none!important}.principal{margin:0}.gantt{max-height:none;overflow:visible}}
 /* login e sincronização */
 .tela-login{position:fixed;inset:0;background:#0a0a0a linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.7)), url(login-fundo.webp) center/cover;background-image:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.7)), url(login-fundo.webp);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:200;overflow:auto}
-.marca-img{width:150px;height:auto;display:block;margin:2px 0 4px}.tela-login .login-logo{width:230px;max-width:70%;display:block;margin:0 auto 28px}
+.marca-img{width:150px;height:40px;object-fit:cover;object-position:top;display:block;margin:2px 0 4px}   /* só o logo, sem o "design & communication" de baixo */.tela-login .login-logo{width:230px;max-width:70%;display:block;margin:0 auto 28px}
 .tela-login .caixa{background:rgba(8,8,8,.55);border:1px solid rgba(255,255,255,.08);border-radius:16px;width:100%;max-width:400px;padding:28px;color:#eee;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .tela-login h1{font-size:1.15rem;margin:0 0 4px;color:#fff;text-align:center}.tela-login .muted{color:#bbb}.tela-login .sub{text-align:center;color:#bbb;font-size:.85rem}
 .tela-login .campo{color:#ccc;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
@@ -522,7 +522,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 </head>
 <body>
 <aside class="lateral">
-  <div class="marca"><img class="marca-img" src="logo-estufa.webp" alt="Estufa design & communication"><a href="#/notificacoes" class="icone-btn lat-notif" id="lat-notif" title="Notificações"><i data-lucide="inbox"></i><span class="lat-badge" id="lat-badge" hidden></span></a><button class="icone-btn lat-recolher" data-act="menu" title="Recolher o menu"><i data-lucide="panel-left-close"></i></button></div>
+  <div class="marca"><img class="marca-img" src="logo-estufa.webp" alt="Estufa"><a href="#/notificacoes" class="icone-btn lat-notif" id="lat-notif" title="Notificações"><i data-lucide="inbox"></i><span class="lat-badge" id="lat-badge" hidden></span></a><button class="icone-btn lat-recolher" data-act="menu" title="Recolher o menu"><i data-lucide="panel-left-close"></i></button></div>
   <div class="lat-busca"><i data-lucide="search"></i><input id="busca-global" type="search" placeholder="Pesquisar" autocomplete="off" oninput="buscaGlobal(this.value)" onfocus="buscaGlobal(this.value)" onkeydown="buscaTecla(event)"><kbd>⌘K</kbd><div class="busca-res" id="busca-res" hidden></div></div>
   <nav class="menu" id="menu"></nav>
   <div class="lat-rodape">Hoje: <span id="hoje-txt"></span></div>
