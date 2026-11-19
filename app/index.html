@@ -200,6 +200,11 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .ent-sc2-bar{display:flex;gap:3px;height:7px}.ent-sc2-bar i{border-radius:4px;min-width:6px}.ent-sc2-leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.74rem;color:var(--tx2)}.ent-sc2-leg span{display:inline-flex;align-items:center;gap:5px}.ent-sc2-leg i{width:7px;height:7px;border-radius:50%}
 .ent-sc2-rod{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid #f0f1f3;font-size:.76rem;color:var(--tx3)}.ent-sc2-fl{letter-spacing:2px;font-size:.95rem}.ent-sc2-fl em{font-style:normal;font-size:.72rem;letter-spacing:0;color:var(--tx3);margin-left:4px}.ent-sc2-rod span{display:inline-flex;align-items:center;gap:5px}.ent-sc2-rod svg{width:13px;height:13px}.ent-sc2-atr{color:var(--verm);font-weight:600}.ent-sc2-ok{color:var(--verde);font-weight:600}
 .ent-sc2.vazio{border-style:dashed;background:#fcfcfd;min-height:130px}.ent-sc2.vazio .ent-sc2-ic{background:#f3f4f6;color:var(--tx3)}.ent-sc2-add{width:34px;height:34px;border-radius:50%;border:1px dashed var(--borda-f);display:flex;align-items:center;justify-content:center;color:var(--tx3)}.ent-sc2-add svg{width:16px;height:16px}.ent-sc2-vz{font-size:.8rem;color:var(--tx3)}
+.kvb{padding:16px 18px;margin-bottom:14px;border-left:4px solid var(--ambar)}.kvb-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.kvb-cab b{display:flex;align-items:center;gap:7px;font-size:.98rem}.kvb-cab b svg{width:17px;height:17px;color:var(--ambar)}.kvb-cab span{display:block;font-size:.78rem;color:var(--tx3);margin-top:2px}
+.kvb-grupos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:14px}@media (max-width:900px){.kvb-grupos{grid-template-columns:1fr}}.kvb-gt{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-bottom:8px}.kvb-i{padding:8px 0;border-top:1px solid #f0f1f3}.kvb-i span{display:block;font-size:.76rem;font-weight:600;color:var(--tx2);margin-bottom:2px}.kvb-i div{font-size:.86rem;line-height:1.45;color:var(--tx);word-break:break-word}.kvb-i a{color:var(--azul)}
+.kvb-vazio{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.kvb-vazio span{font-size:.74rem;border:1px dashed var(--borda-f);color:var(--tx3);border-radius:20px;padding:3px 10px}
+.kvb-ft{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx2);margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--borda)}.kvb-ft:first-of-type{margin-top:0}.kvb-campo{margin-bottom:10px}.kvb-campo em{display:block;font-style:normal;font-weight:400;font-size:.76rem;color:var(--tx3);margin:1px 0 4px}.kvb-campo textarea{width:100%;resize:vertical}
+.ent-kvb{display:flex!important;width:max-content;align-items:center;gap:4px;font-size:.7rem!important;font-weight:600;color:var(--tx3)!important;margin:2px 0 1px}.ent-kvb svg{width:12px;height:12px}.ent-kvb.ok{color:#8a5d00!important}
 .ent-sc-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:6px}@media (max-width:1000px){.ent-sc-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:640px){.ent-sc-grade{grid-template-columns:1fr}}
 .ent-sc{display:flex;flex-direction:column;gap:10px;padding:16px;text-decoration:none;color:var(--tx);border-left:4px solid var(--borda-f);transition:box-shadow .15s,transform .15s}.ent-sc:hover{box-shadow:0 6px 18px rgba(20,18,12,.1);transform:translateY(-1px)}.ent-sc.ok{border-left-color:#2e9d55}.ent-sc.atr{border-left-color:#d0443a}
 .ent-sc-top{display:flex;align-items:center;gap:10px}.ent-sc-top b{font-size:1rem}.ent-sc-top small{display:block;font-size:.72rem;color:var(--tx3)}.ent-sc-top>div{flex:1}.ent-sc-ic{width:34px;height:34px;border-radius:9px;background:var(--pet-900);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}.ent-sc-ic svg{width:17px;height:17px}.ent-sc-ir{width:17px;height:17px;color:var(--tx3)}
@@ -2528,6 +2533,25 @@ function cartaoEnt(c, e){ const dom = e.link ? (e.link.replace(/^https?:\/\//,''
   return `<a href="javascript:void 0" class="ent-card st-${ST_ENT_COR[e.etapa]||'cinza'}" data-act="abrirEnt" data-id="${c.id}" data-e="${e.id}"><b>${h(e.nome)}</b>
     <span class="sd-pill sd-${ST_ENT_COR[e.etapa]==='cinza'?'cinza':ST_ENT_COR[e.etapa]}">${h(ETAPAS_ENT[e.etapa]||e.etapa)}</span>
     ${dom?`<span class="ent-link">${h(dom)}</span>`:''}${e.briefing&&e.briefing.obs&&e.origem==='notion'?`<span class="small" style="color:#8a5a00">${h(e.briefing.obs)}</span>`:''}${e.prazo?`<span class="small muted">prazo ${fdm(e.prazo)}</span>`:''}${(e.aprovacoes||[]).length?`<span class="small muted"><i data-lucide="message-square"></i> ${e.aprovacoes.length}</span>`:''}</a>`; }
+/* direcionamento do KV (opcional): norteia a criação do key visual */
+const KV_CAMPOS = [
+  ['conceito','Conceito / ideia central','Qual é a ideia que deve nortear a comunicação?','Direcionamento criativo'],
+  ['direcao','Direção visual','Como imaginamos essa comunicação? Qual atmosfera queremos transmitir?','Direcionamento criativo'],
+  ['elementos','Elementos obrigatórios','Produtos, pessoas, logos, imagens, ícones ou outros elementos que precisam aparecer.','Direcionamento criativo'],
+  ['evitar','O que evitar','Existe alguma restrição visual ou abordagem que não devemos utilizar?','Direcionamento criativo'],
+  ['referencias','Referências visuais','Links ou imagens de inspiração.','Referências e materiais'],
+  ['materiais','Materiais disponíveis','Logos, fotos, vídeos, identidade visual, campanhas anteriores etc.','Referências e materiais'],
+  ['anterior','Campanha anterior','Existe algum KV que devemos utilizar como base? O que deve ser mantido ou atualizado?','Referências e materiais']];
+const kvPreenchidos = c => KV_CAMPOS.filter(([k])=>String(((c.kvBriefing||{})[k])||'').trim()).length;
+const comLinks = t => h(t).replace(/(https?:\/\/[^\s<]+)/g, u=>`<a href="${u}" target="_blank" rel="noopener">${u.length>60?u.slice(0,57)+'…':u}</a>`).replace(/\n/g,'<br>');
+function kvBriefingBloco(c, ed){ const b = c.kvBriefing || {}, n = kvPreenchidos(c), grupos = [...new Set(KV_CAMPOS.map(x=>x[3]))];
+  return `<div class="card kvb"><div class="kvb-cab"><div><b><i data-lucide="compass"></i>Direcionamento do KV</b><span>opcional · ${n ? `${n} de ${KV_CAMPOS.length} itens preenchidos` : 'ajuda a nortear a criação do key visual'}</span></div>${ed?`<button class="btn btn-s" data-act="kvBriefing" data-id="${c.id}"><i data-lucide="${n?'pencil':'plus'}"></i>${n?'Editar':'Preencher'}</button>`:''}</div>
+    ${n ? `<div class="kvb-grupos">${grupos.map(g=>{ const cs = KV_CAMPOS.filter(x=>x[3]===g && String(b[x[0]]||'').trim()); return cs.length ? `<div class="kvb-g"><div class="kvb-gt">${h(g)}</div>${cs.map(([k,t])=>`<div class="kvb-i"><span>${h(t)}</span><div>${comLinks(b[k])}</div></div>`).join('')}</div>` : ''; }).join('')}</div>`
+      : `<div class="kvb-vazio">${KV_CAMPOS.map(x=>`<span>${h(x[1])}</span>`).join('')}</div>`}</div>`; }
+function formKvBriefing(id){ const c = camp(id); if (!c) return; const b = c.kvBriefing || {}, grupos = [...new Set(KV_CAMPOS.map(x=>x[3]))];
+  abrirModal('Direcionamento do KV', `<div class="small muted" style="margin:-4px 0 12px">Todos os campos são opcionais. Preencha o que ajudar a nortear a criação do key visual.</div><form id="f-kvb" onsubmit="return false">
+    ${grupos.map((g,i)=>`<div class="kvb-ft">${i+3}. ${h(g)}</div>${KV_CAMPOS.filter(x=>x[3]===g).map(([k,t,d])=>`<label class="campo tudo kvb-campo">${h(t)}<em>${h(d)}</em><textarea name="${k}" rows="${k==='referencias'||k==='materiais'?3:2}" placeholder="${k==='referencias'?'Cole links (um por linha)':''}">${h(b[k]||'')}</textarea></label>`).join('')}`).join('')}</form>`,
+    `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="kvBriefingSalvar" data-id="${id}"><i data-lucide="check"></i>Salvar</button>`, true); }
 function entregaveisSecoes(c){
   const fase = etapaSel(c);   // campanha em fases: uma guia por fase (KV e materiais gerais aparecem nas duas)
   const ed = ehEquipe(), vis = e => !(e.marca && marcaCancelada(c, e.marca)) && !(e.paises||[]).every(p=>paisCancelado(c, e.marca, p)) && (!fase || !e.fase || e.fase===fase);
@@ -2544,7 +2568,7 @@ function entregaveisSecoes(c){
   // seções (na ordem da ficha); cada uma vira um card que abre a página da seção
   const tipos = c.entregaveisTipos||[], comum = fase ? ' <span class="ent-comum">comum às duas fases</span>' : '', secs = [];
   const grade = (nome, da) => faixa(nome, da).replace('</span>', '</span>'+(['KV',...TIPOS_GLOBAIS].includes(nome)?comum:'')) + `<div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(nome,'',null)}</div>`;
-  if (tipos.includes('KV')) { const da = L.filter(e=>e.secao==='KV' || e.auto==='kv'); da.forEach(e=>usados.add(e.id)); secs.push({nome:'KV', da, comum:!!fase, html:()=>grade('KV', da)}); }
+  if (tipos.includes('KV')) { const da = L.filter(e=>e.secao==='KV' || e.auto==='kv'); da.forEach(e=>usados.add(e.id)); secs.push({nome:'KV', da, comum:!!fase, kv:true, html:()=>kvBriefingBloco(c, ed) + grade('KV', da)}); }
   if (tipos.includes('Landing page') && fase!=='Awareness') { const f0 = e=>e.secao==='Landing page', da = L.filter(f0); secs.push({nome:'Landing page', da, html:()=>secaoColunas('Landing page', null, f0)}); da.forEach(e=>usados.add(e.id)); }
   for (const canal of (fase ? canaisDaFase(c, fase) : (c.canais||[]))) { const f0 = e=>e.secao===canal || (!e.secao && e.canal===canal), da = L.filter(f0); secs.push({nome:canal, da, html:()=>secaoColunas(canal, canal, f0)}); da.forEach(e=>usados.add(e.id)); }
   for (const t of tipos.filter(t=>TIPOS_GLOBAIS.includes(t))) { const da = L.filter(e=>e.secao===t); da.forEach(e=>usados.add(e.id)); secs.push({nome:t, da, comum:!!fase, html:()=>grade(t, da)}); }
@@ -2568,7 +2592,7 @@ function entregaveisSecoes(c){
     const paises = [...new Set(x.da.flatMap(e=>e.paises||[]))], segs = GRP.map(([k, ets, t, cor])=>({t, cor, n: x.da.filter(e=>ets.includes(e.etapa)).length})).filter(g=>g.n);
     return `<a href="javascript:void 0" class="ent-sc2 ${!tot?'vazio':''}" data-act="entSec" data-id="${c.id}" data-v="${h(x.nome)}">
       <div class="ent-sc2-cab"><span class="ent-sc2-ic"><i data-lucide="${ICONE_SECAO[x.nome]||'package'}"></i></span>
-        <div class="ent-sc2-t"><b>${h(x.nome)}</b><span>${tot ? `${tot} peça${tot===1?'':'s'}${paises.length?` · ${paises.length} ${paises.length===1?'país':'países'}`:''}` : 'nenhuma peça'}${x.comum?' · comum às fases':''}</span></div>
+        <div class="ent-sc2-t"><b>${h(x.nome)}</b>${x.kv ? (n=>`<span class="ent-kvb ${n?'ok':''}"><i data-lucide="${n?'file-check-2':'file-pen-line'}"></i>${n?`direcionamento ${n}/${KV_CAMPOS.length}`:'sem direcionamento'}</span>`)(kvPreenchidos(c)) : ''}<span>${tot ? `${tot} peça${tot===1?'':'s'}${paises.length?` · ${paises.length} ${paises.length===1?'país':'países'}`:''}` : 'nenhuma peça'}${x.comum?' · comum às fases':''}</span></div>
         ${tot ? anel(pct) : `<span class="ent-sc2-add"><i data-lucide="plus"></i></span>`}</div>
       ${tot ? `<div class="ent-sc2-bar">${segs.map(g=>`<i style="flex:${g.n};background:${g.cor}" title="${g.n} ${g.t}"></i>`).join('')}</div>
         <div class="ent-sc2-leg">${segs.map(g=>`<span><i style="background:${g.cor}"></i>${g.n} ${plT(g.n, g.t)}</span>`).join('')}</div>
@@ -4609,6 +4633,9 @@ const ACT = {
   budStAbrir: (el, e) => { e && e.stopPropagation(); abrirBudStatus(el.dataset.mc, el.dataset.conta); },
   budStSalvar: () => gravarBudStatus(false),
   budStAuto: () => gravarBudStatus(true),
+  kvBriefing: el => formKvBriefing(el.dataset.id),
+  kvBriefingSalvar: el => { const c = camp(el.dataset.id), v = ler($('#f-kvb')), b = {}; for (const [k] of KV_CAMPOS) if (String(v[k]||'').trim()) b[k] = String(v[k]).trim();
+    if (Object.keys(b).length) c.kvBriefing = b; else delete c.kvBriefing; registrar(`Direcionamento do KV atualizado: ${c.nome}`); salvar(); fecharModal(); render(); toast('Direcionamento do KV salvo.'); },
   entSec: el => { UI.entSec = UI.entSec || {}; UI.entSec[el.dataset.id] = el.dataset.v || ''; render(); window.scrollTo({top:0}); },
   acGrupo: el => { UI.acGrupo = el.dataset.v; render(); },
   atAba: el => { UI.atAba = el.dataset.v; render(); },
