@@ -209,7 +209,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .lpe-doc h1{font-size:1.6rem;margin:.6em 0 .3em}.lpe-doc h4{font-size:.95rem;margin:.6em 0 .3em}.lpe-doc blockquote{border-left:3px solid var(--tx);margin:.4em 0;padding:.1em 0 .1em 14px}.lpe-doc hr{border:0;border-top:1px solid var(--borda-f);margin:1em 0}
 .lpe-doc ul.todo{list-style:none;padding-left:0}.lpe-doc ul.todo li{position:relative;padding-left:26px;margin:.2em 0}.lpe-doc ul.todo li::before{content:'';position:absolute;left:0;top:.2em;width:15px;height:15px;border:1.5px solid var(--tx2);border-radius:3px;cursor:pointer}.lpe-doc ul.todo li[data-check="1"]{color:var(--tx3);text-decoration:line-through}.lpe-doc ul.todo li[data-check="1"]::before{background:#2383e2;border-color:#2383e2}.lpe-doc ul.todo li[data-check="1"]::after{content:'';position:absolute;left:5px;top:.32em;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 .lpe-doc details{margin:.3em 0}.lpe-doc summary{cursor:pointer;font-weight:600}.lpe-doc details>*:not(summary){margin-left:20px}
-.lpe-doc .callout{display:flex;gap:10px;background:#f4f5f6;border-radius:8px;padding:12px 14px;margin:.5em 0}.lpe-doc .callout-ic{flex:none}.lpe-doc .callout-tx{flex:1;min-width:0}
+.lpe-doc .callout{display:flex;gap:10px;background:#f4f5f6;border-radius:8px;padding:12px 14px;margin:.5em 0}.lpe-doc .callout-ic{flex:none;width:18px;height:18px;margin-top:2px;font-size:0;color:var(--ambar);background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5'/%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5'/%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3C/svg%3E") center/contain no-repeat}.lpe-doc .callout-tx{flex:1;min-width:0}
 .lpe-doc table{border-collapse:collapse;width:100%;margin:.5em 0}.lpe-doc td{border:1px solid var(--borda-f);padding:6px 8px;min-width:60px;vertical-align:top}
 .tbl-h{position:absolute;z-index:40;width:22px;height:22px;border:1px solid var(--borda);background:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tx3);padding:0;box-shadow:0 1px 3px rgba(0,0,0,.08)}.tbl-h:hover{color:#2383e2;border-color:#2383e2}.tbl-h svg{width:14px;height:14px}.tbl-h[hidden]{display:none}
 .lpe-doc td.tbl-sel{box-shadow:inset 0 0 0 2px #2383e2;background-color:rgba(35,131,226,.06)}
@@ -217,13 +217,14 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .tbl-it-l>button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;padding:6px 8px;border-radius:6px;cursor:pointer;font:inherit;font-size:.86rem;text-align:left;color:var(--tx)}.tbl-it-l>button:hover{background:#f1f3f4}.tbl-it-l>button svg{width:15px;height:15px;color:var(--tx2)}.tbl-it-l>button[data-a="excluir"]{color:var(--verm)}.tbl-it-l>button[data-a="excluir"] svg{color:var(--verm)}
 .tbl-sw{margin-left:auto;width:28px;height:16px;border-radius:9px;background:#d5d9dc;position:relative;flex:none;transition:background .15s}.tbl-sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .15s}.tbl-sw.on{background:#2383e2}.tbl-sw.on::after{left:14px}
 .lpe-doc table[data-larg="0"]{width:auto}.lpe-doc table[data-cabl="1"] tr:first-child td{background:#f6f6f4;font-weight:600}.lpe-doc table[data-cabc="1"] td:first-child{background:#f6f6f4;font-weight:600}
+.lpe-doc table:has(colgroup){table-layout:fixed}.lpe-edit.tbl-rz-ok,.lpe-edit.tbl-rz-ok td{cursor:col-resize}body.tbl-rz,body.tbl-rz *{cursor:col-resize!important;user-select:none}.lpe-doc td{position:relative}
 .tbl-sep{border-top:1px solid var(--borda);margin:5px 0}.tbl-cor-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:2px 8px 4px}.tbl-cores{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 4px}.tbl-cores button{border:0;background:none;padding:2px;border-radius:5px;cursor:pointer}.tbl-cores button:hover{background:#f1f3f4}.tbl-cor{display:block;width:20px;height:20px;border-radius:4px;border:1px solid var(--borda)}
 [data-cor="cinza"]{background:#f1f1ef!important}[data-cor="azul"]{background:#e7f0fa!important}[data-cor="verde"]{background:#e8f3ec!important}[data-cor="amarelo"]{background:#fbf3db!important}[data-cor="laranja"]{background:#fbecdd!important}[data-cor="vermelho"]{background:#fbe4e4!important}[data-cor="roxo"]{background:#efe8f8!important}.tbl-cor[data-cor=""]{background:#fff}
 .blk-menu{position:absolute;z-index:50;width:290px;max-height:330px;overflow:auto;background:#fff;border:1px solid var(--borda);border-radius:10px;box-shadow:0 12px 32px rgba(15,15,15,.16);padding:6px}.blk-t{font-size:.7rem;font-weight:700;color:var(--tx3);padding:6px 8px 4px}
 .blk-menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:6px 8px;border-radius:7px;cursor:pointer;text-align:left;font:inherit}.blk-menu button.sel,.blk-menu button:hover{background:#f1f3f4}.blk-ic{width:32px;height:32px;border:1px solid var(--borda);border-radius:6px;display:flex;align-items:center;justify-content:center;background:#fff;flex:none}.blk-ic svg{width:16px;height:16px;color:var(--tx2)}.blk-n{flex:1;display:flex;flex-direction:column}.blk-n b{font-size:.84rem;font-weight:500}.blk-n em{font-style:normal;font-size:.72rem;color:var(--tx3)}.blk-menu kbd{font-family:inherit;font-size:.7rem;color:var(--tx3)}
 .lpe-edit p:only-child:has(br:only-child)::before{content:'Escreva aqui… digite / para inserir blocos';color:var(--tx3);position:absolute;pointer-events:none}
 .np{max-width:900px;margin:0 auto}.np-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:-4px 0 18px}.np-top-d{display:flex;align-items:center;gap:8px}.np-salvo{font-size:.78rem;color:var(--tx3)}.np-pub{color:#1f7a47;border-color:#cfe6d2}
-.np-doc{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:44px 64px 56px}@media (max-width:760px){.np-doc{padding:28px 20px}}.np-ic{font-size:2.6rem;line-height:1;margin-bottom:10px}.np-tit{font-size:2.1rem;font-weight:800;letter-spacing:-.02em;margin:0 0 16px;line-height:1.15}
+.np-doc{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:44px 64px 56px}@media (max-width:760px){.np-doc{padding:28px 20px}}.np-ic{width:52px;height:52px;border-radius:12px;background:var(--pet-50);color:var(--pet-800);display:flex;align-items:center;justify-content:center;margin-bottom:14px}.np-ic svg{width:28px;height:28px}.np-tit{font-size:2.1rem;font-weight:800;letter-spacing:-.02em;margin:0 0 16px;line-height:1.15}
 .np-props{display:flex;flex-direction:column;gap:4px;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--borda)}.np-props>div{display:grid;grid-template-columns:160px 1fr;align-items:center;gap:10px;font-size:.88rem;min-height:30px}.np-props span{display:flex;align-items:center;gap:7px;color:var(--tx3)}.np-props span svg{width:15px;height:15px}.np-props b{font-weight:500}.np-props a{color:var(--azul);word-break:break-all}.np-st{justify-self:start;font-size:.78rem;font-weight:700;border-radius:20px;padding:2px 10px;border:1px solid transparent}
 .np-corpo{border:0!important;padding:0!important;min-height:420px;max-height:none!important;overflow:visible!important;font-size:1rem;line-height:1.65}.np-orig{margin-bottom:18px;border:1px solid var(--borda);border-radius:10px;padding:8px 12px;background:#fafbfb}.np-orig summary{cursor:pointer;font-size:.86rem;font-weight:600;color:var(--tx2)}.np-orig .lpe-doc{border:0;background:none;max-height:none;min-height:0;padding:10px 4px 4px}
 .np-share{display:flex;flex-direction:column;gap:12px}.np-share-l{display:flex;align-items:center;gap:12px}.np-share-l>svg{width:22px;height:22px;color:var(--tx2);flex:none}.np-share-l>div{flex:1}.np-share-l b{display:block}.np-share-l span{font-size:.82rem;color:var(--tx3)}.np-share-u{display:flex;gap:6px}.np-share-u input{flex:1;font-size:.82rem}
@@ -2711,7 +2712,7 @@ function lpFluxoBloco(c, ed){ const {f, idis} = lpDados(c), et = lpEtapas(c), po
 const lpTextoPuro = html => { if (!html) return ''; const d = document.createElement('div'); d.innerHTML = String(html).replace(/<\/(p|h\d|li|div|td|th|tr|summary)>|<br\s*\/?>/gi, m=>m+' '); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
 function lpLimpa(html){ const d = document.createElement('div'); d.innerHTML = html || '';
   d.querySelectorAll('script,style,iframe,object,embed,meta,link').forEach(n=>n.remove());
-  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable)$/i.test(a.name) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v));
+  d.querySelectorAll('*').forEach(n=>{ for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable|colspan|rowspan)$/i.test(a.name) || (n.tagName==='COL' && a.name==='style' && /^width:\s*\d+(\.\d+)?px;?$/.test(v.trim())) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx)$/.test(v));
       if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(v)) || !ok) n.removeAttribute(a.name); } if (n.tagName==='A') { n.setAttribute('target','_blank'); n.setAttribute('rel','noopener'); } });
   return d.innerHTML; }
 function lpAlvo(c, et, idi){ const {f} = lpDados(c); return et==='trad' ? f.trad[idi] : f[et]; }
@@ -2759,7 +2760,7 @@ function editorBlocos(ed){ if (!ed || ed._blocos) return; ed._blocos = true; try
     else if (tipo==='ul' || tipo==='ol') { novo = mk(`<${tipo}><li>${conteudo}</li></${tipo}>`); foco = novo.firstElementChild; }
     else if (tipo==='todo') { novo = mk(`<ul class="todo"><li data-check="0">${conteudo}</li></ul>`); foco = novo.firstElementChild; }
     else if (tipo==='toggle') { novo = mk(`<details open><summary>${vazio?'Título do bloco':conteudo}</summary><p><br></p></details>`); foco = novo.querySelector(vazio?'summary':'p'); }
-    else if (tipo==='callout') { novo = mk(`<div class="callout"><span class="callout-ic" contenteditable="false">💡</span><div class="callout-tx">${conteudo}</div></div>`); foco = novo.querySelector('.callout-tx'); }
+    else if (tipo==='callout') { novo = mk(`<div class="callout"><span class="callout-ic" contenteditable="false"></span><div class="callout-tx">${conteudo}</div></div>`); foco = novo.querySelector('.callout-tx'); }
     else if (tipo==='table') { novo = mk(`<table><tbody>${[0,1,2].map(()=>`<tr>${[0,1,2].map(()=>'<td><br></td>').join('')}</tr>`).join('')}</tbody></table>`); foco = novo.querySelector('td'); }
     else if (tipo==='hr') { novo = document.createElement('hr'); }
     if (!novo) return;
@@ -2799,14 +2800,22 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
     if (td && td.isConnected) { const T = td.closest('table').getBoundingClientRect(); if (e.clientX >= T.left - 34 && e.clientX <= T.right + 6 && e.clientY >= T.top - 26 && e.clientY <= T.bottom + 6) return; }
     hr.hidden = hc.hidden = ht.hidden = true; };
   document.addEventListener('mousemove', mover);
-  const celulas = () => { if (!alvo) return []; const tb = alvo.td.closest('table'); if (!tb) return []; if (alvo.tipo==='tabela') return [...tb.querySelectorAll('td')]; return alvo.tipo==='linha' ? [...alvo.td.parentNode.cells] : [...tb.rows].map(r=>r.cells[alvo.idx]).filter(Boolean); };
-  const marcar = on => { ed.querySelectorAll('td.tbl-sel').forEach(x=>x.classList.remove('tbl-sel')); if (on) celulas().forEach(x=>x.classList.add('tbl-sel')); };
+  const celulas = () => { if (!alvo) return []; const tb = alvo.td.closest('table'); if (!tb) return []; if (alvo.tipo==='tabela') return [...tb.querySelectorAll('td')]; if (alvo.tipo==='celulas') return selCels.filter(x=>x.isConnected); return alvo.tipo==='linha' ? [...alvo.td.parentNode.cells] : [...tb.rows].map(r=>r.cells[alvo.idx]).filter(Boolean); };
+  const marcar = on => { if (alvo && alvo.tipo==='celulas') { if (!on) limparSel(); return; } ed.querySelectorAll('td.tbl-sel').forEach(x=>x.classList.remove('tbl-sel')); if (on) celulas().forEach(x=>x.classList.add('tbl-sel')); };
   const vazia = () => { const c = document.createElement('td'); c.innerHTML = '<br>'; return c; };
   const ACOES = {
     linha: [['acima','arrow-up','Inserir acima'],['abaixo','arrow-down','Inserir abaixo'],['dup','copy','Duplicar'],['limpar','circle-x','Limpar conteúdo'],['excluir','trash-2','Excluir linha']],
     coluna: [['esq','arrow-left','Inserir à esquerda'],['dir','arrow-right','Inserir à direita'],['dup','copy','Duplicar'],['limpar','circle-x','Limpar conteúdo'],['excluir','trash-2','Excluir coluna']] };
   const fazer = a => { setTimeout(()=>ed.dispatchEvent(new Event('input', {bubbles:true})), 0);   // salva as mudanças feitas pelo menu
     const tb = alvo.td.closest('table'), tr = alvo.td.parentNode, idx = alvo.idx;
+    if (alvo.tipo==='celulas') { const cs = celulas();
+      if (a==='mesclar' && cs.length > 1) { const rs = cs.map(x=>x.parentNode.rowIndex), ci = cs.map(x=>x.cellIndex), r1 = Math.min(...rs), r2 = Math.max(...rs), c1 = Math.min(...ci), c2 = Math.max(...ci), alvoC = cs.find(x=>x.parentNode.rowIndex===r1 && x.cellIndex===c1) || cs[0];
+        const textos = cs.map(x=>x.innerHTML).filter(h0=>h0.replace(/<br\s*\/?>/g,'').trim()); alvoC.innerHTML = textos.join('<br>') || '<br>';
+        cs.filter(x=>x!==alvoC).forEach(x=>x.remove()); if (c2>c1) alvoC.colSpan = c2-c1+1; if (r2>r1) alvoC.rowSpan = r2-r1+1; }
+      if (a==='limpar') cs.forEach(x=>x.innerHTML='<br>');
+      if (a.startsWith('cor:')) { const cor = a.slice(4); cs.forEach(x=>{ if (cor) x.dataset.cor = cor; else delete x.dataset.cor; }); }
+      return fecharM(); }
+    if (alvo.tipo==='coluna' && /^(esq|dir|dup|excluir)$/.test(a)) { const cg = tb.querySelector('colgroup'); if (cg) cg.remove(); }
     if (alvo.tipo==='tabela') { const tg = k => { if (tb.dataset[k]==='1') delete tb.dataset[k]; else tb.dataset[k] = '1'; };
       if (a==='larg') { if (tb.dataset.larg==='0') delete tb.dataset.larg; else tb.dataset.larg = '0'; }
       if (a==='cabl') tg('cabl'); if (a==='cabc') tg('cabc');
@@ -2826,10 +2835,10 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
       if (a==='limpar') celulas().forEach(x=>x.innerHTML='<br>');
       if (a==='excluir') { if (tb.rows[0].cells.length<=1) tb.remove(); else [...tb.rows].forEach(r=>{ const c = r.cells[idx]; if (c) c.remove(); }); } }
     fecharM(); };
-  const fecharM = () => { menu.hidden = true; marcar(false); alvo = null; hr.hidden = hc.hidden = ht.hidden = true; };
+  const fecharM = () => { menu.hidden = true; marcar(false); if (alvo && alvo.tipo==='celulas') limparSel(); alvo = null; hr.hidden = hc.hidden = ht.hidden = true; };
   const abrirM = (tipo, botao) => { if (!td) return; alvo = {tipo, td, idx: td.cellIndex}; marcar(true);
     const tb = td.closest('table'), sw = (k, on) => `<span class="tbl-sw ${on?'on':''}"></span>`;
-    const L = tipo==='tabela' ? [['larg','move-horizontal','Ajustar à largura', tb.dataset.larg!=='0'],['cabl','panel-top','Linha de cabeçalho', tb.dataset.cabl==='1'],['cabc','panel-left','Coluna de cabeçalho', tb.dataset.cabc==='1'],['dup','copy','Duplicar tabela'],['excluir','trash-2','Excluir tabela']] : ACOES[tipo];
+    const L = tipo==='celulas' ? [['mesclar','merge','Mesclar células'],['limpar','circle-x','Limpar conteúdo']] : tipo==='tabela' ? [['larg','move-horizontal','Ajustar à largura', tb.dataset.larg!=='0'],['cabl','panel-top','Linha de cabeçalho', tb.dataset.cabl==='1'],['cabc','panel-left','Coluna de cabeçalho', tb.dataset.cabc==='1'],['dup','copy','Duplicar tabela'],['excluir','trash-2','Excluir tabela']] : ACOES[tipo];
     menu.innerHTML = `<input class="tbl-busca" placeholder="Buscar ações…"><div class="tbl-it-l">${L.map(([k,ic,t,on])=>`<button type="button" data-a="${k}" data-t="${normNome(t)}"><i data-lucide="${ic}"></i>${t}${on!==undefined?sw(k,on):''}</button>`).join('')}
       <div class="tbl-sep" data-t="cor"></div><div class="tbl-cor-t" data-t="cor">Cor de fundo</div><div class="tbl-cores" data-t="cor">${CORES_TAB.map(([k,t])=>`<button type="button" data-a="cor:${k}" title="${t}" data-t="cor ${normNome(t)}"><span class="tbl-cor" data-cor="${k}"></span></button>`).join('')}</div></div>`;
     if (window.lucide) lucide.createIcons();
@@ -2839,8 +2848,35 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
     inp.onkeydown = e => { if (e.key==='Escape') { e.preventDefault(); fecharM(); } if (e.key==='Enter') { const b = [...menu.querySelectorAll('button[data-a]')].find(x=>!x.hidden && !x.closest('[hidden]')); if (b) { e.preventDefault(); fazer(b.dataset.a); } } };
     menu.querySelectorAll('button[data-a]').forEach(b=>b.onmousedown = ev => { ev.preventDefault(); fazer(b.dataset.a); }); };
   hr.onmousedown = e => { e.preventDefault(); abrirM('linha', hr); }; hc.onmousedown = e => { e.preventDefault(); abrirM('coluna', hc); }; ht.onmousedown = e => { e.preventDefault(); abrirM('tabela', ht); };
+  /* várias células: arraste de uma célula a outra (ou Shift+clique) */
+  const hs = document.createElement('button'); hs.type = 'button'; hs.className = 'tbl-h tbl-hs'; hs.title = 'Opções das células'; hs.innerHTML = '<i data-lucide="more-vertical"></i>'; hs.hidden = true; box.append(hs); if (window.lucide) lucide.createIcons();
+  let selIni = null, ultIni = null, selCels = [], rz = null, rzAlvo = null;
+  const limparSel = () => { selCels.forEach(x=>x.classList.remove('tbl-sel')); selCels = []; hs.hidden = true; };
+  const retangulo = (a, b) => { const tb = a.closest('table'); if (!tb || tb!==b.closest('table')) return; const r1 = Math.min(a.parentNode.rowIndex, b.parentNode.rowIndex), r2 = Math.max(a.parentNode.rowIndex, b.parentNode.rowIndex), c1 = Math.min(a.cellIndex, b.cellIndex), c2 = Math.max(a.cellIndex, b.cellIndex);
+    limparSel(); for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) { const x = tb.rows[r] && tb.rows[r].cells[c]; if (x) selCels.push(x); } selCels.forEach(x=>x.classList.add('tbl-sel')); };
+  const mostrarHs = () => { const ult = selCels[selCels.length-1], P = box.getBoundingClientRect(), R = ult.getBoundingClientRect(); hs.style.left = (R.right - P.left - 11) + 'px'; hs.style.top = (R.top - P.top + R.height/2 - 11) + 'px'; hs.hidden = false; };
+  const garantirCols = tb => { let cg = tb.querySelector('colgroup'); const n = tb.rows[0] ? [...tb.rows[0].cells].reduce((t,c)=>t+(+c.colSpan||1),0) : 0;
+    if (cg && cg.children.length !== n) { cg.remove(); cg = null; }
+    if (!cg) { cg = document.createElement('colgroup'); const ws = tb.rows[0] ? [...tb.rows[0].cells].flatMap(c=>{ const k = +c.colSpan||1; return Array(k).fill(c.getBoundingClientRect().width/k); }) : []; ws.forEach(w=>{ const col = document.createElement('col'); col.style.width = Math.round(w)+'px'; cg.appendChild(col); }); tb.prepend(cg); }
+    tb.dataset.larg = '0'; return cg; };
+  // borda da coluna sob o mouse (direita da célula, ou esquerda = coluna anterior)
+  const bordaEm = e => { const c = e.target.closest && e.target.closest('td'); if (!c || !ed.contains(c)) return null; const R = c.getBoundingClientRect();
+    if (R.right - e.clientX <= 6) return c; if (e.clientX - R.left <= 4 && c.previousElementSibling) return c.previousElementSibling; return null; };
+  ed.addEventListener('mousedown', e => { rzAlvo = bordaEm(e);
+    if (rzAlvo) { e.preventDefault(); const tb = rzAlvo.closest('table'), cg = garantirCols(tb), col = cg.children[rzAlvo.cellIndex]; if (!col) return; rz = {col, x0:e.clientX, w0:parseFloat(col.style.width)||rzAlvo.getBoundingClientRect().width}; document.body.classList.add('tbl-rz'); return; }
+    const c = e.target.closest('td'); if (!c || !ed.contains(c)) { limparSel(); return; }
+    if (e.shiftKey && ultIni && ultIni.isConnected) { e.preventDefault(); retangulo(ultIni, c); if (selCels.length > 1) mostrarHs(); return; }
+    limparSel(); selIni = c; ultIni = c; });
+  document.addEventListener('mousemove', e => { if (!box.isConnected) return;
+    if (rz) { rz.col.style.width = Math.max(40, Math.round(rz.w0 + e.clientX - rz.x0)) + 'px'; return; }
+    if (selIni && (e.buttons & 1)) { const c = e.target.closest && e.target.closest('td'); if (c && c!==selIni && ed.contains(c)) { retangulo(selIni, c); getSelection().removeAllRanges(); } return; }
+    // perto da borda direita de uma célula: puxar para mudar a largura da coluna
+    rzAlvo = bordaEm(e); ed.classList.toggle('tbl-rz-ok', !!rzAlvo); });
+  document.addEventListener('mouseup', () => { if (!box.isConnected) return; if (rz) { rz = null; document.body.classList.remove('tbl-rz'); ed.dispatchEvent(new Event('input', {bubbles:true})); }
+    if (selIni) { if (selCels.length > 1) mostrarHs(); selIni = null; } });
+  hs.onmousedown = e => { e.preventDefault(); if (!selCels.length) return; td = selCels[0]; abrirM('celulas', hs); };
   // fecha ao clicar fora; usa o caminho do clique (o ícone da alça pode ser recriado durante o próprio clique)
-  document.addEventListener('mousedown', e => { if (menu.hidden) return; const cam = e.composedPath ? e.composedPath() : [e.target]; if (cam.includes(menu) || cam.includes(hr) || cam.includes(hc) || cam.includes(ht)) return; fecharM(); }); }
+  document.addEventListener('mousedown', e => { if (menu.hidden) return; const cam = e.composedPath ? e.composedPath() : [e.target]; if (cam.includes(menu) || cam.includes(hr) || cam.includes(hc) || cam.includes(ht) || cam.includes(hs)) return; fecharM(); }); }
 /* ---------- página do conteúdo da landing page (como uma página do Notion) ---------- */
 function pgLpPagina(r){ const c = camp(r[1]), et = r[2], idi = r[3] || '';
   if (!c || !['conteudo','trad'].includes(et)) return '<div class="vazio">Página não encontrada.</div>';
@@ -2853,7 +2889,7 @@ function pgLpPagina(r){ const c = camp(r[1]), et = r[2], idi = r[3] || '';
     : st==='Aprovado' ? '' : `<button class="btn btn-s btn-p" data-act="lpTextoEnviar"><i data-lucide="send"></i>Enviar para aprovação</button>`;
   return `<div class="np"><div class="np-top"><a href="#/campanha/${c.id}/entregaveis" class="ent-voltar" onclick="UI.entSec=UI.entSec||{};UI.entSec['${c.id}']='Landing page'"><i data-lucide="arrow-left"></i>Landing page</a>
       <div class="np-top-d"><span class="np-salvo" id="np-salvo"></span>${ed?`<button class="btn btn-s ${d.publico?'np-pub':''}" data-act="lpCompartilhar"><i data-lucide="${d.publico?'globe':'share-2'}"></i>${d.publico?'Publicada na web':'Compartilhar'}</button>`:''}${acoes}</div></div>
-    <article class="np-doc"><div class="np-ic">📄</div><h1 class="np-tit">${h(titulo)}</h1>
+    <article class="np-doc"><div class="np-ic"><i data-lucide="file-text"></i></div><h1 class="np-tit">${h(titulo)}</h1>
       <div class="np-props"><div><span><i data-lucide="circle-dot"></i>Status</span><b class="kvc-st kvc-${lpCor(st)} np-st">${h(st)}</b></div>
         <div><span><i data-lucide="user"></i>Responsável</span><b>${h(d.resp||'—')}</b></div>
         <div><span><i data-lucide="megaphone"></i>Campanha</span><b>${h(c.nome)} · ${h(cliente(c.clienteId).nome)}</b></div>
@@ -2886,8 +2922,8 @@ async function paginaPublica(tok){ document.title = 'Estufa · Texto';
   const box = document.getElementById('pub-doc');
   if (error || !data) { box.innerHTML = '<h1 class="np-tit">Página não encontrada</h1><p class="muted">O link pode ter sido despublicado.</p>'; return; }
   document.title = data.titulo || 'Estufa';
-  box.innerHTML = `<div class="np-ic">📄</div><h1 class="np-tit">${h(data.titulo||'')}</h1><div class="pub-meta">Atualizado em ${new Date(data.atualizado_em).toLocaleString('pt-BR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div><div class="lpe-doc np-corpo">${lpLimpa(data.html)}</div>`;
-  box.querySelectorAll('[contenteditable]').forEach(n=>n.removeAttribute('contenteditable')); }
+  box.innerHTML = `<div class="np-ic"><i data-lucide="file-text"></i></div><h1 class="np-tit">${h(data.titulo||'')}</h1><div class="pub-meta">Atualizado em ${new Date(data.atualizado_em).toLocaleString('pt-BR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div><div class="lpe-doc np-corpo">${lpLimpa(data.html)}</div>`;
+  box.querySelectorAll('[contenteditable]').forEach(n=>n.removeAttribute('contenteditable')); if (window.lucide) lucide.createIcons(); }
 function lpCmd(cmd){ const ed = document.getElementById('lpe-edit'); if (!ed) return; ed.focus();
   if (cmd==='link') { const u = prompt('Endereço do link (https://…)'); if (u && /^https?:\/\//i.test(u.trim())) document.execCommand('createLink', false, u.trim()); return; }
   const [c, v] = cmd.split(':'); document.execCommand(c, false, v ? '<'+v+'>' : null); }
