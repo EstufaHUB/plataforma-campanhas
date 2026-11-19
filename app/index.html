@@ -258,6 +258,8 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .at-curto{align-items:center;padding:2px 6px}.at-curto .at-ev-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.at-curto .at-ev-t small{display:none}
 .at-alca{position:absolute;left:0;right:0;bottom:0;height:7px;cursor:ns-resize}.at-alca::after{content:'';position:absolute;left:50%;bottom:2px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:rgba(255,255,255,.75);opacity:0}.at-ev:hover .at-alca::after,.at-esticando .at-alca::after{opacity:1}.at-dia-topo .at-alca{display:none}
 .at-esticando{z-index:6;box-shadow:0 4px 14px rgba(0,0,0,.18)}body.at-redim{cursor:ns-resize;user-select:none}
+.at-dc{position:relative}.at-dc em{font-style:normal;font-size:10px;color:#6b7378;max-width:95%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.at-dc.fer b{color:#8a959a}.at-dc.fer,.at-dia-topo.fer{background:#eceff1}.at-col.fer{background-color:#eceff1}
+.at-naoutil{position:absolute;top:6px;right:6px;border:0;background:none;padding:2px;cursor:pointer;color:#9aa4a8;opacity:0;border-radius:4px}.at-naoutil svg{width:14px;height:14px}.at-dc:hover .at-naoutil{opacity:1}.at-naoutil:hover{background:#eef1f2;color:#55636a}
 .at-agora{position:absolute;left:0;right:0;border-top:2px solid #d0443a;z-index:4;pointer-events:none}.at-agora::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:#d0443a}
 .at-sobre{background-color:#e8f0fe!important}.at-fantasma{position:absolute;left:2px;right:2px;height:24px;border:2px dashed #1a73e8;border-radius:6px;background:rgba(26,115,232,.08);font-size:11px;color:#1a73e8;padding:2px 6px;pointer-events:none;z-index:5}
 body.at-arrastando .at-ev{pointer-events:none}
@@ -3533,7 +3535,7 @@ function atOcorrencias(a, b){ const A = atDados(), L = [];
     const x = {k, rec:r, d0, data:o.data||d0, hora:o.hora!==undefined?o.hora:r.hora, dur:+(o.dur||r.dur||60), cliente:o.cliente!==undefined?o.cliente:r.cliente, campanha:o.campanha!==undefined?o.campanha:r.campanha,
       nome:o.nome||r.nome, desc:o.desc!==undefined?o.desc:r.desc, prazo:o.prazo!==undefined?o.prazo:(r.semPrazo?'':d0), feito:o.feito||null, feitoPor:o.feitoPor||''};
     if (x.data >= a && x.data <= b) L.push(x); }
-  for (const g of atAutos()) { const o = A.ocor[g.k] || {}; if (o.removida) continue; const x = {...g, ...Object.fromEntries(Object.entries(o).filter(([q])=>q!=='removida')), feito:o.feito||null, feitoPor:o.feitoPor||''};
+  for (const g of [...atAutos(), ...atAjusteMes()]) { const o = A.ocor[g.k] || {}; if (o.removida) continue; const x = {...g, ...Object.fromEntries(Object.entries(o).filter(([q])=>q!=='removida')), feito:o.feito||null, feitoPor:o.feitoPor||''};
     if (x.data >= a && x.data <= b) L.push(x); }
   for (const it of A.itens) if (it.data >= a && it.data <= b) L.push({...it, k:'i:'+it.id, item:it, dur:+(it.dur||60)});
   return L.sort((p,q)=>p.data.localeCompare(q.data) || (p.hora?1:0)-(q.hora?1:0) || String(p.hora).localeCompare(String(q.hora))); }
@@ -3548,10 +3550,22 @@ function atAutos(){ if (atDados().autoConferir === false) return []; const G = n
       const g = G.get(k) || {k, auto:true, d0, data:d0, hora:hmTxt(hr), dur:30, cliente: vi ? cliente(vi.c.clienteId).nome : (ct && ct.grupo) || m.conta, campanha:cp, nome:'Conferir campanha 24h após ativar', prazo:d0, paises:[], ativ:t};
       const ps = (vi && vi.v.pais) || paisDe(c.nome); if (ps && !g.paises.includes(ps)) g.paises.push(ps); if (t < g.ativ) g.ativ = t; G.set(k, g); } }
   return [...G.values()].map(g=>({...g, desc:`Ativada no Gerenciador em ${g.ativ.toLocaleDateString('pt-BR')} às ${g.ativ.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${g.paises.length?' · países: '+g.paises.join(', '):''}. Conferir entrega, aprovação dos anúncios, budget e eventos de conversão.`})); }
+/* automática: campanhas com budget separado por mês na ficha → no último dia útil de cada mês, ajustar o budget para o mês seguinte */
+function atAjusteMes(){ if (atDados().autoMensal === false) return []; const out = [];
+  for (const c of ativas()) for (const [key, cf] of Object.entries(c.canaisCfg||{})) { if (!cf || !cf.mensal) continue;
+    const ps = (cf.paises||[]).filter(p=>p.mensal && Object.keys(p.mensal).length); if (!ps.length) continue;
+    const meses = [...new Set(ps.flatMap(p=>Object.keys(p.mensal)))].sort(), canal = key.split(/[|@]/)[0];
+    for (let i = 0; i < meses.length - 1; i++) { const m = meses[i], prox = meses[i+1], [y, mm] = m.split('-').map(Number);
+      const d0 = paraTras(addDias(`${mm===12?y+1:y}-${String(mm===12?1:mm+1).padStart(2,'0')}-01`, -1), 'AG', ctx());
+      if (d0 < AT_AUTO_DESDE) continue;   // meses que já tinham passado quando o lembrete foi criado
+      const vals = ps.map(p=>`${p.cod} ${p.mensal[prox]!=null ? Number(p.mensal[prox]).toLocaleString('pt-BR') : '—'}`).join(' · ');
+      out.push({k:`m:${c.id}:${key}:${m}`, auto:true, mensal:true, d0, data:d0, hora:'', dur:30, cliente:cliente(c.clienteId).nome, campanha:c.nome, nome:`Ajustar budget para ${MESES[+prox.slice(5)-1]}${canal!=='Meta Ads'?' ('+canal+')':''}`, prazo:d0,
+        desc:`Budget mensal diferente por mês na ficha. Recalcular o daily com o saldo e ajustar no Gerenciador para ${MESES[+prox.slice(5)-1]} de ${prox.slice(0,4)}. Budget de ${MESES[+prox.slice(5)-1]} por país: ${vals}.`}); } }
+  return out; }
 function atAtrasadas(){ return atOcorrencias(addDias(HOJE, -60), addDias(HOJE, -1)).filter(x=>!x.feito && x.prazo && x.prazo < HOJE)
   .concat(atDados().itens.filter(it=>!it.feito && it.prazo && it.prazo < HOJE && it.data >= HOJE).map(it=>({...it, k:'i:'+it.id, item:it}))); }
 function atOcor(k){ if (k.startsWith('i:')) { const it = atDados().itens.find(x=>'i:'+x.id===k); return it && {...it, k, item:it}; }
-  if (k.startsWith('a:')) { const o = atDados().ocor[k] || {}, d = o.data || k.split(':').pop(); return atOcorrencias(addDias(d,-40), addDias(d,40)).find(x=>x.k===k) || null; }
+  if (k.startsWith('a:') || k.startsWith('m:')) { const o = atDados().ocor[k] || {}, d = o.data || k.split(':').pop(); return atOcorrencias(addDias(d,-40), addDias(d,40)).find(x=>x.k===k) || null; }
   const [, rid, d0] = k.split(':'), r = atDados().recs.find(x=>x.id===rid); if (!r) return null; const o = (atDados().ocor[k] || {}), d = o.data || d0;
   return atOcorrencias(d, d).find(x=>x.k===k) || null; }
 const atTitulo = x => `${x.prazo ? fdm(x.prazo).replace('/','.') : 'xxx'} - ${x.cliente||'—'}${x.campanha ? ' - '+x.campanha : ''} - ${x.nome}`;
@@ -3591,28 +3605,31 @@ function atLateral(grupos){ const A = atDados(), atr = atAtrasadas();
     ${atr.length ? `<div class="at-lat-h" style="margin-top:16px;color:#a32d2d">Atrasadas <span class="at-n verm">${atr.length}</span></div>${atr.map(x=>`<div class="at-atr" data-act="atAbrir" data-k="${h(x.k)}" draggable="true" data-atdrag="${h(x.k)}"><button class="at-ck" data-act="atCheck" data-k="${h(x.k)}"></button><div><small>prazo ${AT_DSEM[dow(x.prazo)].toLowerCase()} ${fdm(x.prazo)}</small><span>${h(atTitulo(x))}</span></div></div>`).join('')}` : ''}</aside>`; }
 const atBloco = (x, extra='', cls='') => `<div class="at-ev ${atCor(x)} ${cls}" data-act="atAbrir" data-k="${h(x.k)}" draggable="true" data-atdrag="${h(x.k)}" ${extra}><button class="at-ck" data-act="atCheck" data-k="${h(x.k)}" title="${x.feito?'Desmarcar':'Concluir'}"></button><span class="at-ev-t">${h(atTitulo(x))}${x.hora?`<small>${x.hora} – ${hmTxt(hm(x.hora)+x.dur/60)}</small>`:''}</span>${x.rec?'<i data-lucide="repeat" class="at-rep"></i>':x.auto?'<i data-lucide="zap" class="at-rep"></i>':''}${x.hora?'<i class="at-alca" title="Arraste para mudar a duração"></i>':''}</div>`;
 function atSemana(sem){ const dias = [...Array(5)].map((_,i)=>addDias(sem, i)), L = atOcorrencias(sem, addDias(sem, 4)), H = AT_H1 - AT_H0;
-  const cab = dias.map(d=>`<div class="at-dc ${d===HOJE?'hoje':''} ${ctx().util(d,'AG')?'':'fds'}"><span>${AT_DSEM[dow(d)]}</span><b>${+d.slice(8)}</b></div>`).join('');
-  const topo = dias.map(d=>`<div class="at-dia-topo" data-atdia="${d}" data-atall="1">${L.filter(x=>x.data===d && !x.hora).map(x=>atBloco(x)).join('')}</div>`).join('');
+  const fer = d => ctx().util(d,'AG') ? '' : (ctx().motivo(d,'AG')||'').replace('feriado: ','');
+  const cab = dias.map(d=>`<div class="at-dc ${d===HOJE?'hoje':''} ${fer(d)?'fer':''}"><span>${AT_DSEM[dow(d)]}</span><b>${+d.slice(8)}</b>${fer(d) ? `<em title="${h(fer(d))}">${h(fer(d))}</em>` : `<button class="at-naoutil" data-act="formFeriado" data-d="${d}" title="Marcar como dia sem expediente (feriado da agência)"><i data-lucide="calendar-off"></i></button>`}</div>`).join('');
+  const topo = dias.map(d=>`<div class="at-dia-topo ${fer(d)?'fer':''}" data-atdia="${d}" data-atall="1">${L.filter(x=>x.data===d && !x.hora).map(x=>atBloco(x)).join('')}</div>`).join('');
   const col = d => { const xs = L.filter(x=>x.data===d && x.hora).map(x=>({x, a:Math.max(AT_H0, hm(x.hora)), b:0})); xs.forEach(o=>o.b = Math.max(o.a + 0.4, Math.min(AT_H1, hm(o.x.hora) + o.x.dur/60)));
     // blocos que se sobrepõem dividem a largura, como no Google Agenda
     xs.sort((p,q)=>p.a-q.a); let grupo = [], fimG = -1; const fechar = () => { const n = Math.max(...grupo.map(o=>o.l))+1; grupo.forEach(o=>o.n = n); grupo = []; };
     for (const o of xs) { if (o.a >= fimG && grupo.length) fechar(); const us = new Set(grupo.filter(g=>g.b > o.a).map(g=>g.l)); let l = 0; while (us.has(l)) l++; o.l = l; grupo.push(o); fimG = Math.max(fimG, o.b); }
     if (grupo.length) fechar();
     const agora = d===HOJE ? (()=>{ const t = new Date(), v = t.getHours() + t.getMinutes()/60; return v>=AT_H0 && v<=AT_H1 ? `<div class="at-agora" style="top:${(v-AT_H0)*AT_PX}px"></div>` : ''; })() : '';
-    return `<div class="at-col ${d===HOJE?'hoje':''}" data-atdia="${d}">${xs.map(o=>atBloco(o.x, `style="top:${(o.a-AT_H0)*AT_PX}px;height:${(o.b-o.a)*AT_PX-2}px;left:calc(${o.l/o.n*100}% + 2px);width:calc(${100/o.n}% - 4px)"`, (o.b-o.a)*AT_PX < 40 ? 'at-curto' : '')).join('')}${agora}</div>`; };
+    return `<div class="at-col ${d===HOJE?'hoje':''} ${fer(d)?'fer':''}" data-atdia="${d}">${xs.map(o=>atBloco(o.x, `style="top:${(o.a-AT_H0)*AT_PX}px;height:${(o.b-o.a)*AT_PX-2}px;left:calc(${o.l/o.n*100}% + 2px);width:calc(${100/o.n}% - 4px)"`, (o.b-o.a)*AT_PX < 40 ? 'at-curto' : '')).join('')}${agora}</div>`; };
   const horas = [...Array(H)].map((_,i)=>`<div class="at-h" style="top:${i*AT_PX}px">${AT_H0+i}h</div>`).join('');
   return `<div class="card at-cal"><div class="at-cab"><div></div>${cab}</div><div class="at-cab at-topo"><div class="at-h-l">dia todo</div>${topo}</div>
     <div class="at-corpo" style="height:${H*AT_PX}px"><div class="at-horas">${horas}</div>${dias.map(col).join('')}</div></div>`; }
 function atLista(sem){ const L = atOcorrencias(sem, addDias(sem, 4)), dias = [...Array(5)].map((_,i)=>addDias(sem, i));
   const lin = x => `<div class="at-li" data-act="atAbrir" data-k="${h(x.k)}"><button class="at-ck ${atCor(x)}" data-act="atCheck" data-k="${h(x.k)}"></button><span class="at-li-t ${x.feito?'riscado':''}"><b class="at-pz ${atCor(x)}">${x.prazo ? fdm(x.prazo).replace('/','.') : 'xxx'}</b>${h(x.cliente||'—')}${x.campanha?' · '+h(x.campanha):''} · ${h(x.nome)}</span>
     <span class="small muted">${x.hora ? x.hora+' · '+durTxt(x.dur) : 'sem horário'}</span>${x.rec?'<i data-lucide="repeat" class="at-rep" title="Recorrente"></i>':'<span style="width:14px"></span>'}</div>`;
-  return `<div class="card at-lista">${dias.map(d=>{ const xs = L.filter(x=>x.data===d); return `<div class="at-ld ${d===HOJE?'hoje':''}"><div class="at-ld-h">${DSEM[dow(d)]}, ${fdm(d)}${d===HOJE?' <span class="tag">hoje</span>':''}<span class="small muted">${xs.length ? xs.filter(x=>x.feito).length+' de '+xs.length+' concluídas' : ''}</span></div>${xs.length ? xs.map(lin).join('') : '<div class="small muted" style="padding:6px 0 4px">Nada marcado.</div>'}</div>`; }).join('')}</div>`; }
+  return `<div class="card at-lista">${dias.map(d=>{ const xs = L.filter(x=>x.data===d); return `<div class="at-ld ${d===HOJE?'hoje':''}"><div class="at-ld-h">${DSEM[dow(d)]}, ${fdm(d)}${d===HOJE?' <span class="tag">hoje</span>':''}${ctx().util(d,'AG')?'':` <span class="tag">${h((ctx().motivo(d,'AG')||'').replace('feriado: ',''))}</span>`}<span class="small muted">${xs.length ? xs.filter(x=>x.feito).length+' de '+xs.length+' concluídas' : ''}</span></div>${xs.length ? xs.map(lin).join('') : '<div class="small muted" style="padding:6px 0 4px">Nada marcado.</div>'}</div>`; }).join('')}</div>`; }
 const recTxt = r => { const ds = (r.dias||[]).slice().sort().map(d=>AT_DSEM[d].toLowerCase()).join(', ');
   return r.freq==='diaria' ? 'Todo dia útil' : r.freq==='semanal' ? `Toda ${ds||'—'}` : r.freq==='nsem' ? `A cada ${r.n||2} semanas: ${ds||'—'}` : `Todo dia ${r.diaMes||1} do mês`; };
-function atRecorrencias(){ const R = atDados().recs, autoOn = atDados().autoConferir !== false;
+function atRecorrencias(){ const R = atDados().recs, autoOn = atDados().autoConferir !== false, mesOn = atDados().autoMensal !== false;
   return `<div class="card"><div class="card-cab"><h3>Recorrências</h3><button class="btn btn-s btn-p" data-act="atRecForm"><i data-lucide="plus"></i>Nova recorrência</button></div>
     <div class="at-auto ${autoOn?'':'at-pausada'}"><i data-lucide="zap"></i><div><b>Conferir campanha 24h após ativar no Gerenciador</b><div class="small muted">Automática: quando uma campanha começa a rodar no Meta, entra a atividade no dia seguinte, no mesmo horário (fim de semana ou feriado vai para o próximo dia útil). Os países da mesma campanha ficam numa atividade só.</div></div>
       <label class="at-xxx"><input type="checkbox" ${autoOn?'checked':''} data-act="atAutoTog">${autoOn?'ligada':'pausada'}</label></div>
+    <div class="at-auto ${mesOn?'':'at-pausada'}"><i data-lucide="zap"></i><div><b>Ajustar budget para o mês seguinte</b><div class="small muted">Automática: nas campanhas com budget mensal separado na ficha (ex.: Precision Core V2), entra no último dia útil de cada mês, enquanto houver mês seguinte no plano.</div></div>
+      <label class="at-xxx"><input type="checkbox" ${mesOn?'checked':''} data-act="atMesTog">${mesOn?'ligada':'pausada'}</label></div>
     ${R.length ? `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Atividade</th><th>Repetição</th><th>Horário</th><th>Prazo</th><th>Vigência</th><th></th></tr></thead><tbody>
     ${R.map(r=>`<tr class="clic ${r.pausada?'at-pausada':''}" data-act="atRecForm" data-id="${r.id}"><td><b>${h(r.cliente||'—')}${r.campanha?' · '+h(r.campanha):''}</b><div class="small">${h(r.nome)}</div>${r.desc?`<div class="small muted at-desc-1">${h(r.desc)}</div>`:''}</td>
       <td>${h(recTxt(r))}${r.pausada?' <span class="tag">pausada</span>':''}</td><td class="small">${r.hora ? r.hora+' · '+durTxt(+r.dur||60) : 'sem horário · '+durTxt(+r.dur||60)}</td><td>${r.semPrazo?'<span class="at-pz at-sem">xxx</span>':'<span class="small">no dia</span>'}</td><td class="small">desde ${fd(r.ini)}${r.fim?' até '+fd(r.fim):''}</td><td><i data-lucide="chevron-right" class="muted"></i></td></tr>`).join('')}</tbody></table></div>`
@@ -3638,7 +3655,7 @@ function atAbrir(k){ const x = atOcor(k); if (!x) return; UI.atK = k;
   const st = x.feito ? `<span class="at-st at-feito"><i data-lucide="check"></i>Concluída ${x.feito!==true?'em '+fdm(x.feito):''}${x.feitoPor?' por '+h(x.feitoPor):''}</span>` : !x.prazo ? '<span class="at-st at-sem">Sem prazo (xxx)</span>' : x.prazo < HOJE ? '<span class="at-st verm">Atrasada</span>' : '';
   const pend = x.item && x.item.pend ? pendGrupos().find(g=>g.chave===x.item.pend.chave) : null;
   abrirModal(`<span class="at-ck at-ck-g ${atCor(x)}" data-act="atCheck" data-k="${h(k)}"></span>${h(atTitulo(x))}`, `${atListas()}
-    <div class="at-info">${st}${x.rec?`<span class="at-st"><i data-lucide="repeat"></i>${h(recTxt(x.rec))}</span>`:''}${x.item&&x.item.pend?'<span class="at-st"><i data-lucide="alert-circle"></i>Pendência do Gerenciador</span>':''}${x.auto?'<span class="at-st"><i data-lucide="zap"></i>Automática: 24h depois de ativar no Gerenciador</span>':''}</div>
+    <div class="at-info">${st}${x.rec?`<span class="at-st"><i data-lucide="repeat"></i>${h(recTxt(x.rec))}</span>`:''}${x.item&&x.item.pend?'<span class="at-st"><i data-lucide="alert-circle"></i>Pendência do Gerenciador</span>':''}${x.auto?`<span class="at-st"><i data-lucide="zap"></i>${x.mensal?'Automática: último dia útil do mês (budget mensal da ficha)':'Automática: 24h depois de ativar no Gerenciador'}</span>`:''}</div>
     ${pend ? `<div class="at-pend-lista"><b>Países com o ajuste pendente</b>${pend.itens.map(i=>`<div>${paisTxt(i.pais)} · <span class="muted">${h(i.p.o||'')}</span></div>`).join('')}</div>` : ''}
     <form id="f-at" onsubmit="return false">${camposBase(x)}<div class="form-g" style="margin-top:10px">
     <label class="campo">Dia na agenda *<input type="date" name="data" value="${x.data}"></label>${camposHora(x)}${campoPrazo(x)}</div></form>`,
@@ -3655,7 +3672,7 @@ function atSalvar(){ const v = lerAt(); if (!v) return; const A = atDados(), k =
   UI.atK = null; salvar(); fecharModal(); render(); toast('Atividade salva.'); }
 function atExcluir(){ const k = UI.atK, A = atDados(); if (!k) return;
   if (k.startsWith('i:')) { const it = A.itens.find(x=>'i:'+x.id===k); if (!it || !confirm(`Excluir a atividade “${it.nome}”?`)) return; A.itens = A.itens.filter(x=>x!==it); }
-  else { if (!confirm(k.startsWith('a:') ? 'Excluir esta conferência?' : 'Excluir esta atividade só neste dia? A recorrência continua nos outros dias.')) return; A.ocor[k] = {...(A.ocor[k]||{}), removida:true}; }
+  else { if (!confirm(k.startsWith('a:') || k.startsWith('m:') ? 'Excluir este lembrete só neste mês?' : 'Excluir esta atividade só neste dia? A recorrência continua nos outros dias.')) return; A.ocor[k] = {...(A.ocor[k]||{}), removida:true}; }
   UI.atK = null; salvar(); fecharModal(); render(); toast('Atividade excluída.'); }
 function atCheck(k){ const A = atDados(), x = atOcor(k); if (!x) return;
   if (x.item && x.item.pend && !x.feito) { const g = pendGrupos().find(g=>g.chave===x.item.pend.chave); if (g) return atPendCk(g.chave, k); }
@@ -4316,6 +4333,7 @@ const ACT = {
   budStAuto: () => gravarBudStatus(true),
   atAba: el => { UI.atAba = el.dataset.v; render(); },
   atSem: el => { const v = +el.dataset.v; UI.atSem = v ? addDias(UI.atSem || semDom(HOJE), v) : semDom(HOJE); render(); },
+  atMesTog: () => { const A = atDados(); A.autoMensal = A.autoMensal === false; salvar(); render(); toast(A.autoMensal ? 'Lembrete mensal ligado.' : 'Lembrete mensal pausado.'); },
   atAutoTog: () => { const A = atDados(); A.autoConferir = A.autoConferir === false; salvar(); render(); toast(A.autoConferir ? 'Conferência 24h ligada.' : 'Conferência 24h pausada.'); },
   atNova: () => atNova(), atAbrir: el => { if (Date.now() - atSemClique < 300) return; atAbrir(el.dataset.k); }, atSalvar: () => atSalvar(), atExcluir: () => atExcluir(),
   atCheck: el => atCheck(el.dataset.k), atPendCk: el => atPendCk(el.dataset.ch), atPendOk: () => atPendOk(),
@@ -4627,7 +4645,7 @@ const ACT = {
     if (err.length) return abrirModal('Não foi possível salvar', `<div class="alerta verm"><i data-lucide="alert-circle"></i><div>${err.map(h).join('<br>')}</div></div>`, `<button class="btn" data-act="fechar">Ok</button>`);
     S.modeloHist.unshift({versao:S.modelo.versao,data:S.modelo.data,tarefas:S.modelo.tarefas}); S.modelo = {versao:S.modelo.versao+1,data:HOJE,origem:S.modelo.origem,tarefas:T};
     registrar('Modelo de cronograma salvo — versão '+S.modelo.versao); render(); toast('Versão '+S.modelo.versao+' salva. Vale para novas campanhas.'); },
-  formFeriado: el => { const f = S.feriados.find(x=>x.id===el.dataset.f) || {ativo:true,abrang:'Nacional',pais:'BR'};
+  formFeriado: el => { const f = S.feriados.find(x=>x.id===el.dataset.f) || (el.dataset.d ? {ativo:true,abrang:'Agência',pais:'',data:el.dataset.d,nome:'Sem expediente'} : {ativo:true,abrang:'Nacional',pais:'BR'});
     abrirModal(f.id?'Editar feriado':'Novo feriado', `<form id="f-fer" class="form-g"><label class="campo">Nome<input name="nome" value="${h(f.nome||'')}"></label><label class="campo">Data<input type="date" name="data" value="${f.data||''}"></label>
       <label class="campo">Abrangência<select name="abrang">${opts(['Nacional','Estadual','Municipal','Agência'],f.abrang)}</select></label><label class="campo">País<select name="pais">${opts(Object.entries(PAISES).map(([k,p])=>[k,p.n]),f.pais,'— (dia sem expediente da agência)')}</select></label>
       <label class="campo">Estado / região<input name="estado" value="${h(f.estado||'')}"></label><label class="campo">Cidade<input name="cidade" value="${h(f.cidade||'')}"></label>
