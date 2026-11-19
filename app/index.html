@@ -494,6 +494,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 .busca-res{position:absolute;top:calc(100% + 6px);left:0;width:440px;max-height:420px;overflow:auto;background:#fff;color:var(--tx);border:1px solid var(--borda);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.28);z-index:200;padding:6px}.busca-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;text-decoration:none;color:var(--tx)}.busca-it.sel,.busca-it:hover{background:#f1f3f4}.busca-it>svg{width:16px;height:16px;color:var(--tx2);flex:none}.busca-it span{flex:1;min-width:0;display:flex;flex-direction:column}.busca-it b{font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.busca-it em{font-style:normal;font-size:.74rem;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.busca-it small{font-size:.68rem;color:var(--tx3);background:#f1f3f4;border-radius:5px;padding:1px 6px;flex:none}.busca-vz{padding:12px;font-size:.84rem;color:var(--tx3)}
 .lat-recolher{position:absolute;top:10px;right:10px;color:#8b8b8b}.lat-recolher:hover{background:rgba(255,255,255,.08);color:#fff}
 .topo .btn-menu{display:none}body.menu-oculto .topo .btn-menu{display:inline-grid}
+.topo-notif{display:none;position:relative;color:var(--tx2);margin:0 12px 0 2px}body.menu-oculto .topo .topo-notif{display:inline-grid}.topo-badge{position:absolute;top:-5px;right:-8px;background:#e0a33a;color:#2b1a00;border-radius:10px;font-size:10.5px;font-weight:700;line-height:1;padding:3px 6px;min-width:18px;text-align:center;box-sizing:border-box}.topo-badge[hidden]{display:none}
 @media (max-width:860px){.topo .btn-menu{display:inline-grid}}
 /* Status pontual em monitores menores: valores quebram em duas linhas em vez de se sobrepor */
 @media (max-width:1600px){
@@ -528,7 +529,7 @@ body.at-arrastando .at-ev{pointer-events:none}
   <div class="lat-rodape">Hoje: <span id="hoje-txt"></span></div>
 </aside>
 <div class="principal">
-  <header class="topo"><button class="icone-btn btn-menu" data-act="menu" title="Mostrar ou ocultar o menu"><i data-lucide="panel-left"></i></button><div class="migalha" id="migalha"></div><div class="topo-dir nao-imprimir"><span id="sync"></span><span class="on-topo" id="online-topo"></span><span class="quem" id="quem"></span><button class="btn btn-s" data-act="sair"><i data-lucide="log-out"></i>Sair</button></div></header>
+  <header class="topo"><button class="icone-btn btn-menu" data-act="menu" title="Mostrar ou ocultar o menu"><i data-lucide="panel-left"></i></button><a href="#/notificacoes" class="icone-btn topo-notif" id="topo-notif" title="Notificações"><i data-lucide="inbox"></i><span class="topo-badge" id="topo-badge" hidden></span></a><div class="migalha" id="migalha"></div><div class="topo-dir nao-imprimir"><span id="sync"></span><span class="on-topo" id="online-topo"></span><span class="quem" id="quem"></span><button class="btn btn-s" data-act="sair"><i data-lucide="log-out"></i>Sair</button></div></header>
   <div class="aviso-demo" id="aviso-papel" hidden></div>
   <main class="conteudo" id="app"></main>
 </div>
@@ -1466,7 +1467,7 @@ function render(){
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
   const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações']].filter(([k])=>pode(k));
   $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
-  $('#hoje-txt').textContent = fd(HOJE); { const b = $('#lat-badge'); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
+  $('#hoje-txt').textContent = fd(HOJE); { for (const id of ['#lat-badge','#topo-badge']) { const b = $(id); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
   const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
   try { $('#app').innerHTML = podeRota(r) ? pg(r) : (migalha([['Sem acesso']]), '<div class="card vazio" style="margin-top:20px"><i data-lucide="lock"></i><div style="margin-top:8px">Você não tem acesso a esta área. Fale com um administrador.</div></div>'); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
