@@ -1531,7 +1531,7 @@ function pgCliente(id){
   const paisesUnicos = new Set(L.map(c=>c.paises.map(p=>p.cod).sort().join(','))).size<=1;
   const canaisTxt = c => (c.canais||[]).map(nomeCanal).join(', ') || 'sem mídia';
   const lixo = c => ehAdmin() ? `<button class="icone-btn cli-lixo" data-act="excluirCamp" data-id="${c.id}" title="Excluir campanha"><i data-lucide="trash-2"></i></button>` : '';
-  const abrir = c => `location.hash='#/campanha/${c.id}/${c.status==='Em veiculação'&&farolCab(c,true)?'saude':'visao'}'`;
+  const abrir = c => `location.hash='#/campanha/${c.id}/visao'`;   // pela página do cliente, sempre abre na Visão geral
   // situação: farol quando está no ar; "planejar já" quando o planejamento já devia ter começado; senão o status
   const situacao = c => { const fc = c.status==='Em veiculação' ? farolCab(c, true) : '', ini = c.crono ? inicioPlan(c) : null;
     if (fc) return fc.replace('cc-farol','cc-farol cli-farol');
