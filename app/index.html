@@ -239,7 +239,7 @@ label.campo input,label.campo select,label.campo textarea{font-size:.9rem;color:
 .on-topo{display:flex;align-items:center}.on-topo:empty{display:none}.on-item{position:relative;display:inline-flex;margin-left:-6px;border-radius:50%;outline:none;cursor:default}.on-item:first-child{margin-left:0}.on-item>.av{border:2px solid #fff;box-sizing:content-box}.on-item.on-longe>.av{opacity:.5;filter:grayscale(.4)}.on-item .on-pt{right:-1px;bottom:-1px;width:9px;height:9px}.on-item .on-pt:not(.on):not(.aus){display:none}.on-mais{margin-left:6px;font-size:12px;font-weight:600;color:var(--tx2);text-decoration:none;display:inline-flex;align-items:center}.on-mais svg{width:16px;height:16px}.on-card{display:none;position:absolute;top:calc(100% + 8px);right:-40px;width:280px;background:#fff;border:1px solid #e3e6e8;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:60;white-space:normal;color:var(--tx);text-align:left;cursor:auto}.on-item:hover .on-card,.on-item:focus-within .on-card{display:block}.on-card::before{content:'';position:absolute;top:-10px;left:0;right:0;height:10px}.on-c-cab{font-size:12px;color:#7a868c;padding:9px 14px;border-bottom:1px solid #eef0f1;background:#fafbfb;border-radius:10px 10px 0 0}.on-c-on{color:#1f7a47}.on-c-aus{color:#8a5d00}.on-c-corpo{display:flex;gap:12px;align-items:center;padding:12px 14px 10px;font-size:13px}.av.av-c{width:46px;height:46px;font-size:15px}.on-c-pag{display:flex;align-items:center;gap:5px;margin-top:4px;color:var(--tx2)}.on-c-pag svg{width:13px;height:13px}.on-card .btn{margin:0 14px 12px;display:flex;justify-content:center}
 .at-barra{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:4px 0 14px}.at-seg button{display:inline-flex;align-items:center;gap:6px}.at-seg button svg{width:15px;height:15px}
 .at-nav{display:flex;align-items:center;gap:6px}.at-nav b{margin-left:8px;font-size:15px}.at-leg{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2)}.at-leg i{width:11px;height:11px;border-radius:3px;margin-left:8px}
-.at-az{--c:#1a73e8;--cf:#fff}.at-sem{--c:#f08c1a;--cf:#fff}.at-feito{--c:#1e9e57;--cf:#fff}.at-leg i{background:var(--c)}
+.at-az{--c:#1a73e8;--cf:#fff}.at-sem{--c:#f08c1a;--cf:#fff}.at-feito{--c:#1e9e57;--cf:#fff}.at-atras{--c:#d0443a;--cf:#fff}.at-leg i{background:var(--c)}
 .at-grade{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start}@media (max-width:900px){.at-grade{grid-template-columns:1fr}}
 .at-lat{position:sticky;top:12px}.at-lat-h{font-weight:700;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:8px}.at-n{background:#fde7e5;color:#a32d2d;border-radius:20px;font-size:11px;padding:1px 8px}.at-n.zero{background:#e5f4ec;color:#1f7a47}
 .at-pend{display:flex;gap:9px;align-items:flex-start;background:#fff;border:1px solid #e3e6e8;border-left:3px solid #d0443a;border-radius:8px;padding:9px 8px 9px 10px;margin-bottom:8px;cursor:grab}.at-pend:active{cursor:grabbing}
@@ -3546,8 +3546,7 @@ function atAutos(){ if (atDados().autoConferir === false) return []; const G = n
     for (const c of (((m.dados||{}).campanhas)||[])) { const t = c.inicio ? new Date(c.inicio) : null; if (!t || isNaN(t)) continue;
       const a = new Date(t.getTime() + 864e5), dia = a.getFullYear()+'-'+String(a.getMonth()+1).padStart(2,'0')+'-'+String(a.getDate()).padStart(2,'0'); if (dia < AT_AUTO_DESDE) continue;
       const d0 = paraFrente(dia, 'AG', ctx()), vi = vis[c.id], cp = vi ? vi.c.nome : titulo(c.nome), k = `a:${m.conta}:${cp}:${d0}`;
-      const hr = d0===dia ? Math.min(AT_H1-1, Math.max(AT_H0, Math.round((a.getHours() + a.getMinutes()/60)*4)/4)) : AT_H0 + 1;
-      const g = G.get(k) || {k, auto:true, d0, data:d0, hora:hmTxt(hr), dur:30, cliente: vi ? cliente(vi.c.clienteId).nome : (ct && ct.grupo) || m.conta, campanha:cp, nome:'Conferir campanha 24h após ativar', prazo:d0, paises:[], ativ:t};
+      const g = G.get(k) || {k, auto:true, d0, data:d0, hora:'09:00', dur:60, cliente: vi ? cliente(vi.c.clienteId).nome : (ct && ct.grupo) || m.conta, campanha:cp, nome:'Conferir campanha 24h após ativar', prazo:d0, paises:[], ativ:t};
       const ps = (vi && vi.v.pais) || paisDe(c.nome); if (ps && !g.paises.includes(ps)) g.paises.push(ps); if (t < g.ativ) g.ativ = t; G.set(k, g); } }
   return [...G.values()].map(g=>({...g, desc:`Ativada no Gerenciador em ${g.ativ.toLocaleDateString('pt-BR')} às ${g.ativ.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${g.paises.length?' · países: '+g.paises.join(', '):''}. Conferir entrega, aprovação dos anúncios, budget e eventos de conversão.`})); }
 /* automática: campanhas com budget separado por mês na ficha → no último dia útil de cada mês, ajustar o budget para o mês seguinte */
@@ -3559,7 +3558,7 @@ function atAjusteMes(){ if (atDados().autoMensal === false) return []; const out
       const d0 = paraTras(addDias(`${mm===12?y+1:y}-${String(mm===12?1:mm+1).padStart(2,'0')}-01`, -1), 'AG', ctx());
       if (d0 < AT_AUTO_DESDE) continue;   // meses que já tinham passado quando o lembrete foi criado
       const vals = ps.map(p=>`${p.cod} ${p.mensal[prox]!=null ? Number(p.mensal[prox]).toLocaleString('pt-BR') : '—'}`).join(' · ');
-      out.push({k:`m:${c.id}:${key}:${m}`, auto:true, mensal:true, d0, data:d0, hora:'', dur:30, cliente:cliente(c.clienteId).nome, campanha:c.nome, nome:`Ajustar budget para ${MESES[+prox.slice(5)-1]}${canal!=='Meta Ads'?' ('+canal+')':''}`, prazo:d0,
+      out.push({k:`m:${c.id}:${key}:${m}`, auto:true, mensal:true, d0, data:d0, hora:'09:00', dur:60, cliente:cliente(c.clienteId).nome, campanha:c.nome, nome:`Ajustar budget para ${MESES[+prox.slice(5)-1]}${canal!=='Meta Ads'?' ('+canal+')':''}`, prazo:d0,
         desc:`Budget mensal diferente por mês na ficha. Recalcular o daily com o saldo e ajustar no Gerenciador para ${MESES[+prox.slice(5)-1]} de ${prox.slice(0,4)}. Budget de ${MESES[+prox.slice(5)-1]} por país: ${vals}.`}); } }
   return out; }
 function atAtrasadas(){ return atOcorrencias(addDias(HOJE, -60), addDias(HOJE, -1)).filter(x=>!x.feito && x.prazo && x.prazo < HOJE)
@@ -3569,7 +3568,7 @@ function atOcor(k){ if (k.startsWith('i:')) { const it = atDados().itens.find(x=
   const [, rid, d0] = k.split(':'), r = atDados().recs.find(x=>x.id===rid); if (!r) return null; const o = (atDados().ocor[k] || {}), d = o.data || d0;
   return atOcorrencias(d, d).find(x=>x.k===k) || null; }
 const atTitulo = x => `${x.prazo ? fdm(x.prazo).replace('/','.') : 'xxx'} - ${x.cliente||'—'}${x.campanha ? ' - '+x.campanha : ''} - ${x.nome}`;
-const atCor = x => x.feito ? 'at-feito' : !x.prazo ? 'at-sem' : 'at-az';
+const atCor = x => x.feito ? 'at-feito' : !x.prazo ? 'at-sem' : (x.prazo < HOJE || x.data < HOJE) ? 'at-atras' : 'at-az';   // vermelho: passou do dia/prazo sem concluir
 /* ---------- pendências do Gerenciador, agrupadas por campanha (não por país) ---------- */
 const PEND_TIPO = {daily:'Ajustar daily budget no Gerenciador'};
 function pendGrupos(){ const G = new Map(), vis = vinculosMeta(), mcs = META_CONTAS.flatMap(m=>(((m.dados||{}).campanhas)||[]).map(x=>({x, conta:m.conta})));
@@ -3594,7 +3593,7 @@ function pgAtividades(){ migalha([['Digital'],['Atividades']]);
   const corpo = aba==='rec' ? atRecorrencias() : `<div class="at-grade">${atLateral(grupos)}<div>${aba==='cal' ? atSemana(sem) : atLista(sem)}</div></div>`;
   return `<div class="cab"><div><h1>Atividades</h1><p>As ações do digital num lugar só: recorrências, atividades avulsas e pendências do Gerenciador. Arraste uma pendência para o calendário para marcar quando ela será feita; arraste um bloco para mudar o dia ou o horário, e estique pela borda de baixo para mudar a duração.</p></div>
     <div style="display:flex;gap:8px;align-items:center"><button class="btn btn-p" data-act="atNova"><i data-lucide="plus"></i>Nova atividade</button></div></div>
-  <div class="at-barra"><div class="seg at-seg">${seg}</div>${nav}<span class="at-leg"><i class="at-az"></i>a fazer<i class="at-sem"></i>sem prazo (xxx)<i class="at-feito"></i>concluída</span></div>${corpo}`; }
+  <div class="at-barra"><div class="seg at-seg">${seg}</div>${nav}<span class="at-leg"><i class="at-az"></i>a fazer<i class="at-sem"></i>sem prazo (xxx)<i class="at-atras"></i>não concluída<i class="at-feito"></i>concluída</span></div>${corpo}`; }
 function atLateral(grupos){ const A = atDados(), atr = atAtrasadas();
   const agendada = ch => A.itens.find(it=>it.pend && it.pend.chave===ch && !it.feito);
   const card = g => { const ag = agendada(g.chave), n = g.itens.length;
@@ -3626,9 +3625,9 @@ const recTxt = r => { const ds = (r.dias||[]).slice().sort().map(d=>AT_DSEM[d].t
   return r.freq==='diaria' ? 'Todo dia útil' : r.freq==='semanal' ? `Toda ${ds||'—'}` : r.freq==='nsem' ? `A cada ${r.n||2} semanas: ${ds||'—'}` : `Todo dia ${r.diaMes||1} do mês`; };
 function atRecorrencias(){ const R = atDados().recs, autoOn = atDados().autoConferir !== false, mesOn = atDados().autoMensal !== false;
   return `<div class="card"><div class="card-cab"><h3>Recorrências</h3><button class="btn btn-s btn-p" data-act="atRecForm"><i data-lucide="plus"></i>Nova recorrência</button></div>
-    <div class="at-auto ${autoOn?'':'at-pausada'}"><i data-lucide="zap"></i><div><b>Conferir campanha 24h após ativar no Gerenciador</b><div class="small muted">Automática: quando uma campanha começa a rodar no Meta, entra a atividade no dia seguinte, no mesmo horário (fim de semana ou feriado vai para o próximo dia útil). Os países da mesma campanha ficam numa atividade só.</div></div>
+    <div class="at-auto ${autoOn?'':'at-pausada'}"><i data-lucide="zap"></i><div><b>Conferir campanha 24h após ativar no Gerenciador</b><div class="small muted">Automática: quando uma campanha começa a rodar no Meta, entra a atividade no dia seguinte, das 9h às 10h (fim de semana ou feriado vai para o próximo dia útil). Os países da mesma campanha ficam numa atividade só.</div></div>
       <label class="at-xxx"><input type="checkbox" ${autoOn?'checked':''} data-act="atAutoTog">${autoOn?'ligada':'pausada'}</label></div>
-    <div class="at-auto ${mesOn?'':'at-pausada'}"><i data-lucide="zap"></i><div><b>Ajustar budget para o mês seguinte</b><div class="small muted">Automática: nas campanhas com budget mensal separado na ficha (ex.: Precision Core V2), entra no último dia útil de cada mês, enquanto houver mês seguinte no plano.</div></div>
+    <div class="at-auto ${mesOn?'':'at-pausada'}"><i data-lucide="zap"></i><div><b>Ajustar budget para o mês seguinte</b><div class="small muted">Automática: nas campanhas com budget mensal separado na ficha (ex.: Precision Core V2), entra no último dia útil de cada mês, das 9h às 10h, enquanto houver mês seguinte no plano.</div></div>
       <label class="at-xxx"><input type="checkbox" ${mesOn?'checked':''} data-act="atMesTog">${mesOn?'ligada':'pausada'}</label></div>
     ${R.length ? `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Atividade</th><th>Repetição</th><th>Horário</th><th>Prazo</th><th>Vigência</th><th></th></tr></thead><tbody>
     ${R.map(r=>`<tr class="clic ${r.pausada?'at-pausada':''}" data-act="atRecForm" data-id="${r.id}"><td><b>${h(r.cliente||'—')}${r.campanha?' · '+h(r.campanha):''}</b><div class="small">${h(r.nome)}</div>${r.desc?`<div class="small muted at-desc-1">${h(r.desc)}</div>`:''}</td>
@@ -3733,7 +3732,9 @@ let atSemClique = 0;   // o clique que termina o esticar não abre o detalhe
 /* arrastar: pendências e blocos para um dia/horário do calendário */
 let atArr = null;
 document.addEventListener('dragstart', e => { const el = e.target.closest && e.target.closest('[data-atdrag]'); if (!el) return; atArr = el.dataset.atdrag; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', atArr); } catch(_){} setTimeout(()=>document.body.classList.add('at-arrastando'), 0); });
-document.addEventListener('dragend', () => { atArr = null; document.body.classList.remove('at-arrastando'); document.querySelectorAll('.at-sobre').forEach(z=>z.classList.remove('at-sobre')); document.querySelector('.at-fantasma')?.remove(); });
+// limpa o estado do arrasto (o dragend se perde quando a tela é redesenhada depois de soltar, por isso também roda no drop)
+const atFimArr = () => { atArr = null; document.body.classList.remove('at-arrastando'); document.querySelectorAll('.at-sobre').forEach(z=>z.classList.remove('at-sobre')); document.querySelector('.at-fantasma')?.remove(); };
+document.addEventListener('dragend', atFimArr);
 document.addEventListener('dragover', e => { if (!atArr) return; const z = e.target.closest('[data-atdia]'); if (!z) return; e.preventDefault();
   document.querySelectorAll('.at-sobre').forEach(x=>x!==z && x.classList.remove('at-sobre')); z.classList.add('at-sobre');
   let g = document.querySelector('.at-fantasma'); if (z.dataset.atall) { g?.remove(); return; }
@@ -3741,7 +3742,7 @@ document.addEventListener('dragover', e => { if (!atArr) return; const z = e.tar
   const v = atHoraDe(e, z); g.style.top = (v-AT_H0)*AT_PX+'px'; g.textContent = hmTxt(v); });
 const atHoraDe = (e, z) => Math.min(AT_H1 - 0.5, Math.max(AT_H0, AT_H0 + Math.round((e.clientY - z.getBoundingClientRect().top)/AT_PX*4)/4));
 document.addEventListener('drop', e => { if (!atArr) return; const z = e.target.closest('[data-atdia]'); if (!z) return; e.preventDefault();
-  const d = z.dataset.atdia, hora = z.dataset.atall ? '' : hmTxt(atHoraDe(e, z)), A = atDados(), k = atArr; atArr = null;
+  const d = z.dataset.atdia, hora = z.dataset.atall ? '' : hmTxt(atHoraDe(e, z)), A = atDados(), k = atArr; atFimArr();
   if (k.startsWith('pend:')) { const ch = k.slice(5), g = pendGrupos().find(x=>x.chave===ch); if (!g) return;
     const ja = A.itens.find(it=>it.pend && it.pend.chave===ch && !it.feito);
     if (ja) Object.assign(ja, {data:d, hora}); else A.itens.push({id:'A'+Date.now().toString(36), data:d, hora, dur:30, cliente:g.cliente, campanha:g.campanha, nome:PEND_TIPO[g.tipo]||g.tipo,
@@ -4385,7 +4386,8 @@ const ACT = {
     if (!await gravarContasStatus(CONTAS_STATUS.filter(c=>c!==ct))) return; if (UI.stGrupo===ct.grupo) UI.stGrupo = '';
     registrar(`Conta tirada do Digital › Campanhas: ${ct.grupo}`); fecharModal(); render(); toast('Conta tirada de Digital › Campanhas.'); },
   sincContas: async el => { el.disabled = true; toast('Buscando as campanhas no Gerenciador do Meta… (leva alguns segundos)');
-    try { const { data, error } = await sb.functions.invoke('meta-sync', { body: {} }); if (error) throw error;
+    try { const r1 = await sb.functions.invoke('meta-sync', { body: { parte:'vinculos' } }); if (r1.error) throw r1.error;   // em duas chamadas para caber no tempo da função
+      const { data, error } = await sb.functions.invoke('meta-sync', { body: { parte:'contas' } }); if (error) throw error;
       const [{ data: mc }, { data: rm }] = await Promise.all([sb.from('meta_contas').select('*'), sb.from('resultados_meta').select('*')]);
       META_CONTAS = soEstufa(mc); RESULTADOS = {}; for (const r of (rm||[])) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r); aplicarCustosAuto();
       try { const { data: ab } = await sb.from('config').select('valor').eq('chave','alertasBudget').maybeSingle(); ALERTAS_BUDGET = (ab && ab.valor) || {}; } catch(_){}

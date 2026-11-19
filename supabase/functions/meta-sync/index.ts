@@ -224,8 +224,10 @@ Deno.serve(async (req) => {
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   // quem chamou: usuário da equipe (botão) ou o agendamento (sem usuário)
-  let apenas: string | null = null, listar = false;
-  try { const corpo = await req.json(); apenas = corpo?.campanha ?? null; listar = !!corpo?.listarContas; } catch { /* sem corpo */ }
+  // parte: "vinculos" (resultados das campanhas da plataforma) ou "contas" (retrato das contas + alertas); sem parte = as duas.
+  // Separadas, cada chamada cabe no tempo máximo da função.
+  let apenas: string | null = null, listar = false, parte: string | null = null;
+  try { const corpo = await req.json(); apenas = corpo?.campanha ?? null; listar = !!corpo?.listarContas; parte = corpo?.parte ?? null; } catch { /* sem corpo */ }
   const auth = req.headers.get("Authorization") || "";
   const { data: u } = await admin.auth.getUser(auth.replace("Bearer ", ""));
   if (u?.user) {
@@ -246,7 +248,7 @@ Deno.serve(async (req) => {
   if (error) return json({ erro: error.message }, 500);
 
   const feito: unknown[] = [];
-  for (const c of campanhas || []) {
+  for (const c of (parte === "contas" ? [] : campanhas || [])) {
     const vinculos = (c.dados?.metaVinculos || []) as { campanhaId: string; acaoResultado?: string; [k: string]: unknown }[];
     for (const v of vinculos) {
       try {
@@ -280,7 +282,8 @@ Deno.serve(async (req) => {
     }
   }
   // sem campanha específica (agendamento ou botão do Status pontual): atualiza também o retrato das contas
-  const contas = apenas ? [] : await retratoContas(admin, token);
-  let alertas: unknown = null; if (!apenas) { try { alertas = await alertasBudget(admin); } catch (e) { alertas = { erro: String((e as Error).message || e) }; } }
+  const fazContas = !apenas && parte !== "vinculos";
+  const contas = fazContas ? await retratoContas(admin, token) : [];
+  let alertas: unknown = null; if (fazContas) { try { alertas = await alertasBudget(admin); } catch (e) { alertas = { erro: String((e as Error).message || e) }; } }
   return json({ resultado: feito, contas, alertas });
 });
