@@ -4251,6 +4251,8 @@ function atualizarDivisao(){ const fm = $('#form-camp'); if (!fm || !rascunho) r
     if (cf.divisao==='pct') { const sp = cf.paises.reduce((s,p)=>s+(+p.pct||0),0); info.innerHTML = cf.paises.length ? `Soma das porcentagens: <b style="color:${Math.abs(sp-100)<=0.01?'#1f6b3a':'#b3392f'}">${+sp.toFixed(2)}%</b>${Math.abs(sp-100)>0.01?' — precisa dar 100%':''}` : ''; }
     else info.innerHTML = cf.paises.length ? `<span class="muted">${cf.paises.length} país(es) · ${moeda(total/cf.paises.length||0, moe)} para cada</span>` : ''; } }
 function reabrirFormCamp(d){ rascunho = d; $('.modal-corpo').innerHTML = formCampanha(rascunho); icones(); atualizarDivisao(); }
+/* datas das fases iguais? compara o valor (o banco pode devolver as chaves em outra ordem, ex.: fim antes de ini) */
+const mesmasFases = (a, b) => { a = a||{}; b = b||{}; const ks = new Set([...Object.keys(a), ...Object.keys(b)]); for (const k of ks) { const x = a[k]||{}, y = b[k]||{}; if ((x.ini||'')!==(y.ini||'') || (x.fim||'')!==(y.fim||'')) return false; } return true; };
 function abrirFormCampanha(c, clienteId){
   UI.paisesForm = null;
   rascunho = c ? JSON.parse(JSON.stringify(c)) : {clienteId:clienteId||'',regioes:[],paises:[],canais:[],canaisCfg:{}};
@@ -4430,7 +4432,7 @@ const ACT = {
     if (err.length) { $('#aviso-lanc').innerHTML = `<div class="alerta verm"><i data-lucide="alert-circle"></i><div>${err.map(h).join('<br>')}</div></div>`; icones(); return; }
     const novoMod = modeloPara(d), mudouMod = !!d.faseada!==!!c.faseada || soAwareness(d)!==soAwareness(c);   // só muda as etapas quando liga/desliga as fases ou vira campanha só de awareness
     if (mudouMod) { const itens = c.modelo.filter(m=>m.item); d.modelo = [...novoMod, ...(d.faseada ? [] : itens)]; for (const m of d.modelo) { const ant = c.modelo.find(x=>x.id===m.id); if (ant && (c.renomeadas||{})[m.id]) m.nome = ant.nome; } }
-    const mudouDatas = mudouMod || JSON.stringify(d.fasesDatas||null)!==JSON.stringify(c.fasesDatas||null) || !!d.faseada!==!!c.faseada || d.lancamento!==c.lancamento || d.fimVeiculacao!==c.fimVeiculacao || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
+    const mudouDatas = mudouMod || !mesmasFases(d.fasesDatas, c.fasesDatas) || !!d.faseada!==!!c.faseada || d.lancamento!==c.lancamento || d.fimVeiculacao!==c.fimVeiculacao || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
     if (mudouDatas) { rascunho = d; return ACT.compararRecalc(null, d, 'Edição da campanha (datas, países ou idiomas)'); }
     delete d._baseOrig; Object.assign(c, d); sincronizarBudgetCanais(c); sincronizarEntregaveis(c); registrar('Campanha editada: '+c.nome); fecharModal(); render(); toast('Campanha salva.'); },
   alterarLanc: el => { UI.menuCamp = false; const c = camp(el.dataset.id);
