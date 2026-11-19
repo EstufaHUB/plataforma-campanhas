@@ -2659,6 +2659,7 @@ function lpFluxoBloco(c, ed){ const {f, idis} = lpDados(c), et = lpEtapas(c), po
   const link = (et_, idi, k, val, ph) => `<div class="kvc-link"><input type="url" placeholder="${ph}" value="${h(val||'')}" data-chg="lpCampo" data-id="${c.id}" data-et="${et_}" data-idi="${idi||''}" data-k="${k}" ${ed?'':'disabled'}>${val?`<a href="${h(val)}" target="_blank" rel="noopener" class="btn btn-s"><i data-lucide="external-link"></i>Abrir</a>`:''}</div>`;
   const cardConteudo = (titulo, sub, et_, idi, d, lista, bloqueado) => `<div class="card lp-c ${bloqueado?'lp-bloq':''}"><div class="lp-c-cab"><b>${titulo}</b><span>${sub}</span></div>
     <div class="kvc-2"><label class="kvc-campo"><span><i data-lucide="user"></i>Responsável</span>${resp(et_, idi, d.resp)}</label><label class="kvc-campo"><span><i data-lucide="circle-dot"></i>Status</span>${sel(et_, 'status', idi, lista, d.status)}</label></div>
+    <label class="kvc-campo"><span><i data-lucide="file-text"></i>${et_==='trad'?'Tradução':'Conteúdo'} (documento)</span>${link(et_, idi, 'doc', d.doc, et_==='trad'?'Link do documento com a tradução':'Link do documento com o conteúdo (Google Docs, Word…)')}</label>
     <label class="kvc-campo"><span><i data-lucide="globe"></i>LP programada</span>${link(et_, idi, 'lpUrl', d.lpUrl, 'Link da landing page no ar neste idioma')}</label></div>`;
   const passo = (n, t, ok) => `<div class="lp-passo ${ok?'ok':''}"><span>${ok?'<i data-lucide="check"></i>':n}</span>${t}</div>`;
   return `<div class="lp-fluxo">
@@ -5201,7 +5202,7 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
   if (k==='lpCampo') { const c = camp(el.dataset.id); if (!c) return; const {f} = lpDados(c), et = el.dataset.et, alvo = et==='trad' ? f.trad[el.dataset.idi] : f[et], campo = el.dataset.k, val = (el.value||'').trim();
     if (!alvo || (alvo[campo]||'')===val) return; alvo[campo] = val;
     const nome = et==='conteudo' ? 'conteúdo base' : et==='trad' ? 'tradução '+(IDIOMAS[el.dataset.idi]||el.dataset.idi) : et==='layout' ? 'layout' : 'programação';
-    registrar(`Landing page de “${c.nome}” · ${nome}: ${campo==='status'?val:campo==='resp'?'responsável '+(val||'—'):campo==='link'?'link do XD atualizado':'link da LP programada atualizado'}`); salvar(); render(); toast('Salvo.'); return; }
+    registrar(`Landing page de “${c.nome}” · ${nome}: ${campo==='status'?val:campo==='resp'?'responsável '+(val||'—'):campo==='link'?'link do XD atualizado':campo==='doc'?'documento do conteúdo atualizado':'link da LP programada atualizado'}`); salvar(); render(); toast('Salvo.'); return; }
   if (k==='kvCampo') { const c = camp(el.dataset.id); if (!c) return; let e = c.entregaveis.find(x=>x.id===el.dataset.e);
     if (!e) { e = {id:novoId('e'), secao:'KV', auto:'kv', nome:'KV da campanha', canal:'', paises:c.paises.map(p=>p.cod), formato:'Key visual', etapa:'briefing', versoes:[], aprovacoes:[], link:''}; c.entregaveis.push(e); }
     const campo = el.dataset.k, val = (el.value||'').trim(), ant = e[campo] || '';
