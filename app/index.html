@@ -3610,9 +3610,7 @@ function entregaveisSecoes(c){
 function abaEntregaveis(c){
   const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:'',marca:''});
   const temOrg = temOrganico(c), sep = marcaSeparada(c);
-  const sub = `<div class="seg" style="margin-bottom:14px"><button class="${f.sub==='pecas'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="pecas"><i data-lucide="package"></i>Peças</button><button class="${f.sub==='conteudos'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="conteudos"><i data-lucide="languages"></i>Conteúdos por país</button>${temOrg?`<button class="${f.sub==='editorial'?'ativo':''}" data-act="ui" data-k="fen.sub" data-v="editorial"><i data-lucide="calendar-days"></i>Calendário editorial</button>`:''}</div>`;
-  if (f.sub==='conteudos') return sub + conteudosPorPais(c);
-  if (f.sub==='editorial' && temOrg) return sub + calendarioEditorial([c], c.id);
+  const sub = '';   // Conteúdos por país e Calendário editorial saíram: Entregáveis mostra só as peças
   if ((c.notionVinculos||[]).length) return sub + entregaveisNotion(c);
   if (ehEquipe() && !c.entAutoFeito) { sincronizarEntregaveis(c); c.entAutoFeito = true; setTimeout(salvar, 0); }   // 1ª vez: cria as peças-padrão da ficha
   return sub + entregaveisSecoes(c);   // a visão em tabela saiu (só seções)
