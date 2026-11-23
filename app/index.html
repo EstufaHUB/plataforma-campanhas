@@ -109,7 +109,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .cc-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.82rem;color:var(--tx2)}
 .cc-pill{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--tx)}.cc-pill i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .cc-sep{width:1px;height:16px;background:var(--borda)}.cc-ini{display:inline-flex;align-items:center;gap:5px}.cc-ini svg{width:15px;height:15px}.cc-band{letter-spacing:2px}
-.cc-dir{display:flex;gap:8px;align-items:center}.menu-wrap{position:relative}.menu-wrap .btn svg{width:15px;height:15px}
+.cc-dir{display:flex;gap:8px;align-items:center}.np-pop{right:0;left:auto;width:320px;padding:6px}.np-pop button{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;padding:8px 10px;border-radius:8px}.np-pop button svg{width:17px;height:17px;margin-top:2px;flex:none;color:var(--tx2)}.np-pop span{display:flex;flex-direction:column;gap:1px}.np-pop b{font-size:.86rem;font-weight:600}.np-pop em{font-style:normal;font-size:.74rem;color:var(--tx3)}.np-pop small{font-weight:500;font-size:.66rem;color:#8a6116;background:#fbf3db;border-radius:10px;padding:1px 6px;margin-left:4px}.np-pop button:disabled{opacity:.6;cursor:default}.menu-wrap{position:relative}.menu-wrap .btn svg{width:15px;height:15px}
 .menu-pop{position:absolute;right:0;top:calc(100% + 4px);z-index:60;background:var(--sup);border:1px solid var(--borda);border-radius:10px;box-shadow:var(--sombra-f);padding:6px;min-width:220px}
 .menu-pop button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:8px 10px;border-radius:6px;font:inherit;font-size:.86rem;color:var(--tx);cursor:pointer;text-align:left}.menu-pop button:hover{background:var(--pet-50)}.menu-pop svg{width:16px;height:16px}
 .kpi2{display:flex;gap:14px;align-items:flex-start;padding:18px}.k-ic{width:36px;height:36px;border-radius:9px;background:var(--pet-50);color:var(--pet-700);display:grid;place-items:center;flex-shrink:0}.k-ic svg{width:19px;height:19px}
@@ -1652,7 +1652,7 @@ function pgDashboard(){
     return `<a class="card ini-cli" href="#/clientes/${cl.id}">${logoCliente(cl,'cli-logo ini-logo')}<div style="min-width:0"><b>${h(cl.nome)}</b><div class="ini-st"><span><i class="ponto p-verde"></i>${ar} no ar</span><span><i class="ponto" style="background:var(--ambar)"></i>${pr} em produção</span>${ni?`<span><i class="ponto p-cinza"></i>${ni} a iniciar</span>`:''}</div></div></a>`; }).join('');
   const prazo = t => { const st = statusExib(t), d = difDias(HOJE, t.EF); return st==='Atrasada' ? '<span class="tag t-verm">Atrasada</span>' : d<=2 ? `<span class="tag t-amar">${d===0?'Hoje':d===1?'Amanhã':d+' dias'}</span>` : '<span class="tag t-verde">No prazo</span>'; };
   const listaEnt = ent.slice(0,6).map(({c,t})=>`<a class="ini-ent" href="#/campanha/${c.id}/cronograma"><div class="ini-dia"><b>${t.EF.slice(8,10)}</b><span>${MESES[+t.EF.slice(5,7)-1].slice(0,3).toLowerCase()}</span></div><div style="min-width:0"><b>${h(t.nome)}${t.pais?' · '+h(t.pais):''}</b><div class="small muted">${h(c.nome)} · ${h(cliente(c.clienteId).nome)}</div></div><span class="small muted">${h(t.area||'')}</span>${prazo(t)}</a>`).join('');
-  return `<div class="cab ini-cab"><div><h1>${saud}${nome1?', '+h(nome1):''}</h1><p>${dataLonga.charAt(0).toUpperCase()+dataLonga.slice(1)}${semana?` · ${semana} entrega${semana===1?' vence':'s vencem'} nos próximos 7 dias`:''}</p></div><button class="btn btn-p" data-act="novaCampanha"><i data-lucide="plus"></i>Nova campanha</button></div>
+  return `<div class="cab ini-cab"><div><h1>${saud}${nome1?', '+h(nome1):''}</h1><p>${dataLonga.charAt(0).toUpperCase()+dataLonga.slice(1)}${semana?` · ${semana} entrega${semana===1?' vence':'s vencem'} nos próximos 7 dias`:''}</p></div>${btnNovoProjeto('')}</div>
   <div class="grade g4">${k4.map(([t,v,ic,cl])=>`<div class="card kpi ${cl}"><div class="r"><i data-lucide="${ic}"></i>${t}</div><div class="v num">${v}</div></div>`).join('')}</div>
   <div class="grade g3" style="margin-top:16px">${clis}</div>
   <div class="card" style="margin-top:16px"><div class="card-cab"><h3>Próximas entregas</h3><span class="small muted">atrasadas e com prazo nos próximos 14 dias</span></div>${listaEnt || '<div class="vazio small">Nenhuma entrega nos próximos 14 dias.</div>'}${ent.length>6?`<div class="small muted" style="padding:10px 18px">+ ${ent.length-6} entregas</div>`:''}</div>
@@ -1720,7 +1720,7 @@ function pgCliente(id){
   const resumoHtml = resumo.map(x=>`<a href="javascript:void 0" class="cc-pill cli-st ${f.status===x.st?'on':''}" data-act="filtroStatusCli" data-v="${h(x.st)}" title="${f.status===x.st?'Mostrar todas':'Filtrar a lista'}"><i style="background:${corSt[x.st]}"></i>${x.n} ${x.rot}</a>`).join('<span class="cc-sep"></span>');
   const cab = `<div class="cc card"><div class="cc-esq">${logoCliente(cl, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">Cliente</div><h1>${h(cl.nome)}</h1>
       <div class="cc-meta" style="margin-top:6px"><span>${h(cl.segmento)}${cl.contato?' · '+h(cl.contato):''}</span><span class="cc-sep"></span>${resumoHtml}</div></div></div>
-    <div class="cc-dir nao-imprimir"><button class="btn" data-act="formCliente" data-id="${id}"><i data-lucide="pencil"></i>Editar</button><button class="btn" data-act="arquivarCliente" data-id="${id}"><i data-lucide="archive"></i>${cl.arquivado?'Desarquivar':'Arquivar'}</button><button class="btn btn-p" data-act="novaCampanha" data-cliente="${id}"><i data-lucide="plus"></i>Nova campanha</button></div></div>`;
+    <div class="cc-dir nao-imprimir"><button class="btn" data-act="formCliente" data-id="${id}"><i data-lucide="pencil"></i>Editar</button><button class="btn" data-act="arquivarCliente" data-id="${id}"><i data-lucide="archive"></i>${cl.arquivado?'Desarquivar':'Arquivar'}</button>${btnNovoProjeto(id)}</div></div>`;
   // ---------- lista: filtro por marca, totais, recorrentes em cartões, pontuais por quarter e linha do tempo ----------
   const COR_MARCA = {'PTx Trimble':'#111111', 'Precision Planting':'#EF9F27', 'Collab':'#B4B2A9'};
   const corC = c => { const ms = marcasDe(c); return ms.length>1 ? `linear-gradient(${COR_MARCA[ms[0]]||'#ccc'} 50%, ${COR_MARCA[ms[1]]||'#ccc'} 50%)` : (COR_MARCA[ms[0]] || '#d1d5db'); };
@@ -1790,6 +1790,12 @@ function pgCliente(id){
   return cab + filtros + corpo;
 }
 
+/* botão "Novo projeto": escolhe o tipo (campanha hoje; social media, evento e projeto offline em seguida) */
+const TIPOS_PROJETO = [['campanha','megaphone','Campanha','Mídia paga, LP, KV e peças por país', true],['social','smartphone','Social media','Conteúdo orgânico recorrente, mês a mês', false],['evento','tent','Evento','Feira, dia de campo, lançamento presencial', false],['offline','package','Projeto offline','Impressos, brindes, PDV, vídeos institucionais', false]];
+function btnNovoProjeto(cli){ const k = 'np:'+(cli||'');
+  return `<div class="menu-wrap"><button class="btn btn-p" data-act="menuNovoProj" data-k="${k}"><i data-lucide="plus"></i>Novo projeto<i data-lucide="chevron-down"></i></button>${UI.menuNovo===k ? `<div class="menu-pop np-pop">${TIPOS_PROJETO.map(([t,ic,nome,desc,ok])=>ok
+    ? `<button data-act="novoProjeto" data-tipo="${t}" data-cliente="${cli||''}"><i data-lucide="${ic}"></i><span><b>${nome}</b><em>${desc}</em></span></button>`
+    : `<button disabled title="Em breve"><i data-lucide="${ic}"></i><span><b>${nome} <small>em breve</small></b><em>${desc}</em></span></button>`).join('')}</div>` : ''}</div>`; }
 /* =====================================================================
    10. PÁGINA DA CAMPANHA
    ===================================================================== */
@@ -1939,7 +1945,7 @@ function reordenarModelo(c, tid, alvo, depois, fase){
   M.splice(pos, 0, m);
   for (const t of c.crono.tarefas) if (t.tid===tid) t.fase = m.fase;
   return true; }
-document.addEventListener('click', e => { if (UI.mselAberto && !e.target.closest('.msel')) { UI.mselAberto = null; render(); } if (UI.menuCamp && !e.target.closest('.menu-wrap')) { UI.menuCamp = false; render(); } if (UI.paisesForm && !e.target.closest('.msel') && $('#form-camp')) { UI.paisesForm = null; reabrirFormCamp(lerFormCampanha()); } });
+document.addEventListener('click', e => { if (UI.menuNovo && !e.target.closest('.menu-wrap')) { UI.menuNovo = null; render(); } if (UI.mselAberto && !e.target.closest('.msel')) { UI.mselAberto = null; render(); } if (UI.menuCamp && !e.target.closest('.menu-wrap')) { UI.menuCamp = false; render(); } if (UI.paisesForm && !e.target.closest('.msel') && $('#form-camp')) { UI.paisesForm = null; reabrirFormCamp(lerFormCampanha()); } });
 let linhaDrag = null;
 document.addEventListener('dragstart', e => { const g = e.target.closest && e.target.closest('[data-linha-drag]'); if (!g) return;
   linhaDrag = g.dataset.linhaDrag; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', linhaDrag); } catch(_){}
@@ -5455,6 +5461,8 @@ const ACT = {
     registrar(`Landing page de “${c.nome}” · ${et==='trad' ? 'tradução '+(IDIOMAS[idi]||idi) : 'conteúdo base'}: comentário na página${menc.length?' (mencionou '+menc.join(', ')+')':''}`);
     salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
   lpComentPgDel: el => { const {d} = discAlvo(), i = +el.dataset.i; if (!d || !d.coment || !d.coment[i] || d.coment[i].quem!==quemSou() || !confirm('Excluir este comentário?')) return; lpGuardarEdicao(); d.coment.splice(i, 1); salvar(); render(); },
+  menuNovoProj: el => { UI.menuNovo = UI.menuNovo===el.dataset.k ? null : el.dataset.k; render(); },
+  novoProjeto: el => { UI.menuNovo = null; if (el.dataset.tipo==='campanha') { const b = document.createElement('button'); b.dataset.act = 'novaCampanha'; if (el.dataset.cliente) b.dataset.cliente = el.dataset.cliente; ACT.novaCampanha(b); } else render(); },
   pecaMarca: el => { UI.pecaMarca = UI.pecaMarca || {}; UI.pecaMarca[el.dataset.k] = +el.dataset.v || 0; render(); },
   pecaIdi: el => { UI.pecaIdi = UI.pecaIdi || {}; UI.pecaIdi[el.dataset.e] = el.dataset.v; render(); },
   pecaNova: el => { const c = camp(el.dataset.id); if (!c) return; const {canal, marca, fase} = el.dataset, paises = (el.dataset.paises||'').split(',').filter(Boolean);
