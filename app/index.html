@@ -6,7 +6,7 @@
 <title>Estufa · Gestão de campanhas</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111'/%3E%3Cpath d='M16 7l10 17H6z' fill='%23EF9F27'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Grand+Hotel&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
@@ -623,6 +623,113 @@ body.at-arrastando .at-ev{pointer-events:none}
 
 /* dashboard: os cartões de cada linha começam na mesma altura e têm a mesma altura */
 .dsh-kpis>.card,.dsh-g2>.card{margin:0!important}.dsh-kpis{align-items:stretch}.dsh-g2{align-items:stretch!important}
+
+/* ---------- social media: calendário, post com prévia no Instagram, prévia do feed ---------- */
+.pc4-st.c-roxo{background:#efe9fb;color:#5b3fa8}
+.soc-cab .cc-esq{align-items:center}.soc-cab-ic{width:44px;height:44px;flex:none;border-radius:12px;background:linear-gradient(135deg,#feda75,#fa7e1e 30%,#d62976 60%,#962fbf 85%,#4f5bd5);color:#fff;display:flex;align-items:center;justify-content:center}.soc-cab-ic svg{width:22px;height:22px}
+.soc-pf-tag{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;color:var(--tx2)}.soc-pf-tag i{width:8px;height:8px;border-radius:50%}.soc-cab .cc-meta{gap:10px;flex-wrap:wrap}
+.soc-abas{margin:14px 0 0}.soc-abas small{font-size:.68rem;color:var(--tx3);margin-left:4px}
+.soc-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 10px}
+.soc-chips{display:flex;gap:6px;flex-wrap:wrap}.soc-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--borda);background:#fff;border-radius:20px;padding:4px 12px;font-size:.8rem;color:var(--tx2);cursor:pointer;text-decoration:none;white-space:nowrap}.soc-chip i{width:8px;height:8px;border-radius:50%}.soc-chip:hover{background:#f6f6f5}.soc-chip.on{background:#1f2a2e;color:#fff;border-color:#1f2a2e}.soc-chip.on i{box-shadow:0 0 0 1.5px #fff}
+.soc-mes{display:flex;align-items:center;gap:6px;margin-left:auto}.soc-mes b{min-width:150px;text-align:center;font-size:.95rem}.soc-mes .btn svg{margin:0}
+.soc-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.soc-dow{font-size:.68rem;font-weight:700;color:var(--tx3);text-transform:uppercase;text-align:center;letter-spacing:.04em;padding-bottom:2px}
+.soc-cel{background:#fff;border:1px solid var(--borda);border-radius:10px;min-height:120px;padding:6px;display:flex;flex-direction:column;gap:5px;min-width:0;transition:background .12s}
+.soc-cel.fora{background:transparent;border:1px dashed #e3e5e6}
+.soc-cel.hoje{border-color:var(--pet-800);box-shadow:0 0 0 1px var(--pet-800) inset}.soc-cel.sobre{background:#eef6f7;border-color:var(--pet-800)}
+.soc-dia{display:flex;align-items:center;justify-content:space-between;font-size:.74rem;font-weight:600;color:var(--tx3);min-height:18px}.soc-cel.hoje .soc-dia span{background:var(--pet-800);color:#fff;border-radius:10px;padding:0 7px}
+.soc-add{opacity:0;border:0;background:none;cursor:pointer;color:var(--tx3);padding:1px;border-radius:5px;display:flex}.soc-add:hover{background:#f1f3f4;color:var(--tx1)}.soc-add svg{width:15px;height:15px}.soc-cel:hover .soc-add{opacity:1}
+.soc-card{background:#fff;border:1px solid var(--borda);border-radius:8px;padding:6px 7px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;cursor:pointer;box-shadow:0 1px 2px rgba(15,15,15,.04);min-width:0;width:100%;box-sizing:border-box}
+.soc-card:hover{background:#fafafa}.soc-card.soc-ok{background:#eef6f0;border-color:#a9d3b5}.soc-card[draggable=true]{cursor:grab}
+.soc-card-t{display:flex;align-items:flex-start;gap:5px;font-size:.76rem;line-height:1.25;min-width:0;width:100%}.soc-card-t b{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.soc-dots{display:inline-flex;flex:none;margin-top:3px}.soc-dots i{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1.5px #fff}.soc-dots i+i{margin-left:-3px}
+.soc-fmt{width:13px!important;height:13px!important;flex:none;color:var(--tx3);margin-top:1px}
+.soc-card .pc4-st{font-size:.66rem;padding:1px 7px 1px 6px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.soc-card .pc4-st i{flex:none}
+.soc-card-m{display:flex;gap:7px;flex-wrap:wrap;font-size:.66rem;color:var(--tx3)}.soc-card-m span{display:inline-flex;align-items:center;gap:3px}.soc-card-m svg{width:11px;height:11px}.soc-card-m em{font-style:normal;color:#b0640c;font-weight:600}
+.soc-st{cursor:default}.soc-pjs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:18px}
+.soc-pj{display:flex;flex-direction:column;gap:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:background .12s}.soc-pj:hover{background:#fafafa}.soc-pj-t{display:flex;align-items:center;gap:10px}.soc-pj-t .soc-cab-ic{width:30px;height:30px;border-radius:8px}.soc-pj-t .soc-cab-ic svg{width:16px;height:16px}.soc-pj-pfs{display:flex;gap:10px;flex-wrap:wrap}.soc-pj small{color:var(--tx3);font-size:.76rem}
+/* página do post: texto | comentários | iPhone */
+.np.soc-np{max-width:1440px}
+.soc-grade{display:grid;grid-template-columns:minmax(0,1fr) 230px 350px;gap:20px;align-items:start}
+.soc-prev{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px}.soc-prev-cap{font-size:.74rem;color:var(--tx3);text-align:center;max-width:320px;line-height:1.45}
+@media (max-width:1560px){.soc-grade{grid-template-columns:minmax(0,1fr) 350px}.soc-grade .np-disc{grid-column:1;grid-row:2}.soc-grade .np-disc .dc{position:static;margin-bottom:10px}}
+@media (max-width:1000px){.soc-grade{grid-template-columns:1fr}.soc-grade .np-disc{grid-row:auto}.soc-prev{position:static}}
+.soc-dt{display:flex;gap:4px;align-items:center}.soc-dt input{font-family:inherit}
+.soc-lk-row{align-items:start!important}.soc-lk-row>span{padding-top:5px}.soc-links{display:flex;flex-direction:column;gap:2px;min-width:0}.soc-links .np-asset input{min-width:300px}
+.soc-levar{justify-self:start}.soc-mudou{margin:0 0 14px}.soc-mudou .btn{margin-left:6px}.soc-collab-tx{color:var(--tx2)!important;font-weight:500!important}
+/* iPhone */
+.iph{width:330px;height:690px;border-radius:54px;background:#1c1c1e;padding:11px;box-sizing:border-box;position:relative;flex:none;box-shadow:inset 0 0 0 1.5px #4a4a4e,inset 0 0 0 4px #1c1c1e,0 0 0 1px #0b0b0c,0 34px 60px -24px rgba(15,23,30,.45),0 12px 26px -10px rgba(15,23,30,.3)}
+.iph::before,.iph::after{content:'';position:absolute;width:3px;border-radius:2px;background:#2a2a2d}.iph::before{left:-3px;top:150px;height:56px;box-shadow:0 70px 0 #2a2a2d}.iph::after{right:-3px;top:180px;height:86px}
+.iph-tela{position:relative;width:100%;height:100%;border-radius:44px;overflow:hidden;background:#fff;display:flex;flex-direction:column;color:#000;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.iph-esc .iph-tela{background:#000;color:#fff}
+.iph-sb{height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:4px 26px 0 34px;font-size:15px;position:relative;z-index:5}.iph-sb b{font-weight:600;letter-spacing:-.01em}
+.iph-ilha{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:100px;height:29px;border-radius:20px;background:#000}
+.iph-ics{display:flex;gap:5px;align-items:center}.iph-ics svg{height:11.5px;width:auto;fill:currentColor}
+.iph-home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:5px;border-radius:3px;background:#000;z-index:6}.iph-esc .iph-home{background:#fff}
+/* Instagram */
+.ig-top{flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 14px 8px}.ig-logo{font-family:'Grand Hotel',cursive;font-size:28px;line-height:1;letter-spacing:.01em}
+.ig-top-ic{display:flex;gap:18px}.ig-top-ic svg,.ig-ac svg{width:23px;height:23px;stroke-width:1.9}
+.ig-corpo{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}.ig-corpo::-webkit-scrollbar{display:none}
+.ig-ph{display:flex;align-items:center;gap:9px;padding:6px 12px 8px;font-size:13px}.ig-ph>svg{width:18px;height:18px}
+.ig-ph-n{flex:1;min-width:0;line-height:1.25}.ig-ph-n b{font-weight:600}.ig-ph-n span{font-weight:400}
+.ig-av{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--c);color:#fff;font-weight:700;font-size:10px;width:30px;height:30px;flex:none;letter-spacing:.02em}
+.ig-ring{display:inline-flex;padding:2px;border-radius:50%;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);flex:none}.ig-ring .ig-av{box-shadow:0 0 0 2px #fff}
+.ig-av-s{width:26px;height:26px;font-size:9px}.ig-av-g{width:80px;height:80px;font-size:22px}
+.ig-m{position:relative;background:#efefef;aspect-ratio:4/5;overflow:hidden}
+.ig-m>img,.ig-m>video,.ig-m>iframe,.ig-sl img,.ig-sl video{width:100%;height:100%;object-fit:cover;border:0;display:block}
+.ig-car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:100%;scrollbar-width:none}.ig-car::-webkit-scrollbar{display:none}.ig-sl{flex:0 0 100%;scroll-snap-align:start;height:100%}
+.ig-cnt{position:absolute;top:12px;right:12px;background:rgba(18,18,18,.7);color:#fff;font-size:12px;border-radius:13px;padding:3px 9px;pointer-events:none}
+.ig-seta{position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:0;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:0;transition:opacity .15s;box-shadow:0 1px 4px rgba(0,0,0,.2)}.ig-seta svg{width:16px;height:16px;color:#262626}.ig-seta.e{left:8px}.ig-seta.d{right:8px}.ig-m:hover .ig-seta{opacity:1}
+.ig-ac{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 5px;position:relative}.ig-ac>span:first-child{display:flex;gap:15px}
+.ig-dots{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:4px}.ig-dots i{width:6px;height:6px;border-radius:50%;background:#c7c7c7}.ig-dots i.on{background:#0095f6}
+.ig-lk{font-size:13px;font-weight:600;padding:2px 12px}
+.ig-leg{font-size:13px;line-height:1.4;padding:3px 12px 0;cursor:pointer;word-wrap:break-word}.ig-leg b{font-weight:600}
+.ig-leg:not(.ab) .ig-leg-tx{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ig-mais{color:#737373}.ig-leg.ab .ig-mais{display:none}
+.ig-tag{color:#00376b}.iph-esc .ig-tag{color:#e0f1ff}
+.ig-cm{font-size:13px;color:#737373;padding:5px 12px 0}.ig-dt{font-size:11px;color:#737373;padding:5px 12px 16px}
+.ig-nav{flex:none;display:flex;justify-content:space-around;align-items:center;height:44px;padding-bottom:20px;border-top:1px solid #efefef;background:#fff}.ig-nav svg{width:24px;height:24px;stroke-width:1.9}.ig-nav-av{width:25px;height:25px;border-radius:50%;background:linear-gradient(135deg,#d9d9d9,#bdbdbd)}
+.ig-nav.esc{background:#000;border-color:#262626;color:#fff}.ig-nav.esc .ig-nav-av{background:linear-gradient(135deg,#555,#333)}
+.ig-vazio{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;color:#8e8e8e;font-size:12px;text-align:center;padding:18px;box-sizing:border-box;background:#f3f3f3;text-decoration:none;line-height:1.4}.ig-vazio svg{width:26px;height:26px;stroke-width:1.5}.ig-vazio small{font-size:10.5px;color:#a8a8a8}
+.iph-esc .ig-vazio{background:#161616;color:#9a9a9a}
+.ig-full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0}
+/* Reels */
+.ig-rl{position:relative;flex:1;min-height:0;background:#000;overflow:hidden}.ig-rl::after{content:'';position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(transparent,rgba(0,0,0,.6));pointer-events:none}
+.ig-rl-top{position:absolute;top:6px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;font-size:21px;color:#fff;pointer-events:none;z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.35)}.ig-rl-top b{font-weight:700}.ig-rl-top svg{width:24px;height:24px}
+.ig-rl-lat{position:absolute;right:10px;bottom:84px;display:flex;flex-direction:column;gap:17px;align-items:center;color:#fff;font-size:11.5px;font-weight:500;pointer-events:none;z-index:2}.ig-rl-lat span{display:flex;flex-direction:column;align-items:center;gap:3px}.ig-rl-lat svg{width:26px;height:26px;stroke-width:1.8;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.ig-rl-rod{position:absolute;left:12px;right:58px;bottom:14px;color:#fff;font-size:13px;z-index:2;text-shadow:0 1px 2px rgba(0,0,0,.45)}.ig-rl-u{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ig-rl-u b{font-weight:600}.ig-seg{border:1px solid rgba(255,255,255,.75);border-radius:8px;padding:3px 10px;font-weight:600;font-size:12px}
+.ig-rl-leg{margin-top:8px;cursor:pointer;line-height:1.35}.ig-rl-leg:not(.ab){display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.ig-rl-leg.ab{max-height:170px;overflow-y:auto}
+.ig-rl-au{margin-top:8px;font-size:12px;display:flex;gap:6px;align-items:center}.ig-rl-au svg{width:13px;height:13px}
+/* Stories */
+.ig-st{position:relative;flex:1;min-height:0;background:#1a1a1a;border-radius:9px;overflow:hidden;margin:0 2px}
+.ig-st-bar{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:3px;pointer-events:none;z-index:2}.ig-st-bar i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.45)}.ig-st-bar i:first-child{background:#fff}
+.ig-st-cab{position:absolute;top:18px;left:10px;right:10px;display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;pointer-events:none;z-index:2;text-shadow:0 1px 2px rgba(0,0,0,.4)}.ig-st-cab b{font-weight:600}.ig-st-cab span{opacity:.75}.ig-st-cab svg{width:22px;height:22px}.ig-st-cab svg:first-of-type{margin-left:auto}
+.ig-st-rod{flex:none;display:flex;align-items:center;gap:16px;padding:9px 14px 26px;color:#fff}.ig-st-rod svg{width:24px;height:24px}.ig-st-in{flex:1;border:1px solid rgba(255,255,255,.55);border-radius:22px;padding:9px 16px;font-size:13.5px}
+/* perfil e grade do feed */
+.ig-pf-top{flex:none;display:flex;align-items:center;gap:4px;padding:2px 14px 6px;font-size:18px}.ig-pf-top b{font-weight:700;letter-spacing:-.01em}.ig-pf-top svg{width:16px;height:16px}.ig-pf-top>span{margin-left:auto;display:flex;gap:20px}.ig-pf-top>span svg{width:24px;height:24px}
+.ig-pf-cab{display:flex;align-items:center;gap:16px;padding:8px 14px 6px}.ig-pf-nums{flex:1;display:flex;justify-content:space-around;text-align:center}.ig-pf-nums b{display:block;font-size:16px;font-weight:700}.ig-pf-nums span{font-size:12.5px}
+.ig-pf-nome{padding:4px 14px 0;font-size:13px;font-weight:600}
+.ig-pf-bts{display:flex;gap:6px;padding:10px 14px 4px}.ig-pf-bts span{flex:1;text-align:center;background:#efefef;border-radius:8px;padding:7px;font-size:13px;font-weight:600}.ig-pf-bts span:first-child{background:#0095f6;color:#fff}
+.ig-pf-tabs{display:flex;margin-top:10px}.ig-pf-tabs span{flex:1;display:flex;justify-content:center;padding:9px 0;color:#8e8e8e;border-bottom:1px solid #dbdbdb}.ig-pf-tabs span.on{color:#000;border-bottom:1.5px solid #000}.ig-pf-tabs svg{width:22px;height:22px}
+.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.ig-tile{position:relative;aspect-ratio:3/4;background:#efefef;overflow:hidden}.ig-tile[onclick]{cursor:pointer}.ig-tile[onclick]:hover{filter:brightness(.92)}
+.ig-tile img,.ig-tile video,.ig-tile iframe,.ig-tile .ig-vazio{width:100%;height:100%;object-fit:cover;display:block;border:0;pointer-events:none}.ig-tile .ig-vazio{padding:6px;font-size:9.5px}
+.ig-tile.old{opacity:.45}
+.ig-tile-ic{position:absolute;top:6px;right:6px;width:16px!important;height:16px!important;color:#fff;filter:drop-shadow(0 0 2px rgba(0,0,0,.6))}
+.ig-tile-vz{display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;height:100%;padding:8px;font-size:10px;line-height:1.3;color:#737373;text-align:center;border:1.5px dashed #c9c9c9;box-sizing:border-box;background:#fafafa}.ig-tile-vz small{font-size:9px;color:#a8a8a8}
+.ig-tile-dt{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.62);color:#fff;font-size:9.5px;font-weight:600;border-radius:4px;padding:1px 5px}
+.ig-grid-vz{grid-column:1/-1;padding:40px 20px;text-align:center;color:#8e8e8e;font-size:13px}
+.soc-feed{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:28px;align-items:start}.soc-feed-ph{display:flex;justify-content:center;padding-top:4px}
+.soc-feed-info h3{margin:0 0 8px;font-size:1rem}.soc-feed-info h3:first-letter{text-transform:uppercase}.soc-feed-n{font-size:.88rem;color:var(--tx2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.soc-falta{display:flex;flex-direction:column;gap:3px;margin-top:6px}.soc-falta a{font-size:.82rem}.soc-feed-opt{display:flex;gap:6px;align-items:center;margin-top:14px;cursor:pointer}.soc-feed-pub{margin-top:16px;padding-top:14px;border-top:1px solid var(--borda)}
+@media (max-width:900px){.soc-feed{grid-template-columns:1fr}}
+/* formulário e modal "trazer do Brasil" */
+.soc-form{display:flex;flex-direction:column;gap:8px}.soc-form label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--tx2)}.soc-form-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.soc-form-t{font-weight:600;font-size:.88rem;margin-top:10px}.soc-form-t span{font-weight:400;color:var(--tx3);font-size:.78rem;margin-left:6px}
+.soc-form-pf{display:grid;grid-template-columns:34px minmax(0,1.4fr) minmax(0,1fr) 120px;gap:6px;align-items:center}.soc-form-pf input[type=color]{width:34px;height:34px;padding:2px;border:1px solid var(--borda);border-radius:8px;background:#fff;cursor:pointer}
+.soc-trazer{display:flex;flex-direction:column;gap:2px;max-height:420px;overflow:auto}.soc-trazer label{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:.86rem}.soc-trazer label:hover{background:#f6f6f5}.soc-trazer label.off{opacity:.55;cursor:default}.soc-trazer em{font-style:normal;color:var(--tx3);font-size:.78rem}.soc-trazer small{margin-left:auto;color:var(--tx3)}
+/* página pública do post / do feed */
+.pub.pub-soc .pub-doc{max-width:1120px}.pub-soc-g{display:grid;grid-template-columns:350px minmax(0,1fr);gap:48px;align-items:start}.pub-soc-ph{position:sticky;top:20px}.pub-soc-feed{grid-template-columns:minmax(0,1fr) 350px}
+@media (max-width:900px){.pub-soc-g,.pub-soc-feed{grid-template-columns:1fr}.pub-soc-ph{position:static;display:flex;justify-content:center}}
 </style>
 </head>
 <body>
@@ -713,7 +820,7 @@ function nivelDe(p){ if (!p) return null; if (p.papel==='admin') return 'admin';
   const a = p.acessos || AC_PADRAO; for (const k of ['completo','operacional']) if (NIVEIS[k].areas.length===a.length && NIVEIS[k].areas.every(x=>a.includes(x))) return k; return 'pers'; }
 const pode = area => { if (!PERFIL) return false; if (PERFIL.papel==='admin') return true; if (area==='acessos') return false;
   if (PERFIL.papel==='cliente') return area==='campanhas'; if (PERFIL.papel!=='equipe') return false; return (PERFIL.acessos || AC_PADRAO).includes(area); };
-const AREA_ROTA = {clientes:'campanhas', campanha:'campanhas', lp:'campanhas', acoes:'acoes', status:'status', atividades:'status', acompanhamento:'status', anual:'calendarios', editorial:'calendarios', config:'config', invoices:'invoices', acessos:'acessos'};
+const AREA_ROTA = {clientes:'campanhas', campanha:'campanhas', lp:'campanhas', social:'campanhas', acoes:'acoes', status:'status', atividades:'status', acompanhamento:'status', anual:'calendarios', editorial:'calendarios', config:'config', invoices:'invoices', acessos:'acessos'};
 const podeRota = r => !AREA_ROTA[r[0]] || pode(AREA_ROTA[r[0]]);
 const equipeAtiva = () => PERFIS.filter(p=>p.papel==='admin' || p.papel==='equipe');
 const nomeResp = p => String(p.nome || (p.email||'').split('@')[0]).trim();
@@ -1178,6 +1285,21 @@ function dadosDemo(){
   c5.acoes.forEach(a=>a.status='Concluída');
   mk({clienteId:'cl1',nome:'Dia das Mães 2027',descricao:'',objetivo:'Vendas.',lancamento:'2027-04-26',fimVeiculacao:'2027-05-09',regioes:['LATAM'],idiomaBase:'PT',paises:[P('BR','2027-04-26')],canais:['Meta Ads','Conteúdo orgânico / Social Media'],respAtendimento:'u1',respPlanejamento:'u3',orcamento:20000}, false);
   mk({clienteId:'cl2',nome:'Verão Europeu 2027',descricao:'',objetivo:'Reservas.',lancamento:'2027-05-24',fimVeiculacao:'2027-08-31',regioes:['EMEA'],idiomaBase:'EN',paises:[P('DE','2027-05-24'),P('FR','2027-05-24'),P('ES','2027-05-24'),P('UK','2027-05-24')],canais:['Meta Ads','Google Display'],respAtendimento:'u2',respPlanejamento:'u3',orcamento:35000,moeda:'EUR'}, false);
+  // social media (demonstração)
+  { const ps = SOC_PERFIS_PTX.map(x=>Object.assign({}, x)), img = n => `https://picsum.photos/id/${n}/1080/1350.jpg`, d = n => '2026-11-'+String(n).padStart(2,'0');
+    const P2 = (o) => Object.assign({id:novoId('sp'), collab:false, hora:'', editoria:'Produto', resp:'Karen', links:[], etapa:'briefing', doc:{}}, o);
+    const posts = [P2({perfil:'ptxbr', data:d(3), nome:'Piloto automático na colheita', formato:'Carrossel', etapa:'publicado', links:[img(1043), img(1039), img(1036)], doc:{texto:'<p data-cor="amarelo"><b>LEGENDA</b></p><p>Precisão do início ao fim da safra. 🌾</p><p>Com o piloto automático PTx Trimble, cada passada rende mais e erra menos.</p><p><br></p><p>#PTxTrimble #AgriculturaDePrecisão</p>'}}),
+      P2({perfil:'ptxbr', data:d(6), nome:'Dia de campo em Sorriso', formato:'Reels', etapa:'agendado', hora:'18:00', collab:true, links:['https://www.w3schools.com/html/mov_bbb.mp4']}),
+      P2({perfil:'ppbr', data:d(10), nome:'vSet: plantio uniforme', formato:'Estático', etapa:'aprov_asset', links:[img(1048)]}),
+      P2({perfil:'ptxbr', data:d(13), nome:'Correção de sinal RTX', formato:'Estático', etapa:'producao', links:[img(1059)]}),
+      P2({perfil:'ptxbr', data:d(18), nome:'Bastidores da feira', formato:'Stories', etapa:'aprov_conteudo'}),
+      P2({perfil:'ptxbr', data:d(24), nome:'Depoimento do produtor', formato:'Reels', etapa:'briefing'}),
+      P2({perfil:'ppbr', data:d(27), nome:'Checklist pré-plantio', formato:'Carrossel', etapa:'ajuste_conteudo', links:[img(1068)]}),
+      P2({perfil:'ptxbr', data:'2026-10-20', nome:'Post de outubro', formato:'Estático', etapa:'publicado', links:[img(1080)]}),
+      P2({perfil:'ptxbr', data:'2026-10-27', nome:'Outro post de outubro', formato:'Estático', etapa:'publicado', links:[img(1084)]})];
+    const so = {id:'so-demo', tipo:'social', clienteId:'cl1', nome:'Social media · PTx', perfis:ps, collab:['ptxbr','ppbr'], espelho:{de:'ptxbr', para:'ptxlatam'}, posts, feedPub:{}, criadoEm:'2026-11-01', status:'Em andamento'};
+    const es = socLevar(so, posts[0]); es.data = d(5); es.etapa = 'aprov_conteudo'; es.origemEm = 1; posts[0].doc.editadoEm = 2;
+    S.social = [so]; }
   S.seq = seq;
 }
 function salvar(){ try { localStorage.setItem(CHAVE+'-lidas-'+(SESSAO?SESSAO.user.id:''), JSON.stringify(S.notifLidas||{})); } catch(e){} clearTimeout(salvar._t); salvar._pend = true; salvar._t = setTimeout(sincronizar, 400); }
@@ -1195,7 +1317,7 @@ function estadoInicial(){
   seq = 1000;
   return {migr:2, metasStatus:{}, registrosStatus:{}, ocultasStatus:{}, alertasEmail:{para:[], ativo:true}, agencia:{pais:'BR',estado:'',cidade:''}, usuarios:[], feriados:feriadosIniciais(),
     modelo:{versao:1, data:HOJE, origem:VERSAO_MODELO_PLANILHA, tarefas:JSON.parse(JSON.stringify(MODELO_PADRAO))}, modeloHist:[],
-    baseRegiao:{EMEA:'EN',LATAM:'PT',NA:'EN',APAC:'EN',OUT:'EN'}, notifLidas:{}, log:[], clientes:[], campanhas:[]};
+    baseRegiao:{EMEA:'EN',LATAM:'PT',NA:'EN',APAC:'EN',OUT:'EN'}, notifLidas:{}, log:[], clientes:[], campanhas:[], social:[]};
 }
 const cliRow = c => ({id:c.id, nome:c.nome, segmento:c.segmento||'', contato:c.contato||'', arquivado:!!c.arquivado});
 async function carregar(){
@@ -1215,7 +1337,7 @@ async function carregar(){
   for (const r of cf) if (CFG_CHAVES.includes(r.chave)) S[r.chave] = r.valor;
   ALERTAS_BUDGET = ((cf.find(r=>r.chave==='alertasBudget')||{}).valor) || {};
   S.clientes = cl.map(c=>({id:c.id, nome:c.nome, segmento:c.segmento, contato:c.contato, arquivado:c.arquivado}));
-  S.campanhas = ca.map(r=>r.dados);
+  S.campanhas = ca.filter(r=>!r.dados || r.dados.tipo!=='social').map(r=>r.dados); S.social = ca.filter(r=>r.dados && r.dados.tipo==='social').map(r=>r.dados);   // social media fica na mesma tabela, separado das campanhas
   S.log = lg.map(l=>({q:new Date(l.quando).toLocaleString('pt-BR'), quem:l.quem, o:l.texto}));
   try { S.notifLidas = JSON.parse(localStorage.getItem(CHAVE+'-lidas-'+SESSAO.user.id)||'{}'); } catch(e){}
   await carregarNotifEstado();   // lido/não lido e hora de cada aviso, iguais em qualquer aparelho
@@ -1232,7 +1354,7 @@ async function carregar(){
     if (d.notionVinculos===undefined && (NOTION[row.id]||[]).length) { d.notionVinculos = NOTION[row.id].map(r=>({db:r.notion_db, url:(r.dados||{}).url||'', titulo:(r.dados||{}).titulo||''})); vincRecup.push(row.id); } }
   SNAP.cli = {}; SNAP.camp = {}; SNAP.cfg = {};
   for (const c of S.clientes) SNAP.cli[c.id] = JSON.stringify(cliRow(c));
-  for (const c of S.campanhas) SNAP.camp[c.id] = JSON.stringify(c);
+  for (const c of [...S.campanhas, ...S.social]) SNAP.camp[c.id] = JSON.stringify(c);
   for (const r of cf) SNAP.cfg[r.chave] = JSON.stringify(r.valor);   // chaves que faltam são gravadas na primeira sincronização (padrões)
   CTX = null; migrarLancamento();
   // o Notion não é mais usado: campanhas ainda vinculadas trazem as peças para a plataforma automaticamente
@@ -1253,7 +1375,7 @@ async function sincronizar(){
     for (const c of S.clientes) { const j = JSON.stringify(cliRow(c)); novo.cli[c.id] = j; if (SNAP.cli[c.id] !== j) ops.push(sb.from('clientes').upsert(cliRow(c))); }
     // clientes antes das campanhas (chave estrangeira)
     let r = await Promise.all(ops.splice(0)); for (const x of r) if (x.error) throw x.error;
-    for (const c of S.campanhas) { const j = JSON.stringify(c); novo.camp[c.id] = j; if (SNAP.camp[c.id] !== j) ops.push(sb.from('campanhas').upsert({id:c.id, cliente_id:c.clienteId, dados:c})); }
+    for (const c of [...S.campanhas, ...(S.social||[])]) { const j = JSON.stringify(c); novo.camp[c.id] = j; if (SNAP.camp[c.id] !== j) ops.push(sb.from('campanhas').upsert({id:c.id, cliente_id:c.clienteId, dados:c})); }
     const delCamp = Object.keys(SNAP.camp).filter(id=>!(id in novo.camp));
     if (delCamp.length) ops.push(sb.from('campanhas').delete().in('id', delCamp));
     r = await Promise.all(ops.splice(0)); for (const x of r) if (x.error) throw x.error;
@@ -1395,7 +1517,7 @@ const $ = s => document.querySelector(s);
 const cliente = id => S.clientes.find(c=>c.id===id) || {nome:'—'};
 const usuario = id => listaUsuarios().find(u=>u.id===id) || S.usuarios.find(u=>u.id===id);
 const nomeU = id => (usuario(id)||{}).nome || '—';
-const camp = id => S.campanhas.find(c=>c.id===id);
+const camp = id => S.campanhas.find(c=>c.id===id) || (S.social||[]).find(c=>c.id===id);   // projetos de social media usam o mesmo editor de texto
 const pais = cod => PAISES[cod] ? PAISES[cod].f+' '+PAISES[cod].n : cod;
 const moeda = (v,m='BRL') => v==null||v==='' ? '—' : Number(v).toLocaleString('pt-BR',{style:'currency',currency:m,maximumFractionDigits:0});
 const numero = v => v==null||v==='' ? '—' : Number(v).toLocaleString('pt-BR',{maximumFractionDigits:2});
@@ -1554,6 +1676,11 @@ function notificacoes(){
       for (const x of (d.disc||[])) (x.msgs||[]).forEach((m,i)=>{ const q = new Date(m.t).toISOString().slice(0,10); if (q < desde) return;
         if (mencionaMe(m.o)) add('mencpc-d-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'at-sign', t:`${m.quem===me?'Você se mencionou':(m.quem||'Alguém')+' mencionou você'} ${onde}`, d:`${c.nome} · ${m.o.slice(0,90)}`, link, q});
         else if (x.quem===me && m.quem!==me && (i>0 || x.tipo==='s')) add('mencpc-r-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'message-circle', t:`${m.quem||'Alguém'} respondeu ${x.tipo==='s'?'sua sugestão':'seu comentário'} ${onde}`, d:`${c.nome} · ${m.o.slice(0,90)}`, link, q}); }); }
+    for (const p of (S.social||[])) for (const post of (p.posts||[])) { const d = post.doc; if (!d) continue; const link = socRota(p, post), onde = `no post “${post.nome}”`;
+      for (const m of (d.coment||[])) { const q = new Date(m.t).toISOString().slice(0,10); if (q >= desde && mencionaMe(m.o)) add('mencpc-'+post.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'at-sign', t:`${m.quem===me?'Você se mencionou':(m.quem||'Alguém')+' mencionou você'} ${onde}`, d:`${p.nome} · ${m.o.slice(0,90)}`, link, q}); }
+      for (const x of (d.disc||[])) (x.msgs||[]).forEach((m,i)=>{ const q = new Date(m.t).toISOString().slice(0,10); if (q < desde) return;
+        if (mencionaMe(m.o)) add('mencpc-d-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'at-sign', t:`${m.quem===me?'Você se mencionou':(m.quem||'Alguém')+' mencionou você'} ${onde}`, d:`${p.nome} · ${m.o.slice(0,90)}`, link, q});
+        else if (x.quem===me && m.quem!==me && (i>0 || x.tipo==='s')) add('mencpc-r-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'message-circle', t:`${m.quem||'Alguém'} respondeu ${x.tipo==='s'?'sua sugestão':'seu comentário'} ${onde}`, d:`${p.nome} · ${m.o.slice(0,90)}`, link, q}); }); }
     for (const c of ativas()) for (const [sec, L] of Object.entries(c.secComent||{})) for (const x of (L||[])) if (x.q>=desde && mencionaMe(x.o))
       add('mencent-s-'+c.id+'-'+(x.t||x.q), {ts:x.t, tipo:'azul', ic:'at-sign', t:`${x.quem===me?'Você se mencionou':(x.quem||'Alguém')+' mencionou você'} na seção ${sec}`, d:`${c.nome} · ${x.o.slice(0,90)}`, link:`#/campanha/${c.id}/entregaveis`, q:x.q, sec, cid:c.id});
     for (const [mid, rs] of Object.entries(S.registrosStatus||{})) for (const x of rs) if (x.tipo==='coment' && (x.q||'')>='' && mencionaMe(x.o)) {
@@ -1586,13 +1713,13 @@ function render(){
   const nN = notificacoes().filter(n=>!n.lida && n.cat==='mim').length;   // o contador do sino conta só o que é para você
   const nAtr = acoesGlobais().filter(x=>statusExib(x.t)==='Atrasada').length;
   const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial']];
-  const sec = r[0]==='campanha' ? 'clientes' : r[0];
+  const sec = r[0]==='campanha' || r[0]==='social' ? 'clientes' : r[0];
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
   const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações']].filter(([k])=>pode(k));
   $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
   $('#hoje-txt').textContent = fd(HOJE); { for (const id of ['#lat-badge','#topo-badge']) { const b = $(id); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
-  const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
+  const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,social:pgSocial,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
   try { $('#app').innerHTML = podeRota(r) ? pg(r) : (migalha([['Sem acesso']]), '<div class="card vazio" style="margin-top:20px"><i data-lucide="lock"></i><div style="margin-top:8px">Você não tem acesso a esta área. Fale com um administrador.</div></div>'); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
@@ -1609,11 +1736,11 @@ function verificarRelatorio(r){ if (r[0]!=='campanha' || !ehEquipe()) return; co
    gravável (campanhas, clientes e configurações, incluindo metas, budgets e comentários do Status pontual) se mudou */
 const DESF = {pilha:[], refazer:[], atual:null};
 let DEP_ATIVAS = true; try { DEP_ATIVAS = localStorage.getItem('dep-off')!=='1'; } catch(e){}
-const estadoDesf = () => S ? JSON.stringify({campanhas:S.campanhas, clientes:S.clientes, cfg:Object.fromEntries(CFG_CHAVES.map(k=>[k, S[k]]))}) : null;
+const estadoDesf = () => S ? JSON.stringify({campanhas:S.campanhas, social:S.social||[], clientes:S.clientes, cfg:Object.fromEntries(CFG_CHAVES.map(k=>[k, S[k]]))}) : null;
 function capturarDesfazer(){ if (!S || !ehEquipe()) return; const j = estadoDesf(); if (DESF.atual==null) DESF.atual = j;
   else if (DESF.atual !== j) { DESF.pilha.push(DESF.atual); if (DESF.pilha.length > 40) DESF.pilha.shift(); DESF.refazer = []; DESF.atual = j; }
   const bD = $('[data-act="desfazer"]'), bR = $('[data-act="refazer"]'); if (bD) bD.disabled = !DESF.pilha.length; if (bR) bR.disabled = !DESF.refazer.length; }
-function aplicarEstado(j){ const e = JSON.parse(j); S.campanhas = e.campanhas; S.clientes = e.clientes; for (const k of CFG_CHAVES) if (k in e.cfg) S[k] = e.cfg[k]; DESF.atual = j; salvar(); render(); }
+function aplicarEstado(j){ const e = JSON.parse(j); S.campanhas = e.campanhas; S.social = e.social || []; S.clientes = e.clientes; for (const k of CFG_CHAVES) if (k in e.cfg) S[k] = e.cfg[k]; DESF.atual = j; salvar(); render(); }
 function desfazer(refazer){ if (!S || !ehEquipe()) return;
   const de = refazer ? DESF.refazer : DESF.pilha, para = refazer ? DESF.pilha : DESF.refazer; if (!de.length) return toast(refazer?'Nada para refazer.':'Nada para desfazer.');
   para.push(DESF.atual); aplicarEstado(de.pop()); toast(refazer?'Refeito.':'Desfeito. Ctrl+Shift+Z refaz.'); }
@@ -1787,11 +1914,11 @@ function pgCliente(id){
           return `<div class="cli-qh" data-act="cliQ" data-k="${h(id+'|'+k)}" data-v="${fe?'0':'1'}"><i data-lucide="${fe?'chevron-right':'chevron-down'}" class="cli-chev"></i>${q ? `<b>Q${q} ${ano}</b><span>${MQ[q-1]} · ${cs.length} campanha${cs.length===1?'':'s'} · mídia ${txtMoe(somaMoe(cs))}</span>` : '<b>Sem data</b>'}</div>${fe ? '' : `<div class="card cli-tab">${cabCols}${cs.map(linhaC).join('')}</div>`}`; }).join(''); } }
     if (!L.length) corpo = '<div class="card vazio">Nenhuma campanha com esses filtros.</div>';
   }
-  return cab + filtros + corpo;
+  return cab + socListaCli(id) + filtros + corpo;
 }
 
 /* botão "Novo projeto": escolhe o tipo (campanha hoje; social media, evento e projeto offline em seguida) */
-const TIPOS_PROJETO = [['campanha','megaphone','Campanha','Mídia paga, LP, KV e peças por país', true],['social','smartphone','Social media','Conteúdo orgânico recorrente, mês a mês', false],['evento','tent','Evento','Feira, dia de campo, lançamento presencial', false],['offline','package','Projeto offline','Impressos, brindes, PDV, vídeos institucionais', false]];
+const TIPOS_PROJETO = [['campanha','megaphone','Campanha','Mídia paga, LP, KV e peças por país', true],['social','smartphone','Social media','Conteúdo orgânico recorrente, mês a mês', true],['evento','tent','Evento','Feira, dia de campo, lançamento presencial', false],['offline','package','Projeto offline','Impressos, brindes, PDV, vídeos institucionais', false]];
 function btnNovoProjeto(cli){ const k = 'np:'+(cli||'');
   return `<div class="menu-wrap"><button class="btn btn-p" data-act="menuNovoProj" data-k="${k}"><i data-lucide="plus"></i>Novo projeto<i data-lucide="chevron-down"></i></button>${UI.menuNovo===k ? `<div class="menu-pop np-pop">${TIPOS_PROJETO.map(([t,ic,nome,desc,ok])=>ok
     ? `<button data-act="novoProjeto" data-tipo="${t}" data-cliente="${cli||''}"><i data-lucide="${ic}"></i><span><b>${nome}</b><em>${desc}</em></span></button>`
@@ -2816,7 +2943,7 @@ function lpLimpa(html){ const d = document.createElement('div'); d.innerHTML = h
     for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable|colspan|rowspan)$/i.test(a.name) || (n.tagName==='COL' && a.name==='style' && /^width:\s*\d+(\.\d+)?px;?$/.test(v.trim())) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx|disc-c|disc-s)$/.test(v)) || a.name==='data-disc' || (/^(SPAN|B|STRONG|I|EM|U|S|STRIKE|CODE|A|FONT)$/.test(n.tagName) && a.name==='style' && /^(\s*(background-)?color:\s*(#[0-9a-f]{3,8}|rgba?\([\d.,\s]+\)|transparent)\s*;?)+$/i.test(v));
       if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(v)) || !ok) n.removeAttribute(a.name); } if (n.tagName==='A') { n.setAttribute('target','_blank'); n.setAttribute('rel','noopener'); } });
   return d.innerHTML; }
-function lpAlvo(c, et, idi, mi){ if (et==='peca') return pecaDoc(c, idi); const {f} = lpDados(c, mi); return et==='trad' ? f.trad[idi] : f[et]; }
+function lpAlvo(c, et, idi, mi){ if (et==='peca') return pecaDoc(c, idi); if (et==='spost') return socDoc(c, idi); const {f} = lpDados(c, mi); return et==='trad' ? f.trad[idi] : f[et]; }
 function lpTextoAbrir(id, et, idi, mi){ const c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi, mi), {f} = lpDados(c, mi), ed = ehEquipe(), trad = et==='trad';
   UI.lpTxt = {id, et, idi, mi}; const st = d.status || '', nomeIdi = IDIOMAS[trad ? idi : c.idiomaBase] || '';
   const barra = `<div class="lpe-barra">${[['bold','bold','Negrito'],['italic','italic','Itálico'],['formatBlock:h2','heading-2','Título'],['formatBlock:h3','heading-3','Subtítulo'],['formatBlock:p','pilcrow','Parágrafo'],['insertUnorderedList','list','Lista'],['insertOrderedList','list-ordered','Lista numerada'],['link','link','Link']].map(([cmd,ic,t])=>`<button type="button" title="${t}" onmousedown="event.preventDefault();lpCmd('${cmd}')"><i data-lucide="${ic}"></i></button>`).join('')}</div>`;
@@ -3301,7 +3428,7 @@ function lpComentPagina(d, ed){ const cs = d.coment || [], me = quemSou();
 function lpGuardarEdicao(){ const e = document.getElementById('lpe-edit'), {id, et, idi, mi} = UI.lpTxt || {}, c = camp(id); if (!e || !c || !e.isContentEditable) return; const d = lpAlvo(c, et, idi, mi); if (!d) return;
   const t = lpLimpa(e.innerHTML); if (t !== (d.texto||'')) { d.texto = t; d.editadoEm = Date.now(); d.editadoPor = quemSou(); lpAtualizarPublico(c, d, et, idi); } }
 const lpLinkPublico = tok => location.origin + location.pathname + '#/publico/' + tok;
-async function lpAtualizarPublico(c, d, et, idi){ if (!d.publico || !sb) return; const nomeIdi = IDIOMAS[et==='trad' ? idi : c.idiomaBase] || '', mi = +((UI.lpTxt||{}).mi) || 0, marca = lpMarcas(c)[mi] || '';
+async function lpAtualizarPublico(c, d, et, idi){ if (et==='spost') return socAtualizarPublico(c, socPostDe(c, idi)); if (!d.publico || !sb) return; const nomeIdi = IDIOMAS[et==='trad' ? idi : c.idiomaBase] || '', mi = +((UI.lpTxt||{}).mi) || 0, marca = lpMarcas(c)[mi] || '';
   const r = await sb.from('paginas_publicas').upsert({token:d.publico, campanha_id:c.id, chave:(mi ? 'm'+mi+':' : '')+et+(idi?':'+idi:''), titulo: et==='peca' ? `${c.nome} · ${(((c.entregaveis||[]).find(x=>x.id===idi))||{}).nome||'Post'}` : `${c.nome} · Texto landing page · ${marca ? marca+' · ' : ''}${nomeIdi}`, html:lpSemDisc(lpLimpa(d.texto)), atualizado_em:new Date().toISOString()});
   if (r.error) toast('Não foi possível atualizar a página pública: '+r.error.message); }
 function lpCompartilharAbrir(){ const {id, et, idi, mi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi, mi), u = d.publico ? lpLinkPublico(d.publico) : '';
@@ -3319,6 +3446,7 @@ async function paginaPublica(tok){ document.title = 'Estufa · Texto';
   const box = document.getElementById('pub-doc');
   if (error || !data) { box.innerHTML = '<h1 class="np-tit">Página não encontrada</h1><p class="muted">O link pode ter sido despublicado.</p>'; return; }
   document.title = data.titulo || 'Estufa';
+  const so = socPayloadLer(data.html); if (so) { box.parentNode.classList.add('pub-soc'); box.innerHTML = socPublicaHtml(so, data); if (window.lucide) lucide.createIcons(); return; }
   box.innerHTML = `<div class="np-ic"><i data-lucide="file-text"></i></div><h1 class="np-tit">${h(data.titulo||'')}</h1><div class="pub-meta">Atualizado em ${new Date(data.atualizado_em).toLocaleString('pt-BR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div><div class="lpe-doc np-corpo">${lpLimpa(data.html)}</div>`;
   box.querySelectorAll('[contenteditable]').forEach(n=>n.removeAttribute('contenteditable')); if (window.lucide) lucide.createIcons(); }
 function lpCmd(cmd){ const ed = document.getElementById('lpe-edit'); if (!ed) return; ed.focus();
@@ -4865,7 +4993,7 @@ function pgAcompanhamento(){ migalha([['Digital'],['Acompanhamento']]);
     <div class="ac-legenda small muted"><span>Farol pelo CPL do mês × meta de custo:</span><span><i class="ac-leg ac-vd"></i>até a meta</span><span><i class="ac-leg ac-am"></i>até 1,5× a meta</span><span><i class="ac-leg ac-vm"></i>acima de 1,5× ou sem resultado</span><span><i class="ac-leg ac-vz"></i>sem budget no mês</span><span><i class="ac-leg ac-atual-l"></i>mês atual (parcial)</span></div>`; }
 
 /* ---------- quem está com o sistema aberto agora (Supabase Realtime presence) ---------- */
-const PAG_NOME = {atividades:'Atividades', acompanhamento:'Acompanhamento', dashboard:'Início', clientes:'Clientes', campanha:'Campanha', acoes:'Gestão de ações', anual:'Cronograma anual', editorial:'Calendário editorial', notificacoes:'Notificações', config:'Configurações', status:'Campanhas', invoices:'Invoices', acessos:'Acessos e permissões', perfil:'Meu perfil'};
+const PAG_NOME = {social:'Social media', atividades:'Atividades', acompanhamento:'Acompanhamento', dashboard:'Início', clientes:'Clientes', campanha:'Campanha', acoes:'Gestão de ações', anual:'Cronograma anual', editorial:'Calendário editorial', notificacoes:'Notificações', config:'Configurações', status:'Campanhas', invoices:'Invoices', acessos:'Acessos e permissões', perfil:'Meu perfil'};
 function estadoPresenca(){ const r = rota(); let pag = PAG_NOME[r[0]] || 'Início';
   if (r[0]==='campanha') { const c = (S && S.campanhas || []).find(x=>x.id===r[1]); if (c) pag = 'Campanha · '+c.nome; }
   return {id: PERFIL.id, pag, ativo: document.visibilityState==='visible', desde: CANAL_ON && CANAL_ON._desde || new Date().toISOString(), em: new Date().toISOString()}; }
@@ -5462,7 +5590,7 @@ const ACT = {
     salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
   lpComentPgDel: el => { const {d} = discAlvo(), i = +el.dataset.i; if (!d || !d.coment || !d.coment[i] || d.coment[i].quem!==quemSou() || !confirm('Excluir este comentário?')) return; lpGuardarEdicao(); d.coment.splice(i, 1); salvar(); render(); },
   menuNovoProj: el => { UI.menuNovo = UI.menuNovo===el.dataset.k ? null : el.dataset.k; render(); },
-  novoProjeto: el => { UI.menuNovo = null; if (el.dataset.tipo==='campanha') { const b = document.createElement('button'); b.dataset.act = 'novaCampanha'; if (el.dataset.cliente) b.dataset.cliente = el.dataset.cliente; ACT.novaCampanha(b); } else render(); },
+  novoProjeto: el => { UI.menuNovo = null; if (el.dataset.tipo==='campanha') { const b = document.createElement('button'); b.dataset.act = 'novaCampanha'; if (el.dataset.cliente) b.dataset.cliente = el.dataset.cliente; ACT.novaCampanha(b); } else if (el.dataset.tipo==='social') socFormAbrir(null, el.dataset.cliente); else render(); },
   pecaMarca: el => { UI.pecaMarca = UI.pecaMarca || {}; UI.pecaMarca[el.dataset.k] = +el.dataset.v || 0; render(); },
   pecaIdi: el => { UI.pecaIdi = UI.pecaIdi || {}; UI.pecaIdi[el.dataset.e] = el.dataset.v; render(); },
   pecaNova: el => { const c = camp(el.dataset.id); if (!c) return; const {canal, marca, fase} = el.dataset, paises = (el.dataset.paises||'').split(',').filter(Boolean);
@@ -5882,6 +6010,7 @@ function avisarImpacto(){ const imp = impactoFeriados(S.feriados); if (!imp.leng
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const f = ACT[el.dataset.act]; if (!f) return;
   if (el.tagName==='A' && el.getAttribute('href')==='javascript:void 0') e.preventDefault(); f(el, e); });
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (!el) return; const k = el.dataset.chg, v = el.type==='checkbox' ? el.checked : el.value;
+  if (/^soc[A-Z]/.test(k)) return socChg(k, el, v);
   if (k==='papelPerfil' || k==='clientePerfil') { const campo = k==='papelPerfil' ? {papel:v} : {cliente_id:v||null};
     sb.from('perfis').update(campo).eq('id', el.dataset.p).select().then(r=>{ if (r.error || !r.data.length) return toast('Não foi possível alterar o acesso.'); Object.assign(PERFIS.find(p=>p.id===el.dataset.p), r.data[0]); registrar(`Acesso de ${r.data[0].email}: ${PAPEIS[r.data[0].papel]}`); render(); }); return; }
   if (k==='perPais') { const c = camp(el.dataset.id), cf = (c.canaisCfg||{})[el.dataset.k], pc = cf && (cf.paises||[]).find(p=>p.cod===el.dataset.p); if (!pc) return;
@@ -5960,6 +6089,276 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
   const [o,p] = k.split('.'); if (UI[o]) { UI[o][p] = v; render(); }
 });
 document.addEventListener('input', e => { const el = e.target.closest('[data-chg="fc.busca"]'); if (!el) return; UI.fc.busca = el.value; clearTimeout(window._tb); window._tb = setTimeout(()=>{ render(); const i = $('[data-chg="fc.busca"]'); if (i) { i.focus(); i.setSelectionRange(i.value.length,i.value.length); } }, 300); });
+/* =====================================================================
+   SOCIAL MEDIA (projeto recorrente): perfis, calendário editorial, página do post (legenda + prévia no Instagram) e prévia do feed.
+   Fica na tabela campanhas (dados.tipo='social'), mas em S.social, separado das campanhas.
+   Projeto: {id, tipo:'social', clienteId, nome, perfis:[{id,nome,handle,idioma,cor}], collab:[perfilA, perfilB], espelho:{de, para}, posts:[], feedPub:{}}
+   Post: {id, perfil, collab, data, hora, nome, formato, editoria, etapa, resp, links:[], doc:{texto, coment, disc, publico, hist, editadoEm},
+          origem (post do Brasil de onde veio a versão LATAM), origemEm, espelho (id da versão LATAM)}
+   ===================================================================== */
+const SOC_FORMATOS = [['Estático','image'],['Carrossel','images'],['Reels','clapperboard'],['Stories','circle-dashed']];
+const SOC_ETAPAS = [['briefing','Conteúdo em produção'],['aprov_conteudo','Aprovação do conteúdo'],['ajuste_conteudo','Ajustes no conteúdo'],['producao','Produção do asset'],['aprov_asset','Aprovação do asset'],['ajuste_asset','Ajustes no asset'],['aprovado','Aprovado'],['agendado','Agendado'],['publicado','Publicado']];
+const SOC_ORD = SOC_ETAPAS.map(x=>x[0]);
+const SOC_COR = {briefing:'cinza', aprov_conteudo:'amar', ajuste_conteudo:'verm', producao:'azul', aprov_asset:'amar', ajuste_asset:'verm', aprovado:'verde', agendado:'roxo', publicado:'verde'};
+const SOC_PERFIS_PTX = [{id:'ptxbr', nome:'PTx Trimble Brasil', handle:'ptx.trimble.brasil', idioma:'PT', cor:'#111111'},{id:'ptxlatam', nome:'PTx Trimble LATAM', handle:'ptx.trimble.latam', idioma:'ES', cor:'#2c5d8f'},{id:'ppbr', nome:'Precision Planting Brasil', handle:'precisionplanting.brasil', idioma:'PT', cor:'#EF9F27'}];
+const socIcFmt = f => (SOC_FORMATOS.find(x=>x[0]===f)||[,'image'])[1];
+const socProj = id => (S.social||[]).find(x=>x.id===id);
+const socPerfil = (p, id) => (p.perfis||[]).find(x=>x.id===id) || {id, nome:'Perfil removido', handle:'perfil', idioma:'PT', cor:'#9aa9ae'};
+const socPostDe = (p, id) => (p.posts||[]).find(x=>x.id===id);
+const socParceiro = (p, post) => post.collab && (p.collab||[]).includes(post.perfil) ? ((p.collab||[]).find(x=>x!==post.perfil) || null) : null;
+const socNoPerfil = (p, post, pf) => !pf || post.perfil===pf || socParceiro(p, post)===pf;
+const socRota = (p, post) => `#/social/${p.id}/post/${post.id}`;
+const socLinks = post => (post.links||[]).map(x=>String(x||'').trim()).filter(Boolean);
+const socRotulo = post => { const t = (SOC_ETAPAS.find(x=>x[0]===post.etapa)||[,''])[1]; return post.origem ? t.replace('Conteúdo em produção','Traduzindo').replace(' do conteúdo',' da tradução').replace(' no conteúdo',' na tradução') : t; };
+const socOrigMudou = (p, post) => { const o = post.origem && socPostDe(p, post.origem); return !!(o && o.doc && o.doc.editadoEm && o.doc.editadoEm > (post.origemEm||0)); };
+const socF = p => { UI.socF = UI.socF || {}; return UI.socF[p.id] = UI.socF[p.id] || {mes:HOJE.slice(0,7), perfil:'', aba:'cal', feedPerfil:'', datas:true}; };
+const socDataExt = s => s ? `${+s.slice(8,10)} de ${MESES[+s.slice(5,7)-1]}` : '';
+const socMesTxt = m => `${MESES[+m.slice(5,7)-1]} de ${m.slice(0,4)}`;
+const socMesMais = (m, n) => { const d = new Date(+m.slice(0,4), +m.slice(5,7)-1+n, 1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+function socDoc(p, pid){ const post = socPostDe(p, pid); if (!post) return null; const d = post.doc = post.doc || {}; if (d.resp == null && post.resp) d.resp = post.resp; return d; }
+/* estrutura do texto do post: legenda (vai para a prévia) + texto da arte ou roteiro */
+function socModelo(fmt){ const td = x => `<td>${x || '<br>'}</td>`, tab = (cab, linhas) => `<table data-cabl="1" data-cabc="1"><tbody><tr>${cab.map(x=>td('<b>'+x+'</b>')).join('')}</tr>${linhas.map(l=>'<tr>'+l.map(td).join('')+'</tr>').join('')}</tbody></table><p><br></p>`;
+  const leg = `<p data-cor="amarelo"><b>LEGENDA</b></p><p>[Primeira linha: gancho que faz parar o scroll]</p><p>[Desenvolvimento e CTA]</p><p><br></p><p>[#hashtags]</p><p><br></p>`;
+  if (fmt==='Reels' || fmt==='Stories') return leg + `<p data-cor="amarelo"><b>ROTEIRO</b></p>` + tab(['Cena','Roteiro / Locução','Visual'], [['1 - Gancho','[Frase que prende nos 3 primeiros segundos]','[Referência de imagem ou cena]'],['2 - Desenvolvimento','[Mensagem principal]','[Referência de imagem ou cena]'],['3 - Fechamento','[CTA e assinatura]','[Referência de imagem ou cena]']]);
+  if (fmt==='Carrossel') return leg + `<p data-cor="amarelo"><b>TEXTO DA ARTE</b></p>` + tab(['Card','Texto'], [['1 - Capa','[Título que faz deslizar]'],['2','[Texto]'],['3','[Texto]'],['4 - Fechamento','[CTA]']]);
+  return leg + `<p data-cor="amarelo"><b>TEXTO DA ARTE</b></p>` + tab(['Elemento','Texto'], [['Título','[Texto principal da arte]'],['Texto de apoio','[Complemento do título]'],['CTA','[Ex.: Saiba mais]']]); }
+/* legenda em texto puro: o que vem depois do título LEGENDA, até o próximo título amarelo ou tabela */
+function socLegenda(html){ const t = document.createElement('div'); t.innerHTML = lpSemDisc(lpLimpa(html||'')); const ks = [...t.children], ini = ks.findIndex(k=>/^legenda\b/i.test(k.textContent.trim()) && k.textContent.trim().length < 20), out = [];
+  for (const k of ks.slice(ini+1)) { if (k.tagName==='TABLE' || (ini>=0 && k.dataset && k.dataset.cor && k.textContent.trim().length < 30 && /^[A-ZÀ-Ú\s]+$/.test(k.textContent.trim()))) { if (ini>=0) break; continue; }
+    const c = k.cloneNode(true); c.querySelectorAll('br').forEach(b=>b.replaceWith('\n')); c.querySelectorAll('li').forEach(li=>li.prepend('• ')); out.push(c.textContent.replace(/\n$/,'')); }
+  return out.join('\n').replace(/\n{3,}/g,'\n\n').trim(); }
+const socLegHtml = t => h(t||'').replace(/(^|[\s(])([#@][\wÀ-ÿ._]+)/g, '$1<span class="ig-tag">$2</span>').replace(/\n/g,'<br>');
+/* asset: Google Drive vira miniatura (imagem) ou player (vídeo); links diretos de imagem/vídeo aparecem como estão */
+function socMidia(url, modo){ const u = String(url||'').trim(); if (!u) return null;
+  const dr = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/) || (/drive\.google\.com/.test(u) && u.match(/[?&]id=([\w-]{10,})/));
+  if (dr) return modo==='video' ? {t:'iframe', src:`https://drive.google.com/file/d/${dr[1]}/preview`} : {t:'img', src:`https://drive.google.com/thumbnail?id=${dr[1]}&sz=w1080`};
+  if (/\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(u)) return {t:'video', src:u};
+  if (/\.(png|jpe?g|gif|webp|avif)(\?|#|$)/i.test(u) || /googleusercontent\.com|cdninstagram|fbcdn/.test(u)) return {t:'img', src:u};
+  return {t:'link', src:u}; }
+function socImgErro(img){ const d = document.createElement('div'); d.className = 'ig-vazio'; d.innerHTML = '<span>Sem prévia. Confira se o arquivo está compartilhado como “qualquer pessoa com o link”.</span>'; img.replaceWith(d); }
+function socMidiaHtml(url, modo, cls){ const m = socMidia(url, modo), c = cls || '';
+  if (!m) return `<div class="ig-vazio ${c}"><i data-lucide="image-plus"></i><span>Cole o link do asset para ver a prévia</span></div>`;
+  if (m.t==='iframe') return `<iframe class="${c}" src="${h(m.src)}" allow="autoplay; fullscreen" loading="lazy"></iframe>`;
+  if (m.t==='video') return `<video class="${c}" src="${h(m.src)}" ${modo==='thumb' ? 'muted preload="metadata"' : 'playsinline loop muted autoplay onclick="this.paused?this.play():this.pause()" title="Clique para pausar ou continuar"'}></video>`;
+  if (m.t==='img') return `<img class="${c}" src="${h(m.src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="socImgErro(this)">`;
+  return `<a class="ig-vazio ${c}" href="${h(m.src)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i><span>Abrir o asset</span><small>${h(linkCurto(m.src))}</small></a>`; }
+function socCarDots(el){ const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)), box = el.closest('.ig-corpo') || document; box.querySelectorAll('.ig-dots i').forEach((d,k)=>d.classList.toggle('on', k===i));
+  const c = el.parentNode.querySelector('.ig-cnt'); if (c) c.textContent = (i+1)+'/'+el.children.length; }
+/* ---------- iPhone com a interface do Instagram ---------- */
+const IPH_SB = `<div class="iph-sb"><b>9:41</b><span class="iph-ilha"></span><span class="iph-ics"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 16 12"><path d="M8 2.4c2.3 0 4.4.9 6 2.4l1.2-1.3A10.2 10.2 0 0 0 8 .6 10.2 10.2 0 0 0 .8 3.5L2 4.8a8.4 8.4 0 0 1 6-2.4Zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3A6.6 6.6 0 0 0 8 4.2c-1.8 0-3.4.7-4.6 1.8l1.2 1.3c.9-.8 2.1-1.3 3.4-1.3Zm0 3.6c.4 0 .8.2 1.1.4L8 11.4 6.9 10c.3-.2.7-.4 1.1-.4Z"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="19" height="8" rx="2"/><path d="M24 4v4c.8-.3 1.5-1.1 1.5-2s-.7-1.7-1.5-2Z" opacity=".5"/></svg></span></div>`;
+const socPhone = (tela, esc) => `<div class="iph ${esc?'iph-esc':''}"><div class="iph-tela">${IPH_SB}${tela}<span class="iph-home"></span></div></div>`;
+const socNav = esc => `<div class="ig-nav ${esc?'esc':''}"><i data-lucide="house"></i><i data-lucide="search"></i><i data-lucide="square-plus"></i><i data-lucide="clapperboard"></i><span class="ig-nav-av"></span></div>`;
+const socAv = (pf, cls) => `<span class="ig-av ${cls||''}" style="--c:${h(pf.cor||'#333')}">${h(iniciais(pf.nome||pf.handle))}</span>`;
+function socMockup(o, vivo){ const L = (o.links||[]).filter(Boolean), pf = o.perfil, pc = o.parceiro, fmt = o.formato || 'Estático';
+  const nomes = `<b>${h(pf.handle)}</b>${pc ? ` <span>e</span> <b>${h(pc.handle)}</b>` : ''}`, leg = `<span ${vivo?'id="ig-leg-txt"':''}>${socLegHtml(o.legenda)}</span>`;
+  if (fmt==='Stories') return socPhone(`<div class="ig-st">${socMidiaHtml(L[0], 'video', 'ig-full')}<div class="ig-st-bar">${(L.length>1 ? L : [0]).map(()=>'<i></i>').join('')}</div><div class="ig-st-cab">${socAv(pf,'ig-av-s')}<b>${h(pf.handle)}</b><span>2 h</span><i data-lucide="ellipsis"></i><i data-lucide="x"></i></div></div><div class="ig-st-rod"><span class="ig-st-in">Enviar mensagem</span><i data-lucide="heart"></i><i data-lucide="send"></i></div>`, true);
+  if (fmt==='Reels') return socPhone(`<div class="ig-rl">${socMidiaHtml(L[0], 'video', 'ig-full')}<div class="ig-rl-top"><b>Reels</b><i data-lucide="camera"></i></div><div class="ig-rl-lat"><span><i data-lucide="heart"></i>1.248</span><span><i data-lucide="message-circle"></i>36</span><span><i data-lucide="send"></i>52</span><i data-lucide="ellipsis"></i></div><div class="ig-rl-rod"><div class="ig-rl-u">${socAv(pf,'ig-av-s')}<span>${nomes}</span><span class="ig-seg">Seguir</span></div><div class="ig-rl-leg" onclick="this.classList.toggle('ab')">${leg}</div><div class="ig-rl-au"><i data-lucide="music-2"></i>${h(pf.handle)} · Áudio original</div></div></div>${socNav(true)}`, true);
+  const car = fmt==='Carrossel' && L.length > 1;
+  const midia = car ? `<div class="ig-car" onscroll="socCarDots(this)">${L.map(u=>`<div class="ig-sl">${socMidiaHtml(u, 'img')}</div>`).join('')}</div><span class="ig-cnt">1/${L.length}</span><button type="button" class="ig-seta e" onclick="this.parentNode.querySelector('.ig-car').scrollBy({left:-this.parentNode.clientWidth,behavior:'smooth'})"><i data-lucide="chevron-left"></i></button><button type="button" class="ig-seta d" onclick="this.parentNode.querySelector('.ig-car').scrollBy({left:this.parentNode.clientWidth,behavior:'smooth'})"><i data-lucide="chevron-right"></i></button>` : socMidiaHtml(L[0], 'img');
+  return socPhone(`<div class="ig-top"><span class="ig-logo">Instagram</span><span class="ig-top-ic"><i data-lucide="heart"></i><i data-lucide="message-circle"></i></span></div>
+    <div class="ig-corpo"><div class="ig-ph"><span class="ig-ring">${socAv(pf)}</span><div class="ig-ph-n">${nomes}</div><i data-lucide="ellipsis"></i></div>
+      <div class="ig-m ${fmt==='Carrossel'?'ig-car-w':''}">${midia}</div>
+      <div class="ig-ac"><span><i data-lucide="heart"></i><i data-lucide="message-circle"></i><i data-lucide="send"></i></span>${car ? `<span class="ig-dots">${L.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</span>` : ''}<i data-lucide="bookmark"></i></div>
+      <div class="ig-lk">1.248 curtidas</div>
+      <div class="ig-leg" onclick="this.classList.toggle('ab')"><div class="ig-leg-tx"><b>${h(pf.handle)}</b> ${leg}</div><span class="ig-mais">mais</span></div>
+      <div class="ig-cm">Ver todos os 36 comentários</div><div class="ig-dt">${h(socDataExt(o.data))}</div></div>${socNav(false)}`, false); }
+/* perfil com a grade do feed (o post mais novo primeiro) */
+function socFeedMockup(o, app){ const pf = o.perfil;
+  return socPhone(`<div class="ig-pf-top"><i data-lucide="lock"></i><b>${h(pf.handle)}</b><i data-lucide="chevron-down"></i><span><i data-lucide="square-plus"></i><i data-lucide="menu"></i></span></div>
+    <div class="ig-corpo"><div class="ig-pf-cab"><span class="ig-ring">${socAv(pf,'ig-av-g')}</span><div class="ig-pf-nums"><div><b>${o.itens.length}</b><span>posts</span></div><div><b>—</b><span>seguidores</span></div><div><b>—</b><span>seguindo</span></div></div></div>
+      <div class="ig-pf-nome">${h(pf.nome)}</div><div class="ig-pf-bts"><span>Seguir</span><span>Mensagem</span></div>
+      <div class="ig-pf-tabs"><span class="on"><i data-lucide="grid-3x3"></i></span><span><i data-lucide="clapperboard"></i></span><span><i data-lucide="square-user"></i></span></div>
+      <div class="ig-grid">${o.itens.map(t=>`<div class="ig-tile ${t.antigo?'old':''}" ${app && t.rota ? `onclick="location.hash='${t.rota}'" title="${h(t.nome)}"` : ''}>${t.url ? socMidiaHtml(t.url, 'thumb') : `<span class="ig-tile-vz">${h(t.nome)}<small>sem asset</small></span>`}${t.formato==='Carrossel' ? '<i data-lucide="copy" class="ig-tile-ic"></i>' : t.formato==='Reels' ? '<i data-lucide="clapperboard" class="ig-tile-ic"></i>' : ''}${o.datas && t.data ? `<span class="ig-tile-dt">${fdm(t.data)}</span>` : ''}</div>`).join('') || '<div class="ig-grid-vz">Nenhum post no feed neste mês.</div>'}</div></div>${socNav(false)}`, false); }
+const socDadosMock = (p, post) => { const pc = socParceiro(p, post), pf = socPerfil(p, post.perfil), so = x => ({nome:x.nome, handle:x.handle, cor:x.cor});
+  return {formato:post.formato, links:socLinks(post), perfil:so(pf), parceiro:pc ? so(socPerfil(p, pc)) : null, legenda:socLegenda((post.doc||{}).texto), data:post.data, hora:post.hora||''}; };
+/* página pública: o conteúdo vai junto, codificado no começo do html */
+const socPayload = o => '<!--soc:' + btoa(unescape(encodeURIComponent(JSON.stringify(o)))) + '-->';
+const socPayloadLer = html => { const m = /^<!--soc:([A-Za-z0-9+/=]+)-->/.exec(html||''); if (!m) return null; try { return JSON.parse(decodeURIComponent(escape(atob(m[1])))); } catch(e){ return null; } };
+async function socAtualizarPublico(p, post){ const d = (post && post.doc) || {}; if (!d.publico || !sb) return; const o = Object.assign(socDadosMock(p, post), {tipo:'post', titulo:post.nome, html:lpSemDisc(lpLimpa(d.texto))});
+  const r = await sb.from('paginas_publicas').upsert({token:d.publico, campanha_id:p.id, chave:'spost:'+post.id, titulo:`${post.nome} · ${socPerfil(p, post.perfil).nome}`, html:socPayload(o), atualizado_em:new Date().toISOString()});
+  if (r.error) toast('Não foi possível atualizar a página pública: '+r.error.message); }
+function socPublicaHtml(o, data){ const quando = new Date(data.atualizado_em).toLocaleString('pt-BR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  if (o.tipo==='feed') return `<div class="pub-soc-g pub-soc-feed"><div class="pub-soc-tx"><div class="np-ic"><i data-lucide="layout-grid"></i></div><h1 class="np-tit">${h(data.titulo||'')}</h1><div class="pub-meta">Atualizado em ${quando}</div><p class="muted">Prévia de como o feed de <b>@${h(o.perfil.handle)}</b> fica com os posts de ${h(socMesTxt(o.mes))}. Os posts mais claros já estavam no feed antes deste mês.</p></div><div>${socFeedMockup(o, false)}</div></div>`;
+  return `<div class="pub-soc-g"><div class="pub-soc-ph">${socMockup(o, false)}</div><div class="pub-soc-tx"><div class="np-ic"><i data-lucide="${socIcFmt(o.formato)}"></i></div><h1 class="np-tit">${h(o.titulo||'')}</h1><div class="pub-meta">@${h(o.perfil.handle)}${o.parceiro ? ' + @'+h(o.parceiro.handle) : ''} · ${h(o.formato||'')} · ${o.data ? 'publicação em '+fd(o.data)+(o.hora?' às '+h(o.hora):'') : ''}<br>Atualizado em ${quando}</div><div class="lpe-doc np-corpo">${lpLimpa(o.html||'')}</div></div></div>`; }
+/* ---------- cards e páginas ---------- */
+function socCard(p, post, ed){ const pf = socPerfil(p, post.perfil), pcId = socParceiro(p, post), pc = pcId && socPerfil(p, pcId), d = post.doc || {}, n = (d.coment||[]).length + discAbertas(d).length;
+  const meta = [post.hora ? `<span>${h(post.hora)}</span>` : '', pc ? `<span title="Collab com ${h(pc.nome)}"><i data-lucide="users"></i>collab</span>` : '', post.origem ? `<span title="Versão em ${h(IDIOMAS[pf.idioma]||pf.idioma)} de um post de ${h(socPerfil(p, (socPostDe(p, post.origem)||{}).perfil).nome)}"><i data-lucide="globe"></i>${socOrigMudou(p, post) ? '<em>original mudou</em>' : 'tradução'}</span>` : '', post.espelho && socPostDe(p, post.espelho) ? `<span title="Tem versão em ${h(socPerfil(p, socPostDe(p, post.espelho).perfil).nome)}"><i data-lucide="globe"></i></span>` : '', n ? `<span><i data-lucide="message-square"></i>${n}</span>` : ''].join('');
+  return `<div class="soc-card ${post.etapa==='publicado'?'soc-ok':''}" ${ed?`draggable="true" data-socdrag="${post.id}" data-p="${p.id}"`:''} onclick="location.hash='${socRota(p, post)}'" title="${h(post.nome)} · ${h(pf.nome)}${pc?' + '+h(pc.nome):''}">
+    <div class="soc-card-t"><span class="soc-dots"><i style="background:${h(pf.cor)}"></i>${pc?`<i style="background:${h(pc.cor)}"></i>`:''}</span><i data-lucide="${socIcFmt(post.formato)}" class="soc-fmt"></i><b>${h(post.nome)}</b></div>
+    <span class="pc4-st c-${SOC_COR[post.etapa]||'cinza'}"><i></i>${h(socRotulo(post))}</span>${meta ? `<div class="soc-card-m">${meta}</div>` : ''}</div>`; }
+function socCab(p, ed){ const cl = cliente(p.clienteId);
+  return `<div class="cc card soc-cab"><div class="cc-esq"><span class="soc-cab-ic"><i data-lucide="smartphone"></i></span><div style="min-width:0"><div class="cc-cli">Social media · recorrente</div><h1>${h(p.nome)}</h1>
+    <div class="cc-meta" style="margin-top:6px"><span>${h(cl.nome)}</span><span class="cc-sep"></span>${(p.perfis||[]).map(pf=>`<span class="soc-pf-tag" title="@${h(pf.handle)} · ${h(IDIOMAS[pf.idioma]||pf.idioma)}"><i style="background:${h(pf.cor)}"></i>${h(pf.nome)}</span>`).join('')}</div></div></div>
+    ${ed ? `<div class="cc-dir nao-imprimir"><button class="btn" data-act="socEditar" data-p="${p.id}"><i data-lucide="settings-2"></i>Perfis</button><button class="btn btn-p" data-act="socNovoPost" data-p="${p.id}"><i data-lucide="plus"></i>Novo post</button></div>` : ''}</div>`; }
+function pgSocial(r){ const p = socProj(r[1]); if (!p) { migalha([['Social media']]); return '<div class="vazio">Projeto não encontrado.</div>'; }
+  if (r[2]==='post') return pgSocialPost(p, r[3]);
+  const ed = ehEquipe(), f = socF(p), cl = cliente(p.clienteId);
+  migalha([['Clientes','#/clientes'],[cl.nome,`#/clientes/${p.clienteId}`],[p.nome]]);
+  const abas = `<div class="seg soc-abas"><button class="${f.aba==='cal'?'ativo':''}" data-act="socAba" data-p="${p.id}" data-v="cal"><i data-lucide="calendar-days"></i>Calendário editorial</button><button class="${f.aba==='feed'?'ativo':''}" data-act="socAba" data-p="${p.id}" data-v="feed"><i data-lucide="layout-grid"></i>Prévia do feed</button><button disabled title="Em breve: aguardando o modelo"><i data-lucide="clipboard-check"></i>Gestão de ações <small>em breve</small></button></div>`;
+  const mesNav = `<div class="soc-mes"><button class="btn btn-s" data-act="socMes" data-p="${p.id}" data-d="-1" title="Mês anterior"><i data-lucide="chevron-left"></i></button><b>${socMesTxt(f.mes)}</b><button class="btn btn-s" data-act="socMes" data-p="${p.id}" data-d="1" title="Próximo mês"><i data-lucide="chevron-right"></i></button>${f.mes!==HOJE.slice(0,7)?`<button class="btn btn-s" data-act="socMes" data-p="${p.id}" data-d="0">Hoje</button>`:''}</div>`;
+  return socCab(p, ed) + abas + (f.aba==='feed' ? socFeedAba(p, f, ed, mesNav) : socCalAba(p, f, ed, mesNav)); }
+function socCalAba(p, f, ed, mesNav){ const doMes = (p.posts||[]).filter(x=>(x.data||'').startsWith(f.mes)), n = pf => doMes.filter(x=>socNoPerfil(p, x, pf)).length;
+  const chips = `<div class="soc-chips"><a href="javascript:void 0" class="soc-chip ${!f.perfil?'on':''}" data-act="socPerfilF" data-p="${p.id}" data-v="">Todos · ${doMes.length}</a>${(p.perfis||[]).map(pf=>`<a href="javascript:void 0" class="soc-chip ${f.perfil===pf.id?'on':''}" data-act="socPerfilF" data-p="${p.id}" data-v="${pf.id}"><i style="background:${h(pf.cor)}"></i>${h(pf.nome)} · ${n(pf.id)}</a>`).join('')}</div>`;
+  const esp = p.espelho && f.perfil && f.perfil===p.espelho.para && ed ? `<button class="btn btn-s" data-act="socTrazer" data-p="${p.id}" title="Escolher posts de ${h(socPerfil(p, p.espelho.de).nome)} para ganhar versão em ${h(IDIOMAS[socPerfil(p, p.espelho.para).idioma]||'')}"><i data-lucide="globe"></i>Trazer de ${h(socPerfil(p, p.espelho.de).nome)}</button>` : '';
+  const posts = doMes.filter(x=>socNoPerfil(p, x, f.perfil)).sort((a,b)=>(a.hora||'99').localeCompare(b.hora||'99') || a.nome.localeCompare(b.nome));
+  const [a, m] = f.mes.split('-').map(Number), ini = new Date(a, m-1, 1).getDay(), nd = new Date(a, m, 0).getDate(), cels = [];
+  for (let i=0; i<ini; i++) cels.push(null); for (let d=1; d<=nd; d++) cels.push(f.mes+'-'+String(d).padStart(2,'0')); while (cels.length % 7) cels.push(null);
+  const grade = cels.map(iso=>!iso ? '<div class="soc-cel fora"></div>' : `<div class="soc-cel ${iso===HOJE?'hoje':''}" data-socdrop="${iso}" data-p="${p.id}"><div class="soc-dia"><span>${+iso.slice(8)}</span>${ed?`<button class="soc-add" data-act="socNovoPost" data-p="${p.id}" data-d="${iso}" title="Novo post em ${fd(iso)}"><i data-lucide="plus"></i></button>`:''}</div>${posts.filter(x=>x.data===iso).map(x=>socCard(p, x, ed)).join('')}</div>`).join('');
+  return `<div class="soc-bar">${chips}${esp}${mesNav}</div><div class="soc-cal">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>`<div class="soc-dow">${d}</div>`).join('')}${grade}</div>
+    ${ed ? '<div class="small muted" style="margin-top:8px">Arraste um card para outro dia para mudar a data. O “+” em cada dia cria um post.</div>' : ''}`; }
+/* itens da grade do feed: posts do mês (sem stories), do mais novo para o mais antigo, e até 9 posts anteriores mais claros */
+function socFeedItens(p, pf, mes){ const ok = x => socNoPerfil(p, x, pf) && x.formato!=='Stories' && x.data, ord = (a,b)=>(b.data+(b.hora||'')).localeCompare(a.data+(a.hora||''));
+  const doMes = (p.posts||[]).filter(x=>ok(x) && x.data.startsWith(mes)).sort(ord), antes = (p.posts||[]).filter(x=>ok(x) && x.data < mes).sort(ord).slice(0, 9);
+  const it = (x, antigo) => ({url:socLinks(x)[0]||'', formato:x.formato, data:x.data, nome:x.nome, antigo, rota:socRota(p, x)});
+  return {doMes, itens:[...doMes.map(x=>it(x, false)), ...antes.map(x=>it(x, true))]}; }
+function socFeedAba(p, f, ed, mesNav){ const pfId = f.feedPerfil || ((p.perfis||[])[0]||{}).id, pf = socPerfil(p, pfId), {doMes, itens} = socFeedItens(p, pfId, f.mes), sem = doMes.filter(x=>!socLinks(x).length);
+  const chips = `<div class="soc-chips">${(p.perfis||[]).map(x=>`<a href="javascript:void 0" class="soc-chip ${x.id===pfId?'on':''}" data-act="socFeedPerfil" data-p="${p.id}" data-v="${x.id}"><i style="background:${h(x.cor)}"></i>${h(x.nome)}</a>`).join('')}</div>`;
+  const chave = pfId+'|'+f.mes, tok = (p.feedPub||{})[chave], u = tok ? lpLinkPublico(tok) : '';
+  if (tok && ed) posRender.push(()=>socFeedAtualizarPublico(p, pfId, f.mes));
+  const lado = `<div class="card card-p soc-feed-info"><h3>Feed de ${h(socMesTxt(f.mes))}</h3>
+    <div class="soc-feed-n"><b>${doMes.length}</b> post${doMes.length===1?'':'s'} no feed · <b>${doMes.length - sem.length}</b> com asset${sem.length ? '' : doMes.length ? ' <span class="pc4-st c-verde"><i></i>completo</span>' : ''}</div>
+    ${sem.length ? `<div class="alerta amar" style="margin-top:10px"><i data-lucide="image-off"></i><div>A prévia fica completa quando todos os posts tiverem o link do asset. Faltam:<div class="soc-falta">${sem.map(x=>`<a href="${socRota(p, x)}">${fdm(x.data)} · ${h(x.nome)}</a>`).join('')}</div></div></div>` : ''}
+    <label class="small soc-feed-opt"><input type="checkbox" ${f.datas?'checked':''} data-chg="socFeedDatas" data-p="${p.id}"> Mostrar a data de cada post</label>
+    <div class="small muted" style="margin-top:6px">Stories não entram no feed. Os posts mais claros são dos meses anteriores. Clique num post da grade para abri-lo.</div>
+    ${ed ? `<div class="soc-feed-pub">${tok ? `<div class="np-share-u"><input readonly value="${h(u)}" onclick="this.select()"><button class="btn btn-s" data-act="lpCopiar" data-u="${h(u)}"><i data-lucide="copy"></i>Copiar link</button><a class="btn btn-s" href="${h(u)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Abrir</a></div><button class="btn btn-s" data-act="socFeedPub" data-p="${p.id}" data-v="0" style="margin-top:6px">Despublicar</button>` : `<button class="btn btn-s" data-act="socFeedPub" data-p="${p.id}" data-v="1"><i data-lucide="share-2"></i>Compartilhar esta prévia com o cliente</button>`}</div>` : ''}</div>`;
+  return `<div class="soc-bar">${chips}${mesNav}</div><div class="soc-feed">${lado}<div class="soc-feed-ph">${socFeedMockup({perfil:pf, itens, datas:f.datas}, true)}</div></div>`; }
+async function socFeedAtualizarPublico(p, pfId, mes){ const tok = (p.feedPub||{})[pfId+'|'+mes]; if (!tok || !sb) return; const pf = socPerfil(p, pfId), {itens} = socFeedItens(p, pfId, mes);
+  const o = {tipo:'feed', mes, perfil:{nome:pf.nome, handle:pf.handle, cor:pf.cor}, datas:false, itens:itens.map(({rota, ...x})=>x)}, html = socPayload(o); UI.socFeedPubCache = UI.socFeedPubCache || {};
+  if (UI.socFeedPubCache[tok]===html) return; UI.socFeedPubCache[tok] = html;
+  const r = await sb.from('paginas_publicas').upsert({token:tok, campanha_id:p.id, chave:'sfeed:'+pfId+':'+mes, titulo:`Prévia do feed · ${pf.nome} · ${socMesTxt(mes)}`, html, atualizado_em:new Date().toISOString()});
+  if (r.error) { delete UI.socFeedPubCache[tok]; toast('Não foi possível atualizar a prévia pública: '+r.error.message); } }
+function pgSocialPost(p, id){ const post = socPostDe(p, id), cl = cliente(p.clienteId); if (!post) { migalha([['Clientes','#/clientes'],[cl.nome,`#/clientes/${p.clienteId}`],[p.nome,`#/social/${p.id}`]]); return '<div class="vazio">Post não encontrado.</div>'; }
+  const ed = ehEquipe(), d = socDoc(p, id), pf = socPerfil(p, post.perfil), pcId = socParceiro(p, post), outro = (p.collab||[]).includes(post.perfil) ? socPerfil(p, (p.collab||[]).find(x=>x!==post.perfil)) : null;
+  if (!lpTextoPuro(d.texto)) { const o = post.origem && socPostDe(p, post.origem); d.texto = o && lpTextoPuro((o.doc||{}).texto) ? lpSemDisc(lpLimpa(o.doc.texto)) : socModelo(post.formato); if (!o) d.modeloDe = d.texto; }
+  migalha([['Clientes','#/clientes'],[cl.nome,`#/clientes/${p.clienteId}`],[p.nome,`#/social/${p.id}`],[post.nome]]);
+  UI.lpTxt = {id:p.id, et:'spost', idi:post.id, mi:0};
+  posRender.push(()=>{ const e = document.getElementById('lpe-edit'); if (!e) return; if (ed) { editorBlocos(e); lpAutoSalvar(e); }
+    let tp, tl; e.addEventListener('click', ev => { const a = ev.target.closest('[data-disc]'); if (a) discAtivar(a.dataset.disc); });
+    e.addEventListener('input', () => { clearTimeout(tp); tp = setTimeout(discPosicionar, 150); clearTimeout(tl); tl = setTimeout(()=>{ const s = document.getElementById('ig-leg-txt'); if (s) s.innerHTML = socLegHtml(socLegenda(e.innerHTML)); }, 250); });
+    requestAnimationFrame(() => { discAtivar(UI.discAtivo, true); discPosicionar(); if (UI.discRolar) { const an = e.querySelector(`[data-disc="${UI.discRolar}"]`); if (an) an.scrollIntoView({block:'center', behavior:'smooth'}); UI.discRolar = null; } }); });
+  const abertas = discAbertas(d), D = `data-p="${p.id}" data-id="${post.id}"`, dis = ed ? '' : 'disabled', ord = SOC_ORD.indexOf(post.etapa);
+  const L = socLinks(post), linksIn = (post.formato==='Carrossel' ? [...L, ''] : [L[0]||'']).map((u,i)=>`<div class="np-asset"><input class="np-sel np-limpo" type="url" placeholder="${post.formato==='Carrossel' ? (i ? `+ Link do card ${i+1}` : 'Cole o link do card 1 (Drive, PNG ou MP4)') : 'Cole o link do asset (Drive, PNG ou MP4)'}" value="${h(u)}" data-chg="socLink" ${D} data-i="${i}" ${dis}>${u?`<a href="${h(u)}" target="_blank" rel="noopener" class="np-abrir" title="Abrir o arquivo"><i data-lucide="external-link"></i>Abrir</a>`:''}</div>`).join('');
+  const orig = post.origem && socPostDe(p, post.origem), esp = post.espelho && socPostDe(p, post.espelho), podeEsp = p.espelho && post.perfil===p.espelho.de && !post.origem;
+  const etapas = SOC_ETAPAS.map(([k,t])=>[k, post.origem ? t.replace('Conteúdo em produção','Traduzindo').replace(' do conteúdo',' da tradução').replace(' no conteúdo',' na tradução') : t]);
+  const editorias = [...new Set((p.posts||[]).map(x=>x.editoria).filter(Boolean))].sort();
+  return `<div class="np np-dg soc-np"><div class="np-top"><a href="#/social/${p.id}" class="ent-voltar" onclick="UI.socF=UI.socF||{};UI.socF['${p.id}']=Object.assign(UI.socF['${p.id}']||{}, {mes:'${(post.data||HOJE).slice(0,7)}', aba:'cal'})"><i data-lucide="arrow-left"></i>Calendário editorial</a>
+      <div class="np-top-d"><span class="np-salvo" id="np-salvo"></span><div class="dp-w"><button class="btn btn-s dp-bt ${UI.discPainel?'on':''}" data-act="discPainel" title="Comentários e sugestões"><i data-lucide="message-square-text"></i>${abertas.length?`<span class="dp-cnt">${abertas.length}</span>`:''}</button>${UI.discPainel ? discPainelHtml(d) : ''}</div>${ed?`<button class="btn btn-s ${d.publico?'np-pub':''}" data-act="lpCompartilhar"><i data-lucide="${d.publico?'globe':'share-2'}"></i>${d.publico?'Publicada na web':'Compartilhar'}</button><button class="btn btn-s" data-act="socDelPost" ${D} title="Excluir o post"><i data-lucide="trash-2"></i></button>`:''}</div></div>
+    <div class="soc-grade"><article class="np-doc"><div class="np-ic"><i data-lucide="${socIcFmt(post.formato)}"></i></div><h1 class="np-tit">${ed ? `<input class="np-tit-in" value="${h(post.nome)}" data-chg="socCampo" ${D} data-k="nome" title="Clique para renomear" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.defaultValue;this.blur()}">` : h(post.nome)}</h1>
+      ${orig && socOrigMudou(p, post) ? `<div class="alerta amar soc-mudou"><i data-lucide="refresh-cw"></i><div><b>O post original mudou depois desta versão.</b> Confira o que mudou em “${h(orig.nome)}” e ajuste a tradução.${ed?` <button class="btn btn-s" data-act="socRevisado" ${D}>Já revisei</button>`:''}</div></div>` : ''}
+      <div class="np-props"><div><span><i data-lucide="smartphone"></i>Projeto</span><b>${h(p.nome)} · ${h(cl.nome)}</b></div>
+        <div><span><i data-lucide="at-sign"></i>Perfil</span><div class="np-resp"><span class="soc-dots"><i style="background:${h(pf.cor)}"></i></span>${ed ? `<select class="np-sel" data-chg="socCampo" ${D} data-k="perfil">${opts((p.perfis||[]).map(x=>[x.id, x.nome]), post.perfil)}</select>` : `<b>${h(pf.nome)}</b>`}</div></div>
+        ${outro ? `<div><span><i data-lucide="users"></i>Collab</span><label class="np-chk"><input type="checkbox" data-chg="socCampo" ${D} data-k="collab" ${pcId?'checked':''} ${dis}><em class="soc-collab-tx">${pcId ? `Aparece também no calendário de ${h(outro.nome)}` : `<span class="muted">Collab com ${h(outro.nome)}</span>`}</em></label></div>` : ''}
+        <div><span><i data-lucide="calendar"></i>Publicação</span><div class="soc-dt"><input type="date" class="np-sel" value="${h(post.data||'')}" data-chg="socCampo" ${D} data-k="data" ${dis}><input type="time" class="np-sel" value="${h(post.hora||'')}" data-chg="socCampo" ${D} data-k="hora" ${dis}></div></div>
+        <div><span><i data-lucide="ratio"></i>Formato</span>${ed ? `<select class="np-sel" data-chg="socCampo" ${D} data-k="formato">${opts(SOC_FORMATOS.map(x=>x[0]), post.formato)}</select>` : `<b>${h(post.formato)}</b>`}</div>
+        <div><span><i data-lucide="tag"></i>Editoria</span>${ed ? `<input class="np-sel np-limpo" list="soc-edit-${p.id}" placeholder="Vazio" value="${h(post.editoria||'')}" data-chg="socCampo" ${D} data-k="editoria"><datalist id="soc-edit-${p.id}">${editorias.map(x=>`<option value="${h(x)}">`).join('')}</datalist>` : `<b>${h(post.editoria||'—')}</b>`}</div>
+        <div><span><i data-lucide="user"></i>Responsável</span><div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="socCampo" ${D} data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div></div>
+        <div><span><i data-lucide="circle-dot"></i>Status</span>${pillSel(SOC_COR[post.etapa]||'cinza', `data-chg="socCampo" ${D} data-k="etapa" ${dis}`, opts(etapas, post.etapa))}</div>
+        <div><span><i data-lucide="check-square"></i>${post.origem ? 'Tradução aprovada' : 'Conteúdo aprovado'}</span><label class="np-chk"><input type="checkbox" data-chg="socCampo" ${D} data-k="okConteudo" ${ord>=3?'checked':''} ${dis}><em>${ord>=3 ? 'Aprovado pelo cliente' : ''}</em></label></div>
+        <div><span><i data-lucide="check-square"></i>Asset aprovado</span><label class="np-chk"><input type="checkbox" data-chg="socCampo" ${D} data-k="okAsset" ${ord>=6?'checked':''} ${ed && ord>=3 ? '' : 'disabled'}><em>${ord>=6 ? 'Aprovado pelo cliente' : ord>=3 ? '' : '<span class="muted">libera com o conteúdo aprovado</span>'}</em></label></div>
+        <div class="soc-lk-row"><span><i data-lucide="link-2"></i>${post.formato==='Carrossel' ? 'Cards do carrossel' : 'Asset design'}</span><div class="soc-links">${linksIn}</div></div>
+        ${podeEsp ? `<div><span><i data-lucide="globe"></i>${h(socPerfil(p, p.espelho.para).nome)}</span>${esp ? `<div class="np-resp"><a href="${socRota(p, esp)}">${h(esp.nome)} · ${fdm(esp.data)}</a><span class="pc4-st c-${SOC_COR[esp.etapa]||'cinza'}"><i></i>${h(socRotulo(esp))}</span></div>` : ed ? `<button class="btn btn-s soc-levar" data-act="socLevar" ${D}><i data-lucide="globe"></i>Levar para ${h(socPerfil(p, p.espelho.para).nome)} (${h(IDIOMAS[socPerfil(p, p.espelho.para).idioma]||'')})</button>` : '<b class="muted">—</b>'}</div>` : ''}
+        ${orig ? `<div><span><i data-lucide="corner-up-left"></i>Original</span><div class="np-resp"><a href="${socRota(p, orig)}">${h(orig.nome)} · ${h(socPerfil(p, orig.perfil).nome)}</a></div></div>` : ''}
+        ${d.publico?`<div><span><i data-lucide="globe"></i>Link público</span><b><a href="${lpLinkPublico(d.publico)}" target="_blank" rel="noopener">${lpLinkPublico(d.publico).replace(/^https?:\/\//,'').slice(0,60)}…</a></b></div>`:''}</div>
+      ${lpComentPagina(d, ed)}
+      ${orig ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[socPerfil(p, orig.perfil).idioma]||'')}</summary><div class="lpe-doc">${lpSemDisc(lpLimpa((orig.doc||{}).texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
+      <div class="lpe-doc np-corpo ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
+    </article><aside class="np-disc" id="np-disc">${abertas.map(x=>discCard(x, ed)).join('')}</aside>
+    <div class="soc-prev">${socMockup(socDadosMock(p, post), true)}<div class="soc-prev-cap">Prévia no Instagram · ${post.formato==='Stories' ? 'stories não mostram legenda' : 'a legenda vem do bloco LEGENDA do texto'}${socLinks(post).some(u=>/drive\.google/.test(u)) ? '<br>Arquivos do Drive precisam estar compartilhados como “qualquer pessoa com o link”.' : ''}</div></div></div></div>`; }
+/* lista de projetos de social media na página do cliente */
+function socListaCli(cid){ const L = (S.social||[]).filter(p=>p.clienteId===cid && !p.arquivada); if (!L.length) return ''; const mes = HOJE.slice(0,7);
+  return `<div class="cli-st soc-st"><i data-lucide="smartphone" class="cli-ic"></i>Social media<span>${L.length} projeto${L.length===1?'':'s'} recorrente${L.length===1?'':'s'}</span></div><div class="soc-pjs">${L.map(p=>{ const pm = (p.posts||[]).filter(x=>(x.data||'').startsWith(mes)), pub = pm.filter(x=>x.etapa==='publicado').length, prox = (p.posts||[]).filter(x=>x.data>=HOJE && x.etapa!=='publicado').sort((a,b)=>a.data.localeCompare(b.data))[0];
+    return `<a class="soc-pj card" href="#/social/${p.id}"><div class="soc-pj-t"><span class="soc-cab-ic"><i data-lucide="smartphone"></i></span><b>${h(p.nome)}</b></div><div class="soc-pj-pfs">${(p.perfis||[]).map(pf=>`<span class="soc-pf-tag"><i style="background:${h(pf.cor)}"></i>${h(pf.nome)}</span>`).join('')}</div><small>${pm.length} post${pm.length===1?'':'s'} em ${MESES[+mes.slice(5,7)-1]} · ${pub} publicado${pub===1?'':'s'}${prox ? ` · próximo: ${fdm(prox.data)} ${h(prox.nome)}` : ''}</small></a>`; }).join('')}</div>`; }
+/* formulário do projeto (novo ou editar perfis) */
+function socFormAbrir(pid, cliId){ const p = pid && socProj(pid), cli = p ? p.clienteId : (cliId || ''), clNome = cli ? cliente(cli).nome : '', ptx = !p && /ptx|trimble|precision/i.test(clNome);
+  const perfis = p ? (p.perfis||[]).map(x=>Object.assign({}, x)) : ptx ? SOC_PERFIS_PTX.map(x=>Object.assign({}, x)) : [];
+  const alvoN = p ? perfis.length + 1 : Math.max(3, perfis.length); while (perfis.length < alvoN) perfis.push({id:novoId('pf'), nome:'', handle:'', idioma:'PT', cor:['#111111','#2c5d8f','#EF9F27','#1e824c','#a13d75'][perfis.length % 5]});
+  const collab = p ? (p.collab||[]) : ptx ? ['ptxbr','ppbr'] : [], esp = p ? (p.espelho||{}) : ptx ? {de:'ptxbr', para:'ptxlatam'} : {};
+  const selP = (nome, sel) => `<select name="${nome}"><option value="">—</option>${perfis.map((x,i)=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${h(x.nome || 'Perfil '+(i+1))}</option>`).join('')}</select>`;
+  abrirModal(p ? 'Perfis do projeto' : 'Novo projeto · Social media', `<form id="form-soc" class="soc-form" onsubmit="return false">
+    <div class="soc-form-2"><label>Nome do projeto<input name="nome" value="${h(p ? p.nome : 'Social media'+(clNome ? ' · '+clNome : ''))}" required></label>
+      ${p ? '' : `<label>Cliente<select name="cliente">${opts(S.clientes.filter(c=>!c.arquivado).map(c=>[c.id, c.nome]), cli, 'Selecione')}</select></label>`}</div>
+    <div class="soc-form-t">Perfis e calendários <span>cada perfil tem o seu calendário editorial</span></div>
+    ${perfis.map((x,i)=>`<div class="soc-form-pf"><input type="hidden" name="pid" value="${h(x.id)}"><input type="color" name="pc" value="${h(x.cor)}" title="Cor do perfil"><input name="pn" placeholder="Nome do perfil (ex.: PTx Trimble Brasil)" value="${h(x.nome)}"><input name="ph" placeholder="@usuario" value="${h(x.handle ? '@'+x.handle : '')}"><select name="pi">${opts(['PT','ES','EN'].map(k=>[k, IDIOMAS[k]||k]), x.idioma)}</select></div>`).join('')}
+    <div class="small muted">Deixe o nome em branco para não usar a linha${p ? ' (um perfil com posts não pode ser removido)' : ''}. Salve para ganhar mais uma linha.</div>
+    <div class="soc-form-t">Collab <span>o post marcado como collab aparece nos dois calendários</span></div>
+    <div class="soc-form-2">${selP('c1', collab[0])}${selP('c2', collab[1])}</div>
+    <div class="soc-form-t">Versão traduzida <span>posts de um perfil ganham versão em outro idioma, ligada ao original</span></div>
+    <div class="soc-form-2"><label>Posts de${selP('ed', esp.de)}</label><label>viram versão em${selP('ep', esp.para)}</label></div></form>`,
+    `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="socSalvarForm" data-p="${p ? p.id : ''}">${p ? 'Salvar' : 'Criar projeto'}</button>`, true); }
+function socFormSalvar(pid){ const f = document.getElementById('form-soc'); if (!f) return; const p = pid && socProj(pid), v = n => (f.elements[n] && f.elements[n].value || '').trim(), all = n => [...f.querySelectorAll(`[name="${n}"]`)].map(x=>x.value.trim());
+  const nome = v('nome'); if (!nome) return toast('Dê um nome ao projeto.'); const cli = p ? p.clienteId : v('cliente'); if (!cli) return toast('Escolha o cliente.');
+  const ids = all('pid'), ns = all('pn'), hs = all('ph'), is = all('pi'), cs = all('pc'), perfis = [];
+  ids.forEach((id,i)=>{ if (ns[i]) perfis.push({id, nome:ns[i], handle:hs[i].replace(/^@/,'').replace(/\s+/g,'') || ns[i].toLowerCase().normalize('NFD').replace(/[^\w]+/g,'.'), idioma:is[i]||'PT', cor:cs[i]||'#111111'}); });
+  if (!perfis.length) return toast('Cadastre pelo menos um perfil.');
+  if (p) { const usados = new Set((p.posts||[]).map(x=>x.perfil)), fora = [...usados].filter(id=>!perfis.some(x=>x.id===id)); if (fora.length) return toast(`O perfil ${socPerfil(p, fora[0]).nome} tem posts e não pode ser removido.`); }
+  const ok = id => perfis.some(x=>x.id===id), c1 = v('c1'), c2 = v('c2'), de = v('ed'), para = v('ep');
+  const collab = c1 && c2 && c1!==c2 && ok(c1) && ok(c2) ? [c1, c2] : [], espelho = de && para && de!==para && ok(de) && ok(para) ? {de, para} : null;
+  if (p) { Object.assign(p, {nome, perfis, collab, espelho}); registrar(`Social media “${nome}”: perfis atualizados`); fecharModal(); salvar(); render(); return toast('Projeto atualizado.'); }
+  const np = {id:novoId('so'), tipo:'social', clienteId:cli, nome, perfis, collab, espelho, posts:[], feedPub:{}, criadoEm:HOJE, status:'Em andamento'};
+  (S.social = S.social || []).push(np); registrar(`Projeto de social media criado: ${nome} (${cliente(cli).nome})`); fecharModal(); salvar(); location.hash = '#/social/'+np.id; toast('Projeto criado. Use o “+” num dia do calendário para criar o primeiro post.'); }
+/* versão traduzida (ex.: Brasil → LATAM): post ligado ao original, com data própria e o texto para traduzir */
+function socLevar(p, post){ if (!p.espelho || post.espelho && socPostDe(p, post.espelho)) return null; const para = socPerfil(p, p.espelho.para), d = post.doc || {};
+  const n = {id:novoId('sp'), perfil:para.id, collab:false, data:post.data, hora:post.hora||'', nome:post.nome, formato:post.formato, editoria:post.editoria||'', etapa:'briefing', resp:'', links:socLinks(post), origem:post.id, origemEm:Date.now(), doc:{texto:lpSemDisc(lpLimpa(d.texto||'')) || socModelo(post.formato)}};
+  p.posts.push(n); post.espelho = n.id; return n; }
+/* ---------- ações ---------- */
+Object.assign(ACT, {
+  socEditar: el => socFormAbrir(el.dataset.p),
+  socSalvarForm: el => socFormSalvar(el.dataset.p),
+  socAba: el => { const p = socProj(el.dataset.p); if (!p) return; socF(p).aba = el.dataset.v; render(); },
+  socPerfilF: el => { const p = socProj(el.dataset.p); if (!p) return; socF(p).perfil = el.dataset.v; render(); },
+  socFeedPerfil: el => { const p = socProj(el.dataset.p); if (!p) return; socF(p).feedPerfil = el.dataset.v; render(); },
+  socMes: el => { const p = socProj(el.dataset.p); if (!p) return; const f = socF(p), d = +el.dataset.d; f.mes = d ? socMesMais(f.mes, d) : HOJE.slice(0,7); render(); },
+  socNovoPost: el => { const p = socProj(el.dataset.p); if (!p || !ehEquipe()) return; const f = socF(p), pf = f.perfil || ((p.perfis||[])[0]||{}).id;
+    const data = el.dataset.d || (f.mes===HOJE.slice(0,7) ? HOJE : f.mes+'-01');
+    const post = {id:novoId('sp'), perfil:pf, collab:false, data, hora:'', nome:'Novo post', formato:'Estático', editoria:'', etapa:'briefing', resp:'', links:[], doc:{}};
+    p.posts.push(post); registrar(`Social media “${p.nome}”: post criado em ${fd(data)} (${socPerfil(p, pf).nome})`); salvar(); location.hash = socRota(p, post);
+    setTimeout(()=>{ const t = document.querySelector('.np-tit-in'); if (t) { t.focus(); t.select(); } }, 120); },
+  socDelPost: el => { const p = socProj(el.dataset.p), post = p && socPostDe(p, el.dataset.id); if (!post) return;
+    if (!confirm(`Excluir o post “${post.nome}”? Esta ação não pode ser desfeita.${post.espelho && socPostDe(p, post.espelho) ? ' A versão traduzida continua, sem o vínculo.' : ''}`)) return;
+    p.posts = p.posts.filter(x=>x.id!==post.id); for (const x of p.posts) { if (x.origem===post.id) delete x.origem; if (x.espelho===post.id) delete x.espelho; }
+    const tok = (post.doc||{}).publico; if (tok && sb) sb.from('paginas_publicas').delete().eq('token', tok).then(()=>{}, ()=>{});
+    registrar(`Social media “${p.nome}”: post “${post.nome}” excluído`); salvar(); location.hash = '#/social/'+p.id; toast('Post excluído.'); },
+  socLevar: el => { const p = socProj(el.dataset.p), post = p && socPostDe(p, el.dataset.id); if (!post) return; lpGuardarEdicao(); const n = socLevar(p, post); if (!n) return;
+    registrar(`Social media “${p.nome}”: “${post.nome}” levado para ${socPerfil(p, n.perfil).nome}`); salvar(); render(); toast(`Versão criada no calendário de ${socPerfil(p, n.perfil).nome}. Peça a tradução no chat com o link do post.`); },
+  socRevisado: el => { const p = socProj(el.dataset.p), post = p && socPostDe(p, el.dataset.id); if (!post) return; lpGuardarEdicao(); post.origemEm = Date.now(); salvar(); render(); toast('Marcado como revisado.'); },
+  socTrazer: el => { const p = socProj(el.dataset.p); if (!p || !p.espelho) return; const f = socF(p), de = socPerfil(p, p.espelho.de), para = socPerfil(p, p.espelho.para);
+    const L = (p.posts||[]).filter(x=>x.perfil===de.id && !x.origem && (x.data||'').startsWith(f.mes)).sort((a,b)=>a.data.localeCompare(b.data)), livre = x => !(x.espelho && socPostDe(p, x.espelho));
+    abrirModal(`Trazer posts de ${de.nome}`, `<p class="small muted" style="margin-top:0">Os posts escolhidos ganham uma versão em ${h(IDIOMAS[para.idioma]||para.idioma)} no calendário de ${h(para.nome)}, na mesma data (dá para mudar depois). Depois é só pedir a tradução no chat com o link do calendário.</p>
+      <div class="soc-trazer" id="soc-trazer">${L.map(x=>`<label class="${livre(x)?'':'off'}"><input type="checkbox" value="${x.id}" ${livre(x)?'':'disabled checked'}><span class="soc-dots"><i style="background:${h(de.cor)}"></i></span><b>${fdm(x.data)}</b> ${h(x.nome)} <em>${h(x.formato)}</em>${livre(x)?'':'<small>já tem versão</small>'}</label>`).join('') || `<div class="vazio">Nenhum post de ${h(de.nome)} em ${h(socMesTxt(f.mes))}.</div>`}</div>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="socTrazerOk" data-p="${p.id}">Criar versões</button>`); },
+  socTrazerOk: el => { const p = socProj(el.dataset.p); if (!p) return; const ids = [...document.querySelectorAll('#soc-trazer input:checked:not(:disabled)')].map(x=>x.value); if (!ids.length) return toast('Escolha pelo menos um post.');
+    let n = 0; for (const id of ids) { const post = socPostDe(p, id); if (post && socLevar(p, post)) n++; }
+    registrar(`Social media “${p.nome}”: ${n} post${n===1?'':'s'} levado${n===1?'':'s'} para ${socPerfil(p, p.espelho.para).nome}`); fecharModal(); salvar(); render(); toast(`${n} versão${n===1?'':'ões'} criada${n===1?'':'s'}. Peça a tradução no chat com o link do calendário.`); },
+  socFeedPub: async el => { const p = socProj(el.dataset.p); if (!p || !sb) return toast('Sem conexão com o banco.'); const f = socF(p), pfId = f.feedPerfil || ((p.perfis||[])[0]||{}).id, k = pfId+'|'+f.mes; p.feedPub = p.feedPub || {};
+    if (el.dataset.v==='1') { p.feedPub[k] = Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2,8); salvar(); await socFeedAtualizarPublico(p, pfId, f.mes); registrar(`Social media “${p.nome}”: prévia do feed de ${socMesTxt(f.mes)} publicada`); toast('Prévia publicada. Copie o link para enviar ao cliente.'); }
+    else { const tok = p.feedPub[k]; delete p.feedPub[k]; if (tok) await sb.from('paginas_publicas').delete().eq('token', tok); registrar(`Social media “${p.nome}”: prévia do feed despublicada`); salvar(); toast('Prévia despublicada.'); }
+    render(); }
+});
+/* alterações nos campos do post */
+function socChg(k, el, v){ const p = socProj(el.dataset.p); if (!p) return;
+  if (k==='socFeedDatas') { socF(p).datas = !!v; return render(); }
+  const post = socPostDe(p, el.dataset.id); if (!post) return; lpGuardarEdicao(); let msg = '';
+  if (k==='socLink') { const L = post.links = socLinks(post), i = +el.dataset.i, val = String(v||'').trim(); if ((L[i]||'')===val) return; if (val) L[i] = val; else L.splice(i, 1); post.links = L.filter(Boolean); msg = 'link do asset atualizado'; }
+  else { const campo = el.dataset.k, ant = post[campo];
+    if (campo==='collab') { post.collab = !!v; msg = v ? 'collab marcada' : 'collab desmarcada'; }
+    else if (campo==='okConteudo') { post.etapa = v ? (SOC_ORD.indexOf(post.etapa) < 3 ? 'producao' : post.etapa) : 'aprov_conteudo'; msg = v ? 'conteúdo aprovado' : 'aprovação do conteúdo desfeita'; }
+    else if (campo==='okAsset') { post.etapa = v ? (SOC_ORD.indexOf(post.etapa) < 6 ? 'aprovado' : post.etapa) : 'aprov_asset'; msg = v ? 'asset aprovado' : 'aprovação do asset desfeita'; }
+    else if (campo==='resp') { post.resp = v; socDoc(p, post.id).resp = v; msg = 'responsável '+(v||'—'); }
+    else if (campo==='formato') { const d = socDoc(p, post.id); if (d.modeloDe && lpLimpa(d.texto||'')===lpLimpa(d.modeloDe)) d.texto = d.modeloDe = socModelo(v); post.formato = v; msg = 'formato '+v; }
+    else if (campo==='nome') { const nv = String(v).trim(); if (!nv) return render(); post.nome = nv; msg = `renomeado (antes “${ant}”)`; }
+    else if (campo==='perfil') { post.perfil = v; if (!(p.collab||[]).includes(v)) post.collab = false; msg = 'perfil '+socPerfil(p, v).nome; }
+    else { post[campo] = typeof v==='string' ? v.trim() : v; msg = campo==='etapa' ? 'status '+socRotulo(post) : campo==='data' ? 'data '+fd(v) : campo==='hora' ? 'horário '+(v||'—') : campo+' atualizado'; }
+    if (campo==='etapa' || campo==='okConteudo' || campo==='okAsset') (socDoc(p, post.id).hist = socDoc(p, post.id).hist || []).push({t:Date.now(), quem:quemSou(), o:socRotulo(post)}); }
+  registrar(`Social media “${p.nome}” · post “${post.nome}”: ${msg}`); if ((post.doc||{}).publico) socAtualizarPublico(p, post); salvar(); render(); }
+/* arrastar o card para outro dia */
+let SOC_ARR = null;
+document.addEventListener('dragstart', e => { const el = e.target.closest && e.target.closest('[data-socdrag]'); if (!el) return; SOC_ARR = {p:el.dataset.p, id:el.dataset.socdrag}; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', el.dataset.socdrag); } catch(_){} });
+document.addEventListener('dragover', e => { if (!SOC_ARR) return; const c = e.target.closest && e.target.closest('[data-socdrop]'); if (!c) return; e.preventDefault(); document.querySelectorAll('.soc-cel.sobre').forEach(x=>x!==c && x.classList.remove('sobre')); c.classList.add('sobre'); });
+document.addEventListener('dragend', () => { SOC_ARR = null; document.querySelectorAll('.soc-cel.sobre').forEach(x=>x.classList.remove('sobre')); });
+document.addEventListener('drop', e => { if (!SOC_ARR) return; const c = e.target.closest && e.target.closest('[data-socdrop]'); const a = SOC_ARR; SOC_ARR = null; if (!c) return; e.preventDefault();
+  const p = socProj(a.p), post = p && socPostDe(p, a.id), iso = c.dataset.socdrop; if (!post || post.data===iso) return render();
+  post.data = iso; registrar(`Social media “${p.nome}” · post “${post.nome}”: data ${fd(iso)}`); if ((post.doc||{}).publico) socAtualizarPublico(p, post); salvar(); render(); toast(`“${post.nome}” movido para ${fd(iso)}.`); });
+
 /* arrastar e soltar (Kanban e calendário editorial) */
 let arrastando = null;
 document.addEventListener('dragstart', e => { const el = e.target.closest('[data-drag]'); if (el) { arrastando = {id:el.dataset.drag, c:el.dataset.c}; e.dataTransfer.effectAllowed = 'move'; } });
