@@ -1878,7 +1878,7 @@ function pgClientes(r){
 function pgCliente(id){
   const cl = cliente(id); if (!cl.id) return '<div class="vazio">Cliente não encontrado.</div>';
   migalha([['Clientes','#/clientes'],[cl.nome]]);
-  const f = UI.fc || (UI.fc = {ano:'',pais:'',regiao:'',status:'',resp:'',busca:'',arq:false});
+  const f = UI.fc || (UI.fc = {ano:'',pais:'',regiao:'',status:'',resp:'',busca:'',arq:false,agrup:'lista'});
   let L = S.campanhas.filter(c=>c.clienteId===id && (f.arq || !c.arquivada));
   if (f.busca) L = L.filter(c=>c.nome.toLowerCase().includes(f.busca.toLowerCase()));
   if (f.ano) L = L.filter(c=>c.lancamento.startsWith(f.ano));
@@ -1955,16 +1955,22 @@ function pgCliente(id){
       <span class="cli-nm"><b>${h(c.nome)}</b>${c.arquivada?' <span class="tag">Arquivada</span>':''}<small>${marcasDe(c).map(m=>marcaCancelada(c,m)?`<s>${h(m)}</s>`:h(m)).join(' + ')||'—'} · ${h(canaisTxt(c))}${faseada(c)?' · em fases':''}${paisesUnicos?'':' · '+c.paises.map(p=>PAISES[p.cod].f).join(' ')}</small></span>
       <span class="num">${fdm(c.lancamento)} → ${fdm(c.fimVeiculacao)}</span><span class="num dir small">${comecar(c)}</span><span>${situacao(c)}</span>${lixo(c)}</div>`;
     const cabCols = `<div class="cli-ln cli-hd"><span></span><span>Campanha</span><span class="th-sort ${f.sortV?'on':''}" data-act="sortVeic" title="Ordenar pela data de veiculação">Veiculação <i data-lucide="${f.sortV==='asc'?'arrow-up':f.sortV==='desc'?'arrow-down':'arrow-up-down'}"></i></span><span class="dir" title="Quando o planejamento precisa começar, pelo cronograma">Começar em</span><span>Situação</span><span></span></div>`;
-    if (rec.length) corpo += `<div class="cli-st" data-act="cliQ" data-k="${h(id+'|rec')}" data-v="${fechado('rec',false)?'0':'1'}"><i data-lucide="${fechado('rec',false)?'chevron-right':'chevron-down'}" class="cli-chev"></i><i data-lucide="repeat" class="cli-ic"></i>Recorrentes<span>${rec.length} campanha${rec.length===1?'':'s'} · mídia ${txtMoe(somaMoe(rec))}</span></div>${fechado('rec',false) ? '' : `<div class="card cli-tab">${cabCols}${rec.map(linhaC).join('')}</div>`}`;
+    // social media (projetos recorrentes) entra junto com as recorrentes
+    const socs = (S.social||[]).filter(p=>p.clienteId===id && !p.arquivada && (!f.busca || p.nome.toLowerCase().includes(f.busca.toLowerCase()))), mesH = HOJE.slice(0,7);
+    const linhaS = p => { const pm = (p.posts||[]).filter(x=>(x.data||'').startsWith(mesH)), pub = pm.filter(x=>x.etapa==='publicado').length, prox = (p.posts||[]).filter(x=>x.data>=HOJE && x.etapa!=='publicado').sort((a,b)=>a.data.localeCompare(b.data))[0];
+      return `<div class="cli-ln" onclick="location.hash='#/social/${p.id}'"><span class="cli-mk" style="background:linear-gradient(#feda75,#fa7e1e 30%,#d62976 60%,#962fbf 85%,#4f5bd5)"></span>
+        <span class="cli-nm"><b>${h(p.nome)}</b><small>Social media · ${(p.perfis||[]).map(x=>h(x.nome)).join(', ')}</small></span>
+        <span class="num">mês a mês</span><span class="num dir small">${prox ? fdm(prox.data) : '<span class="muted">—</span>'}</span><span><span class="cli-pz azul" title="${pub} publicado${pub===1?'':'s'} no mês">${pm.length} post${pm.length===1?'':'s'} em ${MESES[+mesH.slice(5,7)-1].slice(0,3)}</span></span><span></span></div>`; };
+    if (rec.length || socs.length) corpo += `<div class="cli-st" data-act="cliQ" data-k="${h(id+'|rec')}" data-v="${fechado('rec',false)?'0':'1'}"><i data-lucide="${fechado('rec',false)?'chevron-right':'chevron-down'}" class="cli-chev"></i><i data-lucide="repeat" class="cli-ic"></i>Recorrentes<span>${[rec.length ? `${rec.length} campanha${rec.length===1?'':'s'} · mídia ${txtMoe(somaMoe(rec))}` : '', socs.length ? `${socs.length} social media` : ''].filter(Boolean).join(' · ')}</span></div>${fechado('rec',false) ? '' : `<div class="card cli-tab">${cabCols}${rec.map(linhaC).join('')}${socs.map(linhaS).join('')}</div>`}`;
     if (pon.length) { corpo += `<div class="cli-st" data-act="cliQ" data-k="${h(id+'|pon')}" data-v="${fechado('pon',false)?'0':'1'}"><i data-lucide="${fechado('pon',false)?'chevron-right':'chevron-down'}" class="cli-chev"></i><i data-lucide="target" class="cli-ic"></i>Pontuais<span>${pon.length}</span></div>`;
       if (!fechado('pon',false) && f.agrup==='lista') corpo += `<div class="card cli-tab">${cabCols}${pon.map(linhaC).join('')}</div>`;
       else if (!fechado('pon',false)) { const MQ = ['jan–mar','abr–jun','jul–set','out–dez'], qDe = c => c.lancamento ? c.lancamento.slice(0,4)+'-Q'+(Math.floor((+c.lancamento.slice(5,7)-1)/3)+1) : 'sem data', qs = [];
         for (const c of pon) { const k = qDe(c); if (!qs.includes(k)) qs.push(k); }
         corpo += qs.map(k=>{ const cs = pon.filter(c=>qDe(c)===k), [ano, q] = k.split('-Q'), fimQ = q ? ano+'-'+String(q*3).padStart(2,'0')+'-31' : '', fe = fechado(k, !!fimQ && fimQ < HOJE && cs.every(c=>c.status==='Concluída'));
           return `<div class="cli-qh" data-act="cliQ" data-k="${h(id+'|'+k)}" data-v="${fe?'0':'1'}"><i data-lucide="${fe?'chevron-right':'chevron-down'}" class="cli-chev"></i>${q ? `<b>Q${q} ${ano}</b><span>${MQ[q-1]} · ${cs.length} campanha${cs.length===1?'':'s'} · mídia ${txtMoe(somaMoe(cs))}</span>` : '<b>Sem data</b>'}</div>${fe ? '' : `<div class="card cli-tab">${cabCols}${cs.map(linhaC).join('')}</div>`}`; }).join(''); } }
-    if (!L.length) corpo = '<div class="card vazio">Nenhuma campanha com esses filtros.</div>';
+    if (!L.length && !socs.length) corpo = '<div class="card vazio">Nenhuma campanha com esses filtros.</div>';
   }
-  return cab + socListaCli(id) + filtros + corpo;
+  return cab + filtros + corpo;
 }
 
 /* botão "Novo projeto": escolhe o tipo (campanha hoje; social media, evento e projeto offline em seguida) */
