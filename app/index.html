@@ -3256,9 +3256,10 @@ const linkCurto = u => { try { const x = new URL(u), cam = x.pathname + x.search
 function pecaCardPais(c, e, ed){ const d = pecaDoc(c, e.id), n = (d.coment||[]).length + discAbertas(d).length, rot = rotuloEtapaPost(c, e), cor = rot==='Aguardando conteúdo' ? 'cinza' : (ST_ENT_COR[e.etapa]||'cinza');
   return `<div class="pc4 ${e.etapa==='concluido' ? 'pc4-ok' : ''}" onclick="if(!event.target.closest('input,a,button'))location.hash='${pecaRota(c, e)}'" title="Abrir o post">
     <div class="pc4-t"><i data-lucide="${pecaVideo(e)?'clapperboard':'image'}"></i><b>${h(e.nome)}</b>${ed?`<button class="pc4-x" data-act="pecaDel" data-ids="${pecaGrupo(c, e).map(x=>x.id).join(',')}" title="Excluir este post em todos os países"><i data-lucide="trash-2"></i></button>`:''}</div>
-    <div class="pc4-l2"><span class="pc4-st c-${cor}"><i></i>${h(rot)}</span>${(d.resp||e.resp) ? `<span class="pc4-resp" title="Responsável: ${h(d.resp||e.resp)}">${avatar(d.resp||e.resp, 'av av-s')}${h((d.resp||e.resp).split(' ')[0])}</span>` : '<span class="pc4-resp vz" title="Sem responsável">sem responsável</span>'}</div>
+    <span class="pc4-st c-${cor}"><i></i>${h(rot)}</span>
     ${e.link ? `<div class="pc4-lk"><a href="${h(e.link)}" target="_blank" rel="noopener" title="${h(e.link)}">${h(linkCurto(e.link))}</a><button type="button" title="Copiar o link" data-u="${h(e.link)}" onclick="navigator.clipboard.writeText(this.dataset.u).then(()=>toast('Link copiado.'))"><i data-lucide="copy"></i></button></div>`
       : ed ? `<input class="pc4-in" type="url" placeholder="+ Link do asset" data-chg="pecaArq" data-ids="${e.id}">` : ''}
+    ${(d.resp||e.resp) ? `<span class="pc4-resp" title="Responsável: ${h(d.resp||e.resp)}">${avatar(d.resp||e.resp, 'av av-s')}${h((d.resp||e.resp).split(' ')[0])}</span>` : '<span class="pc4-resp vz" title="Sem responsável">sem responsável</span>'}
     ${n ? `<div class="pc4-com"><i data-lucide="message-square"></i>${n}</div>` : ''}</div>`; }
 /* card do post na seção: igual ao card de conteúdo da LP */
 function pecaCard(c, nome, pcs, ed){ const base = c.idiomaBase || 'PT', porIdi = {};
