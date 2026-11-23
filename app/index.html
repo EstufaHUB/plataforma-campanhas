@@ -6163,7 +6163,7 @@ const socLegHtml = t => h(t||'').replace(/(^|[\s(])([#@][\wÀ-ÿ._]+)/g, '$1<spa
 /* textos-guia: aparecem em cinza no bloco vazio e somem de vez quando ele ganha texto */
 function socPh(ed){ ed.querySelectorAll('[data-ph]').forEach(e=>{ if (e.textContent.trim()) e.removeAttribute('data-ph'); else e.classList.add('vz'); }); }
 /* barra da legenda: contador, gancho antes do "mais" e hashtags; e a linha do corte do "mais" no texto */
-const SOC_CORTE = 125;
+const SOC_CORTE = 95;
 function socLegAjuda(ed){ const bar = document.getElementById('soc-legbar'); if (!bar) return; const txt = socLegenda(ed.innerHTML), n = [...txt].length, gancho = [...(txt.split('\n')[0]||'')].length, tags = (txt.match(/#[\wÀ-ÿ]+/g)||[]).length;
   bar.innerHTML = !txt ? '<span class="muted">Legenda vazia</span>' : `<span>${n.toLocaleString('pt-BR')} / 2.200 caracteres</span><span class="soc-lb-b"><i style="width:${Math.min(100, n/22)}%;${n>2200?'background:var(--verm)':''}"></i></span>`
     + (gancho <= SOC_CORTE ? '<span class="lb-ok">✓ gancho cabe antes do “mais”</span>' : `<span class="lb-av">⚠ a primeira linha passa do “mais” (${gancho} caracteres)</span>`)
