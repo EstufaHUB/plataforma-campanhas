@@ -6145,10 +6145,11 @@ const socMesMais = (m, n) => { const d = new Date(+m.slice(0,4), +m.slice(5,7)-1
 function socDoc(p, pid){ const post = socPostDe(p, pid); if (!post) return null; const d = post.doc = post.doc || {}; if (d.resp == null && post.resp) d.resp = post.resp; return d; }
 /* estrutura do texto do post: legenda (vai para a prévia) + texto da arte ou roteiro */
 function socModelo(fmt){ const ph = t => `data-ph="${t}"`, tab = (cab, linhas) => `<table data-cabl="1" data-cabc="1"><tbody><tr>${cab.map(x=>`<td><b>${x}</b></td>`).join('')}</tr>${linhas.map(([a,b,c])=>`<tr><td>${a}</td><td ${ph(b)}><br></td><td ${ph(c)}><br></td></tr>`).join('')}</tbody></table>`;
-  const T = fmt==='Reels' ? tab(['Cena','Texto','Imagens e vídeos'], [['1 · Gancho','O que aparece e é dito nos 3 primeiros segundos','Cena ou referência'],['2','Texto na tela ou locução','Cena ou referência'],['3','Texto na tela ou locução','Cena ou referência'],['Fechamento','CTA e assinatura','Logo, cena final']])
-    : fmt==='Stories' ? tab(['Frame','Texto','Interação'], [['1','Texto do frame','Enquete, caixinha, link…'],['2','Texto do frame','Enquete, caixinha, link…'],['3','Texto do frame','Enquete, caixinha, link…']])
-    : fmt==='Carrossel' ? tab(['Card','Texto','Visual'], [['1 · Capa','Título que faz deslizar','Imagem ou referência'],['2','Texto do card','Imagem ou referência'],['3','Texto do card','Imagem ou referência'],['Último · Fim','CTA e assinatura','Fundo, logo']])
-    : tab(['Elemento','Texto','Visual'], [['Título','Texto principal da arte','Imagem ou referência'],['Texto de apoio','Complemento do título','—'],['CTA','Ex.: Saiba mais','—']]);
+  const C = ['CENA','TEXTO','IMAGENS E VÍDEOS'], vis = 'Imagem, vídeo ou referência';
+  const T = fmt==='Reels' ? tab(C, [['1 · Gancho','O que aparece e é dito nos 3 primeiros segundos',vis],['2','Texto na tela ou locução',vis],['3','Texto na tela ou locução',vis],['Fechamento','CTA e assinatura','Logo, cena final']])
+    : fmt==='Stories' ? tab(C, [['1','Texto do frame','Imagem ou vídeo · interação (enquete, caixinha, link)'],['2','Texto do frame',vis],['3','Texto do frame',vis]])
+    : fmt==='Carrossel' ? tab(C, [['1 · Capa','Título que faz deslizar',vis],['2','Texto do card',vis],['3','Texto do card',vis],['Último · Fim','CTA e assinatura','Fundo, logo']])
+    : tab(C, [['1','Título e texto de apoio da arte',vis],['CTA','Ex.: Saiba mais','—']]);
   return `<h2>1 · Asset briefing</h2><h4>Referências + ideia criativa</h4><p ${ph('Descreva a ideia criativa e cole os links das referências')}><br></p><h4>Conteúdo</h4>${T}<h2>2 · Legenda</h2><p ${ph('Primeira linha: o gancho que faz parar o scroll')}><br></p><p ${ph('Desenvolvimento e CTA')}><br></p><p ${ph('#hashtags (até 5)')}><br></p>`; }
 /* blocos da legenda: o que vem depois do título "Legenda" (ou "2 · Legenda"), até o próximo título ou tabela */
 function socLegBlocos(root){ const ks = [...root.children], ini = ks.findIndex(k=>{ const t = k.textContent.trim(); return /^(\d+\s*[·.\-]\s*)?legenda\b/i.test(t) && t.length < 20; }), out = [];
