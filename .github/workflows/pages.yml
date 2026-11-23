@@ -27,5 +27,12 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: app
+      # o GitHub às vezes não encontra o pacote logo depois de montar: espera e tenta de novo
       - id: deploy
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deploy.outcome == 'failure'
+        run: sleep 30
+      - id: deploy2
+        if: steps.deploy.outcome == 'failure'
         uses: actions/deploy-pages@v4

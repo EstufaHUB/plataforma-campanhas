@@ -2903,6 +2903,10 @@ function colunasCanal(c, canal, fase){ const out = [];
   if (!out.length && !canal) for (const p of c.paises) out.push({mk:null, p:p.cod});
   const om = m => { const i = MARCAS.indexOf(m); return i<0 ? 99 : i; };
   return out.sort((a,b)=>om(a.mk)-om(b.mk) || (a.p==='BR'?-1:b.p==='BR'?1:a.p.localeCompare(b.p))); }
+/* colunas das seções de entregáveis: países da ficha; com PTx Trimble e Precision Planting marcadas, separadas por marca (sem marca/país cancelado) */
+function colunasFicha(c){ const mks = marcaSeparada(c) ? MARCAS_SEP.filter(m=>!marcaCancelada(c, m)) : [null], out = [];
+  for (const mk of mks) for (const p of (c.paises||[])) if (!(mk && paisCancelado(c, mk, p.cod))) out.push({mk, p:p.cod});
+  return out.sort((a,b)=>mks.indexOf(a.mk)-mks.indexOf(b.mk) || (a.p==='BR'?-1:b.p==='BR'?1:0)); }
 /* cria as peças-padrão que ainda não existem (não apaga nada) */
 function sincronizarEntregaveis(c){
   c.entregaveis = c.entregaveis || []; const tem = k => c.entregaveis.some(e=>e.auto===k), ign = new Set(c.entAutoIgnorar||[]); let n = 0;
@@ -3411,7 +3415,7 @@ function previaArquivo(link, vertical){ const cls = 'pcp' + (vertical ? ' pcp-v'
   if ((m = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/))) return `<div class="${cls} kvp kvp-fr"><iframe src="https://drive.google.com/file/d/${m[1]}/preview" loading="lazy" allow="autoplay" allowfullscreen></iframe></div>`;
   return previaKV(u).replace('class="kvp', `class="${cls} kvp`); }
 function pecasFluxo(c, canal, da, fase, ed){
-  let cols = colunasCanal(c, canal, fase); if (!cols.length) cols = colunasCanal(c, null, fase);   // seções sem canal (email, material rico…): países e marcas da campanha
+  let cols = colunasFicha(c); if (!cols.length) cols = colunasCanal(c, canal, fase);   // colunas = países da ficha (por marca, sem os cancelados); país novo na ficha vira coluna
   const meta = canal==='Meta Ads', tPeca = meta ? 'post' : 'peça'; mks = [...new Set(cols.map(x=>x.mk).filter(Boolean))], kM = c.id+'|'+canal;
   const sm = (UI.pecaMarca||{})[kM], mi = typeof sm==='string' ? Math.max(0, mks.indexOf(sm)) : Math.min(+sm || 0, Math.max(mks.length-1, 0)), mk = mks[mi] || null;
   const paisesMk = cols.filter(x=>!mk || x.mk===mk).map(x=>x.p);
@@ -3562,7 +3566,7 @@ function entregaveisSecoes(c){
   const faixa = (nome, lista) => { const conc = lista.filter(e=>e.etapa==='concluido').length;
     return `<div class="ent-faixa"><i data-lucide="${ICONE_SECAO[nome]||'package'}"></i>${h(nome)}<span>${lista.length ? `${conc} de ${lista.length} concluída${lista.length===1?'':'s'}` : 'sem peças'}</span>${lista.length?`<div class="ent-prog"><i style="width:${Math.round(conc/lista.length*100)}%"></i></div>`:''}</div>`; };
   const novoBtn = (secao, canal, x, porFase) => ed ? `<button class="ent-novo" data-act="formEnt" data-id="${c.id}" data-secao="${h(secao)}" data-canal="${h(canal||'')}" ${x&&x.p?`data-pais="${x.p}"`:''} ${x&&x.mk?`data-marca="${h(x.mk)}"`:''} ${porFase&&fase?`data-fase="${h(fase)}"`:''}><i data-lucide="plus"></i>Nova peça</button>` : '';
-  const secaoColunas = (nome, canal, filtro) => { const cols = colunasCanal(c, canal, fase), varias = new Set(cols.map(x=>x.mk)).size>1;
+  const secaoColunas = (nome, canal, filtro) => { const cols = colunasFicha(c).length ? colunasFicha(c) : colunasCanal(c, canal, fase), varias = new Set(cols.map(x=>x.mk)).size>1;
     const daSec = L.filter(filtro); daSec.forEach(e=>usados.add(e.id));
     if (!cols.length) return faixa(nome, daSec) + `<div class="ent-grade">${daSec.map(e=>cartaoEnt(c,e)).join('')}${novoBtn(nome, canal, null, true)}</div>`;   // sem países no canal: peças em grade
     return faixa(nome, daSec) + `<div class="ent-cols" style="grid-template-columns:repeat(${Math.max(1,cols.length)}, minmax(220px,1fr))">${cols.map(x=>{ const da = daSec.filter(e=>(e.paises||[]).includes(x.p) && (!varias || !x.mk || e.marca===x.mk || !e.marca));
