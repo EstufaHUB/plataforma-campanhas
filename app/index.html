@@ -709,6 +709,16 @@ body.at-arrastando .at-ev{pointer-events:none}
 .soc-max-x{position:absolute;top:16px;right:18px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}.soc-max-x:hover{background:rgba(255,255,255,.26)}.soc-max-x svg{width:22px;height:22px}
 .soc-max-leg{max-width:460px;max-height:86vh;overflow:auto;background:#fff;border-radius:16px;padding:26px 28px;font-size:1.02rem;line-height:1.6;color:#111}.soc-max-lt{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);margin-bottom:10px}.soc-max-tx .ig-tag{color:#00376b}
 @media (max-width:900px){.soc-max{flex-direction:column;overflow:auto;justify-content:flex-start}}
+.iph-fd .iph-sb{position:absolute;top:0;left:0;right:0}
+.ig-fd-top{flex:none;position:relative;height:104px;overflow:hidden;background:#f4f4f4;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;box-sizing:border-box}
+.ig-fd-bl{position:absolute;inset:0;display:flex;flex-direction:column;gap:9px;padding:20px 22px;filter:blur(5px);opacity:.55}.ig-fd-bl i{display:block;height:11px;border-radius:6px;background:#9a9a9a}.ig-fd-bl i:nth-child(1){width:80%}.ig-fd-bl i:nth-child(2){width:62%}.ig-fd-bl i:nth-child(3){width:35%}
+.ig-fd-volta{position:absolute;left:12px;bottom:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 1px 4px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;z-index:1}.ig-fd-volta svg{width:20px;height:20px}
+.ig-fd-tt{position:relative;text-align:center;line-height:1.2;z-index:1}.ig-fd-tt b{display:block;font-size:16px;font-weight:700}.ig-fd-tt small{font-size:12px;color:#262626}
+.ig-mn-esc{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex:none}.ig-mn-esc i{display:block;height:2px;border-radius:2px;background:#111;width:20px}.ig-mn-esc i+i{width:12px}
+.ig-dots-l{display:flex;justify-content:center;padding:9px 0 0}.ig-dots-l .ig-dots{position:static;transform:none}
+.ig-ac2{display:flex;align-items:center;gap:14px;padding:8px 12px 4px;font-size:13px;font-weight:600}.ig-ac2 span{display:inline-flex;align-items:center;gap:5px}.ig-ac2 svg{width:23px;height:23px;stroke-width:1.9}.ig-ac2-sv{margin-left:auto}
+.ig-fd-bot{flex:none;position:relative;height:34px;overflow:hidden;background:#fafafa;border-top:1px solid #efefef}.ig-fd-bot .ig-fd-bl{padding:10px 14px}
+.iph-fd .ig-ph-n .ig-ver{width:14px;height:14px}
 /* Stories */
 .ig-st{position:relative;flex:1;min-height:0;background:#1a1a1a;border-radius:9px;overflow:hidden;margin:0 2px}
 .ig-st-bar{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:3px;pointer-events:none;z-index:2}.ig-st-bar i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.45)}.ig-st-bar i:first-child{background:#fff}
@@ -6172,8 +6182,9 @@ function socCarDots(el){ const i = Math.round(el.scrollLeft / Math.max(1, el.cli
   const c = el.parentNode.querySelector('.ig-cnt'); if (c) c.textContent = (i+1)+'/'+el.children.length; }
 /* ---------- iPhone com a interface do Instagram ---------- */
 const IPH_SB = `<div class="iph-sb"><b>9:41</b><span class="iph-ilha"></span><span class="iph-ics"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 16 12"><path d="M8 2.4c2.3 0 4.4.9 6 2.4l1.2-1.3A10.2 10.2 0 0 0 8 .6 10.2 10.2 0 0 0 .8 3.5L2 4.8a8.4 8.4 0 0 1 6-2.4Zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3A6.6 6.6 0 0 0 8 4.2c-1.8 0-3.4.7-4.6 1.8l1.2 1.3c.9-.8 2.1-1.3 3.4-1.3Zm0 3.6c.4 0 .8.2 1.1.4L8 11.4 6.9 10c.3-.2.7-.4 1.1-.4Z"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="19" height="8" rx="2"/><path d="M24 4v4c.8-.3 1.5-1.1 1.5-2s-.7-1.7-1.5-2Z" opacity=".5"/></svg></span></div>`;
-const socPhone = (tela, esc) => `<div class="iph ${esc?'iph-esc':''}"><div class="iph-tela">${IPH_SB}${tela}<span class="iph-home"></span></div></div>`;
+const socPhone = (tela, esc, cls) => `<div class="iph ${esc?'iph-esc':''} ${cls||''}"><div class="iph-tela">${IPH_SB}${tela}<span class="iph-home"></span></div></div>`;
 const IG_VER = `<svg class="ig-ver" viewBox="0 0 24 24"><path fill="#fff" d="M12 1.6l2.3 1.7 2.9-.2.9 2.7 2.4 1.6-.6 2.8 1.3 2.6-1.9 2.2-.1 2.9-2.8.8-1.4 2.5-2.8-.6L12 22.4l-2.1-1.8-2.8.6-1.4-2.5-2.8-.8-.1-2.9L.9 13l1.3-2.6-.6-2.8L4 6l.9-2.7 2.9.2z"/><path d="M7.6 12.2l3 3 5.8-6" fill="none" stroke="#000" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const IG_VER_AZ = `<svg class="ig-ver" viewBox="0 0 24 24"><path fill="#0095f6" d="M12 1.6l2.3 1.7 2.9-.2.9 2.7 2.4 1.6-.6 2.8 1.3 2.6-1.9 2.2-.1 2.9-2.8.8-1.4 2.5-2.8-.6L12 22.4l-2.1-1.8-2.8.6-1.4-2.5-2.8-.8-.1-2.9L.9 13l1.3-2.6-.6-2.8L4 6l.9-2.7 2.9.2z"/><path d="M7.6 12.2l3 3 5.8-6" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const socNav = esc => `<div class="ig-nav ${esc?'esc':''}"><i data-lucide="house"></i><i data-lucide="search"></i><i data-lucide="square-plus"></i><i data-lucide="clapperboard"></i><span class="ig-nav-av"></span></div>`;
 const socAv = (pf, cls) => pf.logo ? `<span class="ig-av ig-av-img ${cls||''}"><img src="${h(pf.logo)}" alt=""></span>` : `<span class="ig-av ${cls||''}" style="--c:${h(pf.cor||'#333')}">${h(iniciais(pf.nome||pf.handle))}</span>`;
 function socMockup(o, vivo){ const L = (o.links||[]).filter(Boolean), pf = o.perfil, pc = o.parceiro, fmt = o.formato || 'Estático';
@@ -6185,13 +6196,15 @@ function socMockup(o, vivo){ const L = (o.links||[]).filter(Boolean), pf = o.per
     <div class="ig-rl-cm"><span>Faça um comentário...</span></div>`, true);
   const car = fmt==='Carrossel' && L.length > 1, md = o.tipoMidia==='video' ? 'video' : 'img';
   const midia = car ? `<div class="ig-car" onscroll="socCarDots(this)">${L.map(u=>`<div class="ig-sl">${socMidiaHtml(u, md)}</div>`).join('')}</div><span class="ig-cnt">1/${L.length}</span><button type="button" class="ig-seta e" onclick="this.parentNode.querySelector('.ig-car').scrollBy({left:-this.parentNode.clientWidth,behavior:'smooth'})"><i data-lucide="chevron-left"></i></button><button type="button" class="ig-seta d" onclick="this.parentNode.querySelector('.ig-car').scrollBy({left:this.parentNode.clientWidth,behavior:'smooth'})"><i data-lucide="chevron-right"></i></button>` : socMidiaHtml(L[0], md);
-  return socPhone(`<div class="ig-top"><span class="ig-logo">Instagram</span><span class="ig-top-ic"><i data-lucide="heart"></i><i data-lucide="message-circle"></i></span></div>
-    <div class="ig-corpo"><div class="ig-ph"><span class="ig-ring">${socAv(pf)}</span><div class="ig-ph-n">${nomes}</div><i data-lucide="ellipsis"></i></div>
+  const nomesAz = `<b>${h(pf.handle)}</b>${IG_VER_AZ}${pc ? ` <span>e</span> <b>${h(pc.handle)}</b>${IG_VER_AZ}` : ''}`;
+  return socPhone(`<div class="ig-fd-top"><span class="ig-fd-bl"><i></i><i></i><i></i></span><span class="ig-fd-volta"><i data-lucide="chevron-left"></i></span><div class="ig-fd-tt"><b>Posts</b><small>${h(pf.handle)}</small></div></div>
+    <div class="ig-corpo"><div class="ig-ph"><span class="ig-ring">${socAv(pf)}</span><div class="ig-ph-n">${nomesAz}</div><span class="ig-rl-mn ig-mn-esc"><i></i><i></i></span></div>
       <div class="ig-m ${fmt==='Carrossel'?'ig-car-w':''}">${midia}</div>
-      <div class="ig-ac"><span><i data-lucide="heart"></i><i data-lucide="message-circle"></i><i data-lucide="send"></i></span>${car ? `<span class="ig-dots">${L.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</span>` : ''}<i data-lucide="bookmark"></i></div>
-      <div class="ig-lk">1.248 curtidas</div>
+      ${car ? `<div class="ig-dots-l"><span class="ig-dots">${L.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</span></div>` : ''}
+      <div class="ig-ac2"><span><i data-lucide="heart"></i>31</span><span><i data-lucide="message-circle"></i>3</span><span><i data-lucide="repeat-2"></i>1</span><span><i data-lucide="send"></i>1</span><i data-lucide="bookmark" class="ig-ac2-sv"></i></div>
       <div class="ig-leg" onclick="this.classList.toggle('ab')"><div class="ig-leg-tx"><b>${h(pf.handle)}</b> ${leg}</div><span class="ig-mais">mais</span></div>
-      <div class="ig-cm">Ver todos os 36 comentários</div><div class="ig-dt">${h(socDataExt(o.data))}</div></div>${socNav(false)}`, false); }
+      <div class="ig-dt">${h(socDataExt(o.data))}</div></div>
+    <div class="ig-fd-bot"><span class="ig-fd-bl"><i></i><i></i></span></div>`, false, 'iph-fd'); }
 /* perfil com a grade do feed (o post mais novo primeiro) */
 function socFeedMockup(o, app){ const pf = o.perfil;
   return socPhone(`<div class="ig-pf-top"><i data-lucide="lock"></i><b>${h(pf.handle)}</b><i data-lucide="chevron-down"></i><span><i data-lucide="square-plus"></i><i data-lucide="menu"></i></span></div>
