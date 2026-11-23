@@ -6312,7 +6312,7 @@ function pgSocialPost(p, id){ const post = socPostDe(p, id), cl = cliente(p.clie
   UI.lpTxt = {id:p.id, et:'spost', idi:post.id, mi:0};
   posRender.push(()=>{ const e = document.getElementById('lpe-edit'); if (!e) return; if (ed) { editorBlocos(e); lpAutoSalvar(e); }
     let tp, tl; e.addEventListener('click', ev => { const a = ev.target.closest('[data-disc]'); if (a) discAtivar(a.dataset.disc); });
-    socPh(e); socLegAjuda(e); addEventListener('resize', () => { if (e.isConnected) socLegAjuda(e); });
+    socPh(e); socLegAjuda(e); addEventListener('resize', () => { if (e.isConnected) socLegAjuda(e); }); [300, 1200].forEach(ms=>setTimeout(()=>{ if (e.isConnected) socLegAjuda(e); }, ms)); if (document.fonts) document.fonts.ready.then(()=>{ if (e.isConnected) socLegAjuda(e); });
     e.addEventListener('input', () => { socPh(e); clearTimeout(tp); tp = setTimeout(discPosicionar, 150); clearTimeout(tl); tl = setTimeout(()=>{ const s = document.getElementById('ig-leg-txt'); if (s) s.innerHTML = socLegHtml(socLegenda(e.innerHTML)); socLegAjuda(e); }, 250); });
     requestAnimationFrame(() => { discAtivar(UI.discAtivo, true); discPosicionar(); if (UI.discRolar) { const an = e.querySelector(`[data-disc="${UI.discRolar}"]`); if (an) an.scrollIntoView({block:'center', behavior:'smooth'}); UI.discRolar = null; } }); });
   const abertas = discAbertas(d), D = `data-p="${p.id}" data-id="${post.id}"`, dis = ed ? '' : 'disabled', ord = SOC_ORD.indexOf(post.etapa);
