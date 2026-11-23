@@ -655,7 +655,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 @media (max-width:1560px){.soc-grade{grid-template-columns:minmax(0,1fr) 350px}.soc-grade .np-disc{grid-column:1;grid-row:2}.soc-grade .np-disc .dc{position:static;margin-bottom:10px}}
 @media (max-width:1000px){.soc-grade{grid-template-columns:1fr}.soc-grade .np-disc{grid-row:auto}.soc-prev{position:static}}
 .soc-nav{display:flex;align-items:center;gap:8px;margin:0 auto}.soc-nav b{font-size:.86rem;font-weight:600;min-width:90px;text-align:center}.soc-nav small{display:block;font-weight:400;color:var(--tx3);font-size:.7rem}.soc-nav-b{gap:4px;text-decoration:none}.soc-nav-b svg{width:15px;height:15px;margin:0}.soc-nav-b.off{opacity:.35;pointer-events:none}.soc-dt{display:flex;gap:4px;align-items:center}.soc-dt input{font-family:inherit}
-.soc-lk-row{align-items:start!important}.soc-lk-row>span{padding-top:5px}.soc-links{display:flex;flex-direction:column;gap:2px;min-width:0}.soc-links .np-asset input{min-width:300px}
+.soc-lk-row{align-items:start!important}.soc-lk-row>span{padding-top:5px}.soc-pasta>svg{width:15px;height:15px;color:var(--tx3);flex:none}.soc-pasta{margin-bottom:4px;padding-bottom:4px;border-bottom:1px dashed var(--borda)}.soc-links{display:flex;flex-direction:column;gap:2px;min-width:0}.soc-links .np-asset input{min-width:300px}
 .soc-levar{justify-self:start}.soc-mudou{margin:0 0 14px}.soc-mudou .btn{margin-left:6px}.soc-collab-tx{color:var(--tx2)!important;font-weight:500!important}
 /* iPhone */
 .iph{width:330px;height:690px;border-radius:54px;background:#1c1c1e;padding:11px;box-sizing:border-box;position:relative;flex:none;box-shadow:inset 0 0 0 1.5px #4a4a4e,inset 0 0 0 4px #1c1c1e,0 0 0 1px #0b0b0c,0 34px 60px -24px rgba(15,23,30,.45),0 12px 26px -10px rgba(15,23,30,.3)}
@@ -6195,7 +6195,7 @@ function socMockup(o, vivo){ const L = (o.links||[]).filter(Boolean), pf = o.per
     <div class="ig-rl-rod"><div class="ig-rl-u">${socAv(pf,'ig-av-m')}<span><b>${h(pf.handle)}</b>${IG_VER}${pc ? ` <span>e</span> <b>${h(pc.handle)}</b>${IG_VER}` : ''}</span></div><div class="ig-rl-leg" onclick="this.classList.toggle('ab')">${leg}</div></div><div class="ig-rl-pb"><i></i></div></div>
     <div class="ig-rl-cm"><span>Faça um comentário...</span></div>`, true);
   const car = fmt==='Carrossel' && L.length > 1, md = o.tipoMidia==='video' ? 'video' : 'img';
-  const midia = car ? `<div class="ig-car" onscroll="socCarDots(this)">${L.map(u=>`<div class="ig-sl">${socMidiaHtml(u, md)}</div>`).join('')}</div><span class="ig-cnt">1/${L.length}</span><button type="button" class="ig-seta e" onclick="this.parentNode.querySelector('.ig-car').scrollBy({left:-this.parentNode.clientWidth,behavior:'smooth'})"><i data-lucide="chevron-left"></i></button><button type="button" class="ig-seta d" onclick="this.parentNode.querySelector('.ig-car').scrollBy({left:this.parentNode.clientWidth,behavior:'smooth'})"><i data-lucide="chevron-right"></i></button>` : socMidiaHtml(L[0], md);
+  const midia = car ? `<div class="ig-car" onscroll="socCarDots(this)">${L.map((u,i)=>`<div class="ig-sl">${socMidiaHtml(u, (o.tipos||[])[i]==='video' ? 'video' : md)}</div>`).join('')}</div><span class="ig-cnt">1/${L.length}</span><button type="button" class="ig-seta e" onclick="this.parentNode.querySelector('.ig-car').scrollBy({left:-this.parentNode.clientWidth,behavior:'smooth'})"><i data-lucide="chevron-left"></i></button><button type="button" class="ig-seta d" onclick="this.parentNode.querySelector('.ig-car').scrollBy({left:this.parentNode.clientWidth,behavior:'smooth'})"><i data-lucide="chevron-right"></i></button>` : socMidiaHtml(L[0], md);
   const nomesAz = `<b>${h(pf.handle)}</b>${IG_VER_AZ}${pc ? ` <span>e</span> <b>${h(pc.handle)}</b>${IG_VER_AZ}` : ''}`;
   return socPhone(`<div class="ig-fd-top"><span class="ig-fd-bl"><i></i><i></i><i></i></span><span class="ig-fd-volta"><i data-lucide="chevron-left"></i></span><div class="ig-fd-tt"><b>Posts</b><small>${h(pf.handle)}</small></div></div>
     <div class="ig-corpo"><div class="ig-ph"><span class="ig-ring">${socAv(pf)}</span><div class="ig-ph-n">${nomesAz}</div><span class="ig-rl-mn ig-mn-esc"><i></i><i></i></span></div>
@@ -6213,7 +6213,7 @@ function socFeedMockup(o, app){ const pf = o.perfil;
       <div class="ig-pf-tabs"><span class="on"><i data-lucide="grid-3x3"></i></span><span><i data-lucide="clapperboard"></i></span><span><i data-lucide="square-user"></i></span></div>
       <div class="ig-grid">${o.itens.map(t=>`<div class="ig-tile ${t.antigo?'old':''}" ${app && t.rota ? `onclick="location.hash='${t.rota}'" title="${h(t.nome)}"` : ''}>${t.url ? socMidiaHtml(t.url, 'thumb') : `<span class="ig-tile-vz">${h(t.nome)}<small>sem asset</small></span>`}${t.formato==='Carrossel' ? '<i data-lucide="copy" class="ig-tile-ic"></i>' : t.formato==='Reels' ? '<i data-lucide="clapperboard" class="ig-tile-ic"></i>' : ''}${o.datas && t.data ? `<span class="ig-tile-dt">${fdm(t.data)}</span>` : ''}</div>`).join('') || '<div class="ig-grid-vz">Nenhum post no feed neste mês.</div>'}</div></div>${socNav(false)}`, false); }
 const socDadosMock = (p, post) => { const pc = socParceiro(p, post), pf = socPerfil(p, post.perfil), so = x => ({nome:x.nome, handle:x.handle, cor:x.cor, logo:x.logo ? new URL(x.logo, location.href).href : ''});
-  return {formato:post.formato, links:socLinks(post), perfil:so(pf), parceiro:pc ? so(socPerfil(p, pc)) : null, legenda:socLegenda((post.doc||{}).texto), data:post.data, hora:post.hora||'', tipoMidia:post.tipoMidia||''}; };
+  return {formato:post.formato, links:socLinks(post), perfil:so(pf), parceiro:pc ? so(socPerfil(p, pc)) : null, legenda:socLegenda((post.doc||{}).texto), data:post.data, hora:post.hora||'', tipoMidia:post.tipoMidia||'', tipos:post.tipos||[]}; };
 /* página pública: o conteúdo vai junto, codificado no começo do html */
 const socPayload = o => '<!--soc:' + btoa(unescape(encodeURIComponent(JSON.stringify(o)))) + '-->';
 const socPayloadLer = html => { const m = /^<!--soc:([A-Za-z0-9+/=]+)-->/.exec(html||''); if (!m) return null; try { return JSON.parse(decodeURIComponent(escape(atob(m[1])))); } catch(e){ return null; } };
@@ -6292,7 +6292,8 @@ function pgSocialPost(p, id){ const post = socPostDe(p, id), cl = cliente(p.clie
     e.addEventListener('input', () => { clearTimeout(tp); tp = setTimeout(discPosicionar, 150); clearTimeout(tl); tl = setTimeout(()=>{ const s = document.getElementById('ig-leg-txt'); if (s) s.innerHTML = socLegHtml(socLegenda(e.innerHTML)); }, 250); });
     requestAnimationFrame(() => { discAtivar(UI.discAtivo, true); discPosicionar(); if (UI.discRolar) { const an = e.querySelector(`[data-disc="${UI.discRolar}"]`); if (an) an.scrollIntoView({block:'center', behavior:'smooth'}); UI.discRolar = null; } }); });
   const abertas = discAbertas(d), D = `data-p="${p.id}" data-id="${post.id}"`, dis = ed ? '' : 'disabled', ord = SOC_ORD.indexOf(post.etapa);
-  const L = socLinks(post), linksIn = (post.formato==='Carrossel' ? [...L, ''] : [L[0]||'']).map((u,i)=>`<div class="np-asset"><input class="np-sel np-limpo" type="url" placeholder="${post.formato==='Carrossel' ? (i ? `+ Link do card ${i+1}` : 'Cole o link do card 1 (Drive, PNG ou MP4)') : 'Cole o link do asset (Drive, PNG ou MP4)'}" value="${h(u)}" data-chg="socLink" ${D} data-i="${i}" ${dis}>${u?`<a href="${h(u)}" target="_blank" rel="noopener" class="np-abrir" title="Abrir o arquivo"><i data-lucide="external-link"></i>Abrir</a>`:''}</div>`).join('');
+  const L = socLinks(post), pastaIn = post.formato==='Carrossel' ? `<div class="np-asset soc-pasta"><i data-lucide="folder"></i><input class="np-sel np-limpo" type="url" placeholder="Cole o link da pasta do Drive: os cards entram sozinhos" value="${h(post.pasta||'')}" data-chg="socPasta" ${D} ${dis}>${post.pasta && ed ? `<button type="button" class="np-abrir" data-act="socPastaAtualizar" ${D} title="Ler a pasta de novo"><i data-lucide="refresh-cw"></i>Atualizar</button>` : ''}${post.pasta ? `<a href="${h(post.pasta)}" target="_blank" rel="noopener" class="np-abrir"><i data-lucide="external-link"></i>Abrir</a>` : ''}</div>` : '';
+  const linksIn = pastaIn + (post.formato==='Carrossel' ? [...L, ''] : [L[0]||'']).map((u,i)=>`<div class="np-asset"><input class="np-sel np-limpo" type="url" placeholder="${post.formato==='Carrossel' ? (i ? `+ Link do card ${i+1}` : 'Cole o link do card 1 (Drive, PNG ou MP4)') : 'Cole o link do asset (Drive, PNG ou MP4)'}" value="${h(u)}" data-chg="socLink" ${D} data-i="${i}" ${dis}>${u?`<a href="${h(u)}" target="_blank" rel="noopener" class="np-abrir" title="Abrir o arquivo"><i data-lucide="external-link"></i>Abrir</a>`:''}</div>`).join('');
   const orig = post.origem && socPostDe(p, post.origem), esp = post.espelho && socPostDe(p, post.espelho), podeEsp = p.espelho && post.perfil===p.espelho.de && !post.origem;
   const etapas = SOC_ETAPAS.map(([k,t])=>[k, post.origem ? t.replace('Conteúdo em produção','Traduzindo').replace(' do conteúdo',' da tradução').replace(' no conteúdo',' na tradução') : t]);
   const editorias = [...new Set((p.posts||[]).map(x=>x.editoria).filter(Boolean))].sort();
@@ -6357,6 +6358,17 @@ function socFormSalvar(pid){ const f = document.getElementById('form-soc'); if (
   if (p) { Object.assign(p, {nome, perfis, collab, espelho}); registrar(`Social media “${nome}”: perfis atualizados`); fecharModal(); salvar(); render(); return toast('Projeto atualizado.'); }
   const np = {id:novoId('so'), tipo:'social', clienteId:cli, nome, perfis, collab, espelho, posts:[], feedPub:{}, criadoEm:HOJE, status:'Em andamento'};
   (S.social = S.social || []).push(np); registrar(`Projeto de social media criado: ${nome} (${cliente(cli).nome})`); fecharModal(); salvar(); location.hash = '#/social/'+np.id; toast('Projeto criado. Use o “+” num dia do calendário para criar o primeiro post.'); }
+/* pasta do Drive: lê os arquivos (função drive-pasta) e monta um card por arquivo, na ordem do nome */
+async function socLerPasta(p, post, url){ if (!/drive\.google\.com\/drive\/(u\/\d+\/)?folders\//.test(url)) { toast('Esse não é um link de pasta do Drive.'); return render(); }
+  if (!sb) { toast('Sem conexão com o banco.'); return render(); }
+  toast('Lendo a pasta do Drive…');
+  try { const { data, error } = await sb.functions.invoke('drive-pasta', {body:{pasta:url}}); if (error) throw error; if (data.erro) throw new Error(data.erro);
+    const A = data.arquivos || []; if (!A.length) { toast('A pasta não tem imagens nem vídeos (subpastas são ignoradas).'); return render(); }
+    lpGuardarEdicao(); post.pasta = url; post.links = A.map(x=>x.link); post.tipos = A.map(x=>x.tipo); post.tipoMidia = A.every(x=>x.tipo==='video') ? 'video' : '';
+    if (A.length > 1 && !['Carrossel','Stories'].includes(post.formato)) post.formato = 'Carrossel';
+    registrar(`Social media “${p.nome}” · post “${post.nome}”: ${A.length} arquivo(s) lidos da pasta do Drive`); if ((post.doc||{}).publico) socAtualizarPublico(p, post); salvar(); render();
+    toast(`${A.length} card${A.length===1?'':'s'} carregado${A.length===1?'':'s'} da pasta.`);
+  } catch (e) { toast('Não foi possível ler a pasta: '+(e.message||e)); render(); } }
 /* versão traduzida (ex.: Brasil → LATAM): post ligado ao original, com data própria e o texto para traduzir */
 function socLevar(p, post){ if (!p.espelho || post.espelho && socPostDe(p, post.espelho)) return null; const para = socPerfil(p, p.espelho.para), d = post.doc || {};
   const n = {id:novoId('sp'), perfil:para.id, collab:false, data:post.data, hora:post.hora||'', nome:post.nome, formato:post.formato, editoria:post.editoria||'', etapa:'briefing', resp:'', links:socLinks(post), origem:post.id, origemEm:Date.now(), doc:{texto:lpSemDisc(lpLimpa(d.texto||'')) || socModelo(post.formato)}};
@@ -6379,6 +6391,7 @@ Object.assign(ACT, {
     const post = {id:novoId('sp'), perfil:pf.id, collab:false, data:ini, hora:'', nome:'Novo post · '+c.nome, formato:'Estático', editoria:'Campanha', etapa:'briefing', resp:'', links:[], campId:c.id, doc:{}};
     p.posts.push(post); registrar(`Social media “${p.nome}”: post criado pela campanha “${c.nome}” em ${fd(ini)}`); salvar(); location.hash = socRota(p, post);
     setTimeout(()=>{ const t = document.querySelector('.np-tit-in'); if (t) { t.focus(); t.select(); } }, 120); },
+  socPastaAtualizar: el => { const p = socProj(el.dataset.p), post = p && socPostDe(p, el.dataset.id); if (post && post.pasta) socLerPasta(p, post, post.pasta); },
   socDelPost: el => { const p = socProj(el.dataset.p), post = p && socPostDe(p, el.dataset.id); if (!post) return;
     if (!confirm(`Excluir o post “${post.nome}”? Esta ação não pode ser desfeita.${post.espelho && socPostDe(p, post.espelho) ? ' A versão traduzida continua, sem o vínculo.' : ''}`)) return;
     p.posts = p.posts.filter(x=>x.id!==post.id); for (const x of p.posts) { if (x.origem===post.id) delete x.origem; if (x.espelho===post.id) delete x.espelho; }
@@ -6406,7 +6419,8 @@ function socChg(k, el, v){ const p = socProj(el.dataset.p); if (!p) return;
   if (k==='socAcF') { const f = socF(p); (f.ac = f.ac || {visao:'lista', status:'', resp:'', busca:''})[el.dataset.k] = v; return render(); }
   if (k==='socAcCampo') { const a = (p.acoes||[]).find(x=>x.id===el.dataset.a); if (!a) return; if (socAcMudar(p, a, el.dataset.k, v)) salvar(); return render(); }
   const post = socPostDe(p, el.dataset.id); if (!post) return; lpGuardarEdicao(); let msg = '';
-  if (k==='socLink') { const L = post.links = socLinks(post), i = +el.dataset.i, val = String(v||'').trim(); if ((L[i]||'')===val) return; if (val) L[i] = val; else L.splice(i, 1); post.links = L.filter(Boolean); msg = 'link do asset atualizado'; }
+  if (k==='socPasta' || (k==='socLink' && /drive\.google\.com\/drive\/(u\/\d+\/)?folders\//.test(String(v||'')))) { const val = String(v||'').trim(); if (!val) { delete post.pasta; salvar(); return render(); } return socLerPasta(p, post, val); }
+  if (k==='socLink') { const L = post.links = socLinks(post), i = +el.dataset.i, val = String(v||'').trim(); if ((L[i]||'')===val) return; if (val) L[i] = val; else L.splice(i, 1); post.links = L.filter(Boolean); delete post.tipos; msg = 'link do asset atualizado'; }
   else { const campo = el.dataset.k, ant = post[campo];
     if (campo==='collab') { post.collab = !!v; msg = v ? 'collab marcada' : 'collab desmarcada'; }
     else if (campo==='okConteudo') { post.etapa = v ? (SOC_ORD.indexOf(post.etapa) < 3 ? 'producao' : post.etapa) : 'aprov_conteudo'; msg = v ? 'conteúdo aprovado' : 'aprovação do conteúdo desfeita'; }
