@@ -674,7 +674,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 .ig-ph-n{flex:1;min-width:0;line-height:1.25}.ig-ph-n b{font-weight:600}.ig-ph-n span{font-weight:400}
 .ig-av{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--c);color:#fff;font-weight:700;font-size:10px;width:30px;height:30px;flex:none;letter-spacing:.02em}
 .ig-ring{display:inline-flex;padding:2px;border-radius:50%;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);flex:none}.ig-ring .ig-av{box-shadow:0 0 0 2px #fff}
-.ig-av-s{width:26px;height:26px;font-size:9px}.ig-av-g{width:80px;height:80px;font-size:22px}
+.ig-av-img{background:#fff;overflow:hidden}.ig-av-img img{width:84%;height:84%;object-fit:contain}.ig-av-s{width:26px;height:26px;font-size:9px}.ig-av-g{width:80px;height:80px;font-size:22px}
 .ig-m{position:relative;background:#efefef;aspect-ratio:4/5;overflow:hidden}
 .ig-m>img,.ig-m>video,.ig-m>iframe,.ig-sl img,.ig-sl video{width:100%;height:100%;object-fit:cover;border:0;display:block}
 .ig-car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:100%;scrollbar-width:none}.ig-car::-webkit-scrollbar{display:none}.ig-sl{flex:0 0 100%;scroll-snap-align:start;height:100%}.ig-sl iframe{width:100%;height:100%;border:0;display:block}
@@ -6115,7 +6115,8 @@ const SOC_COR = {briefing:'cinza', aprov_conteudo:'amar', ajuste_conteudo:'verm'
 const SOC_PERFIS_PTX = [{id:'ptxbr', nome:'PTx Trimble Brasil', handle:'ptx.trimble.brasil', idioma:'PT', cor:'#111111'},{id:'ptxlatam', nome:'PTx Trimble LATAM', handle:'ptx.trimble.latam', idioma:'ES', cor:'#2c5d8f'},{id:'ppbr', nome:'Precision Planting Brasil', handle:'precisionplantingbr', idioma:'PT', cor:'#EF9F27'}];
 const socIcFmt = f => (SOC_FORMATOS.find(x=>x[0]===f)||[,'image'])[1];
 const socProj = id => (S.social||[]).find(x=>x.id===id);
-const socPerfil = (p, id) => (p.perfis||[]).find(x=>x.id===id) || {id, nome:'Perfil removido', handle:'perfil', idioma:'PT', cor:'#9aa9ae'};
+const socLogo = p => /^ptx\b/i.test(cliente(p.clienteId).nome||'') ? 'logo-ptx.png' : '';   // foto dos perfis: o mesmo logo do cliente
+const socPerfil = (p, id) => { const pf = (p.perfis||[]).find(x=>x.id===id) || {id, nome:'Perfil removido', handle:'perfil', idioma:'PT', cor:'#9aa9ae'}; return Object.assign({}, pf, {logo: pf.logo || socLogo(p)}); };
 const socPostDe = (p, id) => (p.posts||[]).find(x=>x.id===id);
 const socParceiro = (p, post) => post.collab && (p.collab||[]).includes(post.perfil) ? ((p.collab||[]).find(x=>x!==post.perfil) || null) : null;
 const socNoPerfil = (p, post, pf) => !pf || post.perfil===pf || socParceiro(p, post)===pf;
@@ -6174,7 +6175,7 @@ const IPH_SB = `<div class="iph-sb"><b>9:41</b><span class="iph-ilha"></span><sp
 const socPhone = (tela, esc) => `<div class="iph ${esc?'iph-esc':''}"><div class="iph-tela">${IPH_SB}${tela}<span class="iph-home"></span></div></div>`;
 const IG_VER = `<svg class="ig-ver" viewBox="0 0 24 24"><path fill="#fff" d="M12 1.6l2.3 1.7 2.9-.2.9 2.7 2.4 1.6-.6 2.8 1.3 2.6-1.9 2.2-.1 2.9-2.8.8-1.4 2.5-2.8-.6L12 22.4l-2.1-1.8-2.8.6-1.4-2.5-2.8-.8-.1-2.9L.9 13l1.3-2.6-.6-2.8L4 6l.9-2.7 2.9.2z"/><path d="M7.6 12.2l3 3 5.8-6" fill="none" stroke="#000" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const socNav = esc => `<div class="ig-nav ${esc?'esc':''}"><i data-lucide="house"></i><i data-lucide="search"></i><i data-lucide="square-plus"></i><i data-lucide="clapperboard"></i><span class="ig-nav-av"></span></div>`;
-const socAv = (pf, cls) => `<span class="ig-av ${cls||''}" style="--c:${h(pf.cor||'#333')}">${h(iniciais(pf.nome||pf.handle))}</span>`;
+const socAv = (pf, cls) => pf.logo ? `<span class="ig-av ig-av-img ${cls||''}"><img src="${h(pf.logo)}" alt=""></span>` : `<span class="ig-av ${cls||''}" style="--c:${h(pf.cor||'#333')}">${h(iniciais(pf.nome||pf.handle))}</span>`;
 function socMockup(o, vivo){ const L = (o.links||[]).filter(Boolean), pf = o.perfil, pc = o.parceiro, fmt = o.formato || 'Estático';
   const nomes = `<b>${h(pf.handle)}</b>${pc ? ` <span>e</span> <b>${h(pc.handle)}</b>` : ''}`, leg = `<span ${vivo?'id="ig-leg-txt"':''}>${socLegHtml(o.legenda)}</span>`;
   if (fmt==='Stories') return socPhone(`<div class="ig-st">${socMidiaHtml(L[0], 'video', 'ig-full')}<div class="ig-st-bar">${(L.length>1 ? L : [0]).map(()=>'<i></i>').join('')}</div><div class="ig-st-cab">${socAv(pf,'ig-av-s')}<b>${h(pf.handle)}</b><span>2 h</span><i data-lucide="ellipsis"></i><i data-lucide="x"></i></div></div><div class="ig-st-rod"><span class="ig-st-in">Enviar mensagem</span><i data-lucide="heart"></i><i data-lucide="send"></i></div>`, true);
@@ -6198,7 +6199,7 @@ function socFeedMockup(o, app){ const pf = o.perfil;
       <div class="ig-pf-nome">${h(pf.nome)}</div><div class="ig-pf-bts"><span>Seguir</span><span>Mensagem</span></div>
       <div class="ig-pf-tabs"><span class="on"><i data-lucide="grid-3x3"></i></span><span><i data-lucide="clapperboard"></i></span><span><i data-lucide="square-user"></i></span></div>
       <div class="ig-grid">${o.itens.map(t=>`<div class="ig-tile ${t.antigo?'old':''}" ${app && t.rota ? `onclick="location.hash='${t.rota}'" title="${h(t.nome)}"` : ''}>${t.url ? socMidiaHtml(t.url, 'thumb') : `<span class="ig-tile-vz">${h(t.nome)}<small>sem asset</small></span>`}${t.formato==='Carrossel' ? '<i data-lucide="copy" class="ig-tile-ic"></i>' : t.formato==='Reels' ? '<i data-lucide="clapperboard" class="ig-tile-ic"></i>' : ''}${o.datas && t.data ? `<span class="ig-tile-dt">${fdm(t.data)}</span>` : ''}</div>`).join('') || '<div class="ig-grid-vz">Nenhum post no feed neste mês.</div>'}</div></div>${socNav(false)}`, false); }
-const socDadosMock = (p, post) => { const pc = socParceiro(p, post), pf = socPerfil(p, post.perfil), so = x => ({nome:x.nome, handle:x.handle, cor:x.cor});
+const socDadosMock = (p, post) => { const pc = socParceiro(p, post), pf = socPerfil(p, post.perfil), so = x => ({nome:x.nome, handle:x.handle, cor:x.cor, logo:x.logo ? new URL(x.logo, location.href).href : ''});
   return {formato:post.formato, links:socLinks(post), perfil:so(pf), parceiro:pc ? so(socPerfil(p, pc)) : null, legenda:socLegenda((post.doc||{}).texto), data:post.data, hora:post.hora||'', tipoMidia:post.tipoMidia||''}; };
 /* página pública: o conteúdo vai junto, codificado no começo do html */
 const socPayload = o => '<!--soc:' + btoa(unescape(encodeURIComponent(JSON.stringify(o)))) + '-->';
@@ -6264,7 +6265,7 @@ function socFeedAba(p, f, ed, mesNav){ const pfId = f.feedPerfil || ((p.perfis||
     ${ed ? `<div class="soc-feed-pub">${tok ? `<div class="np-share-u"><input readonly value="${h(u)}" onclick="this.select()"><button class="btn btn-s" data-act="lpCopiar" data-u="${h(u)}"><i data-lucide="copy"></i>Copiar link</button><a class="btn btn-s" href="${h(u)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Abrir</a></div><button class="btn btn-s" data-act="socFeedPub" data-p="${p.id}" data-v="0" style="margin-top:6px">Despublicar</button>` : `<button class="btn btn-s" data-act="socFeedPub" data-p="${p.id}" data-v="1"><i data-lucide="share-2"></i>Compartilhar esta prévia com o cliente</button>`}</div>` : ''}</div>`;
   return `<div class="soc-bar">${chips}${mesNav}</div><div class="soc-feed">${lado}<div class="soc-feed-ph">${SOC_MAX_BT}${socFeedMockup({perfil:pf, itens, datas:f.datas}, true)}</div></div>`; }
 async function socFeedAtualizarPublico(p, pfId, mes){ const tok = (p.feedPub||{})[pfId+'|'+mes]; if (!tok || !sb) return; const pf = socPerfil(p, pfId), {itens} = socFeedItens(p, pfId, mes);
-  const o = {tipo:'feed', mes, perfil:{nome:pf.nome, handle:pf.handle, cor:pf.cor}, datas:false, itens:itens.map(({rota, ...x})=>x)}, html = socPayload(o); UI.socFeedPubCache = UI.socFeedPubCache || {};
+  const o = {tipo:'feed', mes, perfil:{nome:pf.nome, handle:pf.handle, cor:pf.cor, logo:pf.logo ? new URL(pf.logo, location.href).href : ''}, datas:false, itens:itens.map(({rota, ...x})=>x)}, html = socPayload(o); UI.socFeedPubCache = UI.socFeedPubCache || {};
   if (UI.socFeedPubCache[tok]===html) return; UI.socFeedPubCache[tok] = html;
   const r = await sb.from('paginas_publicas').upsert({token:tok, campanha_id:p.id, chave:'sfeed:'+pfId+':'+mes, titulo:`Prévia do feed · ${pf.nome} · ${socMesTxt(mes)}`, html, atualizado_em:new Date().toISOString()});
   if (r.error) { delete UI.socFeedPubCache[tok]; toast('Não foi possível atualizar a prévia pública: '+r.error.message); } }
