@@ -6251,7 +6251,8 @@ function socMax(bt){ const ph = bt.closest('.soc-prev, .pub-soc-ph, .soc-feed-ph
   const cl = iph.cloneNode(true); cl.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id')); const leg = iph.querySelector('#ig-leg-txt, .ig-leg-tx > span, .ig-rl-leg > span');
   const box = document.createElement('div'); box.className = 'soc-max'; box.onclick = e => { if (e.target===box) socMaxFechar(); };
   box.innerHTML = `<button type="button" class="soc-max-x" onclick="socMaxFechar()" title="Fechar (Esc)"><i data-lucide="x"></i></button><div class="soc-max-ph"></div>${leg && leg.textContent.trim() ? `<div class="soc-max-leg"><div class="soc-max-lt">Legenda</div><div class="soc-max-tx">${leg.innerHTML}</div></div>` : ''}`;
-  box.querySelector('.soc-max-ph').appendChild(cl); document.body.appendChild(box); cl.style.zoom = Math.max(1, Math.min((innerHeight - 40) / 690, (innerWidth * (leg ? .55 : .9)) / 330));
+  const ph2 = box.querySelector('.soc-max-ph'), setas = !!cl.querySelector('.ig-seta-f'), larg = setas ? 440 : 330; ph2.appendChild(cl); document.body.appendChild(box);
+  const z = Math.max(.8, Math.min((innerHeight - 60) / 690, (innerWidth * (leg ? .5 : .9)) / larg)); cl.style.zoom = z; if (setas) ph2.style.padding = `0 ${Math.round(55*z)}px`;
   cl.querySelectorAll('.ig-leg, .ig-rl-leg').forEach(x=>x.classList.remove('ab')); if (window.lucide) lucide.createIcons(); document.addEventListener('keydown', socMaxEsc); }
 function socMaxFechar(){ document.querySelectorAll('.soc-max').forEach(x=>x.remove()); document.removeEventListener('keydown', socMaxEsc); }
 function socMaxEsc(e){ if (e.key==='Escape') socMaxFechar(); }
