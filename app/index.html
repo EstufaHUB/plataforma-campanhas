@@ -654,7 +654,11 @@ body.at-arrastando .at-ev{pointer-events:none}
 .soc-prev{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px}.soc-prev-cap{font-size:.74rem;color:var(--tx3);text-align:center;max-width:320px;line-height:1.45}
 @media (max-width:1560px){.soc-grade{grid-template-columns:minmax(0,1fr) 350px}.soc-grade .np-disc{grid-column:1;grid-row:2}.soc-grade .np-disc .dc{position:static;margin-bottom:10px}}
 @media (max-width:1000px){.soc-grade{grid-template-columns:1fr}.soc-grade .np-disc{grid-row:auto}.soc-prev{position:static}}
-.soc-nav{display:flex;align-items:center;gap:8px;margin:0 auto}.soc-nav b{font-size:.86rem;font-weight:600;min-width:90px;text-align:center}.soc-nav small{display:block;font-weight:400;color:var(--tx3);font-size:.7rem}.soc-nav-b{gap:4px;text-decoration:none}.soc-nav-b svg{width:15px;height:15px;margin:0}.soc-nav-b.off{opacity:.35;pointer-events:none}.soc-dt{display:flex;gap:4px;align-items:center}.soc-dt input{font-family:inherit}
+.soc-nav{display:flex;align-items:center;gap:8px;margin:0 auto}.soc-nav b{font-size:.86rem;font-weight:600;min-width:90px;text-align:center}.soc-nav small{display:block;font-weight:400;color:var(--tx3);font-size:.7rem}.soc-nav-b{gap:4px;text-decoration:none}.soc-nav-b svg{width:15px;height:15px;margin:0}.soc-nav-b.off{opacity:.35;pointer-events:none}.soc-np .np-doc{position:relative}.soc-corpo [data-ph].vz::before{content:attr(data-ph);color:#b3b1ab;font-style:italic;pointer-events:none}.soc-corpo td[data-ph].vz::before{font-size:.86em}
+.soc-corpo h2{display:flex;align-items:center;gap:8px}.soc-corpo h4{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b6a65;margin:1.2em 0 .4em}
+.soc-legbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px;padding:9px 12px;border:1px solid var(--borda);border-radius:9px;background:#fafafa;font-size:.76rem;color:var(--tx2)}.soc-legbar>span{white-space:nowrap;flex:none}.soc-legbar .lb-ok{color:#2f6b3f;font-weight:600}.soc-legbar .lb-av{color:#a16207;font-weight:600}.soc-lb-b{width:120px;height:5px;border-radius:3px;background:#e6e8ea;overflow:hidden}.soc-lb-b i{display:block;height:100%;background:#2e9d55}
+.soc-corte{position:absolute;border-top:1.5px dashed #e08e10;pointer-events:none;z-index:2}.soc-corte span{position:absolute;right:0;top:-9px;background:#fff;color:#b06d06;font-size:.66rem;font-weight:600;padding:0 5px}
+.soc-dt{display:flex;gap:4px;align-items:center}.soc-dt input{font-family:inherit}
 .soc-lk-row{align-items:start!important}.soc-lk-row>span{padding-top:5px}.soc-lkw{display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:100%}.soc-lkw input{display:none;min-width:320px}.soc-lkw.ed input{display:block}.soc-lkw.ed .soc-lk,.soc-lkw.ed .soc-lk-ed{display:none}.soc-lk{color:var(--azul);text-decoration:none;font-size:.86rem;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px}.soc-lk:hover{text-decoration:underline}.soc-lk-ed{border:0;background:none;padding:2px;cursor:pointer;color:var(--tx3);opacity:0;display:flex}.soc-lk-ed svg{width:13px;height:13px}.np-asset:hover .soc-lk-ed{opacity:1}.soc-lk-n{font-size:.72rem;color:var(--tx3);min-width:14px;text-align:right}.soc-pasta>svg{width:15px;height:15px;color:var(--tx3);flex:none}.soc-pasta{margin-bottom:4px;padding-bottom:4px;border-bottom:1px dashed var(--borda)}.soc-links{display:flex;flex-direction:column;gap:2px;min-width:0}.soc-links .np-asset input{min-width:300px}
 .soc-levar{justify-self:start}.soc-mudou{margin:0 0 14px}.soc-mudou .btn{margin-left:6px}.soc-collab-tx{color:var(--tx2)!important;font-weight:500!important}
 /* iPhone */
@@ -2960,7 +2964,7 @@ const lpTextoPuro = html => { if (!html) return ''; const d = document.createEle
 function lpLimpa(html){ const d = document.createElement('div'); d.innerHTML = html || '';
   d.querySelectorAll('script,style,iframe,object,embed,meta,link').forEach(n=>n.remove());
   d.querySelectorAll('*').forEach(n=>{ if (n.hasAttribute('class')) { const ks = n.getAttribute('class').split(/\s+/).filter(k=>/^(todo|callout|callout-ic|callout-tx|disc-c|disc-s)$/.test(k)); if (ks.length) n.setAttribute('class', ks[0]); else n.removeAttribute('class'); }
-    for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|open|contenteditable|colspan|rowspan)$/i.test(a.name) || (n.tagName==='COL' && a.name==='style' && /^width:\s*\d+(\.\d+)?px;?$/.test(v.trim())) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx|disc-c|disc-s)$/.test(v)) || a.name==='data-disc' || (/^(SPAN|B|STRONG|I|EM|U|S|STRIKE|CODE|A|FONT)$/.test(n.tagName) && a.name==='style' && /^(\s*(background-)?color:\s*(#[0-9a-f]{3,8}|rgba?\([\d.,\s]+\)|transparent)\s*;?)+$/i.test(v));
+    for (const a of [...n.attributes]) { const v = a.value||''; const ok = /^(href|target|rel|data-check|data-cor|data-larg|data-cabl|data-cabc|data-ph|open|contenteditable|colspan|rowspan)$/i.test(a.name) || (n.tagName==='COL' && a.name==='style' && /^width:\s*\d+(\.\d+)?px;?$/.test(v.trim())) || (a.name==='class' && /^(todo|callout|callout-ic|callout-tx|disc-c|disc-s)$/.test(v)) || a.name==='data-disc' || (/^(SPAN|B|STRONG|I|EM|U|S|STRIKE|CODE|A|FONT)$/.test(n.tagName) && a.name==='style' && /^(\s*(background-)?color:\s*(#[0-9a-f]{3,8}|rgba?\([\d.,\s]+\)|transparent)\s*;?)+$/i.test(v));
       if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(v)) || !ok) n.removeAttribute(a.name); } if (n.tagName==='A') { n.setAttribute('target','_blank'); n.setAttribute('rel','noopener'); } });
   return d.innerHTML; }
 function lpAlvo(c, et, idi, mi){ if (et==='peca') return pecaDoc(c, idi); if (et==='spost') return socDoc(c, idi); const {f} = lpDados(c, mi); return et==='trad' ? f.trad[idi] : f[et]; }
@@ -6140,17 +6144,36 @@ const socMesTxt = m => `${MESES[+m.slice(5,7)-1]} de ${m.slice(0,4)}`;
 const socMesMais = (m, n) => { const d = new Date(+m.slice(0,4), +m.slice(5,7)-1+n, 1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
 function socDoc(p, pid){ const post = socPostDe(p, pid); if (!post) return null; const d = post.doc = post.doc || {}; if (d.resp == null && post.resp) d.resp = post.resp; return d; }
 /* estrutura do texto do post: legenda (vai para a prévia) + texto da arte ou roteiro */
-function socModelo(fmt){ const td = x => `<td>${x || '<br>'}</td>`, tab = (cab, linhas) => `<table data-cabl="1" data-cabc="1"><tbody><tr>${cab.map(x=>td('<b>'+x+'</b>')).join('')}</tr>${linhas.map(l=>'<tr>'+l.map(td).join('')+'</tr>').join('')}</tbody></table><p><br></p>`;
-  const leg = `<p data-cor="amarelo"><b>LEGENDA</b></p><p>[Primeira linha: gancho que faz parar o scroll]</p><p>[Desenvolvimento e CTA]</p><p><br></p><p>[#hashtags]</p><p><br></p>`;
-  if (fmt==='Reels' || fmt==='Stories') return leg + `<p data-cor="amarelo"><b>ROTEIRO</b></p>` + tab(['Cena','Roteiro / Locução','Visual'], [['1 - Gancho','[Frase que prende nos 3 primeiros segundos]','[Referência de imagem ou cena]'],['2 - Desenvolvimento','[Mensagem principal]','[Referência de imagem ou cena]'],['3 - Fechamento','[CTA e assinatura]','[Referência de imagem ou cena]']]);
-  if (fmt==='Carrossel') return leg + `<p data-cor="amarelo"><b>TEXTO DA ARTE</b></p>` + tab(['Card','Texto'], [['1 - Capa','[Título que faz deslizar]'],['2','[Texto]'],['3','[Texto]'],['4 - Fechamento','[CTA]']]);
-  return leg + `<p data-cor="amarelo"><b>TEXTO DA ARTE</b></p>` + tab(['Elemento','Texto'], [['Título','[Texto principal da arte]'],['Texto de apoio','[Complemento do título]'],['CTA','[Ex.: Saiba mais]']]); }
+function socModelo(fmt){ const ph = t => `data-ph="${t}"`, tab = (cab, linhas) => `<table data-cabl="1" data-cabc="1"><tbody><tr>${cab.map(x=>`<td><b>${x}</b></td>`).join('')}</tr>${linhas.map(([a,b,c])=>`<tr><td>${a}</td><td ${ph(b)}><br></td><td ${ph(c)}><br></td></tr>`).join('')}</tbody></table>`;
+  const T = fmt==='Reels' ? tab(['Cena','Texto','Imagens e vídeos'], [['1 · Gancho','O que aparece e é dito nos 3 primeiros segundos','Cena ou referência'],['2','Texto na tela ou locução','Cena ou referência'],['3','Texto na tela ou locução','Cena ou referência'],['Fechamento','CTA e assinatura','Logo, cena final']])
+    : fmt==='Stories' ? tab(['Frame','Texto','Interação'], [['1','Texto do frame','Enquete, caixinha, link…'],['2','Texto do frame','Enquete, caixinha, link…'],['3','Texto do frame','Enquete, caixinha, link…']])
+    : fmt==='Carrossel' ? tab(['Card','Texto','Visual'], [['1 · Capa','Título que faz deslizar','Imagem ou referência'],['2','Texto do card','Imagem ou referência'],['3','Texto do card','Imagem ou referência'],['Último · Fim','CTA e assinatura','Fundo, logo']])
+    : tab(['Elemento','Texto','Visual'], [['Título','Texto principal da arte','Imagem ou referência'],['Texto de apoio','Complemento do título','—'],['CTA','Ex.: Saiba mais','—']]);
+  return `<h2>1 · Asset briefing</h2><h4>Referências + ideia criativa</h4><p ${ph('Descreva a ideia criativa e cole os links das referências')}><br></p><h4>Conteúdo</h4>${T}<h2>2 · Legenda</h2><p ${ph('Primeira linha: o gancho que faz parar o scroll')}><br></p><p ${ph('Desenvolvimento e CTA')}><br></p><p ${ph('#hashtags (até 5)')}><br></p>`; }
+/* blocos da legenda: o que vem depois do título "Legenda" (ou "2 · Legenda"), até o próximo título ou tabela */
+function socLegBlocos(root){ const ks = [...root.children], ini = ks.findIndex(k=>{ const t = k.textContent.trim(); return /^(\d+\s*[·.\-]\s*)?legenda\b/i.test(t) && t.length < 20; }), out = [];
+  for (const k of ks.slice(ini+1)) { const t = k.textContent.trim(), cab = /^H[1-3]$/.test(k.tagName) || (k.dataset && k.dataset.cor && t.length < 30 && /^[A-ZÀ-Ú0-9·\s]+$/.test(t));
+    if (k.tagName==='TABLE' || cab) { if (ini>=0) break; continue; } out.push(k); }
+  return out; }
 /* legenda em texto puro: o que vem depois do título LEGENDA, até o próximo título amarelo ou tabela */
-function socLegenda(html){ const t = document.createElement('div'); t.innerHTML = lpSemDisc(lpLimpa(html||'')); const ks = [...t.children], ini = ks.findIndex(k=>/^legenda\b/i.test(k.textContent.trim()) && k.textContent.trim().length < 20), out = [];
-  for (const k of ks.slice(ini+1)) { if (k.tagName==='TABLE' || (ini>=0 && k.dataset && k.dataset.cor && k.textContent.trim().length < 30 && /^[A-ZÀ-Ú\s]+$/.test(k.textContent.trim()))) { if (ini>=0) break; continue; }
-    const c = k.cloneNode(true); c.querySelectorAll('br').forEach(b=>b.replaceWith('\n')); c.querySelectorAll('li').forEach(li=>li.prepend('• ')); out.push(c.textContent.replace(/\n$/,'')); }
-  return out.join('\n').replace(/\n{3,}/g,'\n\n').trim(); }
+function socLegenda(html){ const t = document.createElement('div'); t.innerHTML = lpSemDisc(lpLimpa(html||''));
+  return socLegBlocos(t).map(k=>{ const c = k.cloneNode(true); c.querySelectorAll('br').forEach(b=>b.replaceWith('\n')); c.querySelectorAll('li').forEach(li=>li.prepend('• ')); return c.textContent.replace(/\n$/,''); }).join('\n').replace(/\n{3,}/g,'\n\n').trim(); }
 const socLegHtml = t => h(t||'').replace(/(^|[\s(])([#@][\wÀ-ÿ._]+)/g, '$1<span class="ig-tag">$2</span>').replace(/\n/g,'<br>');
+/* textos-guia: aparecem em cinza no bloco vazio e somem de vez quando ele ganha texto */
+function socPh(ed){ ed.querySelectorAll('[data-ph]').forEach(e=>{ if (e.textContent.trim()) e.removeAttribute('data-ph'); else e.classList.add('vz'); }); }
+/* barra da legenda: contador, gancho antes do "mais" e hashtags; e a linha do corte do "mais" no texto */
+const SOC_CORTE = 125;
+function socLegAjuda(ed){ const bar = document.getElementById('soc-legbar'); if (!bar) return; const txt = socLegenda(ed.innerHTML), n = [...txt].length, gancho = [...(txt.split('\n')[0]||'')].length, tags = (txt.match(/#[\wÀ-ÿ]+/g)||[]).length;
+  bar.innerHTML = !txt ? '<span class="muted">Legenda vazia</span>' : `<span>${n.toLocaleString('pt-BR')} / 2.200 caracteres</span><span class="soc-lb-b"><i style="width:${Math.min(100, n/22)}%;${n>2200?'background:var(--verm)':''}"></i></span>`
+    + (gancho <= SOC_CORTE ? '<span class="lb-ok">✓ gancho cabe antes do “mais”</span>' : `<span class="lb-av">⚠ a primeira linha passa do “mais” (${gancho} caracteres)</span>`)
+    + (tags > 5 ? `<span class="lb-av">⚠ ${tags} hashtags: o ideal é até 5</span>` : tags ? `<span class="lb-ok">✓ ${tags} hashtag${tags===1?'':'s'}</span>` : '<span class="muted">sem hashtags</span>');
+  const doc = ed.closest('.np-doc'); let ln = doc && doc.querySelector('.soc-corte'); if (!doc) return;
+  let resto = SOC_CORTE, alvo = null; for (const [i, b] of socLegBlocos(ed).entries()) { if (i) resto--; const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT); let t;
+    while ((t = w.nextNode())) { if (t.length >= resto && resto > 0) { alvo = [t, resto]; break; } resto -= t.length; } if (alvo || resto <= 0) break; }
+  if (!alvo) { if (ln) ln.remove(); return; }
+  const r = document.createRange(); r.setStart(alvo[0], alvo[1]-1); r.setEnd(alvo[0], alvo[1]); const rc = r.getClientRects()[0], dr = doc.getBoundingClientRect(), er = ed.getBoundingClientRect(); if (!rc) return;
+  if (!ln) { ln = document.createElement('div'); ln.className = 'soc-corte'; ln.innerHTML = '<span>corte do “mais” no feed</span>'; doc.appendChild(ln); }
+  Object.assign(ln.style, {top:(rc.bottom - dr.top + 3)+'px', left:(er.left - dr.left)+'px', width:er.width+'px'}); }
 /* asset: Google Drive vira miniatura (imagem) ou player (vídeo); links diretos de imagem/vídeo aparecem como estão */
 function socMidia(url, modo){ const u = String(url||'').trim(); if (!u) return null;
   const dr = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/) || (/drive\.google\.com/.test(u) && u.match(/[?&]id=([\w-]{10,})/));
@@ -6289,7 +6312,8 @@ function pgSocialPost(p, id){ const post = socPostDe(p, id), cl = cliente(p.clie
   UI.lpTxt = {id:p.id, et:'spost', idi:post.id, mi:0};
   posRender.push(()=>{ const e = document.getElementById('lpe-edit'); if (!e) return; if (ed) { editorBlocos(e); lpAutoSalvar(e); }
     let tp, tl; e.addEventListener('click', ev => { const a = ev.target.closest('[data-disc]'); if (a) discAtivar(a.dataset.disc); });
-    e.addEventListener('input', () => { clearTimeout(tp); tp = setTimeout(discPosicionar, 150); clearTimeout(tl); tl = setTimeout(()=>{ const s = document.getElementById('ig-leg-txt'); if (s) s.innerHTML = socLegHtml(socLegenda(e.innerHTML)); }, 250); });
+    socPh(e); socLegAjuda(e); addEventListener('resize', () => { if (e.isConnected) socLegAjuda(e); });
+    e.addEventListener('input', () => { socPh(e); clearTimeout(tp); tp = setTimeout(discPosicionar, 150); clearTimeout(tl); tl = setTimeout(()=>{ const s = document.getElementById('ig-leg-txt'); if (s) s.innerHTML = socLegHtml(socLegenda(e.innerHTML)); socLegAjuda(e); }, 250); });
     requestAnimationFrame(() => { discAtivar(UI.discAtivo, true); discPosicionar(); if (UI.discRolar) { const an = e.querySelector(`[data-disc="${UI.discRolar}"]`); if (an) an.scrollIntoView({block:'center', behavior:'smooth'}); UI.discRolar = null; } }); });
   const abertas = discAbertas(d), D = `data-p="${p.id}" data-id="${post.id}"`, dis = ed ? '' : 'disabled', ord = SOC_ORD.indexOf(post.etapa);
   // link preenchido aparece em azul (clicável); o lápis troca para o campo de edição
@@ -6322,7 +6346,8 @@ function pgSocialPost(p, id){ const post = socPostDe(p, id), cl = cliente(p.clie
         ${d.publico?`<div><span><i data-lucide="globe"></i>Link público</span><b><a href="${lpLinkPublico(d.publico)}" target="_blank" rel="noopener">${lpLinkPublico(d.publico).replace(/^https?:\/\//,'').slice(0,60)}…</a></b></div>`:''}</div>
       ${lpComentPagina(d, ed)}
       ${orig ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[socPerfil(p, orig.perfil).idioma]||'')}</summary><div class="lpe-doc">${lpSemDisc(lpLimpa((orig.doc||{}).texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
-      <div class="lpe-doc np-corpo ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
+      <div class="lpe-doc np-corpo soc-corpo ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
+      ${post.formato==='Stories' ? '' : '<div class="soc-legbar" id="soc-legbar"></div>'}
     </article><aside class="np-disc" id="np-disc">${abertas.map(x=>discCard(x, ed)).join('')}</aside>
     <div class="soc-prev">${SOC_MAX_BT}${socMockup(socDadosMock(p, post), true)}<div class="soc-prev-cap">Prévia no Instagram · ${post.formato==='Stories' ? 'stories não mostram legenda' : 'a legenda vem do bloco LEGENDA do texto'}${socLinks(post).some(u=>/drive\.google/.test(u)) ? '<br>Arquivos do Drive precisam estar compartilhados como “qualquer pessoa com o link”.' : ''}</div></div></div></div>`; }
 /* setas: post anterior e próximo, pela data (no perfil filtrado no calendário) */
