@@ -3064,7 +3064,7 @@ function pgLpPagina(r){ const [cid, mis] = String(r[1]||'').split('~'), mi = +mi
         <div><span><i data-lucide="check-square"></i>Conteúdo aprovado</span><label class="np-chk"><input type="checkbox" data-chg="lpAprovado" data-id="${c.id}" data-mi="${mi}" data-et="${et}" data-idi="${idi}" ${st==='Aprovado'?'checked':''} ${ed?'':'disabled'}><em>${st==='Aprovado' ? 'Aprovado pelo cliente' : ''}</em></label></div>
         ${peca ? (()=>{ const ok = peca.etapa==='concluido', lib = ORD_ET.indexOf(peca.etapa) >= 3; return `<div><span><i data-lucide="check-square"></i>Asset aprovado</span><label class="np-chk"><input type="checkbox" data-chg="pecaAssetOk" data-ids="${pecaIdiomaGrupo(c, peca).map(x=>x.id).join(',')}" ${ok?'checked':''} ${ed && lib?'':'disabled'}><em>${ok ? 'Aprovado pelo cliente' : lib ? '' : '<span class="muted">libera com o conteúdo aprovado</span>'}</em></label></div>`; })() : ''}
         ${peca ? (()=>{ const ids = pecaIdiomaGrupo(c, peca).map(x=>x.id).join(','), stA = stAssetPeca(peca.etapa), txtOk = ORD_ET.indexOf(peca.etapa) >= 3;
-          return `<div><span><i data-lucide="ratio"></i>Formato</span>${ed ? `<input class="np-sel np-limpo" list="pc-fmts" value="${h(peca.formato||'')}" placeholder="Ex.: Reels 1080×1920" data-chg="pecaFmt" data-ids="${pecaGrupo(c, peca).map(x=>x.id).join(',')}"><datalist id="pc-fmts">${FORMATOS_PECA.map(x=>`<option value="${x}">`).join('')}</datalist>` : `<b>${h(peca.formato||'—')}</b>`}</div>
+          return `<div><span><i data-lucide="ratio"></i>Formato</span>${ed ? `${selFormato(peca.formato||'', `class="np-sel np-limpo" data-chg="pecaFmt" data-ids="${pecaGrupo(c, peca).map(x=>x.id).join(',')}"`)}` : `<b>${h(peca.formato||'—')}</b>`}</div>
             <div><span><i data-lucide="link-2"></i>Asset design</span><div class="np-asset"><input class="np-sel np-limpo" type="url" placeholder="Cole o link do vídeo ou PNG" value="${h(peca.link||'')}" data-chg="pecaArq" data-ids="${peca.id}" ${ed?'':'disabled'}>${peca.link?`<a href="${h(peca.link)}" target="_blank" rel="noopener" class="np-abrir" title="Abrir o arquivo"><i data-lucide="external-link"></i>Abrir</a>`:''}</div></div>`; })() : ''}
         ${d.publico?`<div><span><i data-lucide="globe"></i>Link público</span><b><a href="${lpLinkPublico(d.publico)}" target="_blank" rel="noopener">${lpLinkPublico(d.publico).replace(/^https?:\/\//,'').slice(0,60)}…</a></b></div>`:''}</div>
             ${lpComentPagina(d, ed)}
@@ -3193,7 +3193,9 @@ const LP_MODELOS = {
    link do arquivo (vídeo ou PNG) com prévia ao lado e comentários. Cada coluna de idioma usa as peças dos países
    desse idioma (o kit cria uma peça por país); a etapa de cada peça continua sendo a do resto do sistema.
    ===================================================================== */
-const FORMATOS_PECA = ['Reels 1080×1920','Vídeo 1080×1920','Vídeo 16:9','Estático 1080×1080','Estático 1080×1920','Carrossel 1080×1080','Animação 1080×1920'];
+const FORMATOS_GRUPOS = [['Vídeo',['Reels 1080×1920','Vídeo 1080×1920','Vídeo 1080×1350','Vídeo 1080×1080','Vídeo 16:9','Animação 1080×1920']],['Estático',['Estático 1080×1080','Estático 1080×1350','Estático 1080×1920','Carrossel 1080×1080']],['GIF',['GIF 1080×1080','GIF 1080×1350','GIF 1080×1920']]];
+const FORMATOS_PECA = FORMATOS_GRUPOS.flatMap(g=>g[1]);
+const selFormato = (atual, attrs) => `<select ${attrs}>${!atual ? '<option value="" selected>Escolha o formato</option>' : ''}${atual && !FORMATOS_PECA.includes(atual) ? `<option selected>${h(atual)}</option>` : ''}${FORMATOS_GRUPOS.map(([g, L])=>`<optgroup label="${g}">${L.map(f=>`<option ${f===atual?'selected':''}>${f}</option>`).join('')}</optgroup>`).join('')}</select>`;
 const PECA_CAMPOS = [['asset','Texto do asset'],['copy','Copy do anúncio'],['titulo','Título'],['cta','CTA'],['roteiro','Roteiro']];
 const ORD_ET = ['briefing','aprov_conteudo','ajuste_conteudo','producao','aprov_asset','ajuste_asset','concluido'];
 const ST_TXT = ['Em produção','Aguardando aprovação','Ajustes','Aprovado'], ST_TRAD_PC = ['Traduzindo','Aguardando aprovação','Ajustes','Aprovado'], ST_ASSET = ['Em criação','Aguardando aprovação','Ajustes','Aprovado'];
@@ -5902,7 +5904,7 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
     if (k==='pecaNome') { if (!v || v===es[0].nome) return render(); const e0 = es[0];
       if (c.entregaveis.some(x=>!ids.includes(x.id) && x.nome===v && (x.marca||'')===(e0.marca||'') && (x.fase||'')===(e0.fase||'') && (x.secao||x.canal)===(e0.secao||e0.canal))) { toast('Já existe um post com esse nome nesta seção.'); return render(); }
       registrar(`Post “${e0.nome}” renomeado para “${v}” em “${c.nome}”`); es.forEach(e=>e.nome = v); }
-    if (k==='pecaFmt') es.forEach(e=>e.formato = v);
+    if (k==='pecaFmt') { if (document.getElementById('lpe-edit')) lpGuardarEdicao(); es.forEach(e=>{ const intacto = e.doc && lpLimpa(e.doc.texto||'')===lpLimpa(modeloPeca(e)); e.formato = v; if (intacto) e.doc.texto = modeloPeca(e); }); }
     if (k==='pecaResp') es.forEach(e=>e.resp = v);
     if (k==='pecaArq') { es.forEach(e=>{ if ((e.link||'')===v) return; e.link = v; if (v) (e.versoes = e.versoes || []).push({n:(e.versoes||[]).length+1, link:v, data:HOJE, obs:''}); }); registrar(`Arquivo da peça “${es[0].nome}” atualizado em “${c.nome}”`); }
     if (k==='pecaSt') { const asset = el.dataset.tipo==='asset', alvo = (asset ? ET_ASSET : ET_TXT)[v]; if (!alvo) return render();
