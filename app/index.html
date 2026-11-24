@@ -2344,6 +2344,7 @@ function pgAcoes(){
   const ABAS = [['minhas','Minhas ações', x=>aberta(x) && eu && x.t.pessoa===eu], ['atrasadas','Atrasadas', x=>aberta(x) && atr(x)], ['semana','Esta semana', x=>aberta(x) && (atr(x) || fim(x)<=em7)], ['todas','Todas', x=>true]].filter(a=>a[0]!=='minhas' || eu);
   if (!UI.gaIni) { UI.gaIni = true; if (f.aba==='minhas' && !todas.some(ABAS[0][2])) f.aba = 'semana'; }   // sem ações próprias abertas: abre na semana
   const daAba = (ABAS.find(a=>a[0]===f.aba) || ABAS[0])[2];
+  if (UI.escopo) f.cliente = f.cliente.filter(id=>UI.escopo.includes(id));   // filtro de outro cliente não vale aqui
   const filtro = x => (!f.cliente.length || f.cliente.includes(x.c.clienteId)) && (!f.camp.length || f.camp.includes(x.c.id)) && (!f.pessoa.length || f.pessoa.includes(x.t.pessoa||'—')) && (!f.area.length || f.area.includes(x.t.area)) && (!f.pais.length || f.pais.includes(x.t.pais||'global')) && (!f.status.length || f.status.some(v => v==='Atrasada' ? atr(x) : x.t.status===v));
   const L = todas.filter(x=>daAba(x) && filtro(x)).sort((a,b)=>fim(a)<fim(b)?-1:fim(a)>fim(b)?1:0);
   const mes = HOJE.slice(0,7), concMes = todas.filter(x=>x.t.status==='Concluída' && (x.t.hist||[]).some(hh=>/→ Concluída/.test(hh.o||'') && String(hh.q||'').startsWith(mes))).length;
@@ -4534,7 +4535,8 @@ function pgAnual(){
   migalha([['Cronograma anual']]);
   const f = UI.fan || (UI.fan = {ano:'2027',modo:'veic',cliente:'',pais:'',resp:'',canal:'',status:'',mes:''});
   const ano = f.ano, i0 = ano+'-01-01', nDias = difDias(i0, (+ano+1)+'-01-01');
-  const noEsc = c => !UI.escopo || UI.escopo.includes(c.clienteId);
+  const noEsc = c => !UI.escopo || UI.escopo.includes(c.clienteId), cliEsc = S.clientes.filter(c=>!UI.escopo || UI.escopo.includes(c.id));
+  if (f.cliente && !cliEsc.some(c=>c.id===f.cliente)) f.cliente = '';   // filtro de outro cliente não vale aqui
   let L = ativas().filter(c=>noEsc(c)&&(!f.cliente||c.clienteId===f.cliente)&&(!f.pais||c.paises.some(p=>p.cod===f.pais))&&(!f.resp||c.respAtendimento===f.resp)&&(!f.canal||c.canais.includes(f.canal))&&(!f.status||c.status===f.status));
   const per = c => f.modo==='veic' ? [c.lancamento, c.fimVeiculacao] : [inicioPlan(c), c.lancamento];
   L = L.filter(c=>{ const [a,b] = per(c); return b>=i0 && a<=ano+'-12-31' && (!f.mes || (a.slice(0,7)<=ano+'-'+f.mes && b.slice(0,7)>=ano+'-'+f.mes)); }).sort((a,b)=>per(a)[0]<per(b)[0]?-1:1);
@@ -4551,13 +4553,13 @@ function pgAnual(){
   return `<div class="cab"><div><h1>Cronograma anual</h1><p>${f.modo==='veic'?'Quando cada campanha estará no ar (lançamento → fim da veiculação).':'Quando cada campanha precisa começar a ser trabalhada (briefing → lançamento), pelo cronograma reverso.'}</p></div>
    <div class="seg"><button class="${f.modo==='veic'?'ativo':''}" data-act="ui" data-k="fan.modo" data-v="veic"><i data-lucide="radio-tower"></i>Veiculação</button><button class="${f.modo==='prod'?'ativo':''}" data-act="ui" data-k="fan.modo" data-v="prod"><i data-lucide="hammer"></i>Produção e planejamento</button></div></div>
   ${alertas.map(([t,x])=>`<div class="alerta ${t}"><i data-lucide="bell"></i><div>${x}</div></div>`).join('')}
-  <div class="card"><div class="card-cab"><div class="filtros"><select data-chg="fan.ano">${opts(['2026','2027'],f.ano)}</select><select data-chg="fan.cliente">${opts(S.clientes.map(c=>[c.id,c.nome]),f.cliente,'Todos os clientes')}</select><select data-chg="fan.pais">${opts(Object.entries(PAISES).map(([k,p])=>[k,p.n]),f.pais,'Todos os países')}</select><select data-chg="fan.resp">${opts(S.usuarios.filter(u=>u.area==='Atendimento').map(u=>[u.id,u.nome]),f.resp,'Todos os responsáveis')}</select><select data-chg="fan.canal">${opts(CANAIS,f.canal,'Todos os canais')}</select><select data-chg="fan.status">${opts(ST_CAMP,f.status,'Todos os status')}</select><select data-chg="fan.mes">${opts(MESES.map((m,i)=>[String(i+1).padStart(2,'0'),m]),f.mes,'Todos os meses')}</select></div></div>
+  <div class="card"><div class="card-cab"><div class="filtros"><select data-chg="fan.ano">${opts(['2026','2027'],f.ano)}</select>${cliEsc.length>1?`<select data-chg="fan.cliente">${opts(cliEsc.map(c=>[c.id,c.nome]),f.cliente,'Todos os clientes')}</select>`:''}<select data-chg="fan.pais">${opts(Object.entries(PAISES).map(([k,p])=>[k,p.n]),f.pais,'Todos os países')}</select><select data-chg="fan.resp">${opts(S.usuarios.filter(u=>u.area==='Atendimento').map(u=>[u.id,u.nome]),f.resp,'Todos os responsáveis')}</select><select data-chg="fan.canal">${opts(CANAIS,f.canal,'Todos os canais')}</select><select data-chg="fan.status">${opts(ST_CAMP,f.status,'Todos os status')}</select><select data-chg="fan.mes">${opts(MESES.map((m,i)=>[String(i+1).padStart(2,'0'),m]),f.mes,'Todos os meses')}</select></div></div>
   <div class="anual"><div class="an-int"><div class="an-lin" style="min-height:30px"><div class="nome small muted">Campanha</div><div class="an-cab">${MESES.map((m,i)=>`<div class="an-mes" style="left:${pct(ano+'-'+String(i+1).padStart(2,'0')+'-01')}%;padding:6px">${m.slice(0,3)}</div>`).join('')}</div></div>
    ${L.map(c=>{ const [a,b] = per(c); const l = pct(a), w = Math.max(.8, pct(b)-l);
      return `<div class="an-lin"><div class="nome"><b>${h(c.nome)}</b>${h(cliente(c.clienteId).nome)} · ${c.paises.map(p=>PAISES[p.cod].f).join('')}</div><div class="an-trilho">${MESES.map((m,i)=>`<div class="an-mes" style="left:${pct(ano+'-'+String(i+1).padStart(2,'0')+'-01')}%"></div>`).join('')}
       ${HOJE.startsWith(ano)?`<div style="position:absolute;top:0;bottom:0;left:${pct(HOJE)}%;width:2px;background:#e0a33a"></div>`:''}
       <div class="an-barra" style="left:${l}%;width:${w}%;background:${cores[c.clienteId]||'#1d7585'};${f.modo==='prod'?'opacity:.85;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.15) 0 6px,transparent 6px 12px)':''}" onclick="location.hash='#/campanha/${c.id}/${f.modo==='veic'?'visao':'cronograma'}'" title="${h(c.nome)}\n${f.modo==='veic'?'No ar':'Produção'}: ${fd(a)} → ${fd(b)}\nStatus: ${c.status} · ${nomeU(c.respAtendimento)}">${fdc(a)} → ${fdc(b)} · ${h(c.status)}</div></div></div>`; }).join('') || '<div class="vazio">Nenhuma campanha nesse período.</div>'}
-  </div></div><div class="legenda">${S.clientes.map(c=>`<span><i style="background:${cores[c.id]||'#1d7585'}"></i>${h(c.nome)}</span>`).join('')}<span><i style="background:#e0a33a;width:3px"></i>Hoje</span></div></div>`;
+  </div></div><div class="legenda">${cliEsc.map(c=>`<span><i style="background:${cores[c.id]||'#1d7585'}"></i>${h(c.nome)}</span>`).join('')}<span><i style="background:#e0a33a;width:3px"></i>Hoje</span></div></div>`;
 }
 
 /* =====================================================================
