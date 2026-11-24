@@ -1785,7 +1785,7 @@ function render(){
   fecharMenuBarra();
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida && n.cat==='mim').length;   // o contador do sino conta só o que é para você
-  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['editorial','calendar-days','Calendário editorial']];   // Gestão de ações e Cronograma anual ficam dentro de cada cliente
+  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes']];   // Gestão de ações e Cronograma anual ficam dentro de cada cliente; o Calendário editorial saiu do menu
   const sec = ['campanha','social','grupo','acoes','anual'].includes(r[0]) ? 'clientes' : r[0];
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
