@@ -801,6 +801,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 .pub.pub-soc .pub-doc{max-width:1120px}.pub-soc-g{display:grid;grid-template-columns:350px minmax(0,1fr);gap:48px;align-items:start}.pub-soc-ph{position:sticky;top:20px}.pub-soc-feed{grid-template-columns:minmax(0,1fr) 350px}
 @media (max-width:900px){.pub-soc-g,.pub-soc-feed{grid-template-columns:1fr}.pub-soc-ph{position:static;display:flex;justify-content:center}}
 .cli-gr-l{margin-top:14px;border-top:1px solid var(--borda);display:flex;flex-direction:column}.cli-gr-it{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid #f0f1f2;text-decoration:none;color:inherit;border-radius:6px}.cli-gr-it:last-child{border-bottom:0}.cli-gr-it:hover{background:#f6f7f8}.cli-gr-it>div{flex:1;min-width:0;display:flex;flex-direction:column}.cli-gr-it b{font-size:.88rem;font-weight:600}.cli-gr-it small{font-size:.72rem;color:var(--tx3)}.cli-gr-n{font-size:.74rem;color:var(--tx2);white-space:nowrap}.cli-gr-it svg{width:15px;height:15px;color:var(--tx3)}
+.gr-abas{margin-top:14px}.gr-abas .cont{margin-left:6px;background:var(--verm,#d64545);color:#fff;border-radius:9px;font-size:.68rem;padding:0 6px}
 </style>
 </head>
 <body>
@@ -891,7 +892,7 @@ function nivelDe(p){ if (!p) return null; if (p.papel==='admin') return 'admin';
   const a = p.acessos || AC_PADRAO; for (const k of ['completo','operacional']) if (NIVEIS[k].areas.length===a.length && NIVEIS[k].areas.every(x=>a.includes(x))) return k; return 'pers'; }
 const pode = area => { if (!PERFIL) return false; if (PERFIL.papel==='admin') return true; if (area==='acessos') return false;
   if (PERFIL.papel==='cliente') return area==='campanhas'; if (PERFIL.papel!=='equipe') return false; return (PERFIL.acessos || AC_PADRAO).includes(area); };
-const AREA_ROTA = {clientes:'campanhas', campanha:'campanhas', lp:'campanhas', social:'campanhas', acoes:'acoes', status:'status', atividades:'status', acompanhamento:'status', anual:'calendarios', editorial:'calendarios', config:'config', invoices:'invoices', acessos:'acessos'};
+const AREA_ROTA = {clientes:'campanhas', grupo:'campanhas', campanha:'campanhas', lp:'campanhas', social:'campanhas', acoes:'acoes', status:'status', atividades:'status', acompanhamento:'status', anual:'calendarios', editorial:'calendarios', config:'config', invoices:'invoices', acessos:'acessos'};
 const podeRota = r => !AREA_ROTA[r[0]] || pode(AREA_ROTA[r[0]]);
 const equipeAtiva = () => PERFIS.filter(p=>p.papel==='admin' || p.papel==='equipe');
 const nomeResp = p => String(p.nome || (p.email||'').split('@')[0]).trim();
@@ -1784,15 +1785,14 @@ function render(){
   fecharMenuBarra();
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida && n.cat==='mim').length;   // o contador do sino conta só o que é para você
-  const nAtr = acoesGlobais().filter(x=>statusExib(x.t)==='Atrasada').length;
-  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['acoes','clipboard-check','Gestão de ações',nAtr],['anual','calendar-range','Cronograma anual'],['editorial','calendar-days','Calendário editorial']];
-  const sec = r[0]==='campanha' || r[0]==='social' ? 'clientes' : r[0];
+  const itens = [['dashboard','layout-dashboard','Início'],['clientes','building-2','Clientes'],['editorial','calendar-days','Calendário editorial']];   // Gestão de ações e Cronograma anual ficam dentro de cada cliente
+  const sec = ['campanha','social','grupo','acoes','anual'].includes(r[0]) ? 'clientes' : r[0];
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
   const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações']].filter(([k])=>pode(k));
   $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
   $('#hoje-txt').textContent = fd(HOJE); { for (const id of ['#lat-badge','#topo-badge']) { const b = $(id); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
-  const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,social:pgSocial,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
+  const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,grupo:pgGrupo,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,social:pgSocial,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
   try { $('#app').innerHTML = podeRota(r) ? pg(r) : (migalha([['Sem acesso']]), '<div class="card vazio" style="margin-top:20px"><i data-lucide="lock"></i><div style="margin-top:8px">Você não tem acesso a esta área. Fale com um administrador.</div></div>'); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
@@ -1894,24 +1894,39 @@ function pgClientes(r){
   const L = S.clientes.filter(c=>mostrarArq || !c.arquivado);
   const grupos = gruposClientes(L);
   return `<div class="cab"><div><h1>Clientes</h1><p>Escolha um cliente para ver as campanhas.</p></div><div class="filtros"><label class="small"><input type="checkbox" ${mostrarArq?'checked':''} data-chg="cliArq"> Mostrar arquivados</label><button class="btn btn-p" data-act="formCliente"><i data-lucide="plus"></i>Novo cliente</button></div></div>
-  <div class="grade g3">${grupos.map(g=>g.length > 1 ? cardGrupo(g) : cardCli(g[0])).join('') || '<div class="vazio">Nenhum cliente.</div>'}</div>`;
+  <div class="grade g3">${grupos.map(g=>g.length > 1 ? cardGrupo(g) : cardCli(g[0], '#/grupo/'+encodeURIComponent(grupoKey(g[0])))).join('') || '<div class="vazio">Nenhum cliente.</div>'}</div>`;
 }
 /* clientes com o mesmo primeiro nome (PTx EMEA, PTx LATAM, PTx OEM) ficam num card só */
 const grupoCliNome = c => (c.nome||'').trim().split(/\s+/)[0] || '';
+const grupoKey = c => grupoCliNome(c).toLowerCase();
+const grupoDe = key => S.clientes.filter(c=>grupoKey(c)===key);
 function gruposClientes(L){ const m = new Map(); for (const c of L) { const k = grupoCliNome(c).toLowerCase(); if (!m.has(k)) m.set(k, []); m.get(k).push(c); } return [...m.values()]; }
 const campsCli = id => { const cs = S.campanhas.filter(x=>x.clienteId===id && !x.arquivada); return {cs, ab: cs.filter(x=>x.status!=='Concluída')}; };
-function cardCli(c){ const {cs, ab} = campsCli(c.id);
-  return `<div class="card card-p" style="cursor:pointer" onclick="location.hash='#/clientes/${c.id}'"><div style="display:flex;justify-content:space-between;gap:8px"><div style="display:flex;gap:12px;align-items:center">${logoCliente(c,'cli-logo')}<div><h3>${h(c.nome)}</h3><div class="small muted">${h(c.segmento)}</div></div></div>${c.arquivado?'<span class="tag">Arquivado</span>':''}</div>
+function cardCli(c, link){ const {cs, ab} = campsCli(c.id);
+  return `<div class="card card-p" style="cursor:pointer" onclick="location.hash='${link || '#/clientes/'+c.id}'"><div style="display:flex;justify-content:space-between;gap:8px"><div style="display:flex;gap:12px;align-items:center">${logoCliente(c,'cli-logo')}<div><h3>${h(c.nome)}</h3><div class="small muted">${h(c.segmento)}</div></div></div>${c.arquivado?'<span class="tag">Arquivado</span>':''}</div>
      <div style="display:flex;gap:18px;margin-top:14px"><div><div class="kpi v" style="padding:0;font-size:1.3rem">${ab.length}</div><div class="small muted">em andamento</div></div><div><div class="kpi v" style="padding:0;font-size:1.3rem">${cs.length}</div><div class="small muted">no total</div></div></div>
      <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">${ab.slice(0,3).map(x=>saudeHtml(x)).join('')}</div></div>`; }
 function cardGrupo(g){ const tot = g.map(c=>campsCli(c.id)), ab = tot.reduce((n,x)=>n+x.ab.length,0), cs = tot.reduce((n,x)=>n+x.cs.length,0);
-  return `<div class="card card-p cli-gr"><div style="display:flex;gap:12px;align-items:center">${logoCliente(g[0],'cli-logo')}<div><h3>${h(grupoCliNome(g[0]))}</h3><div class="small muted">${g.length} clientes</div></div></div>
+  return `<div class="card card-p cli-gr" style="cursor:pointer" onclick="location.hash='#/grupo/${encodeURIComponent(grupoKey(g[0]))}'"><div style="display:flex;gap:12px;align-items:center">${logoCliente(g[0],'cli-logo')}<div><h3>${h(grupoCliNome(g[0]))}</h3><div class="small muted">${g.length} clientes</div></div></div>
      <div style="display:flex;gap:18px;margin-top:14px"><div><div class="kpi v" style="padding:0;font-size:1.3rem">${ab}</div><div class="small muted">em andamento</div></div><div><div class="kpi v" style="padding:0;font-size:1.3rem">${cs}</div><div class="small muted">no total</div></div></div>
-     <div class="cli-gr-l">${g.map((c,i)=>`<a class="cli-gr-it" href="#/clientes/${c.id}"><div><b>${h(c.nome)}</b>${c.segmento ? `<small>${h(c.segmento)}</small>` : ''}</div><span class="cli-gr-n">${tot[i].ab.length} em andamento · ${tot[i].cs.length} no total</span>${c.arquivado?'<span class="tag">Arquivado</span>':''}<i data-lucide="chevron-right"></i></a>`).join('')}</div></div>`; }
-function pgCliente(id){
+     <div class="cli-gr-l">${g.map((c,i)=>`<a class="cli-gr-it" href="#/clientes/${c.id}" onclick="event.stopPropagation()"><div><b>${h(c.nome)}</b>${c.segmento ? `<small>${h(c.segmento)}</small>` : ''}</div><span class="cli-gr-n">${tot[i].ab.length} em andamento · ${tot[i].cs.length} no total</span>${c.arquivado?'<span class="tag">Arquivado</span>':''}<i data-lucide="chevron-right"></i></a>`).join('')}</div></div>`; }
+function pgGrupo(r){ const key = decodeURIComponent(r[1]||''), cs = grupoDe(key), aba = r[2] || 'inicio'; if (!cs.length) return '<div class="vazio">Cliente não encontrado.</div>';
+  const um = cs.length===1, nome = um ? cs[0].nome : grupoCliNome(cs[0]), base = '#/grupo/'+encodeURIComponent(key), ids = cs.map(c=>c.id);
+  const nAtr = acoesGlobais().filter(x=>ids.includes(x.c.clienteId) && statusExib(x.t)==='Atrasada').length;
+  const abas = [['inicio', um ? 'Campanhas' : 'Frentes', um ? 'megaphone' : 'layers'], pode('acoes') && ['acoes','Gestão de ações','clipboard-check', nAtr], pode('calendarios') && ['anual','Cronograma anual','calendar-range']].filter(Boolean);
+  const nav = `<nav class="abas nao-imprimir gr-abas">${abas.map(([k,t,ic,n])=>`<a href="${base}${k==='inicio'?'':'/'+k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`).join('')}</nav>`;
+  let corpo; UI.escopo = ids;
+  try { corpo = aba==='acoes' ? pgAcoes() : aba==='anual' ? pgAnual() : um ? pgCliente(cs[0].id, true) : `<div class="grade g3" style="margin-top:14px">${cs.filter(c=>UI.cliArq || !c.arquivado).map(c=>cardCli(c)).join('')}</div>`; } finally { UI.escopo = null; }
+  const rot = (abas.find(a=>a[0]===aba)||[])[1];
+  migalha([['Clientes','#/clientes'], ...(aba==='inicio' ? [[nome]] : [[nome, base],[rot]])]);
+  if (um && aba==='inicio') return corpo.replace('<!--gr-abas-->', nav);   // cliente único: as abas entram logo abaixo do cabeçalho do cliente
+  const tot = cs.map(c=>campsCli(c.id)), nAb = tot.reduce((n,x)=>n+x.ab.length,0), nCs = tot.reduce((n,x)=>n+x.cs.length,0);
+  const cab = `<div class="cc card"><div class="cc-esq">${logoCliente(cs[0], 'cc-logo')}<div style="min-width:0"><div class="cc-cli">Cliente</div><h1>${h(nome)}</h1><div class="cc-meta" style="margin-top:6px"><span>${um ? h(cs[0].segmento||'') : cs.length+' frentes: '+cs.map(c=>h(c.nome.replace(new RegExp('^'+grupoCliNome(c)+'\\s*'),''))).join(', ')}</span><span class="cc-sep"></span><span>${nAb} em andamento · ${nCs} no total</span></div></div></div></div>`;
+  return cab + nav + corpo; }
+function pgCliente(id, noGrupo){
   const cl = cliente(id); if (!cl.id) return '<div class="vazio">Cliente não encontrado.</div>';
   const grp = S.clientes.filter(x=>grupoCliNome(x).toLowerCase()===grupoCliNome(cl).toLowerCase()).length > 1;
-  migalha([['Clientes','#/clientes'],...(grp ? [[grupoCliNome(cl),'#/clientes']] : []),[cl.nome]]);
+  migalha([['Clientes','#/clientes'],...(grp ? [[grupoCliNome(cl),'#/grupo/'+encodeURIComponent(grupoKey(cl))]] : []),[cl.nome]]);
   const f = UI.fc || (UI.fc = {ano:'',pais:'',regiao:'',status:'',resp:'',busca:'',arq:false,agrup:'lista'});
   let L = S.campanhas.filter(c=>c.clienteId===id && (f.arq || !c.arquivada));
   if (f.busca) L = L.filter(c=>c.nome.toLowerCase().includes(f.busca.toLowerCase()));
@@ -2004,7 +2019,7 @@ function pgCliente(id){
           return `<div class="cli-qh" data-act="cliQ" data-k="${h(id+'|'+k)}" data-v="${fe?'0':'1'}"><i data-lucide="${fe?'chevron-right':'chevron-down'}" class="cli-chev"></i>${q ? `<b>Q${q} ${ano}</b><span>${MQ[q-1]} · ${cs.length} campanha${cs.length===1?'':'s'} · mídia ${txtMoe(somaMoe(cs))}</span>` : '<b>Sem data</b>'}</div>${fe ? '' : `<div class="card cli-tab">${cabCols}${cs.map(linhaC).join('')}</div>`}`; }).join(''); } }
     if (!L.length && !socs.length) corpo = '<div class="card vazio">Nenhuma campanha com esses filtros.</div>';
   }
-  return cab + filtros + corpo;
+  return cab + (noGrupo ? '<!--gr-abas-->' : '') + filtros + corpo;
 }
 
 /* botão "Novo projeto": escolhe o tipo (campanha hoje; social media, evento e projeto offline em seguida) */
@@ -2324,7 +2339,7 @@ function pgAcoes(){
   const eu = meuResp(), f = UI.ga || (UI.ga = {aba: eu ? 'minhas' : 'semana', visao:'lista', conc:false, sel:false});
   for (const k of ['cliente','camp','pessoa','area','pais','status']) if (!Array.isArray(f[k])) f[k] = [];
   if (f.aba==='minhas' && !eu) f.aba = 'semana';
-  const ed = ehEquipe(), todas = acoesGlobais(), atr = x => statusExib(x.t)==='Atrasada', fim = x => x.t.EF || '9999', em7 = addDias(HOJE, 7), em1 = addDias(HOJE, 1);
+  const ed = ehEquipe(), todas = acoesGlobais().filter(x=>!UI.escopo || UI.escopo.includes(x.c.clienteId)), atr = x => statusExib(x.t)==='Atrasada', fim = x => x.t.EF || '9999', em7 = addDias(HOJE, 7), em1 = addDias(HOJE, 1);
   const aberta = x => x.t.status!=='Concluída';
   const ABAS = [['minhas','Minhas ações', x=>aberta(x) && eu && x.t.pessoa===eu], ['atrasadas','Atrasadas', x=>aberta(x) && atr(x)], ['semana','Esta semana', x=>aberta(x) && (atr(x) || fim(x)<=em7)], ['todas','Todas', x=>true]].filter(a=>a[0]!=='minhas' || eu);
   if (!UI.gaIni) { UI.gaIni = true; if (f.aba==='minhas' && !todas.some(ABAS[0][2])) f.aba = 'semana'; }   // sem ações próprias abertas: abre na semana
@@ -4519,13 +4534,14 @@ function pgAnual(){
   migalha([['Cronograma anual']]);
   const f = UI.fan || (UI.fan = {ano:'2027',modo:'veic',cliente:'',pais:'',resp:'',canal:'',status:'',mes:''});
   const ano = f.ano, i0 = ano+'-01-01', nDias = difDias(i0, (+ano+1)+'-01-01');
-  let L = ativas().filter(c=>(!f.cliente||c.clienteId===f.cliente)&&(!f.pais||c.paises.some(p=>p.cod===f.pais))&&(!f.resp||c.respAtendimento===f.resp)&&(!f.canal||c.canais.includes(f.canal))&&(!f.status||c.status===f.status));
+  const noEsc = c => !UI.escopo || UI.escopo.includes(c.clienteId);
+  let L = ativas().filter(c=>noEsc(c)&&(!f.cliente||c.clienteId===f.cliente)&&(!f.pais||c.paises.some(p=>p.cod===f.pais))&&(!f.resp||c.respAtendimento===f.resp)&&(!f.canal||c.canais.includes(f.canal))&&(!f.status||c.status===f.status));
   const per = c => f.modo==='veic' ? [c.lancamento, c.fimVeiculacao] : [inicioPlan(c), c.lancamento];
   L = L.filter(c=>{ const [a,b] = per(c); return b>=i0 && a<=ano+'-12-31' && (!f.mes || (a.slice(0,7)<=ano+'-'+f.mes && b.slice(0,7)>=ano+'-'+f.mes)); }).sort((a,b)=>per(a)[0]<per(b)[0]?-1:1);
   const pct = s => Math.max(0,Math.min(100, difDias(i0,s)/nDias*100));
   const cores = {cl1:'#2f8a5a',cl2:'#1d7585',cl3:'#7a5bb0'};
   const alertas = [];
-  for (const c of ativas()) { if (c.status==='Concluída') continue; const ini = inicioPlan(c), d = difDias(HOJE,ini);
+  for (const c of ativas().filter(noEsc)) { if (c.status==='Concluída') continue; const ini = inicioPlan(c), d = difDias(HOJE,ini);
     if (naoIniciada(c) && ini<HOJE) alertas.push(['verm',`<b>${h(c.nome)}</b>: o planejamento deveria ter começado em ${fd(ini)}.`]);
     else if (naoIniciada(c) && d<=15) alertas.push(['amar',`<b>${h(c.nome)}</b> precisa começar nos próximos 15 dias (${fd(ini)}).`]);
     else if (naoIniciada(c) && d<=30) alertas.push(['azul',`<b>${h(c.nome)}</b> precisa começar nos próximos 30 dias (${fd(ini)}).`]);
