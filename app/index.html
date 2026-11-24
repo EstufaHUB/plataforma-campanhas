@@ -761,7 +761,12 @@ body.at-arrastando .at-ev{pointer-events:none}
 .soc-max{position:fixed;inset:0;z-index:9999;background:rgba(12,14,16,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;gap:48px;padding:20px}.soc-max-ph{flex:none}
 .soc-max-x{position:absolute;top:16px;right:18px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}.soc-max-x:hover{background:rgba(255,255,255,.26)}.soc-max-x svg{width:22px;height:22px}
 .soc-max-lado{display:flex;flex-direction:column;gap:14px;max-height:92vh;width:min(440px,40vw);min-width:300px}.soc-max-lado>.soc-max-leg{max-width:none;flex:0 1 auto;min-height:0}.dz-on .soc-max-lado>.soc-max-leg{max-height:38vh}
-.soc-max .ig-rl-pb{display:none}.soc-max iframe.dz-ifr{top:0!important;height:100%!important;width:100%!important;left:0!important;transform:none!important;z-index:4!important}
+.soc-max .ig-rl-pb{display:none}
+.ig-rl-cm.dz-cmbar{padding-top:9px}.dz-ctl.dz-ctl-cm{position:relative;height:42px;background:#1e2124;border-radius:22px;padding:0 8px 0 6px;gap:8px;align-items:center;color:#e4e6e8;z-index:1}
+.dz-pp{flex:none;width:30px;height:30px;border:0;border-radius:50%;background:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}.dz-pp:hover{background:rgba(255,255,255,.1)}.dz-pp svg{width:16px;height:16px;fill:currentColor}
+.dz-tm{flex:none;font-size:11.5px;font-variant-numeric:tabular-nums;color:#c9cccf}.dz-ctl-cm .dz-trk::before,.dz-ctl-cm .dz-prog{bottom:6.5px;border-radius:3px}.dz-ctl-cm .dz-trk:hover::before,.dz-ctl-cm .dz-trk:hover .dz-prog,.dz-ctl-cm.arr .dz-trk::before,.dz-ctl-cm.arr .dz-prog{bottom:5.5px}.dz-ctl-cm .dz-kn{bottom:3px}.dz-ctl-cm .dz-mk{bottom:12px}
+.ig-rl-cm span.dz-tm{display:block;background:none;padding:0;border-radius:0;font-size:11px;color:#c9cccf}.ig-rl-cm span.dz-tip{display:block;padding:2px 6px;border-radius:5px;font-size:11px;color:#fff;background:rgba(0,0,0,.75)}.dz-volr{padding:0!important;border:0!important;min-width:0}
+.dz-ctl-cm .dz-vol{position:static;gap:2px}.dz-ctl-cm .dz-mute{width:30px;height:30px;background:none}.dz-ctl-cm .dz-mute:hover{background:rgba(255,255,255,.1)}.dz-ctl-cm .dz-mute svg{width:16px;height:16px}.dz-ctl-cm .dz-vol:hover .dz-volr,.dz-ctl-cm .dz-volr:focus{width:56px}
 .dz-ctl{position:absolute;left:0;right:0;bottom:0;height:16px;z-index:5;display:flex;align-items:flex-end}.dz-trk{position:relative;flex:1;height:16px;cursor:pointer;touch-action:none}.dz-trk::before{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.3)}
 .dz-prog{position:absolute;left:0;bottom:0;height:3px;background:#fff;width:0}.dz-kn{position:absolute;bottom:-4px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);opacity:0;transition:opacity .12s}
 .dz-trk:hover .dz-kn,.dz-ctl.arr .dz-kn{opacity:1}.dz-trk:hover::before,.dz-ctl.arr .dz-trk::before{height:5px}.dz-trk:hover .dz-prog,.dz-ctl.arr .dz-prog{height:5px}
@@ -6411,19 +6416,27 @@ function dzMontar(box, iph, alvo){ Object.keys(DZ).forEach(k=>delete DZ[k]); Obj
   const vid = iph.querySelector('.ig-rl video, .ig-st video, .ig-m > video'), ifr = iph.querySelector('.ig-rl iframe.ig-full, .ig-st iframe.ig-full, .ig-m > iframe');
   DZ.ehVideo = !!(vid || (ifr && /\/file\/d\//.test(ifr.src)));
   if (vid) dzVideo(vid);
-  else if (ifr && DZ.ehVideo) {   // vídeo do Drive: tenta tocar o arquivo num player nosso; se o Drive não liberar, volta o player do Google com os controles dele
-    const id = (ifr.src.match(/\/file\/d\/([\w-]{10,})/)||[])[1], v = document.createElement('video'); let pronto = false;
-    v.className = ifr.className; v.setAttribute('playsinline', ''); v.loop = true; v.muted = true; v.autoplay = true; v.preload = 'auto';
-    const falha = () => { if (pronto) return; pronto = true; if (v.isConnected) v.replaceWith(ifr); ifr.classList.add('dz-ifr'); DZ.semCtl = true; dzPainel(); };
-    v.addEventListener('loadedmetadata', () => { if (pronto) return; pronto = true; dzVideo(v); dzPinsRender(); }, {once:true}); v.addEventListener('error', falha, {once:true});
-    v.src = `https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`; ifr.replaceWith(v); setTimeout(falha, 10000); }
+  else if (ifr && DZ.ehVideo) {   // vídeo do Drive: o Drive não entrega o arquivo direto ao navegador; a função drive-video busca e repassa. Enquanto carrega (ou se falhar), fica o player do Google recortado
+    const id = (ifr.src.match(/\/file\/d\/([\w-]{10,})/)||[])[1]; let pronto = false;
+    const falha = () => { if (pronto) return; pronto = true; DZ.semCtl = true; dzPainel(); };
+    (async () => { let t = null; try { t = sb && (await sb.auth.getSession()).data.session?.access_token; } catch(e) {}
+      if (!t || !id || !window.SUPA_URL) return falha();
+      const v = document.createElement('video'); v.className = ifr.className; v.setAttribute('playsinline', ''); v.loop = true; v.muted = true; v.preload = 'auto';
+      v.addEventListener('loadedmetadata', () => { if (pronto) return; pronto = true; if (!box.isConnected || !ifr.isConnected) return; ifr.replaceWith(v); dzVideo(v); dzPinsRender(); dzPainel(); }, {once:true});
+      v.addEventListener('error', falha, {once:true}); setTimeout(() => { if (!pronto) { falha(); v.removeAttribute('src'); v.load(); } }, 20000);
+      v.src = `${window.SUPA_URL}/functions/v1/drive-video?id=${id}&t=${encodeURIComponent(t)}`; })(); }
   if (alvo) { box.classList.add('dz-on'); dzCamadas(); dzPainel(); dzPinsRender(); }
   const loop = () => { if (!box.isConnected) return; dzTick(); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
 function dzVideo(v){ DZ.v = v; v.muted = true; v.onclick = () => v.paused ? v.play() : v.pause(); v.play().catch(()=>{});
   const cont = v.parentNode, bar = document.createElement('div'); cont.classList.add('dz-vc'); bar.className = 'dz-ctl';
   bar.innerHTML = `<div class="dz-trk" title="Arraste para avançar ou voltar"><div class="dz-prog"></div><div class="dz-mks"></div><div class="dz-kn"><span class="dz-tip">00:00</span></div></div>`;
   const vol = document.createElement('div'); vol.className = 'dz-vol'; vol.innerHTML = `<input type="range" class="dz-volr" min="0" max="1" step="0.05" value="1" title="Volume"><button type="button" class="dz-mute" title="Ligar o som"><i data-lucide="volume-x"></i></button>`;
-  cont.appendChild(bar); cont.appendChild(vol);
+  const cm = v.closest('.ig-rl') && DZ.iph && DZ.iph.querySelector('.ig-rl-cm');   // Reels: a barra ocupa o lugar do "Faça um comentário"
+  if (cm) { bar.classList.add('dz-ctl-cm'); bar.insertAdjacentHTML('afterbegin', `<button type="button" class="dz-pp" title="Pausar"><i data-lucide="pause"></i></button><span class="dz-tm">00:00</span>`); bar.appendChild(vol);
+    cm.innerHTML = ''; cm.classList.add('dz-cmbar'); cm.appendChild(bar); bar.onclick = e => e.stopPropagation(); bar.querySelector('.dz-pp').onclick = () => v.paused ? v.play().catch(()=>{}) : v.pause(); }
+  else { cont.appendChild(bar); cont.appendChild(vol); }
+  const ppIc = () => { const b = bar.querySelector('.dz-pp'); if (!b) return; b.innerHTML = `<i data-lucide="${v.paused ? 'play' : 'pause'}"></i>`; b.title = v.paused ? 'Reproduzir' : 'Pausar'; if (window.lucide) lucide.createIcons(); };
+  v.addEventListener('play', ppIc); v.addEventListener('pause', ppIc);
   const trk = bar.querySelector('.dz-trk'), pos = e => { const r = trk.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
   const ir = e => { if (v.duration) v.currentTime = pos(e) * v.duration; dzTick(); };
   trk.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); trk.setPointerCapture(e.pointerId); DZ.arr = {tocando: !v.paused}; v.pause(); bar.classList.add('arr'); ir(e); });
@@ -6437,6 +6450,7 @@ function dzVideo(v){ DZ.v = v; v.muted = true; v.onclick = () => v.paused ? v.pl
 function dzTick(){ const v = DZ.v, box = DZ.box; if (!box) return;
   if (v && v.duration) { const f = v.currentTime / v.duration * 100; const pr = box.querySelector('.dz-prog'), kn = box.querySelector('.dz-kn');
     if (pr) pr.style.width = f+'%'; if (kn) { kn.style.left = f+'%'; if (DZ.arr || !box.querySelector('.dz-trk:hover')) kn.querySelector('.dz-tip').textContent = fmtSeg(v.currentTime); }
+    const tm = box.querySelector('.dz-tm'); if (tm) tm.textContent = fmtSeg(v.currentTime)+' / '+fmtSeg(v.duration);
     const lv = box.querySelector('.dz-ch-vivo'); if (lv) lv.textContent = fmtSeg(v.currentTime);
     if (Math.abs((DZ.tUlt||0) - v.currentTime) > .2) { DZ.tUlt = v.currentTime; dzPinsVis(); } }
   const lc = box.querySelector('.dz-ch-card'), car = DZ.iph && DZ.iph.querySelector('.ig-car'); if (lc && car) lc.textContent = 'Card '+(dzCardAtual()+1); }
@@ -6467,7 +6481,7 @@ function dzPainel(){ const lado = DZ.box && DZ.box.querySelector('.soc-max-lado'
   const chips = p ? [p.seg!=null ? `<span class="dz-ch"><i data-lucide="clock"></i>${fmtSeg(p.seg)}</span>` : '', p.card!=null ? `<span class="dz-ch">Card ${p.card+1}</span>` : '', p.x!=null ? `<span class="dz-ch"><i data-lucide="map-pin"></i>ponto marcado</span>` : ''].join('') + `<button type="button" class="dz-ch-x" title="Tirar a marcação" onclick="DZ.pend=null;dzPainel();dzPinsRender()"><i data-lucide="x"></i></button>`
     : (DZ.v ? `<span class="dz-ch"><i data-lucide="clock"></i><span class="dz-ch-vivo">${fmtSeg(DZ.v.currentTime)}</span></span>` : '') + (DZ.semCtl ? `<label class="dz-ch dz-tin-w"><i data-lucide="clock"></i><input class="dz-tin" placeholder="00:05" title="Segundo do vídeo (mm:ss)"></label>` : '') + (car ? `<span class="dz-ch dz-ch-card">Card ${(dzCardAtual()||0)+1}</span>` : '');
   el.innerHTML = `<div class="dz-cm-cab"><b>Comentários no design</b>${L.length ? `<span class="dz-cont">${L.length}</span>` : ''}${ed ? `<button type="button" class="btn btn-s dz-add ${DZ.modo?'on':''}" onclick="dzModo(!DZ.modo)" title="Clique depois no ponto do design"><i data-lucide="map-pin-plus"></i>Marcar ponto</button>` : ''}</div>
-    ${DZ.semCtl ? `<div class="dz-aviso">Este vídeo do Drive só toca no player do Google. Informe o segundo do comentário no campo de tempo.</div>` : ''}
+    ${DZ.semCtl ? `<div class="dz-aviso">Não consegui abrir este vídeo no player da plataforma (confira se ele está compartilhado como “qualquer pessoa com o link”). Informe o segundo do comentário no campo de tempo.</div>` : ''}
     <div class="dz-cm-l">${L.map((m,i)=>`<div class="dz-it ${DZ.sel===m.id?'on':''}" data-id="${m.id}" onclick="dzIr('${m.id}')"><span class="dz-n">${i+1}</span><div class="dz-it-c"><div class="dz-it-m"><b>${h(m.quem||'—')}</b>${dzAncora(m) ? `<span class="dz-ch">${h(dzAncora(m))}</span>` : ''}<span class="dz-qd">${discQuando(m.t)}</span>${ed && m.quem===me ? `<button type="button" class="dz-del" title="Excluir comentário" onclick="event.stopPropagation();dzExcluir('${m.id}')"><i data-lucide="trash-2"></i></button>` : ''}</div><div class="dz-it-x">${comMencoes(m.o).replace(/\n/g,'<br>')}</div></div></div>`).join('') || `<div class="dz-vz">${DZ.ehVideo ? 'Pause no segundo que quer comentar e escreva abaixo. Use “Marcar ponto” para apontar um lugar na tela.' : car ? 'Vá até o card e escreva abaixo. Use “Marcar ponto” para apontar um lugar na arte.' : 'Escreva abaixo. Use “Marcar ponto” para apontar um lugar na arte.'}</div>`}</div>
     ${ed ? `<div class="dz-novo"><div class="dz-anc">${chips}</div><div class="npc-in"><textarea class="dz-txt" rows="2" placeholder="Comentário${DZ.ehVideo ? ' neste segundo' : car ? ' neste card' : ''}… use @ para mencionar" onfocus="if(DZ.v&&!DZ.v.paused)DZ.v.pause()" oninput="sugMencao(this)" onkeydown="event.stopPropagation();if(event.key==='Escape'){this.blur();socMaxEsc(event)}else if(event.key==='Enter'&&!event.shiftKey&&!this.parentNode.querySelector('.menc-sug')){event.preventDefault();dzEnviar()}"></textarea><button type="button" class="dc-env" onclick="dzEnviar()" title="Enviar (Enter)"><i data-lucide="send"></i></button></div></div>` : ''}`;
   if (window.lucide) lucide.createIcons(); }
