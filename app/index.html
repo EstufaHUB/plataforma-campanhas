@@ -810,9 +810,9 @@ body.at-arrastando .at-ev{pointer-events:none}
 .ig-fd-bot{flex:none;position:relative;height:34px;overflow:hidden;background:#fafafa;border-top:1px solid #efefef}.ig-fd-bot .ig-fd-bl{padding:10px 14px}
 .iph-fd .ig-ph-n .ig-ver{width:14px;height:14px}
 /* Stories */
-.ig-st{position:relative;flex:1;min-height:0;background:#1a1a1a;border-radius:9px;overflow:hidden;margin:0 2px}
+.ig-st{position:relative;flex:1;min-height:0;background:#1a1a1a;border-radius:12px;overflow:hidden;margin:46px 2px 0}.ig-st-mn{display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-left:auto;margin-right:6px}.ig-st-mn i{display:block;height:2.2px;border-radius:2px;background:#fff;width:22px}.ig-st-mn i+i{width:14px}.ig-st-cab .ig-ver{margin-left:-4px;width:13px;height:13px}
 .ig-st-bar{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:3px;pointer-events:none;z-index:2}.ig-st-bar i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.45)}.ig-st-bar i:first-child{background:#fff}
-.ig-st-cab{position:absolute;top:18px;left:10px;right:10px;display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;pointer-events:none;z-index:2;text-shadow:0 1px 2px rgba(0,0,0,.4)}.ig-st-cab b{font-weight:600}.ig-st-cab span{opacity:.75}.ig-st-cab svg{width:22px;height:22px}.ig-st-cab svg:first-of-type{margin-left:auto}
+.ig-st-cab{position:absolute;top:18px;left:10px;right:10px;display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;pointer-events:none;z-index:2;text-shadow:0 1px 2px rgba(0,0,0,.4)}.ig-st-cab b{font-weight:600}.ig-st-cab span{opacity:.75}.ig-st-cab svg{width:22px;height:22px}.ig-st-cab svg{flex:none}
 .ig-st-rod{flex:none;display:flex;align-items:center;gap:16px;padding:9px 14px 26px;color:#fff}.ig-st-rod svg{width:24px;height:24px}.ig-st-in{flex:1;border:1px solid rgba(255,255,255,.55);border-radius:22px;padding:9px 16px;font-size:13.5px}
 /* perfil e grade do feed */
 .ig-pf-top{flex:none;display:flex;align-items:center;gap:4px;padding:2px 14px 6px;font-size:18px}.ig-pf-top b{font-weight:700;letter-spacing:-.01em}.ig-pf-top svg{width:16px;height:16px}.ig-pf-top>span{margin-left:auto;display:flex;gap:20px}.ig-pf-top>span svg{width:24px;height:24px}
@@ -6407,6 +6407,16 @@ function socMidia(url, modo){ const u = String(url||'').trim(); if (!u) return n
   if (/\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(u)) return {t:'video', src:u};
   if (/\.(png|jpe?g|gif|webp|avif)(\?|#|$)/i.test(u) || /googleusercontent\.com|cdninstagram|fbcdn/.test(u)) return {t:'img', src:u};
   return {t:'link', src:u}; }
+const socDrvId = u => { u = String(u||''); return (u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/) || (/drive\.google\.com/.test(u) && !/folders\//.test(u) && u.match(/[?&]id=([\w-]{10,})/)) || [])[1] || null; };
+const DRV_TIPO = (()=>{ try { return JSON.parse(localStorage.getItem('drv-tipo')||'{}'); } catch(e){ return {}; } })();
+async function socTok(){ try { return sb && (await sb.auth.getSession()).data.session?.access_token || null; } catch(e){ return null; } }
+async function socDrvTipo(id){ if (DRV_TIPO[id]) return DRV_TIPO[id]; const t = await socTok(); if (!t || !window.SUPA_URL) return null;
+  try { const j = await (await fetch(`${window.SUPA_URL}/functions/v1/drive-video?id=${id}&tipo=1&t=${encodeURIComponent(t)}`)).json(); if (j.tipo) { DRV_TIPO[id] = j.tipo; try { localStorage.setItem('drv-tipo', JSON.stringify(DRV_TIPO)); } catch(e){} } return j.tipo || null; } catch(e){ return null; } }
+function socDrvIframe(el, id){ if (!el.isConnected) return; const f = document.createElement('iframe'); f.className = el.className; f.src = `https://drive.google.com/file/d/${id}/preview`; f.allow = 'autoplay; fullscreen'; el.replaceWith(f); }
+async function socDrvVer(){
+  for (const img of [...document.querySelectorAll('img[data-drv-st]')]) { const id = img.dataset.drvSt; img.removeAttribute('data-drv-st'); if (await socDrvTipo(id) === 'video' && img.isConnected) { const v = document.createElement('video'); v.className = img.className; v.dataset.drvV = id; for (const a of ['muted','loop','playsinline','autoplay']) v.setAttribute(a, ''); v.muted = true; img.replaceWith(v); } }
+  for (const v of [...document.querySelectorAll('video[data-drv-v]:not([src])')]) { const id = v.dataset.drvV, t = await socTok(); if (!t || !window.SUPA_URL) { socDrvIframe(v, id); continue; }
+    v.addEventListener('error', () => socDrvIframe(v, id), {once:true}); v.muted = true; v.src = `${window.SUPA_URL}/functions/v1/drive-video?id=${id}&t=${encodeURIComponent(t)}`; v.play().catch(()=>{}); } }
 function socImgErro(img){ const id = (img.src.match(/drive\.google\.com\/thumbnail\?id=([\w-]+)/)||[])[1];
   if (id && !img.closest('.ig-tile')) { const f = document.createElement('iframe'); f.className = img.className; f.src = `https://drive.google.com/file/d/${id}/preview`; f.allow = 'autoplay; fullscreen'; img.replaceWith(f); return; }
   const d = document.createElement('div'); d.className = 'ig-vazio'; d.innerHTML = '<span>Sem prévia. Confira se o arquivo está compartilhado como “qualquer pessoa com o link”.</span>'; img.replaceWith(d); }
@@ -6534,7 +6544,12 @@ const socNav = esc => `<div class="ig-nav ${esc?'esc':''}"><i data-lucide="house
 const socAv = (pf, cls) => pf.logo ? `<span class="ig-av ig-av-img ${cls||''}"><img src="${h(pf.logo)}" alt=""></span>` : `<span class="ig-av ${cls||''}" style="--c:${h(pf.cor||'#333')}">${h(iniciais(pf.nome||pf.handle))}</span>`;
 function socMockup(o, vivo){ const L = (o.links||[]).filter(Boolean), pf = o.perfil, pc = o.parceiro, fmt = o.formato || 'Estático';
   const nomes = `<b>${h(pf.handle)}</b>${pc ? ` <span>e</span> <b>${h(pc.handle)}</b>` : ''}`, leg = `<span ${vivo?'id="ig-leg-txt"':''}>${socLegHtml(o.legenda)}</span>`;
-  if (fmt==='Stories') return socPhone(`<div class="ig-st">${socMidiaHtml(L[0], 'video', 'ig-full')}<div class="ig-st-bar">${(L.length>1 ? L : [0]).map(()=>'<i></i>').join('')}</div><div class="ig-st-cab">${socAv(pf,'ig-av-s')}<b>${h(pf.handle)}</b><span>2 h</span><i data-lucide="ellipsis"></i><i data-lucide="x"></i></div></div><div class="ig-st-rod"><span class="ig-st-in">Enviar mensagem</span><i data-lucide="heart"></i><i data-lucide="send"></i></div>`, true);
+  if (fmt==='Stories') { const drv = socDrvId(L[0]), tp = (o.tipos||[])[0] || (o.tipoMidia==='video' ? 'video' : '') || (drv && DRV_TIPO[drv]) || '';
+    // arquivo do Drive: sem saber o tipo, mostra a imagem e descobre em seguida; vídeo toca no player da plataforma (sem os controles do Google)
+    const midia = drv && tp!=='video' ? `<img class="ig-full" src="https://drive.google.com/thumbnail?id=${drv}&sz=w1080" alt="" referrerpolicy="no-referrer" ${tp ? '' : `data-drv-st="${drv}"`} onerror="socImgErro(this)">`
+      : drv ? `<video class="ig-full" data-drv-v="${drv}" muted loop playsinline autoplay></video>` : socMidiaHtml(L[0], tp==='image' ? 'img' : 'video', 'ig-full');
+    if (drv) setTimeout(socDrvVer, 0);
+    return socPhone(`<div class="ig-st">${midia}<div class="ig-st-bar">${(L.length>1 ? L : [0]).map(()=>'<i></i>').join('')}</div><div class="ig-st-cab">${socAv(pf,'ig-av-s')}<b>${h(pf.handle)}</b>${IG_VER}<span>7 h</span><span class="ig-st-mn"><i></i><i></i></span><i data-lucide="x"></i></div></div><div class="ig-st-rod"><span class="ig-st-in">Enviar mensagem...</span><i data-lucide="heart"></i><i data-lucide="send"></i></div>`, true); }
   if (fmt==='Reels') return socPhone(`<div class="ig-rl">${socMidiaHtml(L[0], 'video', 'ig-full')}<div class="ig-rl-top"><i data-lucide="chevron-left"></i><i data-lucide="plus"></i></div>
     <div class="ig-rl-lat"><span><i data-lucide="heart"></i>9</span><span><i data-lucide="message-circle"></i></span><span><i data-lucide="repeat-2"></i></span><span><i data-lucide="send"></i>3</span><span><i data-lucide="bookmark"></i></span><span class="ig-rl-mn"><i></i><i></i></span></div>
     <div class="ig-rl-rod"><div class="ig-rl-u">${socAv(pf,'ig-av-m')}<span><b>${h(pf.handle)}</b>${IG_VER}${pc ? ` <span>e</span> <b>${h(pc.handle)}</b>${IG_VER}` : ''}</span></div><div class="ig-rl-leg" onclick="this.classList.toggle('ab')">${leg}</div></div><div class="ig-rl-pb"><i></i></div></div>

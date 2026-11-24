@@ -29,6 +29,13 @@ Deno.serve(async (req) => {
   if (!/^[\w-]{10,}$/.test(id)) return new Response("id inválido", { status: 400, headers: cors });
   if (!(await logado(u.searchParams.get("t") || ""))) return new Response("Faça login.", { status: 401, headers: cors });
 
+  // ?tipo=1: só diz se o arquivo é imagem ou vídeo (para a prévia do Stories escolher o player)
+  if (u.searchParams.get("tipo")) {
+    const r = await fetch(`https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`, { headers: { "User-Agent": "Mozilla/5.0", Range: "bytes=0-0" } });
+    const ct = (r.headers.get("content-type") || "").toLowerCase(); await r.body?.cancel();
+    const tipo = !r.ok || ct.includes("text/html") ? "" : ct.startsWith("video/") ? "video" : ct.startsWith("image/") ? "image" : "";
+    return new Response(JSON.stringify({ tipo }), { headers: { ...cors, "Content-Type": "application/json" } });
+  }
   // pedaço pedido pelo player; sem fim (ou grande demais) vira uma parte de até 8 MB
   const m = (req.headers.get("range") || "").match(/bytes=(\d+)-(\d*)/);
   const ini = m ? +m[1] : 0, fim = m && m[2] ? Math.min(+m[2], ini + PARTE - 1) : ini + PARTE - 1;
