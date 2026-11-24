@@ -800,6 +800,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 /* página pública do post / do feed */
 .pub.pub-soc .pub-doc{max-width:1120px}.pub-soc-g{display:grid;grid-template-columns:350px minmax(0,1fr);gap:48px;align-items:start}.pub-soc-ph{position:sticky;top:20px}.pub-soc-feed{grid-template-columns:minmax(0,1fr) 350px}
 @media (max-width:900px){.pub-soc-g,.pub-soc-feed{grid-template-columns:1fr}.pub-soc-ph{position:static;display:flex;justify-content:center}}
+.cli-gr-l{margin-top:14px;border-top:1px solid var(--borda);display:flex;flex-direction:column}.cli-gr-it{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid #f0f1f2;text-decoration:none;color:inherit;border-radius:6px}.cli-gr-it:last-child{border-bottom:0}.cli-gr-it:hover{background:#f6f7f8}.cli-gr-it>div{flex:1;min-width:0;display:flex;flex-direction:column}.cli-gr-it b{font-size:.88rem;font-weight:600}.cli-gr-it small{font-size:.72rem;color:var(--tx3)}.cli-gr-n{font-size:.74rem;color:var(--tx2);white-space:nowrap}.cli-gr-it svg{width:15px;height:15px;color:var(--tx3)}
 </style>
 </head>
 <body>
@@ -1891,15 +1892,26 @@ function pgClientes(r){
   migalha([['Clientes']]);
   const mostrarArq = UI.cliArq;
   const L = S.clientes.filter(c=>mostrarArq || !c.arquivado);
+  const grupos = gruposClientes(L);
   return `<div class="cab"><div><h1>Clientes</h1><p>Escolha um cliente para ver as campanhas.</p></div><div class="filtros"><label class="small"><input type="checkbox" ${mostrarArq?'checked':''} data-chg="cliArq"> Mostrar arquivados</label><button class="btn btn-p" data-act="formCliente"><i data-lucide="plus"></i>Novo cliente</button></div></div>
-  <div class="grade g3">${L.map(c=>{ const cs = S.campanhas.filter(x=>x.clienteId===c.id && !x.arquivada); const ab = cs.filter(x=>x.status!=='Concluída');
-    return `<div class="card card-p" style="cursor:pointer" onclick="location.hash='#/clientes/${c.id}'"><div style="display:flex;justify-content:space-between;gap:8px"><div style="display:flex;gap:12px;align-items:center">${logoCliente(c,'cli-logo')}<div><h3>${h(c.nome)}</h3><div class="small muted">${h(c.segmento)}</div></div></div>${c.arquivado?'<span class="tag">Arquivado</span>':''}</div>
-     <div style="display:flex;gap:18px;margin-top:14px"><div><div class="kpi v" style="padding:0;font-size:1.3rem">${ab.length}</div><div class="small muted">em andamento</div></div><div><div class="kpi v" style="padding:0;font-size:1.3rem">${cs.length}</div><div class="small muted">no total</div></div></div>
-     <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">${ab.slice(0,3).map(x=>saudeHtml(x)).join('')}</div></div>`; }).join('') || '<div class="vazio">Nenhum cliente.</div>'}</div>`;
+  <div class="grade g3">${grupos.map(g=>g.length > 1 ? cardGrupo(g) : cardCli(g[0])).join('') || '<div class="vazio">Nenhum cliente.</div>'}</div>`;
 }
+/* clientes com o mesmo primeiro nome (PTx EMEA, PTx LATAM, PTx OEM) ficam num card só */
+const grupoCliNome = c => (c.nome||'').trim().split(/\s+/)[0] || '';
+function gruposClientes(L){ const m = new Map(); for (const c of L) { const k = grupoCliNome(c).toLowerCase(); if (!m.has(k)) m.set(k, []); m.get(k).push(c); } return [...m.values()]; }
+const campsCli = id => { const cs = S.campanhas.filter(x=>x.clienteId===id && !x.arquivada); return {cs, ab: cs.filter(x=>x.status!=='Concluída')}; };
+function cardCli(c){ const {cs, ab} = campsCli(c.id);
+  return `<div class="card card-p" style="cursor:pointer" onclick="location.hash='#/clientes/${c.id}'"><div style="display:flex;justify-content:space-between;gap:8px"><div style="display:flex;gap:12px;align-items:center">${logoCliente(c,'cli-logo')}<div><h3>${h(c.nome)}</h3><div class="small muted">${h(c.segmento)}</div></div></div>${c.arquivado?'<span class="tag">Arquivado</span>':''}</div>
+     <div style="display:flex;gap:18px;margin-top:14px"><div><div class="kpi v" style="padding:0;font-size:1.3rem">${ab.length}</div><div class="small muted">em andamento</div></div><div><div class="kpi v" style="padding:0;font-size:1.3rem">${cs.length}</div><div class="small muted">no total</div></div></div>
+     <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">${ab.slice(0,3).map(x=>saudeHtml(x)).join('')}</div></div>`; }
+function cardGrupo(g){ const tot = g.map(c=>campsCli(c.id)), ab = tot.reduce((n,x)=>n+x.ab.length,0), cs = tot.reduce((n,x)=>n+x.cs.length,0);
+  return `<div class="card card-p cli-gr"><div style="display:flex;gap:12px;align-items:center">${logoCliente(g[0],'cli-logo')}<div><h3>${h(grupoCliNome(g[0]))}</h3><div class="small muted">${g.length} clientes</div></div></div>
+     <div style="display:flex;gap:18px;margin-top:14px"><div><div class="kpi v" style="padding:0;font-size:1.3rem">${ab}</div><div class="small muted">em andamento</div></div><div><div class="kpi v" style="padding:0;font-size:1.3rem">${cs}</div><div class="small muted">no total</div></div></div>
+     <div class="cli-gr-l">${g.map((c,i)=>`<a class="cli-gr-it" href="#/clientes/${c.id}"><div><b>${h(c.nome)}</b>${c.segmento ? `<small>${h(c.segmento)}</small>` : ''}</div><span class="cli-gr-n">${tot[i].ab.length} em andamento · ${tot[i].cs.length} no total</span>${c.arquivado?'<span class="tag">Arquivado</span>':''}<i data-lucide="chevron-right"></i></a>`).join('')}</div></div>`; }
 function pgCliente(id){
   const cl = cliente(id); if (!cl.id) return '<div class="vazio">Cliente não encontrado.</div>';
-  migalha([['Clientes','#/clientes'],[cl.nome]]);
+  const grp = S.clientes.filter(x=>grupoCliNome(x).toLowerCase()===grupoCliNome(cl).toLowerCase()).length > 1;
+  migalha([['Clientes','#/clientes'],...(grp ? [[grupoCliNome(cl),'#/clientes']] : []),[cl.nome]]);
   const f = UI.fc || (UI.fc = {ano:'',pais:'',regiao:'',status:'',resp:'',busca:'',arq:false,agrup:'lista'});
   let L = S.campanhas.filter(c=>c.clienteId===id && (f.arq || !c.arquivada));
   if (f.busca) L = L.filter(c=>c.nome.toLowerCase().includes(f.busca.toLowerCase()));
