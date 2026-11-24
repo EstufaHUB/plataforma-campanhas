@@ -834,6 +834,7 @@ const PAISES = {
 };
 const CANAIS = ['Meta Ads','YouTube Ads','Google Display','Google Search','TikTok'];
 const TIPOS_ENTREGAVEL = ['KV','Landing page','Assets ADS','Assets orgânicos','Fluxo de email','Email marketing','Material rico','Materiais para dealers'];
+const SO_PTX_ENTREGAVEL = ['Materiais para dealers'], SO_PTX_ETAPA = ['F2-13'];   // padrão PTx: dealers
 const temOrganico = c => (c.entregaveisTipos||[]).includes('Assets orgânicos') || (c.canais||[]).includes('Conteúdo orgânico / Social Media');
 const AREAS = ['Atendimento','Planejamento','Conteúdo','Design','Digital','Validadores locais','Cliente','Design + Conteúdo','Fornecedor'];
 const ST_CAMP = ['Não iniciada','Em andamento','Em veiculação','Finalizada – relatório pendente','Concluída'];
@@ -973,7 +974,8 @@ const soAwareness = c => !c.faseada && (c.objetivos||[]).length===1 && c.objetiv
 function modeloPara(c, base){
   const copia = () => JSON.parse(JSON.stringify(base || S.modelo.tarefas));
   const semLP = m => m.filter(t=>!ETAPAS_LP.has(tidBase(t.id)) || t.item);
-  if (!c.faseada) return soAwareness(c) ? semLP(copia()) : copia();
+  const semPTx = m => cliPTx(c.clienteId) ? m : m.filter(t=>!SO_PTX_ETAPA.includes(tidBase(t.id)) || t.item);   // dealers: só PTx
+  if (!c.faseada) return semPTx(soAwareness(c) ? semLP(copia()) : copia());
   return FASES_CAMP.flatMap(f=>{ const pf = PREF_ETAPA[f], m = f==='Awareness' ? semLP(copia()) : copia();
     return m.map(t=>Object.assign(t, {id:pf+tidBase(t.id), etapa:f, deps:(t.deps||[]).map(([d,...r])=>[pf+tidBase(d),...r])})); }); }
 const assinaturaModelo = m => (m||[]).map(t=>t.id).filter(id=>!/^[AL]~/.test(id) || true).join(',');
@@ -5246,7 +5248,7 @@ function formCampanha(c){
     <label class="campo">Fim da veiculação *<input type="date" name="fimVeiculacao" required value="${d.fimVeiculacao||''}"></label>
     <label class="campo tudo" style="flex-direction:row;align-items:center;gap:8px;font-weight:600"><input type="checkbox" name="recorrente" ${d.recorrente?'checked':''} style="width:auto">Campanha recorrente (no ar o ano todo, sem período fechado)</label>
     <div class="tudo" id="aviso-lanc"></div>
-    <div class="campo tudo">Entregáveis<div class="chips">${TIPOS_ENTREGAVEL.map(k=>`<label class="chip ${(d.entregaveisTipos||[]).includes(k)?'on':''}"><input type="checkbox" name="entregavelTipo" value="${k}" ${(d.entregaveisTipos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
+    <div class="campo tudo">Entregáveis<div class="chips">${TIPOS_ENTREGAVEL.filter(k=>ptx || !SO_PTX_ENTREGAVEL.includes(k) || (d.entregaveisTipos||[]).includes(k)).map(k=>`<label class="chip ${(d.entregaveisTipos||[]).includes(k)?'on':''}"><input type="checkbox" name="entregavelTipo" value="${k}" ${(d.entregaveisTipos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>
     ${faseada(d) ? FASES_CAMP.map((f,i)=>{ const cs = canaisDaFase(d,f); return `<div class="tudo fase-form"><div class="fase-tit"><span class="fase-num">${i+1}</span>Fase ${i+1} · ${f}</div>
       <div class="fase-datas"><label class="campo">Início da fase *<input type="date" name="faseIni@${f}" value="${periodoFase(d,f).ini||''}"></label><label class="campo">Fim da fase *<input type="date" name="faseFim@${f}" value="${periodoFase(d,f).fim||''}"></label></div>
       <div class="campo tudo">Canais da fase ${f}<div class="chips">${[...CANAIS, ...cs.filter(k=>!CANAIS.includes(k))].map(k=>`<label class="chip ${cs.includes(k)?'on':''}"><input type="checkbox" name="canal@${f}" data-chg="canalCamp" value="${k}" ${cs.includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${h(nomeCanal(k))}</label>`).join('')}</div></div>
@@ -5572,7 +5574,7 @@ const ACT = {
     criarInvoiceFeePendente(c); },
   salvarEdicaoCamp: () => { const d = lerFormCampanha(), c = camp(d.id), err = validarCampanha(d);
     if (err.length) { $('#aviso-lanc').innerHTML = `<div class="alerta verm"><i data-lucide="alert-circle"></i><div>${err.map(h).join('<br>')}</div></div>`; icones(); return; }
-    const novoMod = modeloPara(d), mudouMod = !!d.faseada!==!!c.faseada || soAwareness(d)!==soAwareness(c);   // só muda as etapas quando liga/desliga as fases ou vira campanha só de awareness
+    const novoMod = modeloPara(d), mudouMod = !!d.faseada!==!!c.faseada || soAwareness(d)!==soAwareness(c) || cliPTx(d.clienteId)!==cliPTx(c.clienteId) || (!cliPTx(d.clienteId) && (c.modelo||[]).some(t=>SO_PTX_ETAPA.includes(tidBase(t.id)) && !t.item));   // só muda as etapas quando liga/desliga as fases ou vira campanha só de awareness
     if (mudouMod) { const itens = c.modelo.filter(m=>m.item); d.modelo = [...novoMod, ...(d.faseada ? [] : itens)]; for (const m of d.modelo) { const ant = c.modelo.find(x=>x.id===m.id); if (ant && (c.renomeadas||{})[m.id]) m.nome = ant.nome; } }
     const mudouDatas = mudouMod || !mesmasFases(d.fasesDatas, c.fasesDatas) || !!d.faseada!==!!c.faseada || d.lancamento!==c.lancamento || d.fimVeiculacao!==c.fimVeiculacao || JSON.stringify(d.paises.map(p=>[p.cod,p.lancamento,p.idioma]))!==JSON.stringify(c.paises.map(p=>[p.cod,p.lancamento,p.idioma])) || d.idiomaBase!==c.idiomaBase;
     if (mudouDatas) { rascunho = d; return ACT.compararRecalc(null, d, 'Edição da campanha (datas, países ou idiomas)'); }
