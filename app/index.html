@@ -6322,6 +6322,7 @@ const SOC_ORD = SOC_ETAPAS.map(x=>x[0]), SOC_I_CONT = SOC_ORD.indexOf('aguard_de
 const SOC_COR = {briefing:'cinza', aprov_int_conteudo:'azul', aprov_conteudo:'amar', ajuste_conteudo:'verm', aguard_design:'cinza', producao:'azul', aprov_int_design:'azul', aprov_asset:'amar', ajuste_asset:'verm', aprovado:'verde', agendado:'roxo', publicado:'verde'};
 const SOC_PERFIS_PTX = [{id:'ptxbr', nome:'PTx Trimble Brasil', handle:'ptx.trimble.brasil', idioma:'PT', cor:'#111111'},{id:'ptxlatam', nome:'PTx Trimble LATAM', handle:'ptx.trimble.latam', idioma:'ES', cor:'#2c5d8f'},{id:'ppbr', nome:'Precision Planting Brasil', handle:'precisionplantingbr', idioma:'PT', cor:'#EF9F27'}];
 const socFmtCls = f => 'fmt-'+({'Estático':'est','Carrossel':'car','Reels':'rls','Stories':'sto'}[f]||'x');
+const SOC_COLLAB_TX = {prp:'Collab PrP + PTxT', inf:'Collab influencer', ar:'PrP AR'}, SOC_COLLAB_COR = {prp:'verde', inf:'lar', ar:'azul'};
 const SOC_FMT_COR = {'Estático':'rosa','Carrossel':'azul','Reels':'amar','Stories':'roxo'};
 const socIcFmt = f => (SOC_FORMATOS.find(x=>x[0]===f)||[,'image'])[1];
 const socProj = id => (S.social||[]).find(x=>x.id===id);
@@ -6561,7 +6562,7 @@ function socCard(p, post, ed, semCamp){ const pf = socPerfil(p, post.perfil), pc
   const pub = socPubAtual(post), meta = [pub && pub.status==='agendado' ? `<span class="soc-card-pg" title="Programado no Instagram"><i data-lucide="clock"></i>${new Date(pub.quando).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>` : pub && pub.status==='erro' ? '<span class="soc-card-er" title="Não publicou"><i data-lucide="alert-triangle"></i>erro</span>' : '', post.hora && !(pub && pub.status==='agendado') ? `<span>${h(post.hora)}</span>` : '',  post.origem ? `<span title="Versão em ${h(IDIOMAS[pf.idioma]||pf.idioma)} de um post de ${h(socPerfil(p, (socPostDe(p, post.origem)||{}).perfil).nome)}"><i data-lucide="globe"></i>${socOrigMudou(p, post) ? '<em>original mudou</em>' : 'tradução'}</span>` : '', post.espelho && socPostDe(p, post.espelho) ? `<span title="Tem versão em ${h(socPerfil(p, socPostDe(p, post.espelho).perfil).nome)}"><i data-lucide="globe"></i></span>` : '', n ? `<span><i data-lucide="message-square"></i>${n}</span>` : ''].join('');
   return `<div class="soc-card ${post.etapa==='publicado'?'soc-ok':''}" ${ed?`draggable="true" data-socdrag="${post.id}" data-p="${p.id}"`:''} onclick="location.hash='${socRota(p, post)}'" title="${h(post.nome)} · ${h(pf.nome)}${pc?' + '+h(pc.nome):''}">
     <div class="soc-card-t">${pc ? '' : `<span class="soc-dots"><i style="background:${h(pf.cor)}"></i></span>`}<img src="instagram.png" class="soc-igi" alt="Instagram"><b>${h(post.nome)}</b></div>
-    <span class="soc-card-f ${socFmtCls(post.formato)}"><i data-lucide="${socIcFmt(post.formato)}"></i>${h(post.formato||'—')}</span>${pc ? `<span class="soc-card-f fmt-col" title="Collab com ${h(pc.nome)}"><i data-lucide="users"></i>Collab PrP + PTxT</span>` : ''}${post.collabInf ? '<span class="soc-card-f fmt-inf"><i data-lucide="star"></i>Collab influencer</span>' : ''}
+    <span class="soc-card-f ${socFmtCls(post.formato)}"><i data-lucide="${socIcFmt(post.formato)}"></i>${h(post.formato||'—')}</span>${pc ? `<span class="soc-card-f fmt-col" title="Collab com ${h(pc.nome)}"><i data-lucide="users"></i>Collab PrP + PTxT</span>` : ''}${post.collabInf ? '<span class="soc-card-f fmt-inf"><i data-lucide="star"></i>Collab influencer</span>' : ''}${post.collabAr ? '<span class="soc-card-f fmt-car"><i data-lucide="users"></i>PrP AR</span>' : ''}
     <span class="pc4-st c-${SOC_COR[post.etapa]||'cinza'}"><i></i>${h(socRotulo(post))}</span>${semCamp ? '' : socCampHtml(post)}${socRespHtml(post)}${meta ? `<div class="soc-card-m">${meta}</div>` : ''}</div>`; }
 const socResp = post => (post.doc && post.doc.resp) || post.resp || '';
 const socRespHtml = post => { const r = socResp(post); return r ? `<span class="soc-card-r" title="Responsável: ${h(r)}">${avatar(r, 'av av-s')}${h(r.split(' ')[0])}</span>` : '<span class="soc-card-r vz">sem responsável</span>'; };
@@ -6595,8 +6596,9 @@ function socCab(p, ed){ const cl = cliente(p.clienteId);
     <div class="cc-meta" style="margin-top:6px"><span>${h(cl.nome)}</span><span class="cc-sep"></span>${(p.perfis||[]).map(pf=>`<span class="soc-pf-tag" title="@${h(pf.handle)} · ${h(IDIOMAS[pf.idioma]||pf.idioma)}"><i style="background:${h(pf.cor)}"></i>${h(pf.nome)}</span>`).join('')}</div></div></div>
     ${ed ? `<div class="cc-dir nao-imprimir"><button class="btn" data-act="socEditar" data-p="${p.id}"><i data-lucide="settings-2"></i>Perfis</button><button class="btn btn-p" data-act="socNovoPost" data-p="${p.id}"><i data-lucide="plus"></i>Novo post</button></div>` : ''}</div>`; }
 function socCollab(pid, id, k, on){ const p = socProj(pid), post = p && socPostDe(p, id); if (!p || !post || !ehEquipe()) return; lpGuardarEdicao();
-  if (k==='prp') post.collab = !!on; else if (on) post.collabInf = true; else delete post.collabInf;
-  registrar(`Social media “${p.nome}”: post “${post.nome}” ${on ? 'com' : 'sem'} ${k==='prp' ? 'collab PrP + PTxT' : 'collab influencer'}`); salvar(); render(); }
+  const cp = {inf:'collabInf', ar:'collabAr'}[k];
+  if (k==='prp') post.collab = !!on; else if (cp) { if (on) post[cp] = true; else delete post[cp]; } else return;
+  registrar(`Social media “${p.nome}”: post “${post.nome}” ${on ? 'com' : 'sem'} ${SOC_COLLAB_TX[k]}`); salvar(); render(); }
 function pgSocial(r){ const p = socProj(r[1]); if (!p) { migalha([['Social media']]); return '<div class="vazio">Projeto não encontrado.</div>'; }
   if (r[2]==='post') return pgSocialPost(p, r[3]);
   const ed = ehEquipe(), f = socF(p), cl = cliente(p.clienteId);
@@ -6682,11 +6684,11 @@ function pgSocialPost(p, id){ const post = socPostDe(p, id), cl = cliente(p.clie
           ['resp','user','Responsável', `<div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="socCampo" ${D} data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>`, !d.resp],
           ['campanha','megaphone','Campanha', campV, !at],
           ['editoria','tag','Editoria', socEdLinha(p, post, ed), !(post.edts||[]).length, 'ed-lin'],
-          ['collab','users','Collab', (()=>{ const tx = {prp:'Collab PrP + PTxT', inf:'Collab influencer'}, cor = {prp:'verde', inf:'lar'}, tem = [pcId ? 'prp' : '', post.collabInf ? 'inf' : ''].filter(Boolean);
-            const resto = [outro ? 'prp' : '', 'inf'].filter(k=>k && !tem.includes(k));
+          ['collab','users','Collab', (()=>{ const tx = SOC_COLLAB_TX, cor = SOC_COLLAB_COR, tem = [pcId ? 'prp' : '', post.collabInf ? 'inf' : '', post.collabAr ? 'ar' : ''].filter(Boolean);
+            const resto = [outro ? 'prp' : '', 'inf', 'ar'].filter(k=>k && !tem.includes(k));
             const pills = tem.map(k=>`<span class="pc4-st c-${cor[k]}" ${k==='prp' && outro ? `title="Aparece também no calendário de ${h(outro.nome)}"` : ''}><i></i>${tx[k]}${ed ? `<button type="button" class="soc-cb-x" onclick="socCollab('${p.id}','${post.id}','${k}',false)" title="Tirar">×</button>` : ''}</span>`).join('');
             const add = ed && resto.length ? pillSel('cinza', `data-chg="socCampo" ${D} data-k="collabAdd"`, `<option value="">${tem.length ? '+ Adicionar' : 'Vazio'}</option>${resto.map(k=>`<option value="${k}">${tx[k]}</option>`).join('')}`, tem.length ? 'soc-cb-add' : '') : '';
-            return `<div class="soc-cbs">${pills}${add}${!ed && !tem.length ? '<span class="muted">—</span>' : ''}</div>`; })(), !pcId && !post.collabInf],
+            return `<div class="soc-cbs">${pills}${add}${!ed && !tem.length ? '<span class="muted">—</span>' : ''}</div>`; })(), !pcId && !post.collabInf && !post.collabAr],
           ['asset','link-2', post.formato==='Carrossel' ? 'Cards do carrossel' : 'Asset design', `<div class="soc-links">${linksIn}</div>`, !socLinks(post).length && !post.pasta, 'soc-lk-row'],
           ['okConteudo','check-square', post.origem ? 'Tradução aprovada' : 'Conteúdo aprovado', `<label class="np-chk"><input type="checkbox" data-chg="socCampo" ${D} data-k="okConteudo" ${ord>=SOC_I_CONT?'checked':''} ${dis}><em>${ord>=SOC_I_CONT ? 'Aprovado pelo cliente' : ''}</em></label>`, ord<SOC_I_CONT],
           ['okAsset','check-square','Asset aprovado', `<label class="np-chk"><input type="checkbox" data-chg="socCampo" ${D} data-k="okAsset" ${ord>=SOC_I_ASSET?'checked':''} ${ed && ord>=SOC_I_CONT ? '' : 'disabled'}><em>${ord>=SOC_I_ASSET ? 'Aprovado pelo cliente' : ord>=SOC_I_CONT ? '' : '<span class="muted">libera com o conteúdo aprovado</span>'}</em></label>`, ord<SOC_I_ASSET],
