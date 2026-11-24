@@ -671,6 +671,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 @media (max-width:1000px){.soc-grade{grid-template-columns:1fr}.soc-grade .np-disc{grid-row:auto}.soc-prev{position:static}}
 .soc-nav{display:flex;align-items:center;gap:8px;margin:0 auto}.soc-nav b{font-size:.86rem;font-weight:600;min-width:90px;text-align:center}.soc-nav small{display:block;font-weight:400;color:var(--tx3);font-size:.7rem}.soc-nav-b{gap:4px;text-decoration:none}.soc-nav-b svg{width:15px;height:15px;margin:0}.soc-nav-b.off{opacity:.35;pointer-events:none}.soc-np .np-doc{position:relative}.np-corpo.soc-corpo{min-height:0}.soc-legbar[hidden]{display:none!important}.soc-corpo [data-ph].vz::before{content:attr(data-ph);color:#b3b1ab;font-style:italic;pointer-events:none}.soc-corpo td[data-ph].vz::before{font-size:.86em}
 .soc-corpo h2{display:flex;align-items:center;gap:8px;position:relative}.soc-corpo>h2::before{content:'';position:absolute;left:-24px;bottom:5px;width:16px;height:16px;border-radius:4px;cursor:pointer;background:center/10px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 3l4 4 4-4' fill='none' stroke='%238f8d86' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");transition:transform .15s}.soc-corpo>h2::before:hover{background-color:#f1f3f4}.soc-corpo>h2.soc-fe::before{transform:rotate(-90deg)}.soc-corpo>h2.soc-fe{color:var(--tx2)}.soc-corpo h4{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b6a65;margin:1.2em 0 .4em}.soc-corpo h4:not(h2 + h4){margin-top:2.2em;padding-top:1.6em;border-top:1px solid #e9eaec}
+.soc-legbar-flut{position:absolute;margin:0;z-index:1}.soc-corpo.leg1>h2~h2{margin-top:70px}.soc-legbar .lb-esp{display:inline-flex;align-items:center;gap:5px;color:#2c5d8f;font-weight:600}.soc-legbar .lb-esp svg{width:13px;height:13px}.soc-corpo [contenteditable="false"]{color:var(--tx2);background:#f6f8fb;border-radius:4px;cursor:not-allowed}
 .soc-legbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px;padding:9px 12px;border:1px solid var(--borda);border-radius:9px;background:#fafafa;font-size:.76rem;color:var(--tx2)}.soc-legbar>span{white-space:nowrap;flex:none}.soc-legbar .lb-ok{color:#2f6b3f;font-weight:600}.soc-legbar .lb-av{color:#a16207;font-weight:600}.soc-lb-b{width:120px;height:5px;border-radius:3px;background:#e6e8ea;overflow:hidden}.soc-lb-b i{display:block;height:100%;background:#2e9d55}
 .soc-corte{position:absolute;border-top:1.5px dashed #e08e10;pointer-events:none;z-index:2}.soc-corte span{position:absolute;right:0;top:-9px;background:#fff;color:#b06d06;font-size:.66rem;font-weight:600;padding:0 5px}
 .ed-lin{display:grid;grid-template-columns:160px 1fr;align-items:center;gap:10px;font-size:.88rem;min-height:30px;position:relative}.np-props .ed-lin>span{display:flex;align-items:center;gap:7px;color:var(--tx3)}.ed-lb{cursor:pointer;border-radius:6px;padding:2px 4px;margin-left:-4px}.ed-lb:hover{background:#f1f3f4;color:var(--tx)!important}
@@ -3289,6 +3290,7 @@ function pgLpPagina(r){ const [cid, mis] = String(r[1]||'').split('~'), mi = +mi
   const pBase = peca ? pecaBase(c, peca) : null, sec = peca ? (peca.secao || peca.canal) : 'Landing page';
   if (peca && pecaBriefing(peca) && lpTextoPuro((peca.doc||{}).texto) && lpTextoPuro(peca.doc.texto)===lpTextoPuro(modeloPecaAntigo(peca))) peca.doc.texto = '';
   if (peca && !lpTextoPuro((peca.doc||{}).texto)) { const dd = peca.doc = peca.doc || {}; dd.texto = pBase && pBase.id!==peca.id && lpTextoPuro((pBase.doc||{}).texto) ? lpSemDisc(lpLimpa(pBase.doc.texto)) : modeloPeca(peca); }
+  const p1Leg = peca ? pecaLegEspelha(c, peca) : null; if (p1Leg && peca.doc) peca.doc.texto = legTrocar(peca.doc.texto, ((p1Leg.doc||{}).texto) || modeloPeca(p1Leg), true);
   const {f} = lpDados(c, mi), d = lpAlvo(c, et, idi, mi), marca = peca ? (peca.marca||'') : (lpMarcas(c)[mi] || ''); if (!d) return '<div class="vazio">Idioma não encontrado.</div>';
   const ed = ehEquipe(), trad = peca ? idiomaPeca(c, peca)!==(c.idiomaBase||'PT') : et==='trad', nomeIdi = IDIOMAS[peca ? idiomaPeca(c, peca) : trad ? idi : c.idiomaBase] || '', titulo = peca ? `${peca.nome} · ${nomeIdi}` : `Texto landing page · ${marca ? marca+' · ' : ''}${nomeIdi}`, st = d.status || '';
   migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,`#/clientes/${c.clienteId}`],[c.nome,`#/campanha/${c.id}/entregaveis`],[sec,`#/campanha/${c.id}/entregaveis`],...(marca ? [[marca,`#/campanha/${c.id}/entregaveis`]] : []),[peca ? peca.nome+(ehKV(peca) ? '' : ' · '+nomeIdi) : nomeIdi]]);
@@ -3309,13 +3311,13 @@ function pgLpPagina(r){ const [cid, mis] = String(r[1]||'').split('~'), mi = +mi
             ${lpComentPagina(d, ed)}
       ${trad && peca ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)}</summary><div class="lpe-doc">${lpSemDisc(lpLimpa(((pBase||{}).doc||{}).texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : trad ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)} (aprovado)</summary><div class="lpe-doc">${lpSemDisc(lpLimpa(f.conteudo.texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
       ${ed && !peca ? `<div class="mdl" id="np-modelos" ${lpTextoPuro(d.texto) ? 'hidden' : ''}><div class="mdl-t">Começar com um modelo de estrutura <span>o time só preenche cada seção</span></div><div class="mdl-g">${Object.entries(LP_MODELOS).map(([k,m])=>`<button type="button" class="mdl-c" data-act="lpModelo" data-v="${k}"><span class="mdl-ic"><i data-lucide="${m.ic}"></i></span><b>${h(m.nome)}</b><em>${h(m.obj)}</em><span class="mdl-e">${m.estr.map(x=>`<i>${h(x)}</i>`).join('')}</span></button>`).join('')}</div><div class="mdl-ou">ou comece a escrever abaixo</div></div>` : ''}
-      <div class="lpe-doc np-corpo ${brf?'soc-corpo':''} ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
-      ${brf && pecaFmtSoc(peca)!=='Stories' ? '<div class="soc-legbar" id="soc-legbar"></div>' : ''}
+      <div class="lpe-doc np-corpo ${brf?'soc-corpo leg1':''} ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
+      ${brf ? `<div class="soc-legbar soc-legbar-flut" id="soc-legbar" data-esp="${p1Leg ? 'Espelhada da '+h(p1Leg.nome) : ''}"></div>` : ''}
       ${hist.length ? `<div class="lpe-hist"><div class="lpe-rot">Histórico da aprovação</div>${hist.map(x=>`<div><b>${h(x.o)}</b><span>${new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ${h(x.quem||'')}</span>${x.coment?`<em>“${h(x.coment)}”</em>`:''}</div>`).join('')}</div>` : ''}
     </article><aside class="np-disc" id="np-disc">${abertas.map(x=>discCard(x, ed)).join('')}</aside></div></div>`; }
 /* salva sozinho enquanto escreve (e atualiza a versão pública, se houver) */
 function lpAutoSalvar(ed){ let t; ed.addEventListener('input', () => { const el = document.getElementById('np-salvo'); if (el) el.textContent = 'Salvando…'; clearTimeout(t);
-  t = setTimeout(() => { if (!ed.isConnected) return; const {id, et, idi, mi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi, mi); d.texto = lpLimpa(ed.innerHTML); d.editadoEm = Date.now(); d.editadoPor = quemSou(); salvar(); lpAtualizarPublico(c, d, et, idi);
+  t = setTimeout(() => { if (!ed.isConnected) return; const {id, et, idi, mi} = UI.lpTxt || {}, c = camp(id); if (!c) return; const d = lpAlvo(c, et, idi, mi); d.texto = lpLimpa(ed.innerHTML); d.editadoEm = Date.now(); d.editadoPor = quemSou(); if (et==='peca') pecaLegPropagar(c, idi); salvar(); lpAtualizarPublico(c, d, et, idi);
     if (el) el.textContent = 'Salvo'; const u = document.getElementById('np-ult'); if (u) u.textContent = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' · '+quemSou(); }, 900); }); }
 /* =====================================================================
    COMENTÁRIOS E SUGESTÕES NO TEXTO (como no Notion)
@@ -3486,7 +3488,16 @@ function pecaSincronizar(c, pid){ const e = (c.entregaveis||[]).find(x=>x.id===p
 const pecaBriefing = e => !!e && (e.secao||e.canal)==='Meta Ads';
 const pecaFmtSoc = e => { const f = e.formato || ''; return /carrossel/i.test(f) ? 'Carrossel' : /1920/.test(f) ? (pecaVideo(e) || /^gif/i.test(f) ? 'Reels' : 'Stories') : pecaVideo(e) ? 'Reels' : 'Estático'; };
 /* Meta Ads: mesmo briefing do post de Social media (1 · Asset briefing e 2 · Legenda, como toggles) */
-function modeloPeca(e){ return pecaBriefing(e) ? socModelo(pecaFmtSoc(e)) : ''; }   // demais seções: página em branco, sem modelo por enquanto
+function modeloPeca(e){ return pecaBriefing(e) ? socModelo(pecaFmtSoc(e), true) : ''; }   // demais seções: página em branco, sem modelo por enquanto
+/* legenda espelhada: a Peça 1 (mesma seção, marca, fase e país) é a fonte; as demais copiam a legenda dela, travada, ou escrevem a própria */
+const pecaPrimeira = (c, e) => (c.entregaveis||[]).find(x=>(x.secao||x.canal)===(e.secao||e.canal) && (x.marca||'')===(e.marca||'') && (x.fase||'')===(e.fase||'') && ((x.paises||[])[0]||'')===((e.paises||[])[0]||''));
+const pecaLegEspelha = (c, e) => { const p1 = pecaBriefing(e) && pecaPrimeira(c, e); if (!p1 || p1.id===e.id) return null; if (e.legEsp===undefined) e.legEsp = !socLegenda((e.doc||{}).texto); return e.legEsp ? p1 : null; };
+function legTrocar(alvo, fonte, travar){ const a = document.createElement('div'), f = document.createElement('div'); a.innerHTML = alvo || ''; f.innerHTML = fonte || '';
+  const hA = [...a.children].find(k=>k.tagName==='H2' && /legenda/i.test(k.textContent)); if (!hA || ![...f.children].some(k=>k.tagName==='H2' && /legenda/i.test(k.textContent))) return alvo;
+  socLegBlocos(a).forEach(k=>k.remove()); const novos = socLegBlocos(f).map(k=>{ const n = k.cloneNode(true); if (travar) n.setAttribute('contenteditable','false'); else n.removeAttribute('contenteditable'); return n; });
+  hA.after(...(novos.length ? novos : [Object.assign(document.createElement('p'), {innerHTML:'<br>'})])); return a.innerHTML; }
+function pecaLegPropagar(c, fonteId){ const f = (c.entregaveis||[]).find(x=>x.id===fonteId); if (!f || !pecaBriefing(f)) return;
+  for (const e of c.entregaveis||[]) if (e.id!==f.id && e.doc) { const p1 = pecaLegEspelha(c, e); if (p1 && p1.id===f.id) e.doc.texto = legTrocar(e.doc.texto, (f.doc||{}).texto, true); } }
 /* modelo anterior (COPY / ASSET TEXT): página ainda intocada com ele é trocada pelo novo */
 function modeloPecaAntigo(e){ if ((e.secao||e.canal)!=='Meta Ads') return '';
   const video = pecaVideo(e), td = x => `<td>${x || '<br>'}</td>`;
@@ -6162,6 +6173,9 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
   if (k==='pecaAssetOk') { const ids = (el.dataset.ids||'').split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return; const es = c.entregaveis.filter(e=>ids.includes(e.id));
     es.forEach(e=>{ if (ORD_ET.indexOf(e.etapa) < 3) return; e.etapa = el.checked ? 'concluido' : 'aprov_asset'; if (el.checked) (e.aprovacoes = e.aprovacoes || []).push({tipo:'Asset', resultado:'Aprovado', coment:'', data:HOJE, quem:quemSou()}); });
     registrar(`Post “${es[0].nome}” de “${c.nome}”: asset ${el.checked ? 'aprovado' : 'voltou para aprovação'}`); salvar(); render(); toast(el.checked ? 'Asset aprovado.' : 'Aprovação do asset desmarcada.'); return; }
+  if (k==='pecaLegEsp') { const c = camp(el.dataset.id), e = c && (c.entregaveis||[]).find(x=>x.id===el.dataset.e); if (!e) return; if (document.getElementById('lpe-edit')) lpGuardarEdicao();
+      e.legEsp = v==='esp'; const d = e.doc = e.doc || {}, p1 = pecaPrimeira(c, e); if (e.legEsp && p1) d.texto = legTrocar(d.texto, (p1.doc||{}).texto, true); else d.texto = legTrocar(d.texto, d.texto, false);
+      registrar('Legenda de '+e.nome+(e.legEsp ? ' espelhada da '+(p1||{}).nome : ' própria')); salvar(); render(); return; }
   if (/^peca(Txt|Nome|Fmt|Resp|Arq|St)$/.test(k)) { const ids = (el.dataset.ids||'').split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return;
     const es = c.entregaveis.filter(e=>ids.includes(e.id)), v = (el.value||'').trim();
     if (k==='pecaTxt') { es.forEach(e=>{ e.textos = e.textos || {}; e.textos[el.dataset.k] = el.value; }); salvar(); return; }
@@ -6237,13 +6251,14 @@ const socMesTxt = m => `${MESES[+m.slice(5,7)-1]} de ${m.slice(0,4)}`;
 const socMesMais = (m, n) => { const d = new Date(+m.slice(0,4), +m.slice(5,7)-1+n, 1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
 function socDoc(p, pid){ const post = socPostDe(p, pid); if (!post) return null; const d = post.doc = post.doc || {}; if (d.resp == null && post.resp) d.resp = post.resp; return d; }
 /* estrutura do texto do post: legenda (vai para a prévia) + texto da arte ou roteiro */
-function socModelo(fmt){ const ph = t => `data-ph="${t}"`, tab = (cab, linhas) => `<table data-cabl="1" data-cabc="1"><tbody><tr>${cab.map(x=>`<td><b>${x}</b></td>`).join('')}</tr>${linhas.map(([a,b,c])=>`<tr><td>${a}</td><td ${ph(b)}><br></td><td ${ph(c)}><br></td></tr>`).join('')}</tbody></table>`;
+function socModelo(fmt, legPrimeiro){ const ph = t => `data-ph="${t}"`, tab = (cab, linhas) => `<table data-cabl="1" data-cabc="1"><tbody><tr>${cab.map(x=>`<td><b>${x}</b></td>`).join('')}</tr>${linhas.map(([a,b,c])=>`<tr><td>${a}</td><td ${ph(b)}><br></td><td ${ph(c)}><br></td></tr>`).join('')}</tbody></table>`;
   const C = ['CENA','TEXTO','IMAGENS E VÍDEOS'], vis = 'Imagem, vídeo ou referência';
   const T = fmt==='Reels' ? tab(C, [['1 · Gancho','O que aparece e é dito nos 3 primeiros segundos',vis],['2','Texto na tela ou locução',vis],['3','Texto na tela ou locução',vis],['Fechamento','CTA e assinatura','Logo, cena final']])
     : fmt==='Stories' ? tab(C, [['1','Texto do frame','Imagem ou vídeo · interação (enquete, caixinha, link)'],['2','Texto do frame',vis],['3','Texto do frame',vis]])
     : fmt==='Carrossel' ? tab(C, [['1 · Capa','Título que faz deslizar',vis],['2','Texto do card',vis],['3','Texto do card',vis],['Último · Fim','CTA e assinatura','Fundo, logo']])
     : tab(C, [['1','Título e texto de apoio da arte',vis],['CTA','Ex.: Saiba mais','—']]);
-  return `<h2>1 · Asset briefing</h2><h4>Referências + ideia criativa</h4><p ${ph('Descreva a ideia criativa e cole os links das referências')}><br></p><h4>Conteúdo</h4>${T}<h2>2 · Legenda</h2><p ${ph('Primeira linha: o gancho que faz parar o scroll')}><br></p><p ${ph('Desenvolvimento e CTA')}><br></p><p ${ph('#hashtags (até 5)')}><br></p>`; }
+  const brf = n => `<h2>${n} · Asset briefing</h2><h4>Referências + ideia criativa</h4><p ${ph('Descreva a ideia criativa e cole os links das referências')}><br></p><h4>Conteúdo</h4>${T}`, leg = n => `<h2>${n} · Legenda</h2><p ${ph('Primeira linha: o gancho que faz parar o scroll')}><br></p><p ${ph('Desenvolvimento e CTA')}><br></p><p ${ph('#hashtags (até 5)')}><br></p>`;
+  return legPrimeiro ? leg(1) + brf(2) : brf(1) + leg(2); }
 /* blocos da legenda: o que vem depois do título "Legenda" (ou "2 · Legenda"), até o próximo título ou tabela */
 function socLegBlocos(root){ const ks = [...root.children], ini = ks.findIndex(k=>{ const t = k.textContent.trim(); return /^(\d+\s*[·.\-]\s*)?legenda\b/i.test(t) && t.length < 20; }), out = [];
   for (const k of ks.slice(ini+1)) { const t = k.textContent.trim(), cab = /^H[1-3]$/.test(k.tagName) || (k.dataset && k.dataset.cor && t.length < 30 && /^[A-ZÀ-Ú0-9·\s]+$/.test(t));
@@ -6256,7 +6271,7 @@ const socLegHtml = t => h(t||'').replace(/(^|[\s(])([#@][\wÀ-ÿ._]+)/g, '$1<spa
 /* seções do briefing como toggle: a seta à esquerda do título recolhe o que vem até o próximo título (só na tela; não muda o texto salvo) */
 function socToggles(ed, pid){ const F = (UI.socFecha = UI.socFecha || {})[pid] = (UI.socFecha[pid] || {}), hs = [...ed.children].filter(k=>k.tagName==='H2');
   const aplicar = () => hs.forEach((h2, i)=>{ const fe = !!F[i]; h2.classList.toggle('soc-fe', fe); let k = h2.nextElementSibling; while (k && k.tagName!=='H2') { k.hidden = fe; k = k.nextElementSibling; } });
-  aplicar(); const bar = document.getElementById('soc-legbar'); if (bar) bar.hidden = !!F[hs.length-1] && /legenda/i.test((hs[hs.length-1]||{}).textContent||'');
+  const iLeg = hs.findIndex(x=>/legenda/i.test(x.textContent||'')); aplicar(); const bar = document.getElementById('soc-legbar'); if (bar) bar.hidden = iLeg>=0 && !!F[iLeg];
   ed.addEventListener('mousedown', ev => { const h2 = ev.target.closest && ev.target.closest('h2'); if (!h2 || h2.parentNode!==ed || ev.offsetX > 0) return; ev.preventDefault(); const i = hs.indexOf(h2); if (i<0) return; F[i] = !F[i]; aplicar();
     const b = document.getElementById('soc-legbar'); if (b && /legenda/i.test(h2.textContent)) b.hidden = !!F[i]; socLegAjuda(ed); }); }
 /* textos-guia: aparecem em cinza no bloco vazio e somem de vez quando ele ganha texto */
@@ -6268,6 +6283,9 @@ function socLegAjuda(ed){ const bar = document.getElementById('soc-legbar'); if 
     + (gancho <= SOC_CORTE ? '<span class="lb-ok">✓ gancho cabe antes do “mais”</span>' : `<span class="lb-av">⚠ a primeira linha passa do “mais” (${gancho} caracteres)</span>`)
     + (tags > 5 ? `<span class="lb-av">⚠ ${tags} hashtags: o ideal é até 5</span>` : tags ? `<span class="lb-ok">✓ ${tags} hashtag${tags===1?'':'s'}</span>` : '<span class="muted">sem hashtags</span>');
   const doc = ed.closest('.np-doc'); let ln = doc && doc.querySelector('.soc-corte'); if (!doc) return;
+  if (bar.classList.contains('soc-legbar-flut')) { const bl = socLegBlocos(ed), ult = bl[bl.length-1] || [...ed.children].find(k=>k.tagName==='H2' && /legenda/i.test(k.textContent)), dr0 = doc.getBoundingClientRect(), er0 = ed.getBoundingClientRect();
+    if (ult) Object.assign(bar.style, {top:(ult.getBoundingClientRect().bottom - dr0.top + 6)+'px', left:(er0.left - dr0.left)+'px', width:er0.width+'px'}); }
+  const esp = ed.querySelector('[contenteditable="false"]'); if (esp && bar.firstChild) bar.insertAdjacentHTML('afterbegin', `<span class="lb-esp"><i data-lucide="copy"></i>${h(bar.dataset.esp||'Espelhada')}</span>`), window.lucide && lucide.createIcons();
   let resto = SOC_CORTE, alvo = null; for (const [i, b] of socLegBlocos(ed).entries()) { if (i) resto--; const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT); let t;
     while ((t = w.nextNode())) { if (t.length >= resto && resto > 0) { alvo = [t, resto]; break; } resto -= t.length; } if (alvo || resto <= 0) break; }
   if (!alvo || alvo[0].parentElement.closest('[hidden]')) { if (ln) ln.remove(); return; }
@@ -6523,6 +6541,7 @@ function pecaPropsHtml(c, peca, d, ed, mi, et, idi, st){ const kv = ehKV(peca), 
     ['formato','ratio','Formato', ed ? selFormato(peca.formato||'', `class="np-sel np-limpo" data-chg="pecaFmt" data-ids="${gG}"`) : `<b>${h(peca.formato||'—')}</b>`, !peca.formato],
     ['resp','user','Responsável', `<div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="lpCampo" ${A} data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>`, !d.resp],
     ['asset','link-2', kv ? 'Arquivo do KV' : 'Asset design', `<div class="np-asset">${lkCampo(peca.link||'', `data-chg="pecaArq" data-ids="${peca.id}"`, kv ? 'Cole o link do arquivo (Drive, Canva, Figma…)' : 'Cole o link do vídeo ou PNG', ed)}</div>`, !peca.link],
+    ...((p1 => p1 && p1.id!==peca.id ? [['legenda','copy','Legenda', ed ? `<select class="np-sel" data-chg="pecaLegEsp" data-id="${c.id}" data-e="${peca.id}">${opts([['esp','Espelhar da '+p1.nome],['nova','Escrever nova legenda']], pecaLegEspelha(c, peca) ? 'esp' : 'nova')}</select>` : `<b>${pecaLegEspelha(c, peca) ? 'Espelhada da '+h(p1.nome) : 'Própria'}</b>`, false]] : [])(pecaBriefing(peca) && pecaPrimeira(c, peca))),
     ['prazo','calendar','Prazo', ed ? `<input type="date" class="np-sel" value="${h(peca.prazo||'')}" data-chg="kvCampo" data-id="${c.id}" data-e="${peca.id}" data-k="prazo">` : `<b>${peca.prazo ? fd(peca.prazo) : '—'}</b>`, !peca.prazo],
     ['okConteudo','check-square','Conteúdo aprovado', `<label class="np-chk"><input type="checkbox" data-chg="lpAprovado" ${A} ${st==='Aprovado'?'checked':''} ${ed?'':'disabled'}><em>${st==='Aprovado' ? 'Aprovado pelo cliente' : ''}</em></label>`, st!=='Aprovado'],
     ['okAsset','check-square','Asset aprovado', `<label class="np-chk"><input type="checkbox" data-chg="pecaAssetOk" data-ids="${gI}" ${ok?'checked':''} ${ed && lib?'':'disabled'}><em>${ok ? 'Aprovado pelo cliente' : lib ? '' : '<span class="muted">libera com o conteúdo aprovado</span>'}</em></label>`, !ok],
