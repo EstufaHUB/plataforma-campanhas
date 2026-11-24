@@ -636,7 +636,7 @@ body.at-arrastando .at-ev{pointer-events:none}
 
 /* ---------- social media: calendário, post com prévia no Instagram, prévia do feed ---------- */
 .pc4-st.c-roxo{background:#efe9fb;color:#5b3fa8}.pc4-st.c-rosa{background:#fce4ef;color:#a3245f}.pc4-st.c-lar{background:#fdebd9;color:#9a4d0c}
-.soc-cbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.soc-cb-cel{cursor:pointer;border-radius:6px;padding:3px 6px;margin:-3px -6px;min-height:26px}.soc-cb-cel:hover{background:#f1f2f4}
+.soc-cbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.soc-cb-cel{cursor:pointer;border-radius:6px;padding:3px 22px 3px 6px;margin:-3px -6px;min-height:26px;position:relative;width:fit-content}.soc-cb-cel::after{content:'';position:absolute;right:8px;top:50%;width:5px;height:5px;border-right:1.5px solid var(--tx3);border-bottom:1.5px solid var(--tx3);transform:translateY(-70%) rotate(45deg)}.soc-cb-cel:hover{background:#f1f2f4}
 .soc-cbp{position:fixed;z-index:9000;width:310px;background:#fff;border:1px solid var(--borda);border-radius:10px;box-shadow:0 10px 30px rgba(15,15,15,.16),0 1px 3px rgba(15,15,15,.08);overflow:hidden}
 .soc-cbp-in{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:8px 10px;background:#f7f7f5;border-bottom:1px solid var(--borda)}.soc-cbp-sel{display:contents}.soc-cbp-in input{flex:1;min-width:110px;border:0;background:none;font:inherit;font-size:.88rem;outline:none;padding:3px 0}
 .soc-cbp-t{font-size:.74rem;color:var(--tx3);font-weight:500;padding:9px 12px 4px}.soc-cbp-l{max-height:250px;overflow:auto;padding:0 5px 6px}
@@ -6614,10 +6614,9 @@ function socCollab(pid, id, k, on){ const p = socProj(pid), post = p && socPostD
   const o = socCbOpcoes(p).find(x=>x.id===k); registrar(`Social media “${p.nome}”: post “${post.nome}” ${on ? 'com' : 'sem'} ${o ? o.nome : k}`); salvar();
   if (document.querySelector('.soc-cbp')) { UI.socCbMudou = true; socCbPintar(); } else render(); }
 /* janela de escolha do Collab (busca, várias opções, criar opção nova) */
-function socCbAbrir(el, pid, id){ socCbFechar(); const pop = document.createElement('div'); pop.className = 'soc-cbp'; pop.dataset.p = pid; pop.dataset.id = id;
-  const r = el.getBoundingClientRect(); pop.style.left = Math.max(8, Math.min(r.left - 8, innerWidth - 320)) + 'px'; pop.style.top = Math.max(8, Math.min(r.top - 8, innerHeight - 340)) + 'px';
-  pop.innerHTML = `<div class="soc-cbp-in"><span class="soc-cbp-sel"></span><input placeholder="Buscar ou criar uma opção…" oninput="socCbPintar()" onkeydown="socCbTecla(event)"></div><div class="soc-cbp-t">Selecione uma opção ou crie uma</div><div class="soc-cbp-l"></div>`;
-  document.body.appendChild(pop); UI.socCbMudou = false; socCbPintar(); pop.querySelector('input').focus();
+function socCbAbrir(el, pid, id){ socCbFechar(); const pop = document.createElement('div'); pop.className = 'soc-cbp soc-pop1'; pop.dataset.p = pid; pop.dataset.id = id;
+  pop.innerHTML = `<div class="soc-cbp-l"></div>`; document.body.appendChild(pop); UI.socCbMudou = false; socCbPintar();
+  const r = el.getBoundingClientRect(), alt = pop.offsetHeight; pop.style.left = Math.max(8, Math.min(r.left - 6, innerWidth - 320)) + 'px'; pop.style.top = (r.bottom + 4 + alt > innerHeight - 8 ? Math.max(8, r.top - 4 - alt) : r.bottom + 4) + 'px';
   setTimeout(()=>document.addEventListener('mousedown', socCbFora), 0); }
 /* lista suspensa colorida para Status e Formato do post (o select nativo não deixa colorir as opções) */
 document.addEventListener('mousedown', e => { const sel = e.target.closest && e.target.closest('select[data-pop]'); if (!sel || sel.disabled) return; e.preventDefault(); popCorAbrir(sel); }, true);
@@ -6635,14 +6634,10 @@ document.addEventListener('keydown', e => { if (e.key==='Escape' && document.que
 function socCbTecla(e){ if (e.key==='Escape') { e.preventDefault(); return socCbFechar(); }
   const it = [...document.querySelectorAll('.soc-cbp-o')]; if (e.key==='Enter' && it.length) { e.preventDefault(); (it.find(x=>x.classList.contains('ativo')) || it[0]).click(); }
   if (e.key==='Backspace' && !e.target.value) { const pop = e.target.closest('.soc-cbp'), p = socProj(pop.dataset.p), post = p && socPostDe(p, pop.dataset.id), L = post ? socCbIds(p, post) : []; if (L.length) socCollab(p.id, post.id, L[L.length-1], false); } }
-function socCbPintar(){ const pop = document.querySelector('.soc-cbp'); if (!pop) return; const p = socProj(pop.dataset.p), post = p && socPostDe(p, pop.dataset.id); if (!post) return socCbFechar();
-  const tem = socCbIds(p, post), q = pop.querySelector('input').value.trim(), qn = socNorm(q), podePrp = (p.collab||[]).includes(post.perfil);
-  pop.querySelector('.soc-cbp-sel').innerHTML = socCbDe(p, post).map(o=>`<span class="pc4-st c-${o.cor}">${h(o.nome)}<button type="button" class="soc-cb-x" onmousedown="event.preventDefault()" onclick="socCollab('${p.id}','${post.id}','${o.id}',false)" title="Tirar">×</button></span>`).join('');
-  const ops = socCbOpcoes(p).filter(o=>(o.id!=='prp' || podePrp || tem.includes('prp')) && (!qn || socNorm(o.nome).includes(qn)));
-  const existe = socCbOpcoes(p).some(o=>socNorm(o.nome)===qn), cor = SOC_CB_CORES[(p.collabOpc||[]).length % SOC_CB_CORES.length];
-  pop.querySelector('.soc-cbp-l').innerHTML = ops.map(o=>{ const on = tem.includes(o.id); return `<div class="soc-cbp-o ${on?'on':''}" onmousedown="event.preventDefault()" onclick="socCollab('${p.id}','${post.id}','${o.id}',${!on})"><span class="pc4-st c-${o.cor}">${h(o.nome)}</span>${o.id==='prp' && !podePrp ? '<small class="muted">perfil sem collab</small>' : ''}${on ? '<i data-lucide="check"></i>' : ''}</div>`; }).join('')
-    + (q && !existe ? `<div class="soc-cbp-o novo ${ops.length?'':'ativo'}" onmousedown="event.preventDefault()" onclick="socCbCriar()">Criar <span class="pc4-st c-${cor}">${h(q)}</span></div>` : '')
-    + (!ops.length && !q ? '<div class="soc-cbp-vz">Nenhuma opção.</div>' : '');
+function socCbPintar(){ const pop = document.querySelector('.soc-cbp[data-id]'); if (!pop) return; const p = socProj(pop.dataset.p), post = p && socPostDe(p, pop.dataset.id); if (!post) return socCbFechar();
+  const tem = socCbIds(p, post), podePrp = (p.collab||[]).includes(post.perfil), ops = socCbOpcoes(p).filter(o=>o.id!=='prp' || podePrp || tem.includes('prp'));
+  pop.querySelector('.soc-cbp-l').innerHTML = ops.map(o=>{ const on = tem.includes(o.id); return `<div class="soc-cbp-o ${on?'on':''}" onclick="socCollab('${p.id}','${post.id}','${o.id}',${!on})"><span class="pc4-st c-${o.cor}"><i></i>${h(o.nome)}</span>${on ? '<i data-lucide="check"></i>' : ''}</div>`; }).join('');
+  const cel = document.querySelector('.soc-cb-cel'); if (cel) cel.innerHTML = socCbDe(p, post).map(o=>`<span class="pc4-st c-${o.cor}"><i></i>${h(o.nome)}</span>`).join('') || '<span class="muted">Vazio</span>';
   if (window.lucide) lucide.createIcons(); }
 function socCbCriar(){ const pop = document.querySelector('.soc-cbp'); if (!pop) return; const p = socProj(pop.dataset.p), nome = pop.querySelector('input').value.trim(); if (!p || !nome) return;
   const o = {id:novoId('cb'), nome, cor:SOC_CB_CORES[(p.collabOpc||[]).length % SOC_CB_CORES.length]}; (p.collabOpc = p.collabOpc || []).push(o); pop.querySelector('input').value = '';
