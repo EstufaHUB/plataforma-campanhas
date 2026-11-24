@@ -852,7 +852,9 @@ function idiomaBaseDe(paises, atual){
   return atual || (paises[0] ? S.baseRegiao[PAISES[paises[0].cod].r] : '') || 'EN'; }
 const MARCA_SEP = 'PTx Trimble + Precision Planting (separadas)', MARCAS_SEP = ['PTx Trimble','Precision Planting'];
 /* marcas da campanha (várias); PTx Trimble + Precision Planting juntas = peças separadas por marca */
-const marcasDe = c => Array.isArray(c.marcas) ? c.marcas : c.marca===MARCA_SEP ? [...MARCAS_SEP] : c.marca ? [c.marca] : [];
+/* marca e campanha em fases são do padrão PTx; os outros clientes não têm */
+const cliPTx = id => !id || /^ptx$/i.test(((S.clientes||[]).find(c=>c.id===id)||{nome:'PTx'}).nome.trim().split(/\s+/)[0]);
+const marcasDe = c => !cliPTx(c.clienteId) ? [] : Array.isArray(c.marcas) ? c.marcas : c.marca===MARCA_SEP ? [...MARCAS_SEP] : c.marca ? [c.marca] : [];
 const marcaCancelada = (c, mk) => !!((c.marcasCanceladas||{})[mk]);
 /* país cancelado para uma marca (vale para todos os canais e fases da marca); '*' = todas as marcas */
 const paisCancInfo = (c, mk, cod) => { const pc = c.paisesCancelados || {}; return (pc[mk||'*']||{})[cod] || (pc['*']||{})[cod] || null; };
@@ -5227,16 +5229,18 @@ const cfgLog = () => `<div class="card"><ul class="lista-simples">${S.log.map(l=
 let rascunho = null; // nova campanha em edição
 function formCampanha(c){
   const novo = !c.id;
-  const d = c;
+  let d = c;
   const regs = d.regioes || [];
   const paisesDisp = Object.entries(PAISES).filter(([,p])=>regs.includes(p.r));
+  const ptx = !!d.clienteId && cliPTx(d.clienteId);
+  if (!ptx && faseada(d)) d = Object.assign({}, d, {faseada:false, canais:[...new Set([...(d.canais||[]), ...FASES_CAMP.flatMap(f=>canaisDaFase(d,f))])]});   // fora da PTx, sem fases
   return `<form id="form-camp"><div class="form-g">
-    <label class="campo">Cliente *<select name="clienteId" required>${opts(S.clientes.filter(x=>!x.arquivado).map(x=>[x.id,x.nome]),d.clienteId,'Selecione')}</select></label>
+    <label class="campo">Cliente *<select name="clienteId" required data-chg="cliCamp">${opts(S.clientes.filter(x=>!x.arquivado).map(x=>[x.id,x.nome]),d.clienteId,'Selecione')}</select></label>
     <label class="campo">Nome da campanha *<input name="nome" required value="${h(d.nome||'')}"></label>
     <label class="campo">Link do planejamento estratégico<input type="url" name="urlPlanejamento" value="${h(d.urlPlanejamento||'')}" placeholder="https://docs.google.com/presentation/…"></label>
-    <label class="campo">Nome da apresentação<input name="nomePlanejamento" value="${h(d.nomePlanejamento||'')}" placeholder="Ex.: PTx Trimble EMEA | Planning and Concept"></label>
-    <div class="campo tudo">Marca *<div class="chips">${MARCAS.map(k=>`<label class="chip ${marcasDe(d).includes(k)?'on':''}"><input type="checkbox" name="marca" data-chg="marcaCamp" value="${k}" ${marcasDe(d).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div><div class="small muted" style="margin-top:6px">Marque PTx Trimble e Precision Planting juntas quando as peças forem separadas por marca.</div></div>
-    <div class="campo tudo">Campanha em fases?<div class="chips">${[['nao','Não'],['sim','Sim · Awareness e depois Lead gen']].map(([v,l])=>`<label class="chip ${(v==='sim')===faseada(d)?'on':''}"><input type="radio" name="faseada" data-chg="faseCamp" value="${v}" ${(v==='sim')===faseada(d)?'checked':''} style="display:none">${l}</label>`).join('')}</div>${faseada(d)?'<div class="small muted" style="margin-top:6px">Cada fase tem seus próprios canais, países e budget.</div>':''}</div>
+    <label class="campo">Nome da apresentação<input name="nomePlanejamento" value="${h(d.nomePlanejamento||'')}" placeholder="Ex.: Planning and Concept"></label>
+    ${ptx ? `<div class="campo tudo">Marca *<div class="chips">${MARCAS.map(k=>`<label class="chip ${marcasDe(d).includes(k)?'on':''}"><input type="checkbox" name="marca" data-chg="marcaCamp" value="${k}" ${marcasDe(d).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div><div class="small muted" style="margin-top:6px">Marque PTx Trimble e Precision Planting juntas quando as peças forem separadas por marca.</div></div>
+    <div class="campo tudo">Campanha em fases?<div class="chips">${[['nao','Não'],['sim','Sim · Awareness e depois Lead gen']].map(([v,l])=>`<label class="chip ${(v==='sim')===faseada(d)?'on':''}"><input type="radio" name="faseada" data-chg="faseCamp" value="${v}" ${(v==='sim')===faseada(d)?'checked':''} style="display:none">${l}</label>`).join('')}</div>${faseada(d)?'<div class="small muted" style="margin-top:6px">Cada fase tem seus próprios canais, países e budget.</div>':''}</div>` : ''}
     ${faseada(d) ? '' : `<div class="campo tudo">Objetivo da campanha *<div class="chips">${OBJETIVOS.map(k=>`<label class="chip ${(d.objetivos||[]).includes(k)?'on':''}"><input type="checkbox" name="objetivo" value="${k}" ${(d.objetivos||[]).includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${k}</label>`).join('')}</div></div>`}
     <label class="campo">Data prevista de lançamento *<input type="date" name="lancamento" required value="${d.lancamento||''}" data-chg="lancForm"></label>
     <label class="campo">Fim da veiculação *<input type="date" name="fimVeiculacao" required value="${d.fimVeiculacao||''}"></label>
@@ -5254,7 +5258,7 @@ function formCampanha(c){
 }
 function lerFormCampanha(){
   const fm = $('#form-camp'), v = ler(fm);
-  const fs = fm.querySelector('input[name=faseada]:checked'), ehFases = fs ? fs.value==='sim' : faseada(rascunho);
+  const fs = fm.querySelector('input[name=faseada]:checked'), ehFases = cliPTx(v.clienteId) && (fs ? fs.value==='sim' : faseada(rascunho));
   const canaisFase = {}; for (const f of FASES_CAMP) canaisFase[f] = fm.querySelector(`input[name="canal@${f}"]`) ? [...fm.querySelectorAll(`input[name="canal@${f}"]:checked`)].map(x=>x.value) : canaisDaFase(rascunho, f);
   let canais = fm.querySelector('input[name=canal]') ? [...fm.querySelectorAll('input[name=canal]:checked')].map(x=>x.value) : (rascunho.canais||[]);
   if (ehFases && !FASES_CAMP.some(f=>canaisFase[f].length) && canais.length) canaisFase[FASES_CAMP[0]] = [...canais];   // ao ligar as fases, os canais vão para a 1ª fase
@@ -5285,7 +5289,7 @@ function validarCampanha(d){
   for (const ch of chavesCfg(d)) { const cf = (d.canaisCfg||{})[ch.key] || cfgVazio(), k = rotuloCfg(ch);
     if (!cf.paises.length) err.push(`Selecione os países de ${k}.`);
     if (cf.divisao==='pct' && cf.paises.length) { const sp = cf.paises.reduce((s,p)=>s+(+p.pct||0),0); if (Math.abs(sp-100) > 0.01) err.push(`${k}: a divisão por país soma ${+sp.toFixed(2)}%. Ajuste para 100%.`); } }
-  if (!(d.marcas||[]).length) err.push('Escolha a marca da campanha.');
+  if (cliPTx(d.clienteId) && !(d.marcas||[]).length) err.push('Escolha a marca da campanha.');
   if (!(d.objetivos||[]).length) err.push('Escolha o objetivo da campanha (geração de leads e/ou awareness).');
 
   const dts = [d.lancamento, ...d.paises.map(p=>p.lancamento)].filter(Boolean);
@@ -6199,7 +6203,7 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
     return render(); }
   if (k==='statusObs') { const c = camp(el.dataset.id); c.statusObs = Object.assign({}, c.statusObs, {[el.dataset.k]: el.value}); registrar(`Observação do status pontual de “${c.nome}”`); return salvar(); }
   if (k==='saudeTxt') { const c = camp(el.dataset.id); c.saude = Object.assign({}, c.saude, {[el.dataset.k]: el.value}); return salvar(); }
-  if (k==='canalCamp' || k==='marcaCamp' || k==='faseCamp') return reabrirFormCamp(lerFormCampanha());
+  if (k==='canalCamp' || k==='marcaCamp' || k==='faseCamp' || k==='cliCamp') return reabrirFormCamp(lerFormCampanha());
   if (k==='paisCanal') { const d = lerFormCampanha(), cf = d.canaisCfg[el.dataset.c], cod = el.value; if (!cf) return;
     cf.paises = el.checked ? [...cf.paises, {cod, pct:null}] : cf.paises.filter(p=>p.cod!==cod);
     return reabrirFormCamp(consolidarCanais(d)); }
