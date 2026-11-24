@@ -3311,8 +3311,8 @@ function pgLpPagina(r){ const [cid, mis] = String(r[1]||'').split('~'), mi = +mi
             ${lpComentPagina(d, ed)}
       ${trad && peca ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)}</summary><div class="lpe-doc">${lpSemDisc(lpLimpa(((pBase||{}).doc||{}).texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : trad ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)} (aprovado)</summary><div class="lpe-doc">${lpSemDisc(lpLimpa(f.conteudo.texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
       ${ed && !peca ? `<div class="mdl" id="np-modelos" ${lpTextoPuro(d.texto) ? 'hidden' : ''}><div class="mdl-t">Começar com um modelo de estrutura <span>o time só preenche cada seção</span></div><div class="mdl-g">${Object.entries(LP_MODELOS).map(([k,m])=>`<button type="button" class="mdl-c" data-act="lpModelo" data-v="${k}"><span class="mdl-ic"><i data-lucide="${m.ic}"></i></span><b>${h(m.nome)}</b><em>${h(m.obj)}</em><span class="mdl-e">${m.estr.map(x=>`<i>${h(x)}</i>`).join('')}</span></button>`).join('')}</div><div class="mdl-ou">ou comece a escrever abaixo</div></div>` : ''}
-      <div class="lpe-doc np-corpo ${brf?'soc-corpo leg1':''} ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
-      ${brf ? `<div class="soc-legbar soc-legbar-flut" id="soc-legbar" data-esp="${p1Leg ? 'Espelhada da '+h(p1Leg.nome) : ''}"></div>` : ''}
+      <div class="lpe-doc np-corpo ${brf?'soc-corpo':''} ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
+      ${pecaComLeg(peca) ? `<div class="soc-legbar soc-legbar-flut" id="soc-legbar" data-esp="${p1Leg ? 'Espelhada da '+h(p1Leg.nome) : ''}"></div>` : ''}
       ${hist.length ? `<div class="lpe-hist"><div class="lpe-rot">Histórico da aprovação</div>${hist.map(x=>`<div><b>${h(x.o)}</b><span>${new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ${h(x.quem||'')}</span>${x.coment?`<em>“${h(x.coment)}”</em>`:''}</div>`).join('')}</div>` : ''}
     </article><aside class="np-disc" id="np-disc">${abertas.map(x=>discCard(x, ed)).join('')}</aside></div></div>`; }
 /* salva sozinho enquanto escreve (e atualiza a versão pública, se houver) */
@@ -3485,19 +3485,29 @@ function pecaDoc(c, pid){ const e = (c.entregaveis||[]).find(x=>x.id===pid); if 
 function pecaSincronizar(c, pid){ const e = (c.entregaveis||[]).find(x=>x.id===pid); if (!e || !e.doc) return; const d = e.doc, alvo = ETAPA_DE_ST[d.status];
   for (const x of pecaIdiomaGrupo(c, e)) { if (alvo && !(d.status==='Aprovado' && ORD_ET.indexOf(x.etapa) >= 3)) x.etapa = alvo; x.resp = d.resp || ''; } }
 /* briefing do asset (como no Notion): COPY + tabela ASSET TEXT (cena a cena no vídeo; elementos da arte no estático) */
-const pecaBriefing = e => !!e && (e.secao||e.canal)==='Meta Ads';
+const pecaBriefing = e => !!e && !ehKV(e);   // página da peça com o Asset briefing em toggle
+const pecaComLeg = e => !!e && (e.secao||e.canal)==='Meta Ads';   // só o Meta Ads tem legenda (e o espelho da Peça 1)
 const pecaFmtSoc = e => { const f = e.formato || ''; return /carrossel/i.test(f) ? 'Carrossel' : /1920/.test(f) ? (pecaVideo(e) || /^gif/i.test(f) ? 'Reels' : 'Stories') : pecaVideo(e) ? 'Reels' : 'Estático'; };
 /* Meta Ads: mesmo briefing do post de Social media (1 · Asset briefing e 2 · Legenda, como toggles) */
-function modeloPeca(e){ return pecaBriefing(e) ? socModelo(pecaFmtSoc(e), true) : ''; }   // demais seções: página em branco, sem modelo por enquanto
+function modeloPeca(e){ if (!pecaBriefing(e)) return ''; if (pecaComLeg(e)) return socModelo(pecaFmtSoc(e), true);
+  const sec = e.secao || e.canal || '', ph = t => `data-ph="${t}"`, vid = /youtube|tiktok/i.test(sec) || pecaVideo(e), vis = vid ? 'Imagem, vídeo ou referência' : 'Imagem ou referência';
+  const L = vid ? [['1 · Gancho','O que aparece e é dito nos primeiros segundos'],['2','Texto na tela ou locução'],['3','Texto na tela ou locução'],['Fechamento','CTA e assinatura']]
+    : /google/i.test(sec) ? [['Título curto','Até 30 caracteres'],['Título longo','Até 90 caracteres'],['Descrição','Até 90 caracteres'],['CTA','Ex.: Saiba mais']]
+    : /email/i.test(sec) ? [['Assunto','Linha de assunto'],['Pré-header','Texto que aparece depois do assunto'],['Título','Título do email'],['Corpo','Texto principal'],['CTA','Texto do botão']]
+    : /material rico/i.test(sec) ? [['Capa','Título e subtítulo do material'],['Introdução','Abertura do material'],['Seções','Tópicos e textos de cada parte'],['CTA final','Próximo passo para o leitor']]
+    : [['Título','Texto principal'],['Texto de apoio','Complemento do título'],['CTA','Ex.: Saiba mais']];
+  const C = vid ? ['CENA','TEXTO','IMAGENS E VÍDEOS'] : ['ELEMENTO','TEXTO','IMAGENS'];
+  const T = `<table data-cabl="1" data-cabc="1"><tbody><tr>${C.map(x=>`<td><b>${x}</b></td>`).join('')}</tr>${L.map(([a,b])=>`<tr><td>${a}</td><td ${ph(b)}><br></td><td ${ph(vis)}><br></td></tr>`).join('')}</tbody></table>`;
+  return `<h2>1 · Asset briefing</h2><h4>Referências + ideia criativa</h4><p ${ph('Descreva a ideia criativa e cole os links das referências')}><br></p><h4>Conteúdo</h4>${T}`; }
 /* legenda espelhada: a Peça 1 (mesma seção, marca, fase e país) é a fonte; as demais copiam a legenda dela, travada, ou escrevem a própria */
 const pecaPrimeira = (c, e) => (c.entregaveis||[]).find(x=>(x.secao||x.canal)===(e.secao||e.canal) && (x.marca||'')===(e.marca||'') && (x.fase||'')===(e.fase||'') && ((x.paises||[])[0]||'')===((e.paises||[])[0]||''));
-const pecaLegEspelha = (c, e) => { const p1 = pecaBriefing(e) && pecaPrimeira(c, e); if (!p1 || p1.id===e.id) return null; if (e.legEsp===undefined) e.legEsp = !socLegenda((e.doc||{}).texto); return e.legEsp ? p1 : null; };
+const pecaLegEspelha = (c, e) => { const p1 = pecaComLeg(e) && pecaPrimeira(c, e); if (!p1 || p1.id===e.id) return null; if (e.legEsp===undefined) e.legEsp = !socLegenda((e.doc||{}).texto); return e.legEsp ? p1 : null; };
 function legTrocar(alvo, fonte, travar){ const a = document.createElement('div'), f = document.createElement('div'); a.innerHTML = alvo || ''; f.innerHTML = fonte || '';
   const cabLeg = r => [...r.children].find(k=>{ const t = k.textContent.trim(); return /^(\d+\s*[·.\-]\s*)?(legenda|copy)\b/i.test(t) && t.length < 20; });   // fonte pode estar no modelo antigo (COPY)
   const hA = cabLeg(a); if (!hA || !cabLeg(f)) return alvo;
   socLegBlocos(a).forEach(k=>k.remove()); const novos = socLegBlocos(f).map(k=>{ const n = k.cloneNode(true); if (travar) n.setAttribute('contenteditable','false'); else n.removeAttribute('contenteditable'); return n; });
   hA.after(...(novos.length ? novos : [Object.assign(document.createElement('p'), {innerHTML:'<br>'})])); return a.innerHTML; }
-function pecaLegPropagar(c, fonteId){ const f = (c.entregaveis||[]).find(x=>x.id===fonteId); if (!f || !pecaBriefing(f)) return;
+function pecaLegPropagar(c, fonteId){ const f = (c.entregaveis||[]).find(x=>x.id===fonteId); if (!f || !pecaComLeg(f)) return;
   for (const e of c.entregaveis||[]) if (e.id!==f.id && e.doc) { const p1 = pecaLegEspelha(c, e); if (p1 && p1.id===f.id) e.doc.texto = legTrocar(e.doc.texto, (f.doc||{}).texto, true); } }
 function pecaLegModo(cid, eid, v){ const c = camp(cid), e = c && (c.entregaveis||[]).find(x=>x.id===eid); if (!e) return; if (document.getElementById('lpe-edit')) lpGuardarEdicao();
   e.legEsp = v==='esp'; const d = e.doc = e.doc || {}, p1 = pecaPrimeira(c, e); if (e.legEsp && p1) d.texto = legTrocar(d.texto, (p1.doc||{}).texto, true); else d.texto = legTrocar(d.texto, d.texto, false);
@@ -6547,7 +6557,7 @@ function pecaPropsHtml(c, peca, d, ed, mi, et, idi, st){ const kv = ehKV(peca), 
     ['formato','ratio','Formato', ed ? selFormato(peca.formato||'', `class="np-sel np-limpo" data-chg="pecaFmt" data-ids="${gG}"`) : `<b>${h(peca.formato||'—')}</b>`, !peca.formato],
     ['resp','user','Responsável', `<div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="lpCampo" ${A} data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>`, !d.resp],
     ['asset','link-2', kv ? 'Arquivo do KV' : 'Asset design', `<div class="np-asset">${lkCampo(peca.link||'', `data-chg="pecaArq" data-ids="${peca.id}"`, kv ? 'Cole o link do arquivo (Drive, Canva, Figma…)' : 'Cole o link do vídeo ou PNG', ed)}</div>`, !peca.link],
-    ...((p1 => p1 && p1.id!==peca.id ? [['legenda','copy','Legenda', ed ? `<select class="np-sel" data-chg="pecaLegEsp" data-id="${c.id}" data-e="${peca.id}">${opts([['esp','Espelhar da '+p1.nome],['nova','Escrever nova legenda']], pecaLegEspelha(c, peca) ? 'esp' : 'nova')}</select>` : `<b>${pecaLegEspelha(c, peca) ? 'Espelhada da '+h(p1.nome) : 'Própria'}</b>`, false]] : [])(pecaBriefing(peca) && pecaPrimeira(c, peca))),
+    ...((p1 => p1 && p1.id!==peca.id ? [['legenda','copy','Legenda', ed ? `<select class="np-sel" data-chg="pecaLegEsp" data-id="${c.id}" data-e="${peca.id}">${opts([['esp','Espelhar da '+p1.nome],['nova','Escrever nova legenda']], pecaLegEspelha(c, peca) ? 'esp' : 'nova')}</select>` : `<b>${pecaLegEspelha(c, peca) ? 'Espelhada da '+h(p1.nome) : 'Própria'}</b>`, false]] : [])(pecaComLeg(peca) && pecaPrimeira(c, peca))),
     ['prazo','calendar','Prazo', ed ? `<input type="date" class="np-sel" value="${h(peca.prazo||'')}" data-chg="kvCampo" data-id="${c.id}" data-e="${peca.id}" data-k="prazo">` : `<b>${peca.prazo ? fd(peca.prazo) : '—'}</b>`, !peca.prazo],
     ['okConteudo','check-square','Conteúdo aprovado', `<label class="np-chk"><input type="checkbox" data-chg="lpAprovado" ${A} ${st==='Aprovado'?'checked':''} ${ed?'':'disabled'}><em>${st==='Aprovado' ? 'Aprovado pelo cliente' : ''}</em></label>`, st!=='Aprovado'],
     ['okAsset','check-square','Asset aprovado', `<label class="np-chk"><input type="checkbox" data-chg="pecaAssetOk" data-ids="${gI}" ${ok?'checked':''} ${ed && lib?'':'disabled'}><em>${ok ? 'Aprovado pelo cliente' : lib ? '' : '<span class="muted">libera com o conteúdo aprovado</span>'}</em></label>`, !ok],
