@@ -760,6 +760,29 @@ body.at-arrastando .at-ev{pointer-events:none}
 .soc-max-bt{align-self:center;margin-bottom:-2px}.soc-feed-ph{flex-direction:column;align-items:center;gap:8px}.soc-feed-ph .soc-max-bt{align-self:center}.pub-soc-ph{display:flex;flex-direction:column;gap:8px}
 .soc-max{position:fixed;inset:0;z-index:9999;background:rgba(12,14,16,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;gap:48px;padding:20px}.soc-max-ph{flex:none}
 .soc-max-x{position:absolute;top:16px;right:18px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}.soc-max-x:hover{background:rgba(255,255,255,.26)}.soc-max-x svg{width:22px;height:22px}
+.soc-max-lado{display:flex;flex-direction:column;gap:14px;max-height:92vh;width:min(440px,40vw);min-width:300px}.soc-max-lado>.soc-max-leg{max-width:none;flex:0 1 auto;min-height:0}.dz-on .soc-max-lado>.soc-max-leg{max-height:38vh}
+.soc-max .ig-rl-pb{display:none}.soc-max iframe.dz-ifr{top:0!important;height:100%!important;width:100%!important;left:0!important;transform:none!important;z-index:4!important}
+.dz-ctl{position:absolute;left:0;right:0;bottom:0;height:16px;z-index:5;display:flex;align-items:flex-end}.dz-trk{position:relative;flex:1;height:16px;cursor:pointer;touch-action:none}.dz-trk::before{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.3)}
+.dz-prog{position:absolute;left:0;bottom:0;height:3px;background:#fff;width:0}.dz-kn{position:absolute;bottom:-4px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);opacity:0;transition:opacity .12s}
+.dz-trk:hover .dz-kn,.dz-ctl.arr .dz-kn{opacity:1}.dz-trk:hover::before,.dz-ctl.arr .dz-trk::before{height:5px}.dz-trk:hover .dz-prog,.dz-ctl.arr .dz-prog{height:5px}
+.dz-tip{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;font-size:11px;font-weight:600;padding:2px 6px;border-radius:5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dz-mks{position:absolute;inset:0;pointer-events:none}.dz-mk{position:absolute;bottom:7px;transform:translateX(-50%);min-width:15px;height:15px;border-radius:8px;background:#ef9f27;color:#111;font-size:9px;font-weight:800;font-style:normal;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35)}.dz-mk.on{background:#fff}
+.dz-vol{position:absolute;right:10px;bottom:24px;z-index:5;display:flex;align-items:center;gap:6px}.ig-rl .dz-vol{bottom:auto;top:92px}.dz-mute{width:32px;height:32px;border-radius:50%;border:0;background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}.dz-mute svg{width:17px;height:17px}.dz-mute:hover{background:rgba(0,0,0,.7)}
+.dz-volr{width:0;opacity:0;transition:width .15s,opacity .15s;accent-color:#fff;cursor:pointer;margin:0}.dz-vol:hover .dz-volr,.dz-volr:focus{width:80px;opacity:1}
+.dz-q{position:relative}.dz-cap{display:none;position:absolute;inset:0;z-index:8;cursor:crosshair;background:rgba(239,159,39,.08);outline:2px dashed rgba(239,159,39,.9);outline-offset:-2px}.dz-modo .dz-cap{display:block}
+.dz-pins{position:absolute;inset:0;z-index:7;pointer-events:none}.dz-pin{position:absolute;transform:translate(-50%,-100%);min-width:24px;height:24px;padding:0 5px;border-radius:12px 12px 12px 2px;background:#ef9f27;color:#111;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid #fff;transition:opacity .15s}
+.dz-pin.on{background:#111;color:#fff;transform:translate(-50%,-100%) scale(1.15)}.dz-pin.novo{background:#fff;color:#111}.dz-pin.fora{opacity:0;pointer-events:none}
+.dz-cm{background:#fff;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;min-height:0;flex:1 1 auto;color:#111}.dz-cm-cab{display:flex;align-items:center;gap:8px;margin-bottom:10px}.dz-cm-cab b{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3)}
+.dz-cont{font-size:.7rem;background:#111;color:#fff;border-radius:9px;padding:0 7px;font-weight:600}.dz-add{margin-left:auto}.dz-add.on{background:#ef9f27;border-color:#ef9f27;color:#111}
+.dz-aviso{font-size:.78rem;color:#8a6116;background:#fbf3db;border-radius:8px;padding:7px 10px;margin-bottom:8px}
+.dz-cm-l{overflow:auto;min-height:40px;flex:1 1 auto;display:flex;flex-direction:column;gap:4px;margin:0 -8px;padding:0 8px}.dz-vz{color:var(--tx3);font-size:.85rem;line-height:1.5;padding:6px 0}
+.dz-it{display:flex;gap:10px;padding:8px;border-radius:10px;cursor:pointer}.dz-it:hover{background:#f6f7f8}.dz-it.on{background:#fdf3e2}.dz-n{flex:none;width:22px;height:22px;border-radius:11px 11px 11px 2px;background:#ef9f27;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}.dz-it.on .dz-n{background:#111;color:#fff}
+.dz-it-c{min-width:0;flex:1}.dz-it-m{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.82rem}.dz-qd{color:var(--tx3);font-size:.75rem}.dz-it-x{font-size:.9rem;line-height:1.45;margin-top:2px;word-wrap:break-word}
+.dz-del{margin-left:auto;border:0;background:none;color:var(--tx3);cursor:pointer;padding:2px;display:flex}.dz-del svg{width:14px;height:14px}.dz-del:hover{color:var(--verm)}
+.dz-ch{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:600;background:#f1f2f4;color:#3d3c38;border-radius:6px;padding:1px 7px;font-variant-numeric:tabular-nums}.dz-ch svg{width:12px;height:12px}
+.dz-novo{border-top:1px solid var(--borda);padding-top:10px;margin-top:8px}.dz-anc{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;min-height:20px}.dz-ch-x{border:0;background:none;cursor:pointer;color:var(--tx3);display:flex;padding:0}.dz-ch-x svg{width:14px;height:14px}
+.dz-tin{width:52px;border:0;background:transparent;font:inherit;padding:0;outline:none}.dz-novo .npc-in{display:flex;align-items:flex-end;gap:6px;border:1px solid var(--borda);border-radius:10px;padding:6px 6px 6px 10px;position:relative}.dz-txt{flex:1;border:0;resize:none;font:inherit;font-size:.9rem;outline:none;min-height:40px;background:transparent}
+@media (max-width:900px){.soc-max{flex-direction:column;overflow:auto;justify-content:flex-start}.soc-max-lado{width:100%;max-height:none}}
 .soc-max-leg{max-width:460px;max-height:86vh;overflow:auto;background:#fff;border-radius:16px;padding:26px 28px;font-size:1.02rem;line-height:1.6;color:#111}.soc-max-lt{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);margin-bottom:10px}.soc-max-tx .ig-tag{color:#00376b}
 @media (max-width:900px){.soc-max{flex-direction:column;overflow:auto;justify-content:flex-start}}
 .iph-fd .iph-sb{position:absolute;top:0;left:0;right:0}
@@ -1759,6 +1782,7 @@ function notificacoes(){
         else if (x.quem===me && m.quem!==me && (i>0 || x.tipo==='s')) add('mencpc-r-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'message-circle', t:`${m.quem||'Alguém'} respondeu ${x.tipo==='s'?'sua sugestão':'seu comentário'} ${onde}`, d:`${c.nome} · ${m.o.slice(0,90)}`, link, q}); }); }
     for (const p of (S.social||[])) for (const post of (p.posts||[])) { const d = post.doc; if (!d) continue; const link = socRota(p, post), onde = `no post “${post.nome}”`;
       for (const m of (d.coment||[])) { const q = new Date(m.t).toISOString().slice(0,10); if (q >= desde && mencionaMe(m.o)) add('mencpc-'+post.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'at-sign', t:`${m.quem===me?'Você se mencionou':(m.quem||'Alguém')+' mencionou você'} ${onde}`, d:`${p.nome} · ${m.o.slice(0,90)}`, link, q}); }
+      for (const m of (d.comentDesign||[])) { const q = new Date(m.t).toISOString().slice(0,10); if (q >= desde && mencionaMe(m.o)) add('mencdz-'+m.id, {ts:m.t, tipo:'azul', ic:'at-sign', t:`${m.quem===me?'Você se mencionou':(m.quem||'Alguém')+' mencionou você'} no design do post “${post.nome}”`, d:`${p.nome} · ${dzAncora(m)}${dzAncora(m)?' · ':''}${m.o.slice(0,80)}`, link, q}); }
       for (const x of (d.disc||[])) (x.msgs||[]).forEach((m,i)=>{ const q = new Date(m.t).toISOString().slice(0,10); if (q < desde) return;
         if (mencionaMe(m.o)) add('mencpc-d-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'at-sign', t:`${m.quem===me?'Você se mencionou':(m.quem||'Alguém')+' mencionou você'} ${onde}`, d:`${p.nome} · ${m.o.slice(0,90)}`, link, q});
         else if (x.quem===me && m.quem!==me && (i>0 || x.tipo==='s')) add('mencpc-r-'+x.id+'-'+m.t, {ts:m.t, tipo:'azul', ic:'message-circle', t:`${m.quem||'Alguém'} respondeu ${x.tipo==='s'?'sua sugestão':'seu comentário'} ${onde}`, d:`${p.nome} · ${m.o.slice(0,90)}`, link, q}); }); }
@@ -6368,12 +6392,95 @@ function socMidiaHtml(url, modo, cls){ const m = socMidia(url, modo), c = cls ||
 function socMax(bt){ const ph = bt.closest('.soc-prev, .pub-soc-ph, .soc-feed-ph'); const iph = ph && ph.querySelector('.iph'); if (!iph) return; socMaxFechar();
   const cl = iph.cloneNode(true); cl.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id')); const leg = iph.querySelector('#ig-leg-txt, .ig-leg-tx > span, .ig-rl-leg > span');
   const box = document.createElement('div'); box.className = 'soc-max'; box.onclick = e => { if (e.target===box) socMaxFechar(); };
-  box.innerHTML = `<button type="button" class="soc-max-x" onclick="socMaxFechar()" title="Fechar (Esc)"><i data-lucide="x"></i></button><div class="soc-max-ph"></div>${leg && leg.textContent.trim() ? `<div class="soc-max-leg"><div class="soc-max-lt">Legenda</div><div class="soc-max-tx">${leg.innerHTML}</div></div>` : ''}`;
+  const alvo = ph.classList.contains('soc-prev') ? dzAlvo() : null, temLeg = !!(leg && leg.textContent.trim());
+  box.innerHTML = `<button type="button" class="soc-max-x" onclick="socMaxFechar()" title="Fechar (Esc)"><i data-lucide="x"></i></button><div class="soc-max-ph"></div>${temLeg || alvo ? `<div class="soc-max-lado">${temLeg ? `<div class="soc-max-leg"><div class="soc-max-lt">Legenda</div><div class="soc-max-tx">${leg.innerHTML}</div></div>` : ''}</div>` : ''}`;
   const ph2 = box.querySelector('.soc-max-ph'), setas = !!cl.querySelector('.ig-seta-f'), larg = setas ? 440 : 330; ph2.appendChild(cl); document.body.appendChild(box);
-  const z = Math.max(.8, Math.min((innerHeight - 60) / 690, (innerWidth * (leg ? .5 : .9)) / larg)); cl.style.zoom = z; if (setas) ph2.style.padding = `0 ${Math.round(55*z)}px`;
-  cl.querySelectorAll('.ig-leg, .ig-rl-leg').forEach(x=>x.classList.remove('ab')); if (window.lucide) lucide.createIcons(); document.addEventListener('keydown', socMaxEsc); }
-function socMaxFechar(){ document.querySelectorAll('.soc-max').forEach(x=>x.remove()); document.removeEventListener('keydown', socMaxEsc); }
-function socMaxEsc(e){ if (e.key==='Escape') socMaxFechar(); }
+  const z = Math.max(.8, Math.min((innerHeight - 60) / 690, (innerWidth * (temLeg || alvo ? .5 : .9)) / larg)); cl.style.zoom = z; if (setas) ph2.style.padding = `0 ${Math.round(55*z)}px`;
+  cl.querySelectorAll('.ig-leg, .ig-rl-leg').forEach(x=>x.classList.remove('ab')); dzMontar(box, cl, alvo); if (window.lucide) lucide.createIcons(); document.addEventListener('keydown', socMaxEsc); }
+function socMaxFechar(){ const mudou = DZ.mudou; document.querySelectorAll('.soc-max').forEach(x=>x.remove()); document.removeEventListener('keydown', socMaxEsc); Object.keys(DZ).forEach(k=>delete DZ[k]); if (mudou) render(); }
+function socMaxEsc(e){ if (e.key!=='Escape') return; if (DZ.modo || DZ.pend) { dzModo(false); DZ.pend = null; dzPainel(); dzPinsRender(); return; } socMaxFechar(); }
+/* ---------- tela cheia: player próprio (linha arrastável, volume) e comentários presos ao design ----------
+   comentário no design: {id, quem, t, o, seg (vídeo, em segundos), card (carrossel, 0..n), x, y (% do quadro, opcional)} em post.doc.comentDesign */
+const DZ = {};
+const fmtSeg = s => { s = Math.max(0, Math.floor(+s||0)); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+const lerSeg = t => { t = String(t||'').trim(); const m = t.match(/^(\d{1,3}):([0-5]?\d)$/); return m ? (+m[1])*60 + (+m[2]) : /^\d+(\.\d+)?$/.test(t) ? +t : null; };
+const dzAncora = m => [m.seg!=null ? fmtSeg(m.seg) : '', m.card!=null ? 'Card '+(m.card+1) : ''].filter(Boolean).join(' · ');
+function dzAlvo(){ const {id, et, idi} = UI.lpTxt || {}; if (et!=='spost' || !/\/post\//.test(location.hash)) return null; const p = camp(id), post = p && socPostDe(p, idi); return post ? {p, post, d: socDoc(p, idi)} : null; }
+const dzLista = () => [...((DZ.alvo && DZ.alvo.d.comentDesign) || [])].sort((a,b)=>(a.card??-1)-(b.card??-1) || (a.seg??-1)-(b.seg??-1) || a.t-b.t);
+function dzMontar(box, iph, alvo){ Object.keys(DZ).forEach(k=>delete DZ[k]); Object.assign(DZ, {box, iph, alvo, pend:null, sel:null, modo:false});
+  const vid = iph.querySelector('.ig-rl video, .ig-st video, .ig-m > video'), ifr = iph.querySelector('.ig-rl iframe.ig-full, .ig-st iframe.ig-full, .ig-m > iframe');
+  DZ.ehVideo = !!(vid || (ifr && /\/file\/d\//.test(ifr.src)));
+  if (vid) dzVideo(vid);
+  else if (ifr && DZ.ehVideo) {   // vídeo do Drive: tenta tocar o arquivo num player nosso; se o Drive não liberar, volta o player do Google com os controles dele
+    const id = (ifr.src.match(/\/file\/d\/([\w-]{10,})/)||[])[1], v = document.createElement('video'); let pronto = false;
+    v.className = ifr.className; v.setAttribute('playsinline', ''); v.loop = true; v.muted = true; v.autoplay = true; v.preload = 'auto';
+    const falha = () => { if (pronto) return; pronto = true; if (v.isConnected) v.replaceWith(ifr); ifr.classList.add('dz-ifr'); DZ.semCtl = true; dzPainel(); };
+    v.addEventListener('loadedmetadata', () => { if (pronto) return; pronto = true; dzVideo(v); dzPinsRender(); }, {once:true}); v.addEventListener('error', falha, {once:true});
+    v.src = `https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`; ifr.replaceWith(v); setTimeout(falha, 10000); }
+  if (alvo) { box.classList.add('dz-on'); dzCamadas(); dzPainel(); dzPinsRender(); }
+  const loop = () => { if (!box.isConnected) return; dzTick(); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+function dzVideo(v){ DZ.v = v; v.muted = true; v.onclick = () => v.paused ? v.play() : v.pause(); v.play().catch(()=>{});
+  const cont = v.parentNode, bar = document.createElement('div'); cont.classList.add('dz-vc'); bar.className = 'dz-ctl';
+  bar.innerHTML = `<div class="dz-trk" title="Arraste para avançar ou voltar"><div class="dz-prog"></div><div class="dz-mks"></div><div class="dz-kn"><span class="dz-tip">00:00</span></div></div>`;
+  const vol = document.createElement('div'); vol.className = 'dz-vol'; vol.innerHTML = `<input type="range" class="dz-volr" min="0" max="1" step="0.05" value="1" title="Volume"><button type="button" class="dz-mute" title="Ligar o som"><i data-lucide="volume-x"></i></button>`;
+  cont.appendChild(bar); cont.appendChild(vol);
+  const trk = bar.querySelector('.dz-trk'), pos = e => { const r = trk.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
+  const ir = e => { if (v.duration) v.currentTime = pos(e) * v.duration; dzTick(); };
+  trk.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); trk.setPointerCapture(e.pointerId); DZ.arr = {tocando: !v.paused}; v.pause(); bar.classList.add('arr'); ir(e); });
+  trk.addEventListener('pointermove', e => { if (DZ.arr) ir(e); else if (v.duration) { const t = bar.querySelector('.dz-tip'); t.textContent = fmtSeg(pos(e) * v.duration); } });
+  const solta = () => { if (!DZ.arr) return; if (DZ.arr.tocando) v.play().catch(()=>{}); DZ.arr = null; bar.classList.remove('arr'); };
+  trk.addEventListener('pointerup', solta); trk.addEventListener('pointercancel', solta);
+  const ic = () => { const b = vol.querySelector('.dz-mute'), mudo = v.muted || !v.volume; b.innerHTML = `<i data-lucide="${mudo ? 'volume-x' : v.volume < .5 ? 'volume-1' : 'volume-2'}"></i>`; b.title = mudo ? 'Ligar o som' : 'Tirar o som'; if (window.lucide) lucide.createIcons(); };
+  vol.querySelector('.dz-mute').onclick = e => { e.stopPropagation(); v.muted = !v.muted; if (!v.muted && !v.volume) v.volume = .6; vol.querySelector('.dz-volr').value = v.muted ? 0 : v.volume; ic(); };
+  vol.querySelector('.dz-volr').oninput = e => { const x = +e.target.value; v.volume = x; v.muted = !x; ic(); };
+  vol.onclick = e => e.stopPropagation(); v.addEventListener('loadedmetadata', dzMarcas); dzMarcas(); }
+function dzTick(){ const v = DZ.v, box = DZ.box; if (!box) return;
+  if (v && v.duration) { const f = v.currentTime / v.duration * 100; const pr = box.querySelector('.dz-prog'), kn = box.querySelector('.dz-kn');
+    if (pr) pr.style.width = f+'%'; if (kn) { kn.style.left = f+'%'; if (DZ.arr || !box.querySelector('.dz-trk:hover')) kn.querySelector('.dz-tip').textContent = fmtSeg(v.currentTime); }
+    const lv = box.querySelector('.dz-ch-vivo'); if (lv) lv.textContent = fmtSeg(v.currentTime);
+    if (Math.abs((DZ.tUlt||0) - v.currentTime) > .2) { DZ.tUlt = v.currentTime; dzPinsVis(); } }
+  const lc = box.querySelector('.dz-ch-card'), car = DZ.iph && DZ.iph.querySelector('.ig-car'); if (lc && car) lc.textContent = 'Card '+(dzCardAtual()+1); }
+const dzCardAtual = () => { const car = DZ.iph && DZ.iph.querySelector('.ig-car'); return car ? Math.round(car.scrollLeft / Math.max(1, car.clientWidth)) : null; };
+function dzMarcas(){ const v = DZ.v, mk = DZ.box && DZ.box.querySelector('.dz-mks'); if (!mk) return; const L = dzLista();
+  mk.innerHTML = v && v.duration ? L.map((m,i)=>m.seg!=null ? `<i class="dz-mk ${DZ.sel===m.id?'on':''}" style="left:${Math.min(100, m.seg / v.duration * 100)}%" title="${h(fmtSeg(m.seg))} · ${h(m.quem||'')}: ${h(m.o.slice(0,60))}" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation();dzIr('${m.id}')">${i+1}</i>` : '').join('') : ''; }
+/* camada para clicar (modo comentário) e camada dos pinos, em cada quadro (cada card no carrossel) */
+function dzCamadas(){ const sl = [...DZ.iph.querySelectorAll('.ig-sl')], quadros = sl.length ? sl : [DZ.iph.querySelector('.ig-rl, .ig-st, .ig-m')].filter(Boolean);
+  quadros.forEach((q, i) => { q.classList.add('dz-q'); q.dataset.card = sl.length ? i : '';
+    const cap = document.createElement('div'); cap.className = 'dz-cap'; cap.title = 'Clique no ponto que quer comentar';
+    cap.onclick = e => { e.stopPropagation(); const r = cap.getBoundingClientRect(); dzMarcar({x: +((e.clientX - r.left) / r.width * 100).toFixed(1), y: +((e.clientY - r.top) / r.height * 100).toFixed(1), card: sl.length ? i : null}); };
+    const pins = document.createElement('div'); pins.className = 'dz-pins'; q.appendChild(pins); q.appendChild(cap); }); }
+function dzModo(on){ DZ.modo = on; DZ.box && DZ.box.classList.toggle('dz-modo', on); const b = DZ.box && DZ.box.querySelector('.dz-add'); if (b) b.classList.toggle('on', on); }
+function dzMarcar(a){ const v = DZ.v; if (v) { v.pause(); a.seg = +v.currentTime.toFixed(1); } dzModo(false); DZ.pend = a; DZ.sel = null; dzPainel(); dzPinsRender(); const ta = DZ.box.querySelector('.dz-txt'); if (ta) ta.focus(); }
+function dzPinsRender(){ if (!DZ.box || !DZ.alvo) return; const L = dzLista();
+  DZ.iph.querySelectorAll('.dz-q').forEach(q=>{ const card = q.dataset.card==='' ? null : +q.dataset.card, pins = q.querySelector('.dz-pins'); if (!pins) return;
+    const meus = L.map((m,i)=>[m,i]).filter(([m])=>m.x!=null && (card==null || m.card===card));
+    pins.innerHTML = meus.map(([m,i])=>`<span class="dz-pin ${DZ.sel===m.id?'on':''}" data-id="${m.id}" data-seg="${m.seg??''}" style="left:${m.x}%;top:${m.y}%" title="${h(m.quem||'')}: ${h(m.o.slice(0,80))}" onclick="event.stopPropagation();dzIr('${m.id}')">${i+1}</span>`).join('')
+      + (DZ.pend && DZ.pend.x!=null && (card==null || DZ.pend.card===card) ? `<span class="dz-pin novo" style="left:${DZ.pend.x}%;top:${DZ.pend.y}%">+</span>` : ''); });
+  dzPinsVis(); dzMarcas(); }
+/* no vídeo, o pino aparece só perto do segundo comentado (ou quando o comentário está selecionado) */
+function dzPinsVis(){ const v = DZ.v; if (!DZ.iph) return; DZ.iph.querySelectorAll('.dz-pin[data-seg]').forEach(p=>{ const s = p.dataset.seg; p.classList.toggle('fora', !!(v && s!=='' && !p.classList.contains('on') && Math.abs(v.currentTime - +s) > 1.5)); }); }
+function dzIr(id){ const m = dzLista().find(x=>x.id===id); if (!m) return; DZ.sel = DZ.sel===id ? null : id; DZ.pend = null;
+  if (DZ.sel) { if (m.seg!=null && DZ.v) { DZ.v.pause(); DZ.v.currentTime = m.seg; } const car = DZ.iph.querySelector('.ig-car'); if (m.card!=null && car) car.scrollTo({left: m.card * car.clientWidth, behavior:'smooth'}); }
+  dzPainel(); dzPinsRender(); const it = DZ.box.querySelector(`.dz-it[data-id="${id}"]`); if (it) it.scrollIntoView({block:'nearest'}); }
+function dzPainel(){ const lado = DZ.box && DZ.box.querySelector('.soc-max-lado'); if (!lado || !DZ.alvo) return; let el = lado.querySelector('.dz-cm'); if (!el) { el = document.createElement('div'); el.className = 'dz-cm'; lado.appendChild(el); }
+  const L = dzLista(), ed = ehEquipe(), me = quemSou(), car = !!DZ.iph.querySelector('.ig-car'), p = DZ.pend;
+  const chips = p ? [p.seg!=null ? `<span class="dz-ch"><i data-lucide="clock"></i>${fmtSeg(p.seg)}</span>` : '', p.card!=null ? `<span class="dz-ch">Card ${p.card+1}</span>` : '', p.x!=null ? `<span class="dz-ch"><i data-lucide="map-pin"></i>ponto marcado</span>` : ''].join('') + `<button type="button" class="dz-ch-x" title="Tirar a marcação" onclick="DZ.pend=null;dzPainel();dzPinsRender()"><i data-lucide="x"></i></button>`
+    : (DZ.v ? `<span class="dz-ch"><i data-lucide="clock"></i><span class="dz-ch-vivo">${fmtSeg(DZ.v.currentTime)}</span></span>` : '') + (DZ.semCtl ? `<label class="dz-ch dz-tin-w"><i data-lucide="clock"></i><input class="dz-tin" placeholder="00:05" title="Segundo do vídeo (mm:ss)"></label>` : '') + (car ? `<span class="dz-ch dz-ch-card">Card ${(dzCardAtual()||0)+1}</span>` : '');
+  el.innerHTML = `<div class="dz-cm-cab"><b>Comentários no design</b>${L.length ? `<span class="dz-cont">${L.length}</span>` : ''}${ed ? `<button type="button" class="btn btn-s dz-add ${DZ.modo?'on':''}" onclick="dzModo(!DZ.modo)" title="Clique depois no ponto do design"><i data-lucide="map-pin-plus"></i>Marcar ponto</button>` : ''}</div>
+    ${DZ.semCtl ? `<div class="dz-aviso">Este vídeo do Drive só toca no player do Google. Informe o segundo do comentário no campo de tempo.</div>` : ''}
+    <div class="dz-cm-l">${L.map((m,i)=>`<div class="dz-it ${DZ.sel===m.id?'on':''}" data-id="${m.id}" onclick="dzIr('${m.id}')"><span class="dz-n">${i+1}</span><div class="dz-it-c"><div class="dz-it-m"><b>${h(m.quem||'—')}</b>${dzAncora(m) ? `<span class="dz-ch">${h(dzAncora(m))}</span>` : ''}<span class="dz-qd">${discQuando(m.t)}</span>${ed && m.quem===me ? `<button type="button" class="dz-del" title="Excluir comentário" onclick="event.stopPropagation();dzExcluir('${m.id}')"><i data-lucide="trash-2"></i></button>` : ''}</div><div class="dz-it-x">${comMencoes(m.o).replace(/\n/g,'<br>')}</div></div></div>`).join('') || `<div class="dz-vz">${DZ.ehVideo ? 'Pause no segundo que quer comentar e escreva abaixo. Use “Marcar ponto” para apontar um lugar na tela.' : car ? 'Vá até o card e escreva abaixo. Use “Marcar ponto” para apontar um lugar na arte.' : 'Escreva abaixo. Use “Marcar ponto” para apontar um lugar na arte.'}</div>`}</div>
+    ${ed ? `<div class="dz-novo"><div class="dz-anc">${chips}</div><div class="npc-in"><textarea class="dz-txt" rows="2" placeholder="Comentário${DZ.ehVideo ? ' neste segundo' : car ? ' neste card' : ''}… use @ para mencionar" onfocus="if(DZ.v&&!DZ.v.paused)DZ.v.pause()" oninput="sugMencao(this)" onkeydown="event.stopPropagation();if(event.key==='Escape'){this.blur();socMaxEsc(event)}else if(event.key==='Enter'&&!event.shiftKey&&!this.parentNode.querySelector('.menc-sug')){event.preventDefault();dzEnviar()}"></textarea><button type="button" class="dc-env" onclick="dzEnviar()" title="Enviar (Enter)"><i data-lucide="send"></i></button></div></div>` : ''}`;
+  if (window.lucide) lucide.createIcons(); }
+function dzEnviar(){ const a = DZ.alvo, ta = DZ.box && DZ.box.querySelector('.dz-txt'), txt = (ta && ta.value || '').trim(); if (!a || !txt) return;
+  const an = Object.assign({}, DZ.pend || {}); if (an.seg==null && DZ.v) an.seg = +DZ.v.currentTime.toFixed(1);
+  const tin = DZ.box.querySelector('.dz-tin'); if (an.seg==null && tin && tin.value.trim()) { const s = lerSeg(tin.value); if (s==null) return toast('Escreva o tempo como 00:05.'); an.seg = s; }
+  if (an.card==null && DZ.iph.querySelector('.ig-car')) an.card = dzCardAtual();
+  lpGuardarEdicao(); const m = Object.assign({id: novoId('dz'), quem: quemSou(), t: Date.now(), o: txt}, ...Object.entries(an).filter(([,v])=>v!=null).map(([k,v])=>({[k]:v})));
+  (a.d.comentDesign = a.d.comentDesign || []).push(m); const menc = RESPONSAVEIS.filter(n=>txt.includes('@'+n));
+  registrar(`Post “${a.post.nome}”: comentário no design${dzAncora(m) ? ' ('+dzAncora(m)+')' : ''}${menc.length ? ' (mencionou '+menc.join(', ')+')' : ''}`);
+  salvar(); DZ.mudou = true; DZ.pend = null; DZ.sel = m.id; dzPainel(); dzPinsRender(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); }
+function dzExcluir(id){ const a = DZ.alvo, L = (a && a.d.comentDesign) || [], i = L.findIndex(x=>x.id===id); if (i<0 || L[i].quem!==quemSou() || !confirm('Excluir este comentário?')) return;
+  lpGuardarEdicao(); L.splice(i, 1); salvar(); DZ.mudou = true; if (DZ.sel===id) DZ.sel = null; dzPainel(); dzPinsRender(); }
 const SOC_MAX_BT = `<button type="button" class="btn btn-s soc-max-bt" onclick="socMax(this)" title="Ver o celular em tela cheia"><i data-lucide="maximize-2"></i>Tela cheia</button>`;
 function socCarDots(el){ const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)), box = el.closest('.ig-corpo') || document; box.querySelectorAll('.ig-dots i').forEach((d,k)=>d.classList.toggle('on', k===i));
   const c = el.parentNode.querySelector('.ig-cnt'); if (c) c.textContent = (i+1)+'/'+el.children.length; }
@@ -6560,7 +6667,7 @@ function pgSocialPost(p, id){ const post = socPostDe(p, id), cl = cliente(p.clie
       <div class="lpe-doc np-corpo soc-corpo ${ed?'lpe-edit':''}" id="lpe-edit" ${ed?'contenteditable="true" data-disc="1"':''}>${lpDiscSoAbertas(lpLimpa(d.texto), d)}</div>
       ${post.formato==='Stories' ? '' : '<div class="soc-legbar" id="soc-legbar"></div>'}
     </article><aside class="np-disc" id="np-disc">${abertas.map(x=>discCard(x, ed)).join('')}</aside>
-    <div class="soc-prev">${SOC_MAX_BT}${socMockup(socDadosMock(p, post), true)}<div class="soc-prev-cap">Prévia no Instagram · ${post.formato==='Stories' ? 'stories não mostram legenda' : 'a legenda vem do bloco LEGENDA do texto'}${socLinks(post).some(u=>/drive\.google/.test(u)) ? '<br>Arquivos do Drive precisam estar compartilhados como “qualquer pessoa com o link”.' : ''}</div></div></div></div>`; }
+    <div class="soc-prev">${(n=>n ? SOC_MAX_BT.replace('Tela cheia</button>', `Tela cheia<span class="dz-cont">${n}</span></button>`).replace('title="Ver o celular em tela cheia"', `title="Ver em tela cheia e comentar o design (${n} comentário${n===1?'':'s'})"`) : SOC_MAX_BT.replace('title="Ver o celular em tela cheia"', 'title="Ver em tela cheia e comentar o design"'))(((post.doc||{}).comentDesign||[]).length)}${socMockup(socDadosMock(p, post), true)}<div class="soc-prev-cap">Prévia no Instagram · ${post.formato==='Stories' ? 'stories não mostram legenda' : 'a legenda vem do bloco LEGENDA do texto'}${socLinks(post).some(u=>/drive\.google/.test(u)) ? '<br>Arquivos do Drive precisam estar compartilhados como “qualquer pessoa com o link”.' : ''}</div></div></div></div>`; }
 /* visibilidade das propriedades do post (por projeto, como no Notion): sempre mostrar, ocultar quando vazia, sempre ocultar */
 const SOC_PROP_PADRAO = {projeto:'oculta', collab:'vazio', instagram:'vazio'};
 function propDono(dono){ const [t, id] = String(dono||'').split(':'), o = t==='soc' ? socProj(id) : camp(id), pre = t==='soc' ? 'prop' : t==='lp' ? 'lpProp' : t==='kv' ? 'kvProp' : 'pecaProp'; return o ? {o, vk: pre+'Vis', ok: pre+'Ordem', soc: t==='soc'} : null; }
