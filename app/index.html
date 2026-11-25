@@ -7026,9 +7026,23 @@ function socCbAbrir(el, pid, id){ socCbFechar(); const pop = document.createElem
   const r = el.getBoundingClientRect(), alt = pop.offsetHeight; pop.style.left = Math.max(8, Math.min(r.left - 6, innerWidth - 320)) + 'px'; pop.style.top = (r.bottom + 4 + alt > innerHeight - 8 ? Math.max(8, r.top - 4 - alt) : r.bottom + 4) + 'px';
   setTimeout(()=>document.addEventListener('mousedown', socCbFora), 0); }
 /* lista suspensa colorida para Status e Formato do post (o select nativo não deixa colorir as opções) */
-document.addEventListener('mousedown', e => { const sel = e.target.closest && e.target.closest('select[data-pop]'); if (!sel || sel.disabled) return; e.preventDefault(); popCorAbrir(sel); }, true);
-document.addEventListener('keydown', e => { const sel = e.target.closest && e.target.closest('select[data-pop]'); if (sel && !sel.disabled && (e.key===' ' || e.key==='Enter' || e.key==='ArrowDown')) { e.preventDefault(); popCorAbrir(sel); } }, true);
-function popCorAbrir(sel){ socCbFechar(); const corDe = {etapa: v=>SOC_COR[v], formato: v=>SOC_FMT_COR[v], cli: v=>v==='ativo'?'verde':'cinza', od: v=>OD_COR[v]}[sel.dataset.pop] || (()=>'cinza');
+/* lista colorida (como no Notion) em todo seletor de status do sistema */
+const SEL_COR = 'select[data-pop], .st-pill select, select[data-chg*="tatus"], select[data-chg*="tapa"], select[data-chg$="St"], select[name="status"], select.farol, select.inv-st';
+const COR_T = {'t-verde':'verde','t-pet':'verde','t-azul':'azul','t-roxo':'roxo','t-verm':'verm','t-amar':'amar'};
+function corTexto(t){ t = String(t||'').toLowerCase();
+  if (/cancel|bloque|atrasad|reprov|ajuste|estour/.test(t)) return 'verm';
+  if (/conclu|aprovad|publicad|no ar|^pag[oa]|pronto|ativo$|em veicula|finalizad/.test(t)) return 'verde';
+  if (/aprova|aguard|revis|pendente|valida|em espera|relatório/.test(t)) return 'amar';
+  if (/program|planej/.test(t)) return 'roxo';
+  if (/produ|andamento|tradu|design|reda|criaç|enviad|traduz/.test(t)) return 'azul';
+  return 'cinza'; }
+function corOpcao(sel, o){ const v = o.value, k = sel.dataset.pop;
+  const esp = {etapa: SOC_COR, formato: SOC_FMT_COR, od: OD_COR}[k]; if (esp && esp[v]) return esp[v]; if (k==='cli') return v==='ativo' ? 'verde' : 'cinza';
+  for (const M of [ST_ENT_COR, LP_ET_COR, COR_INV, OD_COR]) if (M[v]) return M[v];
+  return COR_T[corStatus(o.text)] || COR_T[corStatus(v)] || corTexto(o.text); }
+document.addEventListener('mousedown', e => { const sel = e.target.closest && e.target.closest(SEL_COR); if (!sel || sel.disabled || sel.multiple || e.button) return; e.preventDefault(); popCorAbrir(sel); }, true);
+document.addEventListener('keydown', e => { const sel = e.target.closest && e.target.closest(SEL_COR); if (sel && !sel.disabled && (e.key===' ' || e.key==='Enter' || e.key==='ArrowDown')) { e.preventDefault(); popCorAbrir(sel); } }, true);
+function popCorAbrir(sel){ socCbFechar(); const corOf = {}; for (const o of sel.options) corOf[o.value] = corOpcao(sel, o); const corDe = v => corOf[v];
   const pop = document.createElement('div'); pop.className = 'soc-cbp soc-pop1'; const r = sel.closest('.pc4-st, select').getBoundingClientRect();
   pop.innerHTML = `<div class="soc-cbp-l">${[...sel.options].map(o=>`<div class="soc-cbp-o ${o.value===sel.value?'on':''}" data-v="${h(o.value)}"><span class="pc4-st c-${corDe(o.value)||'cinza'}"><i></i>${h(o.text)}</span>${o.value===sel.value ? '<i data-lucide="check"></i>' : ''}</div>`).join('')}</div>`;
   document.body.appendChild(pop); const alt = pop.offsetHeight; pop.style.left = Math.max(8, Math.min(r.left - 6, innerWidth - 320)) + 'px'; pop.style.top = (r.bottom + 4 + alt > innerHeight - 8 ? Math.max(8, r.top - 4 - alt) : r.bottom + 4) + 'px';
