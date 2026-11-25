@@ -6523,6 +6523,7 @@ try { UI.odFech = JSON.parse(localStorage.getItem('od-fech2')||'{}'); } catch(e)
 function odMigrar(c){ let mud = false; c.pedidos = c.pedidos || []; c.horas = c.horas || []; c.entregaveis = c.entregaveis || [];
   for (const p of c.pedidos) { if (!p.ents) continue; for (const e of p.ents) c.entregaveis.push({id:e.id, nome:e.nome, secao:'On Demand', pedido:p.id, grupo:e.grupo||'', formato:e.formato||'', etapa:OD_ET_DE[e.status]||'briefing', link:e.link||'', canva:e.canva||'', prazo:e.prazo||null, idioma:c.idiomaBase||'PT', paises:[], versoes:[], aprovacoes:[], briefing:{}});
     delete p.ents; mud = true; }
+  for (const e of c.entregaveis) if (e.pedido && e.canva && !e.link) { e.link = e.canva; mud = true; }
   if (odAutoConcluir(c)) mud = true;
   if (mud) setTimeout(salvar, 0); }
 
@@ -6622,8 +6623,7 @@ function odHorasTab(c, ed){
 /* propriedades extras na página da peça do On Demand */
 function odPecaProps(c, peca, ed){ const p = odPed(c, peca.pedido), gs = [...new Set(odEnts(c, peca.pedido).map(e=>e.grupo).filter(Boolean))];
   return [['pedido','folder','Pedido', `<b><a href="#/campanha/${c.id}/entregaveis" onclick="UI.odSec=UI.odSec||{};UI.odSec['${c.id}']='${peca.pedido}'">${h(p ? p.nome : '—')}</a></b>`, false],
-    ['publico','users','Público', ed ? `<input class="np-sel" list="dl-odg-${peca.id}" value="${h(peca.grupo||'')}" placeholder="Vazio" data-chg="odPecaGrupo" data-id="${c.id}" data-e="${peca.id}"><datalist id="dl-odg-${peca.id}">${gs.map(g=>`<option value="${h(g)}">`).join('')}</datalist>` : `<b>${h(peca.grupo||'—')}</b>`, !peca.grupo],
-    ['canva','palette','Canva template', `<div class="np-asset">${lkCampo(peca.canva||'', `data-chg="odPecaCanva" data-id="${c.id}" data-e="${peca.id}"`, 'Cole o link do template no Canva', ed)}</div>`, !peca.canva]]; }
+    ['publico','users','Público', ed ? `<input class="np-sel" list="dl-odg-${peca.id}" value="${h(peca.grupo||'')}" placeholder="Vazio" data-chg="odPecaGrupo" data-id="${c.id}" data-e="${peca.id}"><datalist id="dl-odg-${peca.id}">${gs.map(g=>`<option value="${h(g)}">`).join('')}</datalist>` : `<b>${h(peca.grupo||'—')}</b>`, !peca.grupo]]; }
 
 function odChg(k, el, v){ const c = camp(el.dataset.id); if (!c) return;
   if (k==='odPecaGrupo' || k==='odPecaCanva') { const e = (c.entregaveis||[]).find(x=>x.id===el.dataset.e); if (!e) return; if (k==='odPecaGrupo') e.grupo = (v||'').trim(); else e.canva = (v||'').trim(); registrar(`${k==='odPecaGrupo'?'Público':'Canva'} da peça “${e.nome}” atualizado em “${c.nome}”`); return render(); }
@@ -7292,7 +7292,7 @@ function pecaPropsHtml(c, peca, d, ed, mi, et, idi, st){ const kv = ehKV(peca), 
     ['status','circle-dot','Status', selEtapaPost(c, peca, ed), false],
     ['formato','ratio','Formato', ed ? selFormato(peca.formato||'', `class="np-sel np-limpo" data-chg="pecaFmt" data-ids="${gG}"`) : `<b>${h(peca.formato||'—')}</b>`, !peca.formato],
     ['resp','user','Responsável', `<div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="lpCampo" ${A} data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>`, !d.resp],
-    ['asset','link-2', kv ? 'Arquivo do KV' : 'Asset design', `<div class="np-asset">${lkCampo(peca.link||'', `data-chg="pecaArq" data-ids="${peca.id}"`, kv ? 'Cole o link do arquivo (Drive, Canva, Figma…)' : 'Cole o link do vídeo ou PNG', ed)}</div>`, !peca.link],
+    ['asset','link-2', kv ? 'Arquivo do KV' : peca.pedido ? 'Link do asset' : 'Asset design', `<div class="np-asset">${lkCampo(peca.link||'', `data-chg="pecaArq" data-ids="${peca.id}"`, kv || peca.pedido ? 'Cole o link do arquivo (Drive, Canva, Figma…)' : 'Cole o link do vídeo ou PNG', ed)}</div>`, !peca.link],
     ...((p1 => p1 && p1.id!==peca.id ? [['legenda','copy','Legenda', ed ? `<select class="np-sel" data-chg="pecaLegEsp" data-id="${c.id}" data-e="${peca.id}">${opts([['esp','Espelhar da '+p1.nome],['nova','Escrever nova legenda']], pecaLegEspelha(c, peca) ? 'esp' : 'nova')}</select>` : `<b>${pecaLegEspelha(c, peca) ? 'Espelhada da '+h(p1.nome) : 'Própria'}</b>`, false]] : [])(pecaComLeg(peca) && pecaPrimeira(c, peca))),
     ['prazo','calendar','Prazo', ed ? `<input type="date" class="np-sel" value="${h(peca.prazo||'')}" data-chg="kvCampo" data-id="${c.id}" data-e="${peca.id}" data-k="prazo">` : `<b>${peca.prazo ? fd(peca.prazo) : '—'}</b>`, !peca.prazo],
     ['okConteudo','check-square','Conteúdo aprovado', `<label class="np-chk"><input type="checkbox" data-chg="lpAprovado" ${A} ${st==='Aprovado'?'checked':''} ${ed?'':'disabled'}><em>${st==='Aprovado' ? 'Aprovado pelo cliente' : ''}</em></label>`, st!=='Aprovado'],
