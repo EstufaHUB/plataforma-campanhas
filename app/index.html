@@ -899,6 +899,7 @@ a.od-ln:hover{background:#fafbfb}.od-th{font-size:.72rem;text-transform:uppercas
 @media (max-width:820px){.od-kpis{grid-template-columns:1fr 1fr 1fr}.od-kpis .od-barra{grid-column:1/-1}.od-2col{grid-template-columns:1fr}.od-ln{grid-template-columns:1fr auto}.od-ln>span:nth-child(n+3){display:none}.od-th{display:none}.od-s-cab{flex-wrap:wrap}}
 .od-det{background:#fff;border:1px solid var(--borda);border-radius:12px;margin-bottom:14px}.od-det summary{display:flex;align-items:center;gap:8px;padding:12px 16px;font-weight:600;cursor:pointer;list-style:none}.od-det summary::-webkit-details-marker{display:none}.od-det summary i{width:16px;height:16px}.od-det summary .btn{margin-left:auto}.od-det .od-texto{padding:0 16px 14px}.od-det .od-dir{margin:0 16px 14px}
 .od-2col .od-det{margin:0}.ent-sec-pg .od-2col{margin:0 0 16px}
+.pc4-resp-ed{position:relative;cursor:pointer;border-radius:12px;padding:1px 4px 1px 2px;margin-left:-2px}.pc4-resp-ed:hover{background:#f1f2f4}.pc4-resp-ed i{width:14px;height:14px}.pc4-resp-ed select{border:0;background:transparent;font:inherit;color:inherit;padding:0 2px;cursor:pointer;max-width:150px;appearance:none;-webkit-appearance:none}.pc4-resp-ed select:focus{outline:none}.pc4 .st-pill{align-self:flex-start}
 </style>
 </head>
 <body>
@@ -3762,12 +3763,13 @@ const rotuloEtapaPost = (c, e) => { const trad = idiomaPeca(c, e)!==(c.idiomaBas
   const t = (ETAPAS_POST.find(x=>x[0]===e.etapa)||[,''])[1]; return trad ? t.replace('Conteúdo em produção','Traduzindo').replace(' do conteúdo',' da tradução').replace(' no conteúdo',' na tradução') : t; };
 const linkCurto = u => { try { const x = new URL(u), cam = x.pathname + x.search; return x.hostname.replace(/^www\./,'') + (cam.length > 14 ? cam.slice(0,4) + '…' + cam.slice(-6) : cam); } catch(e){ return String(u).slice(0,28); } };
 function pecaCardPais(c, e, ed){ const d = pecaDoc(c, e.id), n = (d.coment||[]).length + discAbertas(d).length, rot = rotuloEtapaPost(c, e), cor = rot==='Aguardando conteúdo' ? 'cinza' : (ST_ENT_COR[e.etapa]||'cinza');
-  return `<div class="pc4 ${e.etapa==='concluido' ? 'pc4-ok' : ''}" onclick="if(!event.target.closest('input,a,button'))location.hash='${pecaRota(c, e)}'" title="Abrir o post">
+  return `<div class="pc4 ${e.etapa==='concluido' ? 'pc4-ok' : ''}" onclick="if(!event.target.closest('input,a,button,select,.pc4-st,.pc4-resp'))location.hash='${pecaRota(c, e)}'" title="Abrir o post">
     <div class="pc4-t"><i data-lucide="${pecaVideo(e)?'clapperboard':'image'}"></i><b>${h(e.nome)}</b>${ed?`<button class="pc4-x" data-act="pecaDel" data-ids="${pecaGrupo(c, e).map(x=>x.id).join(',')}" title="Excluir este post em todos os países"><i data-lucide="trash-2"></i></button>`:''}</div>
-    <span class="pc4-st c-${cor}"><i></i>${h(rot)}</span>
+    ${ed ? selEtapaPost(c, e, ed) : `<span class="pc4-st c-${cor}"><i></i>${h(rot)}</span>`}
     ${e.link ? `<div class="pc4-lk"><a href="${h(e.link)}" target="_blank" rel="noopener" title="${h(e.link)}">${h(linkCurto(e.link))}</a><button type="button" title="Copiar o link" data-u="${h(e.link)}" onclick="navigator.clipboard.writeText(this.dataset.u).then(()=>toast('Link copiado.'))"><i data-lucide="copy"></i></button></div>`
       : ed ? `<input class="pc4-in" type="url" placeholder="+ Link do asset" data-chg="pecaArq" data-ids="${e.id}">` : ''}
-    ${(d.resp||e.resp) ? `<span class="pc4-resp" title="Responsável: ${h(d.resp||e.resp)}">${avatar(d.resp||e.resp, 'av av-s')}${h((d.resp||e.resp).split(' ')[0])}</span>` : '<span class="pc4-resp vz" title="Sem responsável">sem responsável</span>'}
+    ${ed ? `<label class="pc4-resp pc4-resp-ed ${(d.resp||e.resp)?'':'vz'}" title="Responsável">${(d.resp||e.resp) ? avatar(d.resp||e.resp, 'av av-s') : '<i data-lucide="user-round"></i>'}<select data-chg="pecaResp" data-ids="${pecaIdiomaGrupo(c, e).map(x=>x.id).join(',')}">${opts(optsResp(d.resp||e.resp), d.resp||e.resp||'', 'sem responsável')}</select></label>`
+      : (d.resp||e.resp) ? `<span class="pc4-resp" title="Responsável: ${h(d.resp||e.resp)}">${avatar(d.resp||e.resp, 'av av-s')}${h((d.resp||e.resp).split(' ')[0])}</span>` : '<span class="pc4-resp vz" title="Sem responsável">sem responsável</span>'}
     ${n ? `<div class="pc4-com"><i data-lucide="message-square"></i>${n}</div>` : ''}</div>`; }
 /* card do post na seção: igual ao card de conteúdo da LP */
 function pecaCard(c, nome, pcs, ed){ const base = c.idiomaBase || 'PT', porIdi = {};
@@ -6652,6 +6654,8 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
       if (v==='concluido' && ant!=='concluido') (e.aprovacoes = e.aprovacoes || []).push({tipo:'Asset', resultado:'Aprovado', coment:'', data:HOJE, quem:quemSou()});
       if (/^ajuste_/.test(v) && ant!==v) (e.aprovacoes = e.aprovacoes || []).push({tipo: v==='ajuste_asset' ? 'Asset' : 'Conteúdo', resultado:'Ajustes solicitados', coment:'', data:HOJE, quem:quemSou()}); });
     registrar(`Post “${es[0].nome}” de “${c.nome}”: ${t.toLowerCase()}`); salvar(); render(); return; }
+  if (k==='pecaResp') { const ids = (el.dataset.ids||'').split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return; const es = c.entregaveis.filter(e=>ids.includes(e.id));
+    es.forEach(e=>{ e.doc = e.doc || {}; e.doc.resp = v; e.resp = v; }); registrar(`Responsável do post “${es[0].nome}” de “${c.nome}”: ${v||'—'}`); salvar(); render(); return; }
   if (k==='pecaAssetOk') { const ids = (el.dataset.ids||'').split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return; const es = c.entregaveis.filter(e=>ids.includes(e.id));
     es.forEach(e=>{ if (ORD_ET.indexOf(e.etapa) < 3) return; e.etapa = el.checked ? 'concluido' : 'aprov_asset'; if (el.checked) (e.aprovacoes = e.aprovacoes || []).push({tipo:'Asset', resultado:'Aprovado', coment:'', data:HOJE, quem:quemSou()}); });
     registrar(`Post “${es[0].nome}” de “${c.nome}”: asset ${el.checked ? 'aprovado' : 'voltou para aprovação'}`); salvar(); render(); toast(el.checked ? 'Asset aprovado.' : 'Aprovação do asset desmarcada.'); return; }
