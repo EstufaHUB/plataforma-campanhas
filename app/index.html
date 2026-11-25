@@ -2121,7 +2121,7 @@ function pgCliente(id, noGrupo){
   const dir = (f.sortV || (f.ordem==='desc' ? 'desc' : 'asc'))==='desc' ? -1 : 1, porData = (a,b)=> dir * ((a.lancamento||'').localeCompare(b.lancamento||'') || (a.fimVeiculacao||'').localeCompare(b.fimVeiculacao||''));
   rec.sort(porData); pon.sort(porData);
   const paisesUnicos = new Set(L.map(c=>c.paises.map(p=>p.cod).sort().join(','))).size<=1;
-  const canaisTxt = c => c.tipo==='projeto' ? 'Projeto · '+(c.entregaveis||[]).length+' peça(s)' : (c.canais||[]).map(nomeCanal).join(', ') || 'sem mídia';
+  const canaisTxt = c => c.tipo==='projeto' ? 'Projeto'+((c.canais||[]).length ? ' · '+c.canais.map(nomeCanal).join(', ') : '') : (c.canais||[]).map(nomeCanal).join(', ') || 'sem mídia';
   const lixo = c => ehAdmin() ? `<button class="icone-btn cli-lixo" data-act="excluirCamp" data-id="${c.id}" title="Excluir campanha"><i data-lucide="trash-2"></i></button>` : '';
   const abrir = c => `location.hash='#/campanha/${c.id}/visao'`;   // pela página do cliente, sempre abre na Visão geral
   // situação: farol quando está no ar; "planejar já" quando o planejamento já devia ter começado; senão o status
@@ -2179,20 +2179,27 @@ function btnNovoProjeto(cli){ const k = 'np:'+(cli||'');
     ? `<button data-act="novoProjeto" data-tipo="${t}" data-cliente="${cli||''}"><i data-lucide="${ic}"></i><span><b>${nome}</b><em>${desc}</em></span></button>`
     : `<button disabled title="Em breve"><i data-lucide="${ic}"></i><span><b>${nome} <small>em breve</small></b><em>${desc}</em></span></button>`).join('')}</div>` : ''}</div>`; }
 /* projeto simples: mesma estrutura da campanha, mas só com Entregáveis e Gestão de ações */
-function projForm(c, cliId){ const cli = c ? c.clienteId : (cliId||'');
+function projForm(c, cliId){ const cli = c ? c.clienteId : (cliId||''), tipos = c ? c.entregaveisTipos||[] : [], cans = c ? c.canais||[] : [], ps = c ? c.paises.map(p=>p.cod) : [];
+  const chips = (nome, lista, sel, rot) => `<div class="chips">${lista.map(k=>`<label class="chip ${sel.includes(k)?'on':''}"><input type="checkbox" name="${nome}" value="${k}" ${sel.includes(k)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${rot?rot(k):h(k)}</label>`).join('')}</div>`;
   abrirModal(c ? 'Editar projeto' : 'Novo projeto', `<form id="f-proj" class="form-g">
     <label class="campo tudo">Nome do projeto *<input name="nome" required maxlength="160" value="${h(c?c.nome:'')}" placeholder="Ex.: Kit de boas-vindas dealers"></label>
     <label class="campo">Cliente *<select name="clienteId">${opts(S.clientes.filter(x=>!x.arquivado || x.id===cli).map(x=>[x.id,x.nome]).sort((a,b)=>a[1].localeCompare(b[1])), cli, 'Selecione')}</select></label>
     <label class="campo">Entrega final<input type="date" name="lancamento" value="${c?c.lancamento||'':''}"></label>
+    <div class="campo tudo">Entregáveis${chips('pjTipo', TIPOS_ENTREGAVEL.filter(k=>k!=='Assets ADS'), tipos)}</div>
+    <div class="campo tudo">Canais${chips('pjCanal', CANAIS, cans, nomeCanal)}</div>
+    <div class="campo tudo">Países<span class="small muted" style="font-weight:400">cada país vira uma coluna nas seções, como na campanha</span>${chips('pjPais', Object.keys(PAISES), ps, k=>PAISES[k].f+' '+h(PAISES[k].n))}</div>
     <label class="campo tudo">Descrição<textarea name="descricao">${h(c?c.descricao||'':'')}</textarea></label></form>`,
-    `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="projSalvar" data-id="${c?c.id:''}">${c?'Salvar':'<i data-lucide="plus"></i>Criar projeto'}</button>`); }
-function projSalvar(id){ const v = ler($('#f-proj')), nome = (v.nome||'').trim();
+    `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="projSalvar" data-id="${c?c.id:''}">${c?'Salvar':'<i data-lucide="plus"></i>Criar projeto'}</button>`, true); }
+function projSalvar(id){ const fm = $('#f-proj'), v = ler(fm), nome = (v.nome||'').trim(), marcados = n => [...fm.querySelectorAll(`input[name=${n}]:checked`)].map(x=>x.value);
   if (!nome) return toast('Informe o nome do projeto.'); if (!v.clienteId) return toast('Escolha o cliente.');
-  let c = id && camp(id);
-  if (c) { Object.assign(c, {nome, clienteId:v.clienteId, lancamento:v.lancamento||c.lancamento, fimVeiculacao:v.lancamento||c.fimVeiculacao, descricao:v.descricao||''}); registrar('Projeto editado: '+nome); fecharModal(); render(); return; }
-  const lanc = v.lancamento || addDias(HOJE, 30);
-  c = novaCampanha({tipo:'projeto', nome, clienteId:v.clienteId, lancamento:lanc, fimVeiculacao:lanc, descricao:v.descricao||'', paises:[], idiomaBase:'PT', entregaveisTipos:[], status:'Em andamento'});
-  c.modelo = []; c.entAutoFeito = true; aplicarCronograma(c, calcularCronograma(c), 'Projeto criado');
+  let c = id && camp(id); const lanc = v.lancamento || (c && c.lancamento) || addDias(HOJE, 30), cods = marcados('pjPais'), canais = marcados('pjCanal');
+  const paises = cods.map(cod=>(c && c.paises.find(p=>p.cod===cod)) || {cod, idioma:PAISES[cod].i, lancamento:lanc, respLocal:VALID_PAIS[cod]||'', obs:'', links:''});
+  const cfg = {}; for (const k of canais) cfg[k] = Object.assign({}, (c && (c.canaisCfg||{})[k]) || {}, {paises: cods.map(cod=>({cod}))});
+  const dados = {nome, clienteId:v.clienteId, lancamento:lanc, fimVeiculacao:lanc, descricao:v.descricao||'', entregaveisTipos:marcados('pjTipo'), canais, canaisCfg:cfg, paises, regioes:[...new Set(cods.map(k=>PAISES[k].r))], idiomaBase: cods.length ? PAISES[cods[0]].i : 'PT'};
+  if (c) { Object.assign(c, dados); for (const p of paises) if (!c.traducoes[p.cod]) c.traducoes[p.cod] = {texto:'',status:p.idioma===c.idiomaBase?'N/A':'Aguardando conteúdo original',resp:'u4',validador:p.respLocal,prazo:null,versaoMaster:0,coment:[],hist:[],aprovadoEm:null};
+    sincronizarEntregaveis(c); registrar('Projeto editado: '+nome); fecharModal(); render(); return; }
+  c = novaCampanha(Object.assign({tipo:'projeto', status:'Em andamento'}, dados));
+  c.modelo = []; aplicarCronograma(c, calcularCronograma(c), 'Projeto criado'); sincronizarEntregaveis(c); c.entAutoFeito = true;
   S.campanhas.push(c); registrar('Projeto criado: '+nome); fecharModal(); location.hash = '#/campanha/'+c.id+'/entregaveis'; render(); toast('Projeto criado.'); }
 function pgProjeto(c, r){
   const aba = r[2]==='acoes' ? 'acoes' : 'entregaveis', cli = cliente(c.clienteId);
@@ -2203,14 +2210,6 @@ function pgProjeto(c, r){
      <div class="cc-meta"><span class="cc-pill"><i style="background:${COR_ST_CAMP[c.status]||'#9aa9ae'}"></i>${h(c.status)}</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-check"></i>Entrega final: ${fdm(c.lancamento)}</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="list-checks"></i>${feitas} de ${ts.length} ações concluídas</span>${c.arquivada?' <span class="tag">Arquivado</span>':''}</div>${c.descricao?`<div class="small muted" style="margin-top:6px">${h(c.descricao)}</div>`:''}</div></div>
    <div class="cc-dir nao-imprimir">${ehEquipe()?`<button class="btn" data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'}</button><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button>`:''}</div></div>
    <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${aba==='acoes' ? abaAcoes(c) : abaEntregaveis(c)}`; }
-/* entregáveis do projeto: peças agrupadas pela seção que a equipe escreve */
-function projEntregaveis(c){ const ed = ehEquipe(), L = c.entregaveis||[];
-  const secs = [...new Set(L.map(e=>e.secao||'Peças'))];
-  const novo = s => ed ? `<button class="ent-novo" data-act="formEnt" data-id="${c.id}" ${s?`data-secao="${h(s)}"`:''}><i data-lucide="plus"></i>Nova peça</button>` : '';
-  const topo = `<div class="ent-topo2"><div class="ent-tt"><b>Entregáveis</b><span>${L.length ? `${L.filter(e=>e.etapa==='concluido').length} de ${L.length} concluída${L.length===1?'':'s'}` : 'nenhuma peça ainda'}</span></div><div class="ent-topo2-d">${ed?`<button class="btn btn-p btn-s" data-act="formEnt" data-id="${c.id}"><i data-lucide="plus"></i>Nova peça</button>`:''}</div></div>`;
-  if (!L.length) return topo + `<div class="card card-p"><div class="vazio">Adicione as peças do projeto. Dê um nome de seção (ex.: Impressos, Vídeos) para agrupar.</div></div>`;
-  return topo + secs.map(s=>{ const da = L.filter(e=>(e.secao||'Peças')===s), conc = da.filter(e=>e.etapa==='concluido').length;
-    return `<div class="ent-faixa"><i data-lucide="package"></i>${h(s)}<span>${conc} de ${da.length} concluída${da.length===1?'':'s'}</span><div class="ent-prog"><i style="width:${Math.round(conc/da.length*100)}%"></i></div></div><div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novo(s==='Peças'?'':s)}</div>`; }).join(''); }
 /* =====================================================================
    10. PÁGINA DA CAMPANHA
    ===================================================================== */
@@ -3897,7 +3896,6 @@ function abaEntregaveis(c){
   const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:'',marca:''});
   const temOrg = temOrganico(c), sep = marcaSeparada(c);
   const sub = '';   // Conteúdos por país e Calendário editorial saíram: Entregáveis mostra só as peças
-  if (c.tipo==='projeto') return projEntregaveis(c);
   if ((c.notionVinculos||[]).length) return sub + entregaveisNotion(c);
   if (ehEquipe() && !c.entAutoFeito) { sincronizarEntregaveis(c); c.entAutoFeito = true; setTimeout(salvar, 0); }   // 1ª vez: cria as peças-padrão da ficha
   return sub + entregaveisSecoes(c);   // a visão em tabela saiu (só seções)
@@ -6262,9 +6260,9 @@ const ACT = {
   delKpi: el => { const c = camp(el.dataset.id); c.kpis = c.kpis.filter(x=>x.id!==el.dataset.k); registrar('KPI excluído em '+c.nome); fecharModal(); render(); },
   /* entregáveis */
   formEnt: el => { const c = camp(el.dataset.id), e = c.entregaveis.find(x=>x.id===el.dataset.e) || {paises: el.dataset.pais?[el.dataset.pais]:[], briefing:{}, canal: el.dataset.canal||'', marca: el.dataset.marca||undefined, secao: el.dataset.secao||undefined, fase: el.dataset.fase||undefined};
-    abrirModal(e.id?'Editar entregável':'Novo entregável — briefing', `<form id="f-ent" class="form-g">${c.tipo==='projeto' ? `<label class="campo">Seção<input name="secao" list="dl-secoes" value="${h(e.secao||'')}" placeholder="Ex.: Impressos, Vídeos"><datalist id="dl-secoes">${[...new Set((c.entregaveis||[]).map(x=>x.secao).filter(Boolean))].map(x=>`<option value="${h(x)}">`).join('')}</datalist></label>` : `<input type="hidden" name="secao" value="${h(e.secao||'')}">`}<input type="hidden" name="fase" value="${h(e.fase||'')}"><label class="campo">Nome da peça *<input name="nome" value="${h(e.nome||'')}"></label>${c.tipo==='projeto' ? '' : `<label class="campo">Canal<select name="canal">${opts(c.canais,e.canal,'— sem canal —')}</select></label>`}
+    abrirModal(e.id?'Editar entregável':'Novo entregável — briefing', `<form id="f-ent" class="form-g"><input type="hidden" name="secao" value="${h(e.secao||'')}"><input type="hidden" name="fase" value="${h(e.fase||'')}"><label class="campo">Nome da peça *<input name="nome" value="${h(e.nome||'')}"></label><label class="campo">Canal<select name="canal">${opts(c.canais,e.canal,'— sem canal —')}</select></label>
       ${marcaSeparada(c) ? `<div class="campo tudo">Marca da peça<div class="chips">${(e.id?MARCAS_SEP:[...MARCAS_SEP,'Ambas (cria uma peça para cada marca)']).map(k=>`<label class="chip ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'on':''}"><input type="radio" name="marcaPeca" value="${k}" ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'checked':''} style="display:none" onchange="this.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.contains(this)))">${k}</label>`).join('')}</div></div>` : ''}
-      ${c.tipo==='projeto' ? '' : `<div class="campo tudo">Países (marque vários se o arquivo for o mesmo para todos)<div class="chips">${c.paises.map(p=>`<label class="chip ${e.paises.includes(p.cod)?'on':''}"><input type="checkbox" name="pais" value="${p.cod}" ${e.paises.includes(p.cod)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${pais(p.cod)}</label>`).join('')}</div></div>`}
+      ${!c.paises.length ? '' : `<div class="campo tudo">Países (marque vários se o arquivo for o mesmo para todos)<div class="chips">${c.paises.map(p=>`<label class="chip ${e.paises.includes(p.cod)?'on':''}"><input type="checkbox" name="pais" value="${p.cod}" ${e.paises.includes(p.cod)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${pais(p.cod)}</label>`).join('')}</div></div>`}
       <label class="campo">Idioma<select name="idioma">${opts([...Object.entries(IDIOMAS),['Sem fala','Sem texto / sem fala']],e.idioma)}</select></label><label class="campo">Formato<input name="formato" value="${h(e.formato||'')}" placeholder="Ex.: 1080×1350"></label>
       <label class="campo">Objetivo<input name="objetivo" value="${h(e.objetivo||'')}"></label><label class="campo">Prazo<input type="date" name="prazo" value="${e.prazo||''}"></label>
       <label class="campo">Responsável pelo conteúdo<select name="respConteudo">${optsUsu(e.respConteudo,'Conteúdo')}</select></label><label class="campo">Responsável pelo design<select name="respDesign">${optsUsu(e.respDesign,'Design')}</select></label>
@@ -6273,7 +6271,7 @@ const ACT = {
       <label class="campo tudo">Copy<textarea name="b_copy">${h(e.briefing.copy||'')}</textarea></label><label class="campo">Referências visuais<input name="b_referencias" value="${h(e.briefing.referencias||'')}"></label><label class="campo">Observações<input name="b_obs" value="${h(e.briefing.obs||'')}"></label></form>`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarEnt" data-id="${c.id}" data-e="${e.id||''}">Salvar</button>`, true); },
   salvarEnt: el => { const c = camp(el.dataset.id), fm = $('#f-ent'), v = ler(fm); if (!v.nome.trim()) return toast('Informe o nome da peça.');
-    const paises = [...fm.querySelectorAll('input[name=pais]:checked')].map(x=>x.value); if (!paises.length && c.tipo!=='projeto') return toast('Escolha pelo menos um país.');
+    const paises = [...fm.querySelectorAll('input[name=pais]:checked')].map(x=>x.value); if (!paises.length && c.paises.length) return toast('Escolha pelo menos um país.');
     const mp = v.marcaPeca; delete v.marcaPeca; if (!v.secao) delete v.secao; if (!v.fase) delete v.fase;
     const br = {}; for (const k in v) if (k.startsWith('b_')) { br[k.slice(2)] = v[k]; delete v[k]; } delete v.pais;
     let e = c.entregaveis.find(x=>x.id===el.dataset.e);
