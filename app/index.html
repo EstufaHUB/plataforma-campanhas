@@ -3362,7 +3362,7 @@ function kvCards(c, da, ed){ const lista = da.length ? da : [null];
     return `<div class="card kvc"><div class="kvc-cab"><span class="kvc-ic"><i data-lucide="image"></i></span><div><b>${h(e ? e.nome : 'KV da campanha')}</b><span>Key visual${e && e.prazo ? ' · prazo '+fdm(e.prazo) : ''}</span></div>${e?`<a href="javascript:void 0" class="kvc-det" data-act="abrirEnt" data-id="${c.id}" data-e="${id}" title="Versões, aprovações e comentários">Detalhes<i data-lucide="chevron-right"></i></a>`:''}</div>
       ${previaKV(link)}
       <label class="kvc-campo"><span><i data-lucide="link-2"></i>Arquivo</span><div class="kvc-link"><input type="url" placeholder="Cole o link do arquivo (Drive, Canva, Figma…)" value="${h(link)}" ${att('link')}>${link?`<a href="${h(link)}" target="_blank" rel="noopener" class="btn btn-s" title="Abrir ${h(dom)}"><i data-lucide="external-link"></i>Abrir</a>`:''}</div></label>
-      <div class="kvc-2"><label class="kvc-campo"><span><i data-lucide="user"></i>Responsável</span><select ${att('resp')}>${opts(optsResp(e && e.resp), (e && e.resp)||'', 'Selecione')}</select></label>
+      <div class="kvc-2"><label class="kvc-campo"><span><i data-lucide="user"></i>Responsável</span><select ${att('resp')}>${opts(optsRespCli(c.clienteId, e && e.resp), (e && e.resp)||'', 'Selecione')}</select></label>
         <label class="kvc-campo"><span><i data-lucide="circle-dot"></i>Status</span><select class="kvc-st kvc-${cor}" ${att('etapa')}>${opts(Object.entries(ETAPAS_ENT), e ? e.etapa : 'briefing')}</select></label></div>
       ${kvComentarios(c, e, ed)}</div>`; }).join(''); }
 /* comentários do KV, com @menção (a pessoa mencionada recebe notificação) */
@@ -3960,7 +3960,7 @@ function pecaCardPais(c, e, ed){ const d = pecaDoc(c, e.id), n = (d.coment||[]).
     ${ed ? selEtapaPost(c, e, ed) : `<span class="pc4-st c-${cor}"><i></i>${h(rot)}</span>`}
     ${e.link ? `<div class="pc4-lk"><a href="${h(e.link)}" target="_blank" rel="noopener" title="${h(e.link)}">${h(linkCurto(e.link))}</a><button type="button" title="Copiar o link" data-u="${h(e.link)}" onclick="navigator.clipboard.writeText(this.dataset.u).then(()=>toast('Link copiado.'))"><i data-lucide="copy"></i></button></div>`
       : ed ? `<input class="pc4-in" type="url" placeholder="+ Link do asset" data-chg="pecaArq" data-ids="${e.id}">` : ''}
-    ${ed ? `<label class="pc4-resp pc4-resp-ed ${(d.resp||e.resp)?'':'vz'}" title="Responsável">${(d.resp||e.resp) ? avatar(d.resp||e.resp, 'av av-s') : '<i data-lucide="user-round"></i>'}<select data-chg="pecaResp" data-ids="${pecaIdiomaGrupo(c, e).map(x=>x.id).join(',')}">${opts(optsResp(d.resp||e.resp), d.resp||e.resp||'', 'sem responsável')}</select></label>`
+    ${ed ? `<label class="pc4-resp pc4-resp-ed ${(d.resp||e.resp)?'':'vz'}" title="Responsável">${(d.resp||e.resp) ? avatar(d.resp||e.resp, 'av av-s') : '<i data-lucide="user-round"></i>'}<select data-chg="pecaResp" data-ids="${pecaIdiomaGrupo(c, e).map(x=>x.id).join(',')}">${opts(optsRespCli(c.clienteId, d.resp||e.resp), d.resp||e.resp||'', 'sem responsável')}</select></label>`
       : (d.resp||e.resp) ? `<span class="pc4-resp" title="Responsável: ${h(d.resp||e.resp)}">${avatar(d.resp||e.resp, 'av av-s')}${h((d.resp||e.resp).split(' ')[0])}</span>` : '<span class="pc4-resp vz" title="Sem responsável">sem responsável</span>'}
     ${n ? `<div class="pc4-com"><i data-lucide="message-square"></i>${n}</div>` : ''}</div>`; }
 /* card do post na seção: igual ao card de conteúdo da LP */
@@ -6854,18 +6854,18 @@ async function aprovCarregar(){ if (!sb) return; const q = ehCliente() ? sb.from
   const r = await q; if (!r.error) APROV = r.data || []; }
 const aprovChave = (tipo, cid, alvo, etapa) => [tipo, cid, typeof alvo==='string' ? alvo : JSON.stringify(alvo), etapa].join('|');
 /* tudo que está esperando o cliente */
-function aprovPendencias(){ const L = [];
+function aprovPendencias(){ const L = [], eu = ehCliente() ? quemSou() : null;
   for (const c of S.campanhas.filter(x=>!x.arquivada)) {
     const vistos = new Set();
     for (const e of (c.entregaveis||[])) { if (!['aprov_conteudo','aprov_asset'].includes(e.etapa) || vistos.has(e.id)) continue;
       const g = pecaIdiomaGrupo(c, e).filter(x=>x.etapa===e.etapa); g.forEach(x=>vistos.add(x.id)); const d = pecaDoc(c, e.id) || {}, ped = e.pedido && odPed(c, e.pedido);
+      if (eu && !g.some(x=>((x.doc||{}).resp || x.resp)===eu)) continue;   // cliente: só as peças em que ele é o responsável
       const etapa = e.etapa==='aprov_conteudo' ? 'conteudo' : 'asset', alvo = g.map(x=>x.id).sort().join(',');
       L.push({k:aprovChave('peca', c.id, alvo, etapa), tipo:'peca', c, alvo, etapa, titulo:e.nome, onde: ped ? ped.nome : (e.secao||e.canal||''), sub: e.pedido ? (e.grupo||'') : [...new Set(g.flatMap(x=>x.paises||[]))].map(p=>PAISES[p]?PAISES[p].f+' '+PAISES[p].n:p).join(' · '), texto: d.texto||'', links: [e.link, e.canva].filter(Boolean), quando: e.prazo}); }
     for (const x of lpDocs(c)) { const nome = 'Landing page' + (x.marca ? ' · '+x.marca : '') + ' · ' + (IDIOMAS[x.cod]||x.cod||'');
       const alvo = {mi:x.mi, et:x.et, idi:x.idi};
       if (x.d.status==='Aguardando aprovação do cliente') L.push({k:aprovChave('lp', c.id, alvo, 'conteudo'), tipo:'lp', c, alvo, etapa:'conteudo', titulo: x.trad ? 'Tradução da landing page' : 'Texto da landing page', onde:nome, sub:'', texto:x.d.texto||'', links:[]});
       if (lpLayoutSt(x.f, x.d)==='Aguardando aprovação do cliente') L.push({k:aprovChave('lp', c.id, alvo, 'layout'), tipo:'lp', c, alvo, etapa:'layout', titulo:'Layout da landing page', onde:nome, sub:'', texto:'', links:[lpLayoutLink(x.f, x.d)].filter(Boolean)}); } }
-  const eu = ehCliente() ? quemSou() : null;
   for (const p of (S.social||[]).filter(x=>!x.arquivada)) for (const post of (p.posts||[])) { if (!['aprov_conteudo','aprov_asset'].includes(post.etapa)) continue;
     if (eu && (((post.doc||{}).resp) || post.resp) !== eu) continue;   // cliente: só os posts em que ele é o responsável
     const etapa = post.etapa==='aprov_conteudo' ? 'conteudo' : 'asset', perf = (p.perfis||[]).find(x=>x.id===post.perfil);
@@ -7590,7 +7590,7 @@ function pecaPropsHtml(c, peca, d, ed, mi, et, idi, st){ const kv = ehKV(peca), 
   const L0 = [
     ['status','circle-dot','Status', selEtapaPost(c, peca, ed), false],
     ['formato','ratio','Formato', ed ? selFormato(peca.formato||'', `class="np-sel np-limpo" data-chg="pecaFmt" data-ids="${gG}"`) : `<b>${h(peca.formato||'—')}</b>`, !peca.formato],
-    ['resp','user','Responsável', `<div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="lpCampo" ${A} data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>`, !d.resp],
+    ['resp','user','Responsável', `<div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="lpCampo" ${A} data-k="resp">${opts(optsRespCli(c.clienteId, d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>`, !d.resp],
     ['asset','link-2', kv ? 'Arquivo do KV' : peca.pedido ? 'Link do asset' : 'Asset design', `<div class="np-asset">${lkCampo(peca.link||'', `data-chg="pecaArq" data-ids="${peca.id}"`, kv || peca.pedido ? 'Cole o link do arquivo (Drive, Canva, Figma…)' : 'Cole o link do vídeo ou PNG', ed)}</div>`, !peca.link],
     ...((p1 => p1 && p1.id!==peca.id ? [['legenda','copy','Legenda', ed ? `<select class="np-sel" data-chg="pecaLegEsp" data-id="${c.id}" data-e="${peca.id}">${opts([['esp','Espelhar da '+p1.nome],['nova','Escrever nova legenda']], pecaLegEspelha(c, peca) ? 'esp' : 'nova')}</select>` : `<b>${pecaLegEspelha(c, peca) ? 'Espelhada da '+h(p1.nome) : 'Própria'}</b>`, false]] : [])(pecaComLeg(peca) && pecaPrimeira(c, peca))),
     ['prazo','calendar','Prazo', ed ? `<input type="date" class="np-sel" value="${h(peca.prazo||'')}" data-chg="kvCampo" data-id="${c.id}" data-e="${peca.id}" data-k="prazo">` : `<b>${peca.prazo ? fd(peca.prazo) : '—'}</b>`, !peca.prazo],
