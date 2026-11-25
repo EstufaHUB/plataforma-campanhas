@@ -215,6 +215,62 @@ async function alertasBudget(admin: ReturnType<typeof createClient>) {
   return { avisos: itens.length, novos: novos.length, enviado: true, para };
 }
 
+// ---------- campanha pausada no Gerenciador: vira pendência em Digital › Atividades (justificar a pausa) e avisa por e-mail ----------
+// Estado em config.alertasPausa = { [id da campanha no Meta]: {campanha, pais, onde, campId, conta, pausadaEm, avisadaEm, reativadaEm?, pend} }.
+// Só o servidor grava essa chave; a justificativa fica na plataforma (metasStatus[id].pausaJust), então não há disputa de gravação.
+async function alertasPausa(admin: ReturnType<typeof createClient>) {
+  const [{ data: camps }, { data: rms }, { data: mcs }, { data: cfg }, { data: adms }] = await Promise.all([
+    admin.from("campanhas").select("id, dados"), admin.from("resultados_meta").select("campanha_id, meta_campanha, dados"),
+    admin.from("meta_contas").select("conta, dados"), admin.from("config").select("chave, valor").in("chave", ["alertasPausa", "contasStatus", "ocultasStatus", "alertasEmail"]),
+    admin.from("perfis").select("email, papel").eq("papel", "admin")]);
+  const linhaCfg = (cfg || []).find((r) => r.chave === "alertasPausa"), primeira = !linhaCfg;
+  const ant = (linhaCfg?.valor || {}) as Record<string, Record<string, unknown>>;
+  const nomesConta = Object.fromEntries((((cfg || []).find((r) => r.chave === "contasStatus")?.valor || []) as { conta: string; grupo: string }[]).map((c) => [String(c.conta), c.grupo]));
+  const ocultas = ((cfg || []).find((r) => r.chave === "ocultasStatus")?.valor || {}) as Record<string, unknown>;
+  const agora = new Date(), hoje = agora.toISOString().slice(0, 10), PAUSA = ["PAUSED", "CAMPAIGN_PAUSED"];
+  type P = { id: string; campanha: string; pais: string; onde: string; campId: string | null; conta: string | null; pausadaEm: string | null };
+  const pausadas: Record<string, P> = {};
+  // campanhas da plataforma vinculadas ao Meta (status lido em cada sincronização dos vínculos)
+  const vinc: Record<string, { c: Record<string, unknown>; d: Record<string, unknown>; v: Record<string, string> }> = {};
+  for (const c of camps || []) { const d = c.dados || {}; if (d.arquivada || d.status === "Concluída" || d.tipo) continue;
+    for (const v of (d.metaVinculos || []) as Record<string, string>[]) vinc[v.campanhaId] = { c, d, v }; }
+  for (const [id, x] of Object.entries(vinc)) { if (ocultas[id]) continue;
+    const r = (rms || []).find((y) => y.campanha_id === x.c.id && y.meta_campanha === id); if (!r) continue;
+    const st = String(r.dados?.status || ""), fimMeta = String(r.dados?.fimMeta || "").slice(0, 10);
+    const fimPer = String((x.d.faseada ? (x.d.fasesDatas as Record<string, { fim?: string }>)?.[x.v.fase || "Lead gen"]?.fim : "") || x.d.fimVeiculacao || "").slice(0, 10);
+    if (!PAUSA.includes(st) || (fimMeta && fimMeta < hoje) || (fimPer && fimPer < hoje)) continue;
+    pausadas[id] = { id, campanha: String(x.d.nome || id), pais: x.v.pais || "", onde: "Campanha da plataforma", campId: String(x.c.id), conta: String(x.v.conta || "").replace(/^act_/, "") || null, pausadaEm: (r.dados?.statusEm as string) || null }; }
+  // campanhas só no Gerenciador (retrato das contas): as pausadas recentes ainda no período
+  for (const m of mcs || []) for (const mc of ((m.dados?.campanhas || []) as Record<string, unknown>[])) { const id = String(mc.id); if (vinc[id] || ocultas[id]) continue;
+    if (!mc.pausada || (mc.fim && String(mc.fim).slice(0, 10) < hoje)) continue;
+    pausadas[id] = { id, campanha: String(mc.nome), pais: "", onde: nomesConta[String(m.conta)] || m.dados?.nome || "Gerenciador", campId: null, conta: String(m.conta), pausadaEm: (mc.pausadaEm as string) || null }; }
+  // novas pausas: não estavam pausadas na rodada anterior. Na primeira rodada, só conta pausa dos últimos 2 dias (as antigas entram sem aviso).
+  const recente = (em: string | null) => !!em && Date.parse(em) >= agora.getTime() - 2 * 864e5;
+  const novas: P[] = [], prox: Record<string, Record<string, unknown>> = {};
+  for (const p of Object.values(pausadas)) { const a = ant[p.id];
+    const nova = a ? !!a.reativadaEm : (primeira ? recente(p.pausadaEm) : true);
+    if (nova) novas.push(p);
+    prox[p.id] = nova ? { ...p, avisadaEm: agora.toISOString(), pend: true } : { ...a, ...p, pausadaEm: a!.pausadaEm || p.pausadaEm, reativadaEm: null }; }
+  // as que voltaram a rodar (ou saíram do retrato): guarda por 60 dias, para a pendência de justificativa continuar
+  for (const [id, a] of Object.entries(ant)) { if (prox[id]) continue;
+    const reat = (a.reativadaEm as string) || agora.toISOString();
+    if (Date.parse(reat) >= agora.getTime() - 60 * 864e5) prox[id] = { ...a, reativadaEm: reat }; }
+  await admin.from("config").upsert({ chave: "alertasPausa", valor: prox });
+  const cfgEmail = ((cfg || []).find((r) => r.chave === "alertasEmail")?.valor || {}) as { para?: string[]; ativo?: boolean };
+  if (cfgEmail.ativo === false) return { pausadas: Object.keys(pausadas).length, novas: novas.length, enviado: false, desligado: true };
+  const para = (cfgEmail.para && cfgEmail.para.length ? cfgEmail.para : (adms || []).map((a) => a.email)).filter(Boolean), user = (Deno.env.get("GMAIL_USER") || "").trim(), pass = (Deno.env.get("GMAIL_APP_PASSWORD") || "").replace(/\s+/g, "");
+  if (!novas.length || !para.length || !user || !pass) return { pausadas: Object.keys(pausadas).length, novas: novas.length, enviado: false };
+  const quando = (em: string | null) => em ? new Date(em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+  const linhas = novas.map((i) => `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee"><b>${i.campanha}</b>${i.pais ? " · " + i.pais : ""}<div style="color:#6b7a80;font-size:12px">${i.onde}</div></td><td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap">${quando(i.pausadaEm)}</td></tr>`).join("");
+  const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1b2a2f;line-height:1.5"><p style="margin:0 0 12px">${novas.length === 1 ? "Esta campanha foi pausada" : "Estas campanhas foram pausadas"} no Gerenciador de Anúncios do Meta. A plataforma criou uma pendência em <b>Digital › Atividades</b> para registrar o motivo da pausa.</p>
+    <table style="border-collapse:collapse;font-size:13px;width:100%;max-width:640px"><tr style="background:#f3f4f6"><th style="text-align:left;padding:6px 10px">Campanha</th><th style="text-align:right;padding:6px 10px">Pausada em</th></tr>${linhas}</table>
+    <p style="margin:14px 0 0"><a href="https://estufahub.github.io/plataforma-campanhas/#/atividades" style="color:#1d6b4f;font-weight:700">Justificar em Atividades →</a></p>
+    <p style="margin:14px 0 0;color:#6b7a80;font-size:12px">Aviso automático da plataforma de campanhas Estufa (a cada sincronização com o Meta). O horário é o da última alteração da campanha no Gerenciador.</p></div>`;
+  const t = nodemailer.createTransport({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user, pass } });
+  await t.sendMail({ from: `"Estufa · Alertas" <${user}>`, to: para.join(", "), subject: novas.length === 1 ? `Campanha pausada no Gerenciador: ${novas[0].campanha}${novas[0].pais ? " · " + novas[0].pais : ""}` : `${novas.length} campanhas pausadas no Gerenciador`, html });
+  return { pausadas: Object.keys(pausadas).length, novas: novas.length, enviado: true, para };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const token = Deno.env.get("META_ACCESS_TOKEN");
@@ -285,5 +341,6 @@ Deno.serve(async (req) => {
   const fazContas = !apenas && parte !== "vinculos";
   const contas = fazContas ? await retratoContas(admin, token) : [];
   let alertas: unknown = null; if (fazContas) { try { alertas = await alertasBudget(admin); } catch (e) { alertas = { erro: String((e as Error).message || e) }; } }
-  return json({ resultado: feito, contas, alertas });
+  let pausas: unknown = null; if (fazContas) { try { pausas = await alertasPausa(admin); } catch (e) { pausas = { erro: String((e as Error).message || e) }; } }
+  return json({ resultado: feito, contas, alertas, pausas });
 });

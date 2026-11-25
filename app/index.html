@@ -957,6 +957,8 @@ body:has(#login-raiz:not([style*="none"]) .tela-login) .lang-flut{display:inline
    1. DADOS DE REFERÊNCIA
    ===================================================================== */
 const HOJE = (()=>{ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+/* o esperado (ritmo, budget consumido) conta os dias até ontem: o dia de hoje ainda não fechou no Gerenciador */
+const ONTEM = (()=>{ const d = new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 const IDIOMAS = {EN:'Inglês',PT:'Português',ES:'Espanhol',DE:'Alemão',FR:'Francês',IT:'Italiano',JA:'Japonês',NL:'Holandês',TR:'Turco',RU:'Russo',UA:'Ucraniano'};
 const REGIOES = {EMEA:'Europa (EMEA)',LATAM:'América Latina (LATAM)',NA:'América do Norte (NA)',APAC:'Ásia-Pacífico (APAC)',OUT:'Outros'};
 const PAISES = {
@@ -1515,7 +1517,7 @@ function salvar(){ try { localStorage.setItem(CHAVE+'-lidas-'+(SESSAO?SESSAO.use
 /* =====================================================================
    NUVEM (Supabase): login, carga e gravação
    ===================================================================== */
-let ALERTAS_BUDGET = {};
+let ALERTAS_BUDGET = {}, ALERTAS_PAUSA = {};   // gravados só pelo meta-sync (servidor)
 let sb = null, SESSAO = null, PERFIL = null, ONLINE = {}, CANAL_ON = null, PERFIS = [], RESULTADOS = {}, NOTION = {}, META_CONTAS = [], CONTAS_STATUS = [], RECORRENTES = new Set(), INVOICES = [];
 const SNAP = {cli:{}, camp:{}, cfg:{}};
 const CFG_CHAVES = ['agencia','usuarios','feriados','modelo','modeloHist','baseRegiao','metasStatus','registrosStatus','ocultasStatus','alertasEmail','atividades','acompanhamento'];
@@ -1545,7 +1547,7 @@ async function carregar(){
   ]);
   S = estadoInicial(); DESF.pilha = []; DESF.refazer = []; DESF.atual = null;
   for (const r of cf) if (CFG_CHAVES.includes(r.chave)) S[r.chave] = r.valor;
-  ALERTAS_BUDGET = ((cf.find(r=>r.chave==='alertasBudget')||{}).valor) || {};
+  ALERTAS_BUDGET = ((cf.find(r=>r.chave==='alertasBudget')||{}).valor) || {}; ALERTAS_PAUSA = ((cf.find(r=>r.chave==='alertasPausa')||{}).valor) || {};
   S.clientes = cl.map(c=>({id:c.id, nome:c.nome, segmento:c.segmento, contato:c.contato, arquivado:c.arquivado, status:c.status||'ativo', grupo:c.grupo||'', logo:c.logo||''}));
   S.campanhas = ca.filter(r=>!r.dados || r.dados.tipo!=='social').map(r=>r.dados); S.social = ca.filter(r=>r.dados && r.dados.tipo==='social').map(r=>r.dados);   // social media fica na mesma tabela, separado das campanhas
   S.log = lg.map(l=>({q:new Date(l.quando).toLocaleString('pt-BR'), quem:l.quem, o:l.texto}));
@@ -2901,7 +2903,7 @@ function dadosSaude(c){
   }
   // as metas (budget, leads, custo) ficam as de Budgets e KPIs; o período escolhido só filtra os dias dos resultados
   const total = Math.max(1, difDias(ini, fim)+1);
-  const decorridos = Math.max(0, Math.min(total, difDias(ini, HOJE)+1)), frac = decorridos/total, restam = Math.max(0, difDias(HOJE, fim));
+  const decorridos = Math.max(0, Math.min(total, difDias(ini, ONTEM)+1)), frac = decorridos/total, restam = Math.max(0, difDias(HOJE, fim));
   const comMeta = linhas.filter(x=>x.leadsMeta);
   let score = null, ritmo = null, cplRatio = null;
   if (comMeta.length && frac>0) {
@@ -3025,7 +3027,7 @@ function saudeAwareness(c, S2){
   const comMeta = S2.linhas.filter(x=>x.custoAw>0 && metAw(x) && metAw(x).k===M.k), engMeta = comMeta.length===S2.linhas.length ? comMeta.reduce((s,x)=>s+x.bud/x.custoAw,0) : null, cpeMeta = engMeta ? bud/engMeta : null;
   const espE = engMeta ? engMeta*Math.min(1,S2.frac) : null, dE = espE ? eng/espE-1 : null, dC = cpe && cpeMeta ? cpe/cpeMeta-1 : null;
   const cEng = cartao(M.ic, M.rot, numCurto(eng), engMeta ? 'de '+numCurto(engMeta) : (M.k==='engaj'?'interações':M.pl),
-    engMeta ? barra(eng/engMeta, dE<-0.1?'#e0a100':'#2e9d55', Math.min(1,S2.frac), encerrada?'Meta da fase':'Esperado hoje') : barra(Math.min(1, (taxa||0)/0.6), '#2e9d55', null),
+    engMeta ? barra(eng/engMeta, dE<-0.1?'#e0a100':'#2e9d55', Math.min(1,S2.frac), encerrada?'Meta da fase':'Esperado até ontem') : barra(Math.min(1, (taxa||0)/0.6), '#2e9d55', null),
     `Custo por ${M.un}: ${cpe!=null?mc(cpe):'—'}${cpeMeta?` · meta ${mc(cpeMeta)}`:''}`,
     engMeta ? pill(dE<-0.25||dC>0.15?'verm':dE<-0.1||dC>0.05?'amar':'verde', `${Math.round(eng/engMeta*100)}% da meta${dC!=null?` · custo ${Math.round(Math.abs(dC)*100)}% ${dC>0?'acima':'abaixo'}`:''}`)
       : taxa==null ? pill('cinza','Sem dados') : pill('cinza','Meta a definir'),
@@ -3093,8 +3095,8 @@ function abaSaude(c){
   // leads
   const espL = leadsMeta ? leadsMeta*S2.frac : null, dL = espL ? leads/espL-1 : null;
   const cLeads = cartao('users', 'Leads', numero(leads), leadsMeta?'de '+numero(leadsMeta):'',
-    leadsMeta ? barra(leads/leadsMeta, dL<-0.1?'#e0a100':'#2e9d55', S2.frac, 'Esperado hoje') : barra(0,'#ccc',null),
-    leadsMeta ? `Esperado hoje: ${numero(Math.round(espL))}` : 'Sem meta de leads',
+    leadsMeta ? barra(leads/leadsMeta, dL<-0.1?'#e0a100':'#2e9d55', S2.frac, 'Esperado até ontem') : barra(0,'#ccc',null),
+    leadsMeta ? `Esperado até ontem: ${numero(Math.round(espL))}` : 'Sem meta de leads',
     leadsMeta ? pill(dL<-0.25?'verm':dL<-0.1?'amar':'verde', Math.abs(dL)<0.03?'No ritmo':`${Math.round(Math.abs(dL)*100)}% ${dL>0?'acima':'abaixo'} do ritmo`) : pill('cinza','Meta a definir'),
     projL!=null ? `Projeção ao fim: <b>~${numero(projL)} leads</b>${leadsMeta?` (${Math.round(projL/leadsMeta*100)}% da meta)`:''}` : `Total no período: <b>${numero(leads)}</b>`,
     subPais(o=>`<b>${numero(o.leads)}${o.leadsMeta?' / '+numero(o.leadsMeta):''}</b>`));
@@ -4111,8 +4113,8 @@ function metaAutoGer(mc, conta){
   let meta, real, frac, modo;
   const longa = ini && fim && difDias(ini, fim) > 120;
   let esperado, metaTotal = null;
-  if (ini && fim && !longa && !RECORRENTES.has(mc.id)) { const tot = Math.max(1, difDias(ini, fim)+1), dec = Math.max(0, Math.min(tot, difDias(ini, HOJE)+1)); frac = dec/tot; meta = pl*tot/custoMeta; real = +mc.resultados||0; modo = 'periodo'; esperado = meta*frac; metaTotal = meta; }
-  else if (ini) { const tf = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(1, Math.min(tf||1e9, difDias(ini, HOJE)+1)); frac = 1; meta = pl*dec/custoMeta; real = +mc.resultados||0; modo = 'acum'; var decAc = dec; esperado = meta; metaTotal = tf ? pl*tf/custoMeta : null; }
+  if (ini && fim && !longa && !RECORRENTES.has(mc.id)) { const tot = Math.max(1, difDias(ini, fim)+1), dec = Math.max(0, Math.min(tot, difDias(ini, ONTEM)+1)); frac = dec/tot; meta = pl*tot/custoMeta; real = +mc.resultados||0; modo = 'periodo'; esperado = meta*frac; metaTotal = meta; }
+  else if (ini) { const tf = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(1, Math.min(tf||1e9, difDias(ini, ONTEM)+1)); frac = 1; meta = pl*dec/custoMeta; real = +mc.resultados||0; modo = 'acum'; var decAc = dec; esperado = meta; metaTotal = tf ? pl*tf/custoMeta : null; }
   else { frac = 1; meta = pl*7/custoMeta; real = +mc.resultados7||0; modo = '7d'; esperado = meta; }
   const fp = ini && fim ? fracPlano(mc.id, ini, fim, pl*Math.max(1, difDias(ini, fim)+1)) : null;
   if (fp) { if (modo==='periodo') { frac = fp.frac; esperado = meta*frac; } else if (modo==='acum') { meta = fp.esperado/custoMeta; esperado = meta; } }
@@ -4153,9 +4155,9 @@ async function montarSlides(grupo, tipo = '', opc = {}){
   if (!opc.Pptx) await carregarScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js');
   const ct = contasVisiveis().find(x=>x.grupo===grupo); if (!ct) throw new Error('Conta não encontrada.');
   const en = idiomaConta(ct)==='en', T = en
-    ? {saude:'Campaign health', termina:'Campaign ends in', dias:'days', encerrada:'Campaign ended', kpis:'KPIs follow-up', pais:'Country', meta:'Goal', ating:'Reached', custo:'Cost', diario:'Daily budget', plan:'Planned', real:'Actual (7d)', pontos:'Points of attention', coment:'Comments', periodo:'Campaign duration', relatorio:'Report date', fonte:'Source: Meta Ads Manager', atualizado:'updated', semMeta:'No goal set', total:'Total', investido:'Invested', fase:'Phase', capa:'Campaign status', campanhas:'campaigns live', ok:'All countries on track.', escreva:'Add comments here…', esperado:'expected today', resumo:['Invested','Results','Avg. cost'], abaixo:(n,l)=>`${n} ${n===1?'country':'countries'} below pace: ${l}`, campanha:'Campaign',
+    ? {saude:'Campaign health', termina:'Campaign ends in', dias:'days', encerrada:'Campaign ended', kpis:'KPIs follow-up', pais:'Country', meta:'Goal', ating:'Reached', custo:'Cost', diario:'Daily budget', plan:'Planned', real:'Actual (7d)', pontos:'Points of attention', coment:'Comments', periodo:'Campaign duration', relatorio:'Report date', fonte:'Source: Meta Ads Manager', atualizado:'updated', semMeta:'No goal set', total:'Total', investido:'Invested', fase:'Phase', capa:'Campaign status', campanhas:'campaigns live', ok:'All countries on track.', escreva:'Add comments here…', esperado:'expected through yesterday', resumo:['Invested','Results','Avg. cost'], abaixo:(n,l)=>`${n} ${n===1?'country':'countries'} below pace: ${l}`, campanha:'Campaign',
        niv:{Saudável:'Healthy','Atenção':'Attention','Crítica':'Critical'}, tipo:{leads:'Leads','conversões':'Conversions',cliques:'Clicks',engajamentos:'Engagements',alcance:'Reach',compras:'Purchases'}, cpr:{leads:'CPL','conversões':'Cost per conversion',cliques:'CPC',engajamentos:'Cost per engagement',alcance:'Cost per person',compras:'Cost per purchase'}}
-    : {saude:'Saúde da campanha', termina:'A campanha termina em', dias:'dias', encerrada:'Campanha encerrada', kpis:'Acompanhamento de KPIs', pais:'País', meta:'Meta', ating:'Atingido', custo:'Custo', diario:'Budget diário', plan:'Planejado', real:'Real (7d)', pontos:'Pontos de atenção', coment:'Comentários', periodo:'Período de veiculação', relatorio:'Data do relatório', fonte:'Fonte: Gerenciador de Anúncios do Meta', atualizado:'atualizado', semMeta:'Meta a definir', total:'Total', investido:'Investido', fase:'Fase', capa:'Status das campanhas', campanhas:'campanhas no ar', ok:'Todos os países no ritmo.', escreva:'Escreva aqui os comentários…', esperado:'esperado hoje', resumo:['Investido','Resultados','Custo médio'], abaixo:(n,l)=>`${n} ${n===1?'país':'países'} abaixo do ritmo: ${l}`, campanha:'Campanha',
+    : {saude:'Saúde da campanha', termina:'A campanha termina em', dias:'dias', encerrada:'Campanha encerrada', kpis:'Acompanhamento de KPIs', pais:'País', meta:'Meta', ating:'Atingido', custo:'Custo', diario:'Budget diário', plan:'Planejado', real:'Real (7d)', pontos:'Pontos de atenção', coment:'Comentários', periodo:'Período de veiculação', relatorio:'Data do relatório', fonte:'Fonte: Gerenciador de Anúncios do Meta', atualizado:'atualizado', semMeta:'Meta a definir', total:'Total', investido:'Investido', fase:'Fase', capa:'Status das campanhas', campanhas:'campanhas no ar', ok:'Todos os países no ritmo.', escreva:'Escreva aqui os comentários…', esperado:'esperado até ontem', resumo:['Investido','Resultados','Custo médio'], abaixo:(n,l)=>`${n} ${n===1?'país':'países'} abaixo do ritmo: ${l}`, campanha:'Campanha',
        niv:{Saudável:'Saudável','Atenção':'Atenção','Crítica':'Crítica'}, tipo:{leads:'Leads','conversões':'Conversões',cliques:'Cliques',engajamentos:'Engajamentos',alcance:'Alcance',compras:'Compras'}, cpr:{leads:'CPL','conversões':'Custo por conversão',cliques:'CPC',engajamentos:'Custo por engajamento',alcance:'Custo por pessoa',compras:'Custo por compra'}};
   const nPais = p => p ? (en ? p : (PAISES[p] ? PAISES[p].n : p)) : (en ? 'General' : 'Geral');
   const g0 = gruposStatusConta(ct, vinculosMeta()), {d, moe} = g0, lista = g0.lista.filter(g=>!tipo || (tipo==='recorrentes') === !!g.recorrente);
@@ -4181,7 +4183,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     const sl = pptx.addSlide(); sl.background = bg || {color:C.fundo};
     // números por país
     const invG = mc => { const pl = +mc.budgetDiario||0, ini = (mc.inicio||'').slice(0,10), fim = (mc.fim||'').slice(0,10); if (!pl || !ini) return {total:null, esperado:null};
-      const tot = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(0, Math.min(tot||1e9, difDias(ini, HOJE)+1)), fp = tot ? fracPlano(mc.id, ini, fim, pl*tot) : null;
+      const tot = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(0, Math.min(tot||1e9, difDias(ini, ONTEM)+1)), fp = tot ? fracPlano(mc.id, ini, fim, pl*tot) : null;
       return {total: tot ? pl*tot : null, esperado: fp ? fp.esperado : pl*dec}; };
     const linhas = g.linhas.map(({mc, p, vi})=>{
       if (vi) { const m = metricasStatus(vi.c, vi.v.fase||null, vi.v.marca||null, vi.v.pais||null); if (m.vazio) return {p, vazio:true};
@@ -4206,7 +4208,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     sl.addText(T.campanha.toUpperCase(), {x:xc, y:0.36, w:4.4, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut, charSpacing:1});
     sl.addText(g.titulo, {x:xc, y:0.58, w:4.45, h:0.38, fontFace:F, fontSize:17, bold:true, color:C.esc, fit:'shrink'});
     sl.addText(`${grupo}${g.fase ? ` · ${T.fase} ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}` : ''}${g.pausada ? (en?' · Paused':' · Pausada')+(g.pausadaEm?' '+dt(g.pausadaEm):'') : ''}`, {x:xc, y:0.92, w:4.45, h:0.25, fontFace:F, fontSize:9.5, color:C.mut});
-    const totD = g.per.ini && g.per.fim ? Math.max(1, difDias(g.per.ini, g.per.fim)+1) : null, decD = totD ? Math.max(0, Math.min(totD, difDias(g.per.ini, HOJE)+1)) : 0, frac = totD ? decD/totD : 0;
+    const totD = g.per.ini && g.per.fim ? Math.max(1, difDias(g.per.ini, g.per.fim)+1) : null, decD = totD ? Math.max(0, Math.min(totD, difDias(g.per.ini, ONTEM)+1)) : 0, frac = totD ? decD/totD : 0;
     card(sl, 6.1, 0.3, 3.85, 0.95);
     sl.addText(T.periodo.toUpperCase(), {x:6.3, y:0.36, w:3.5, h:0.25, fontFace:F, fontSize:8.5, bold:true, color:C.mut, charSpacing:1});
     sl.addText(`${dt(g.per.ini)} → ${dt(g.per.fim)}`, {x:6.3, y:0.57, w:2.1, h:0.36, fontFace:F, fontSize:16, bold:true, color:C.esc, fit:'shrink'});
@@ -4222,7 +4224,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     const cel = (txt, cor, o) => ({text:txt, options:Object.assign({align:'center', valign:'middle', fontSize:10.5, color: cor ? C[cor+'T'] : C.txt, fill:{color: cor ? C[cor+'F'] : 'FFFFFF'}, bold: !!cor}, o||{})});
     const tt = o => Object.assign({bold:true, fill:{color:'EEF3F4'}}, o||{});
     const multi = linhas.length>1, sR = linhas.reduce((t,l)=>t+(+l.real||0),0), sM = linhas.every(l=>l.meta) ? linhas.reduce((t,l)=>t+l.meta,0) : null, sI = linhas.reduce((t,l)=>t+(+l.inv||0),0);
-    const espHoje = en ? 'Expected today' : 'Esperado hoje', sE = linhas.every(l=>l.esp!=null) ? linhas.reduce((t,l)=>t+l.esp,0) : null;
+    const espHoje = en ? 'Expected through yesterday' : 'Esperado até ontem', sE = linhas.every(l=>l.esp!=null) ? linhas.reduce((t,l)=>t+l.esp,0) : null;
     const rL = [[{text:T.pais, options:hd({align:'left', fill:{color:C.esc}})}, {text:T.meta, options:hd()}, {text:espHoje, options:hd()}, {text:T.ating, options:hd()}]];
     for (const l of linhas) rL.push([cel(nPais(l.p), null, {bold:true, align:'left'}), cel(l.meta?num(l.meta):'—'), cel(l.esp!=null?num(Math.round(l.esp)):'—'), cel(num(l.real), corR(l.rit))]);
     if (multi) rL.push([cel(T.total, null, tt({align:'left'})), cel(sM?num(sM):'—', null, tt()), cel(sE!=null?num(Math.round(sE)):'—', null, tt()), cel(num(sR), null, tt())]);
@@ -4254,7 +4256,7 @@ async function montarSlides(grupo, tipo = '', opc = {}){
     for (const l of linhas) { const n = nPais(l.p);
       if (l.aprend) { const dA = Math.max(0, difDias(l.aprend, HOJE)); pts.push(en ? `${n}: learning phase (started ${dA} day${dA===1?'':'s'} ago); results are not evaluated yet.` : `${n}: fase de aprendizado (começou há ${dA} dia${dA===1?'':'s'}); resultados ainda não avaliados.`); continue; }
       if (!l.real && (l.inv||0)>0) pts.push(en ? `${n}: no ${(T.tipo[l.tipo]||'results').toLowerCase()} yet.` : `${n}: ainda sem ${(T.tipo[l.tipo]||'resultados').toLowerCase()}.`);
-      else if (l.rit!=null && l.rit<1) pts.push(en ? `${n}: ${num(l.real)} of ${num(l.esp)} expected so far.` : `${n}: ${num(l.real)} de ${num(l.esp)} esperados até hoje.`);
+      else if (l.rit!=null && l.rit<1) pts.push(en ? `${n}: ${num(l.real)} of ${num(l.esp)} expected so far.` : `${n}: ${num(l.real)} de ${num(l.esp)} esperados até ontem.`);
       if (l.custo!=null && l.custoMeta && l.custo>l.custoMeta) pts.push(en ? `${n}: ${T.cpr[l.tipo]||'cost'} ${din(l.custo)} (goal ${din(l.custoMeta)}).` : `${n}: ${T.cpr[l.tipo]||'custo'} ${din(l.custo)} (meta ${din(l.custoMeta)}).`);
       const rd = l.plano ? l.dia/l.plano : null; if (rd!=null && (rd<0.85 || rd>1.15)) pts.push(en ? `${n}: spending ${din(l.dia)}/day of ${din(l.plano)} planned.` : `${n}: gastando ${din(l.dia)}/dia de ${din(l.plano)} planejados.`); }
     card(sl, 9.2, 1.45, 3.78, 2.85, T.pontos);
@@ -4338,7 +4340,7 @@ function ctxMetaStatus(mcId, conta){
   const A = metaAutoGer(mc, conta), pl = +mc.budgetDiario||0; if (!pl) return null;
   const tot = A ? A.tot : 7, base = pl*tot, tipo = mc.tipoResultado || 'resultados';
   return {mc, base, moe, meta: A ? A.meta : null, custo: A ? A.custoMeta : null, tipo, unid: 'custo por '+(tipo==='alcance'?'pessoa':tipo.replace(/s$/,'')), manual: !!(A && A.manual),
-    baseTxt: `budget diário de ${moeda2(pl, moe)} × ${tot} dias${A && A.modo==='7d' ? ' (últimos 7 dias)' : A && A.modo==='acum' ? ' (desde o início até hoje)' : ' (período da campanha)'} = ${moeda2(base, moe)}`}; }
+    baseTxt: `budget diário de ${moeda2(pl, moe)} × ${tot} dias${A && A.modo==='7d' ? ' (últimos 7 dias)' : A && A.modo==='acum' ? ' (desde o início até ontem)' : ' (período da campanha)'} = ${moeda2(base, moe)}`}; }
 function abrirMetaStatus(mcId, conta){
   const x = ctxMetaStatus(mcId, conta); if (!x || !(x.base>0)) return alert(x && x.vi ? `Defina o budget de Meta Ads deste país em Budgets e KPIs de “${x.vi.c.nome}” para ajustar a meta.` : 'Sem budget para calcular a meta desta campanha.');
   UI.metaSt = {mcId, conta};
@@ -4385,7 +4387,7 @@ function mesesPeriodo(ini, fim){ const out = []; if (!ini || !fim || fim < ini) 
     const a = (m+'-01') < ini ? ini : m+'-01', b = ult > fim ? fim : ult; out.push({m, ini:a, fim:b, dias: difDias(a, b)+1, rot: NOMES_MES[mm-1]+(a.slice(8)!=='01'?` (desde ${+a.slice(8)})`:'')+(b!==ult?` (até ${+b.slice(8)})`:'')}); m = prox; }
   return out; }
 function fracPlano(id, ini, fim, total){ const P = planoMensal(id); if (!P || !ini || !fim) return null; const ms = mesesPeriodo(ini, fim); let esp = 0, atual = null;
-  for (const m of ms) { const B = +P[m.m]||0; if (m.fim < HOJE) esp += B; else if (m.ini <= HOJE) { esp += B*(difDias(m.ini, HOJE)+1)/m.dias; atual = {...m, B}; } }
+  for (const m of ms) { const B = +P[m.m]||0; if (m.fim <= ONTEM) esp += B; else if (m.ini <= HOJE) { esp += B*Math.max(0, difDias(m.ini, ONTEM)+1)/m.dias; atual = {...m, B}; } }
   return {esperado: esp, frac: total ? Math.min(1, esp/total) : null, atual, ms, P}; }
 function gastoMes(mc, vi, mes){ if (vi) { const r = (RESULTADOS[vi.c.id]||[]).find(x=>x.meta_campanha===mc.id) || (RESULTADOS[vi.c.id]||[]).find(x=>((x.dados||{}).vinculo||{}).campanhaId===mc.id);
     if (r) return ((r.dados||{}).porDia||[]).filter(d=>String(d.data).slice(0,7)===mes).reduce((t,d)=>t+(+d.investido||0),0); }
@@ -4671,19 +4673,19 @@ function pgStatus(){
   const COR = {verde:'#2e9d55', amar:'#e0a100', verm:'#d0443a'};
   const curto = (v, m) => v==null ? '—' : v<0.1 ? mcusto(v, m).replace(/^R\$\s?/,'') : Number(v).toLocaleString('pt-BR',{maximumFractionDigits:2});
   const cel = (val, ref, pct, frac, cor, marca) => `<div class="stb-top"><b>${val}</b><span class="muted">/ ${ref}</span><span class="stp-pct">${pct}</span></div><div class="sd-bar stb"><i style="width:${Math.min(100,frac*100)}%;background:${COR[cor]}"></i>${marca!=null?`<b style="left:${marca*100}%"></b>`:''}</div>`;
-  const esp = (v, rot='esperado hoje') => `<div class="stb-esp">${rot}: <b>${v}</b></div>`;
+  const esp = (v, rot='esperado até ontem') => `<div class="stb-esp">${rot}: <b>${v}</b></div>`;
   // investimento: preenchimento = consumido, traço = quanto deveria ter sido consumido até hoje
   const barraInv = (inv, total, esperado, moe) => { const mc0 = v => moedaCurta(v, moe);
     if (!total) return `<div class="stb-top"><b>${mc0(inv)}</b><span class="muted">consumido</span></div>${esperado?esp(mc0(esperado)):''}`;
     const fr = inv/total, ei = esperado!=null ? Math.min(1, esperado/total) : null, r = esperado ? inv/esperado : null;
     return cel(mc0(inv), mc0(total).replace(/^[^\d]+/,''), Math.round(fr*100)+'%', fr, r==null ? 'verde' : corDev(r), ei!=null && ei<1 ? ei : null) + (esperado!=null ? esp(mc0(esperado)) : ''); };
   const invGer = mc => { const pl = +mc.budgetDiario||0, ini = (mc.inicio||'').slice(0,10), fim = (mc.fim||'').slice(0,10); if (!pl || !ini) return {inv:+mc.investido||0};
-    const tot = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(0, Math.min(tot||1e9, difDias(ini, HOJE)+1)); const fp = tot ? fracPlano(mc.id, ini, fim, pl*tot) : null; return {inv:+mc.investido||0, total: tot ? pl*tot : null, esperado: fp ? fp.esperado : pl*dec}; };
+    const tot = fim ? Math.max(1, difDias(ini, fim)+1) : null, dec = Math.max(0, Math.min(tot||1e9, difDias(ini, ONTEM)+1)); const fp = tot ? fracPlano(mc.id, ini, fim, pl*tot) : null; return {inv:+mc.investido||0, total: tot ? pl*tot : null, esperado: fp ? fp.esperado : pl*dec}; };
   // custo: preenchimento = custo atual, traço = meta (verde abaixo da meta)
   const barraCusto = m => { if (m.vazio) return '<span class="muted small">—</span>'; if (m.custo==null) return `<span class="muted small">sem resultado</span>${m.custoMeta?esp('≤ '+mcusto(m.custoMeta,m.moe), 'esperado'):''}`;
     if (!m.custoMeta) return `<div class="stb-top"><b>${mcusto(m.custo,m.moe)}</b><span class="muted">/ meta a definir</span></div>`;
     const r = m.custo/m.custoMeta, esc = Math.max(r, 1)*1.15; return cel(mcusto(m.custo,m.moe), curto(m.custoMeta,m.moe), Math.round(r*100)+'%', r/esc, corCusto(r), 1/esc) + esp('≤ '+mcusto(m.custoMeta,m.moe), 'esperado'); };
-  // resultado: preenchimento = atingido da meta, traço = esperado hoje (cor pelo ritmo)
+  // resultado: preenchimento = atingido da meta, traço = esperado até ontem (cor pelo ritmo)
   const barraRes = (m, mc) => { if (m.vazio) return '<span class="muted small">—</span>'; const fpR = mc ? fracPlano(mc.id, m.S2.ini, m.S2.fim, m.bud) : null;
     if (!m.meta) return `<div class="stb-top"><b>${numCurto(m.real)}</b><span class="muted">/ meta a definir</span></div>`;
     const r = m.real/m.meta, fe = fpR && fpR.frac!=null ? fpR.frac : Math.min(1, m.S2.frac), rit = fe ? r/fe : r; return cel(numCurto(m.real), numCurto(m.meta), Math.round(r*100)+'%', r, corRes(rit), fe<1?fe:null) + esp(numCurto(Math.round(m.meta*fe))); };
@@ -4699,7 +4701,7 @@ function pgStatus(){
     if (fim) { if (m.meta) d.push(m.real>=m.meta ? ['verde', `Fase encerrada: meta batida (${ni(m.real)} de ${ni(m.meta)}).`] : ['amar', `Fase encerrada: ${ni(m.real)} de ${ni(m.meta)} da meta.`]); }
     else {
       const esp = Math.min(1, S2.frac), rit = m.meta && esp ? (m.real/m.meta)/esp : null;
-      if (rit!=null && rit<1) d.push([corRes(rit), `Resultado abaixo do ritmo: ${ni(m.real)} de ${ni(m.meta*esp)} esperados até hoje.`]);
+      if (rit!=null && rit<1) d.push([corRes(rit), `Resultado abaixo do ritmo: ${ni(m.real)} de ${ni(m.meta*esp)} esperados até ontem.`]);
       if (g.r!=null && g.r<0.85) d.push([g.r<0.5?'verm':'amar', `Investimento baixo: subir para ${md(g.precisa ?? g.plano)}/dia.`]);
       else if (g.r!=null && g.r>1.15) d.push(['amar', `Gasto acima do planejado: ${g.precisa!=null?`ajustar para ${md(g.precisa)}/dia`:'reduzir o diário'}.`]);
       if (m.custo && m.custoMeta && m.custo/m.custoMeta>1) d.push([corCusto(m.custo/m.custoMeta), `${m.rotCusto} de ${mcusto(m.custo, m.moe)}, acima da meta de ${mcusto(m.custoMeta, m.moe)}.`]);
@@ -4725,7 +4727,7 @@ function pgStatus(){
       if (A.rit!=null && A.rit<1) notas.unshift([corRes(A.rit), `${A.modo==='7d'?'Últimos 7 dias':A.modo==='acum'?'Acumulado':'Resultado'} abaixo do ritmo: ${ni(A.real)} de ${ni(A.esperado)} esperados${A.modo==='7d'?' em 7 dias':' até hoje'}.`]);
       if (!A.novo && A.custo && A.custo/A.custoMeta>1) notas.unshift([corCusto(A.custo/A.custoMeta), `Custo de ${mcusto(A.custo, moe)}, acima ${A.manual?'da meta':'da média da conta'} (${mcusto(A.custoMeta, moe)}).`]);
       const rc = A.custo ? A.custo/A.custoMeta : null, escC = Math.max(rc||0, 1)*1.15;
-      return {A, nivel: A.nivel ? A.nivel.t : null, cel1: cel(numCurto(A.real), numCurto(mT)+(A.modo==='7d'?' em 7 dias':A.metaTotal==null&&A.modo==='acum'?' até hoje':''), Math.round(rr*100)+'%', rr, corR, eFr!=null && eFr<1 ? eFr : null) + esp(numCurto(Math.round(A.esperado)), A.modo==='7d'?'esperado em 7 dias':'esperado hoje'), cel4,
+      return {A, nivel: A.nivel ? A.nivel.t : null, cel1: cel(numCurto(A.real), numCurto(mT)+(A.modo==='7d'?' em 7 dias':A.metaTotal==null&&A.modo==='acum'?' até ontem':''), Math.round(rr*100)+'%', rr, corR, eFr!=null && eFr<1 ? eFr : null) + esp(numCurto(Math.round(A.esperado)), A.modo==='7d'?'esperado em 7 dias':'esperado até ontem'), cel4,
         cel2: (rc==null ? '<span class="muted small">sem resultado</span>' : cel(mcusto(A.custo, moe), curto(A.custoMeta, moe), Math.round(rc*100)+'%', rc/escC, corCusto(rc), 1/escC)) + esp('≤ '+mcusto(A.custoMeta, moe), 'esperado'),
         cel3: pl ? cel(moeda2(real, moe), curto(pl, moe), Math.round(r*100)+'%', r/(Math.max(r,1)*1.15), cls, 1/(Math.max(r,1)*1.15)) : `<div class="stb-top"><b>${moeda2(real, moe)}</b><span class="muted">/ dia</span></div>`,
         fr: notas.length ? notas.slice(0,2).map(([n,t])=>`<div class="stp-fr"><i class="p-${n}"></i>${h(t)}</div>`).join('') : '<span class="muted">No ritmo.</span>', cor: corN(A.nivel), dias}; }
@@ -4784,7 +4786,7 @@ function pgStatus(){
       if (foco && !(foco==='atencao' ? trata : nivelCamp===foco)) return '';
       return `<div class="stp-card ${aberto?'':'fech'} ${g.pausada?'pausada':''} ${g.oculta?'oculta':''}">
         <div class="stp-ch" data-act="stpAbrir" data-k="${h(chave)}"><i data-lucide="chevron-down" class="stp-chev"></i><span class="ponto-st" style="background:${g.pausada?'#9aa3a6':aprendTudo?COR_APR:corN(pior?{t:pior}:null)}"></span>
-          <div class="stp-tit">${g.c?`<a ${lk} class="st-nome" onclick="event.stopPropagation()">${h(g.titulo)}</a>`:`<span class="st-nome">${h(g.titulo)}</span>`}${g.fase?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}</span>`:''}${g.pausada?`<span class="stp-pill n-p"><i data-lucide="pause"></i>Pausada${g.pausadaEm?' em '+fdm(g.pausadaEm):''}</span>`:aprendTudo?`<span class="stp-pill n-ap"><i data-lucide="graduation-cap"></i>Em aprendizado</span>`:pill}${semMeta&&!g.pausada?'<span class="stp-pill">Sem meta cadastrada</span>':''}${auto && !semMeta && auto.manual?`<span class="stp-pill" title="Custo por resultado ajustado à mão no Digital › Campanhas; a meta é o budget ÷ esse custo."><i data-lucide="pencil"></i>Custo manual</span>`:''}${auto && !semMeta && !auto.manual?`<span class="stp-pill" title="Meta calculada automaticamente: custo médio de ${auto.n} campanha(s) de ${h(auto.midia)} ${auto.base==='país'?'no mesmo país':'na conta'} nos últimos 6 meses (sem contar esta) × budget diário${auto.modo==='7d'?', nos últimos 7 dias':auto.modo==='acum'?' × dias desde o início (acumulado até hoje)':' do período'}."><i data-lucide="sparkles"></i>Meta automática</span>`:''}${g.recorrente && !tipoF?'<span class="stp-pill"><i data-lucide="repeat"></i>Recorrente</span>':''}</div>
+          <div class="stp-tit">${g.c?`<a ${lk} class="st-nome" onclick="event.stopPropagation()">${h(g.titulo)}</a>`:`<span class="st-nome">${h(g.titulo)}</span>`}${g.fase?` <span class="tag t-pet">Fase ${FASES_CAMP.indexOf(g.fase)+1} · ${g.fase}</span>`:''}${g.pausada?`<span class="stp-pill n-p"><i data-lucide="pause"></i>Pausada${g.pausadaEm?' em '+fdm(g.pausadaEm):''}</span>`:aprendTudo?`<span class="stp-pill n-ap"><i data-lucide="graduation-cap"></i>Em aprendizado</span>`:pill}${semMeta&&!g.pausada?'<span class="stp-pill">Sem meta cadastrada</span>':''}${auto && !semMeta && auto.manual?`<span class="stp-pill" title="Custo por resultado ajustado à mão no Digital › Campanhas; a meta é o budget ÷ esse custo."><i data-lucide="pencil"></i>Custo manual</span>`:''}${auto && !semMeta && !auto.manual?`<span class="stp-pill" title="Meta calculada automaticamente: custo médio de ${auto.n} campanha(s) de ${h(auto.midia)} ${auto.base==='país'?'no mesmo país':'na conta'} nos últimos 6 meses (sem contar esta) × budget diário${auto.modo==='7d'?', nos últimos 7 dias':auto.modo==='acum'?' × dias desde o início (acumulado até ontem)':' do período'}."><i data-lucide="sparkles"></i>Meta automática</span>`:''}${g.recorrente && !tipoF?'<span class="stp-pill"><i data-lucide="repeat"></i>Recorrente</span>':''}</div>
           <div class="stp-res"><span><b>${numCurto(res)}</b> ${h(tipoR)}</span><span><b>${res?mcusto(inv/res, moe):'—'}</b> por ${h(unid)}</span><span>${per.ini?fdm(per.ini):'?'} → ${per.fim?fdm(per.fim):'sem fim'}${restam!=null?` · <b>${restam}</b> dias restantes`:''}</span></div>
           ${ehEquipe()?`<a href="javascript:void 0" class="st-rec" data-act="alternarRecorrente" data-ids="${g.linhas.map(l=>l.mc.id).join(',')}" data-v="${g.recorrente?'0':'1'}" title="${g.recorrente?'Passar para pontual':'Marcar como recorrente'}"><i data-lucide="${g.recorrente?'target':'repeat'}"></i>${g.recorrente?'Tornar pontual':'Tornar recorrente'}</a><a href="javascript:void 0" class="st-rec" data-act="ocultarSt" data-ids="${g.linhas.map(l=>l.mc.id).join(',')}" data-v="${g.oculta?'0':'1'}" title="${g.oculta?'Voltar a mostrar no Digital › Campanhas':'Esconder esta campanha do Digital › Campanhas e do relatório'}"><i data-lucide="${g.oculta?'eye':'eye-off'}"></i>${g.oculta?'Mostrar':'Ocultar'}</a>`:''}</div>
         <div class="stp-det"><table class="tab st-tab"><colgroup><col style="width:10%"><col style="width:14%"><col style="width:15%"><col style="width:15%"><col style="width:13%"><col style="width:18%"><col style="width:15%"></colgroup><thead><tr><th>País</th><th>Resultado</th><th>Custo</th><th>Investimento</th><th>Budget diário</th><th>Atenção</th><th>Comentários</th></tr></thead><tbody>${linhas}</tbody></table></div></div>`; }).join('');
@@ -4808,7 +4810,7 @@ function pgStatus(){
       <div class="stc-n"><b>${T.n}</b> campanha${T.n===1?'':'s'} no ar${T.pausada?` · ${T.pausada} pausada${T.pausada===1?'':'s'}`:''}</div>
       <div class="stc-far">${far || '<span class="muted">Nenhuma campanha desse tipo no ar.</span>'}</div>
       <div class="stc-rod"><span>Investido: <b>${moedaCurta(T.inv, moe)}</b></span><span>${!snap ? 'não sincronizada' : hs<1 ? 'atualizado há menos de 1 h' : 'atualizado há '+Math.round(hs)+' h'}</span><i data-lucide="chevron-right"></i></div></a>`; }).join('')}</div>`}
-  <div class="small muted" style="padding:14px 4px">Campanhas vinculadas: resultado e custo comparados com a meta da plataforma (o traço marca a meta ou o esperado para hoje). Campanhas só no Gerenciador: resultado conforme o objetivo e custo por resultado, sem meta. Investimento: consumido desde o início × budget total; o traço e o “esperado hoje” mostram quanto deveria ter sido consumido até hoje (budget × dias decorridos). Budget diário: média dos últimos 7 dias × budget diário planejado. Cores: resultado verde no ritmo ou acima, amarelo até 50% abaixo do esperado e vermelho mais de 50% abaixo; custo verde até a meta, amarelo até 50% acima e vermelho mais de 50% acima; gasto verde até 15% de diferença, amarelo até 50% e vermelho acima disso. Em aprendizado: os 7 primeiros dias não são avaliados. As campanhas abrem recolhidas: clique para ver os países.</div>`; }
+  <div class="small muted" style="padding:14px 4px">Campanhas vinculadas: resultado e custo comparados com a meta da plataforma (o traço marca a meta ou o esperado até ontem). Campanhas só no Gerenciador: resultado conforme o objetivo e custo por resultado, sem meta. Investimento: consumido desde o início × budget total; o traço e o “esperado até ontem” mostram quanto deveria ter sido consumido até ontem (budget × dias decorridos até ontem; o dia de hoje ainda não fechou). Budget diário: média dos últimos 7 dias × budget diário planejado. Cores: resultado verde no ritmo ou acima, amarelo até 50% abaixo do esperado e vermelho mais de 50% abaixo; custo verde até a meta, amarelo até 50% acima e vermelho mais de 50% acima; gasto verde até 15% de diferença, amarelo até 50% e vermelho acima disso. Em aprendizado: os 7 primeiros dias não são avaliados. As campanhas abrem recolhidas: clique para ver os países.</div>`; }
 const mcusto = (v, m) => moeda2(v, m);   // padrão: 2 casas decimais
 
 /* =====================================================================
@@ -5124,7 +5126,10 @@ function atOcor(k){ if (k.startsWith('i:')) { const it = atDados().itens.find(x=
 const atTitulo = x => `${x.prazo ? fdm(x.prazo).replace('/','.') : 'xxx'} - ${x.cliente||'—'}${x.campanha ? ' - '+x.campanha : ''} - ${x.nome}`;
 const atCor = x => x.feito ? 'at-feito' : !x.prazo ? 'at-sem' : (x.prazo < HOJE || x.data < HOJE) ? 'at-atras' : 'at-az';   // vermelho: passou do dia/prazo sem concluir
 /* ---------- pendências do Gerenciador, agrupadas por campanha (não por país) ---------- */
-const PEND_TIPO = {daily:'Ajustar daily budget no Gerenciador'};
+const PEND_TIPO = {daily:'Ajustar daily budget no Gerenciador', pausa:'Justificar a pausa da campanha'};
+/* pausas detectadas pelo meta-sync (config.alertasPausa) ainda sem justificativa (metasStatus[id].pausaJust.chave = avisadaEm da pausa) */
+const pausaAberta = (id, a) => a && a.pend && a.avisadaEm && !ocultaSt(id) && ((((S && S.metasStatus)||{})[id]||{}).pausaJust||{}).chave !== a.avisadaEm;
+const pausaPend = (id, a) => ({id:'pausa:'+id+':'+a.avisadaEm, tipo:'pausa', em:String(a.avisadaEm).slice(0,10), o:`Pausada no Gerenciador${a.pausadaEm ? ' em '+fdm(String(a.pausadaEm).slice(0,10)) : ''}${a.reativadaEm ? ' (já voltou a rodar)' : ''}`});
 function pendGrupos(){ const G = new Map(), vis = vinculosMeta(), mcs = META_CONTAS.flatMap(m=>(((m.dados||{}).campanhas)||[]).map(x=>({x, conta:m.conta})));
   for (const [mcId, m] of Object.entries(S.metasStatus||{})) { const ps = (m.pend||[]).filter(p=>!p.feito); if (!ps.length) continue;
     const f = mcs.find(o=>o.x.id===mcId), vi = vis[mcId], nomeMc = f ? f.x.nome : mcId, ct = f && CONTAS_STATUS.find(c=>String(c.conta)===String(f.conta));
@@ -5132,10 +5137,14 @@ function pendGrupos(){ const G = new Map(), vis = vinculosMeta(), mcs = META_CON
     for (const p of ps) { const tipo = p.tipo || 'daily', chave = (vi ? 'c:'+vi.c.id : 'm:'+(f ? f.conta : '')+':'+cp) + ':' + tipo;
       const g = G.get(chave) || {chave, tipo, cliente:cli, campanha:cp, itens:[], em:p.em||HOJE};
       g.itens.push({mcId, p, pais:(vi && vi.v.pais) || paisDe(nomeMc) || '', conta:f && f.conta, nome:nomeMc}); if ((p.em||HOJE) < g.em) g.em = p.em; G.set(chave, g); } }
+  for (const [mcId, a] of Object.entries(ALERTAS_PAUSA||{})) { if (!pausaAberta(mcId, a)) continue; const vi = vis[mcId], p = pausaPend(mcId, a);
+    const cp = vi ? vi.c.nome : titulo(a.campanha||mcId), cli = vi ? cliente(vi.c.clienteId).nome : a.onde || '—', chave = (vi ? 'c:'+vi.c.id : 'm:'+(a.conta||'')+':'+cp) + ':pausa';
+    const g = G.get(chave) || {chave, tipo:'pausa', cliente:cli, campanha:cp, itens:[], em:p.em};
+    g.itens.push({mcId, p, pais:(vi && vi.v.pais) || a.pais || paisDe(a.campanha||'') || '', conta:a.conta, nome:a.campanha||mcId}); if (p.em < g.em) g.em = p.em; G.set(chave, g); }
   return [...G.values()].sort((a,b)=>a.em.localeCompare(b.em)); }
 /* atividade de pendência: segue os ids das pendências de cada país, não o nome da campanha
    (o nome pode mudar ou não ser encontrado numa página aberta há muito tempo) */
-const pendIdsAbertos = () => { const s = new Set(); for (const m of Object.values((S && S.metasStatus)||{})) for (const p of (m.pend||[])) if (!p.feito) s.add(String(p.id)); return s; };
+const pendIdsAbertos = () => { const s = new Set(); for (const m of Object.values((S && S.metasStatus)||{})) for (const p of (m.pend||[])) if (!p.feito) s.add(String(p.id)); for (const [id, a] of Object.entries(ALERTAS_PAUSA||{})) if (pausaAberta(id, a)) s.add(pausaPend(id, a).id); return s; };
 function grupoDoItem(it, gs){ gs = gs || pendGrupos(); const ids = (it.pend||{}).ids; return (ids && ids.length ? gs.find(g=>g.itens.some(i=>ids.includes(String(i.p.id)))) : null) || gs.find(g=>g.chave===it.pend.chave) || null; }
 function pendItemAberto(it, ab){ const ids = (it.pend||{}).ids; return ids && ids.length ? ids.some(id=>(ab||pendIdsAbertos()).has(String(id))) : !!grupoDoItem(it); }
 function itemDoGrupo(g, itens){ const ids = new Set(g.itens.map(i=>String(i.p.id))); return (itens||[]).find(it=>it.pend && !it.feito && (it.pend.ids && it.pend.ids.length ? it.pend.ids.some(id=>ids.has(String(id))) : it.pend.chave===g.chave)); }
@@ -5290,16 +5299,25 @@ function atCheck(k){ const A = atDados(), x = atOcor(k); if (!x) return;
 function atContMenu(){ try { return pendGrupos().length + atAtrasadas().length; } catch(e){ return 0; } }
 /* concluir uma pendência: escolher os países já ajustados no Gerenciador */
 function atPendCk(ch, k){ const g = pendGrupos().find(x=>x.chave===ch); if (!g) return; UI.atPend = {ch, k:k||null};
+  if (g.tipo==='pausa') return abrirModal(h(PEND_TIPO.pausa), `<div class="small muted" style="margin:-4px 0 10px">${h(g.cliente)} · ${h(g.campanha)} · a campanha foi pausada no Gerenciador. Registre o motivo (fica no histórico da campanha em Digital › Campanhas).</div>
+    <div class="at-paises">${g.itens.length>1 ? `<label class="at-pais-todos"><input type="checkbox" checked onchange="this.closest('.at-paises').querySelectorAll('input[name=mc]').forEach(c=>c.checked=this.checked)"><b>Todos</b></label>` : ''}
+    ${g.itens.map(i=>`<label><input type="checkbox" name="mc" value="${h(i.mcId)}|${h(String(i.p.id))}" checked><span><b>${paisTxt(i.pais)}</b><em>${h(i.p.o||'')}</em></span></label>`).join('')}</div>
+    <label class="campo" style="margin-top:12px">Motivo da pausa<textarea id="at-pausa-mot" rows="3" placeholder="Ex.: pedido do cliente, verba encerrada, troca de criativos, problema na LP…"></textarea></label>`,
+    `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="atPendOk"><i data-lucide="check"></i>Registrar motivo</button>`);
   abrirModal(h(PEND_TIPO[g.tipo]||g.tipo), `<div class="small muted" style="margin:-4px 0 10px">${h(g.cliente)} · ${h(g.campanha)} · marque os países em que o ajuste já foi feito no Gerenciador.</div>
     <div class="at-paises"><label class="at-pais-todos"><input type="checkbox" onchange="this.closest('.at-paises').querySelectorAll('input[name=mc]').forEach(c=>c.checked=this.checked)"><b>Todos</b></label>
     ${g.itens.map(i=>`<label><input type="checkbox" name="mc" value="${h(i.mcId)}|${h(String(i.p.id))}"><span><b>${paisTxt(i.pais)}</b><em>${h(i.p.o||'')} · desde ${fdm(i.p.em)}</em></span></label>`).join('')}</div>`,
     `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="atPendOk"><i data-lucide="check"></i>Concluir os marcados</button>`); }
 function atPendOk(){ const sel = [...document.querySelectorAll('.at-paises input[name=mc]:checked')].map(c=>c.value.split('|')); if (!sel.length) return toast('Marque ao menos um país.');
-  for (const [mcId, id] of sel) { const m = ((S.metasStatus||{})[mcId])||{}, p = (m.pend||[]).find(x=>String(x.id)===String(id)); if (!p) continue;
+  const motEl = $('#at-pausa-mot');
+  if (motEl) { const mot = motEl.value.trim(); if (!mot) { motEl.focus(); return toast('Escreva o motivo da pausa.'); } S.metasStatus = S.metasStatus || {};
+    for (const [mcId] of sel) { const a = (ALERTAS_PAUSA||{})[mcId]; if (!a) continue; const m = S.metasStatus[mcId] = S.metasStatus[mcId] || {};
+      m.pausaJust = {chave:a.avisadaEm, motivo:mot, em:HOJE, por:quemSouAt()}; regStatus(mcId, `Campanha pausada no Gerenciador${a.pausadaEm ? ' em '+fd(String(a.pausadaEm).slice(0,10)) : ''}. Motivo: ${mot}`); } }
+  else for (const [mcId, id] of sel) { const m = ((S.metasStatus||{})[mcId])||{}, p = (m.pend||[]).find(x=>String(x.id)===String(id)); if (!p) continue;
     p.feito = HOJE; p.feitoPor = quemSouAt(); regStatus(mcId, `Daily budget ajustado no Gerenciador (${(p.o||'').split(' para ')[1]||''}). Pendência concluída.`); S.registrosStatus[mcId][0].bud = 1; }
   const {ch, k} = UI.atPend || {}, resta = pendGrupos().find(g=>g.chave===ch), A = atDados();
   if (!resta) for (const it of A.itens) if (it.pend && it.pend.chave===ch && !it.feito) { it.feito = HOJE; it.feitoPor = quemSouAt(); }
-  salvar(); fecharModal(); render(); toast(resta ? `${sel.length} ${sel.length===1?'país concluído':'países concluídos'}; ${resta.itens.length} ainda pendente${resta.itens.length===1?'':'s'}.` : 'Pendência concluída em todos os países.'); }
+  salvar(); fecharModal(); render(); toast(motEl ? (resta ? `Motivo registrado; ${resta.itens.length} ${resta.itens.length===1?'país ainda pendente':'países ainda pendentes'}.` : 'Motivo da pausa registrado.') : resta ? `${sel.length} ${sel.length===1?'país concluído':'países concluídos'}; ${resta.itens.length} ainda pendente${resta.itens.length===1?'':'s'}.` : 'Pendência concluída em todos os países.'); }
 /* recorrência */
 function atRecForm(id){ const A = atDados(), r = A.recs.find(x=>x.id===id) || {freq:'semanal', dias:[dow(HOJE)], n:2, diaMes:+HOJE.slice(8), ini:HOJE, dur:60, hora:''}; UI.atRec = r.id || null;
   const dias = [1,2,3,4,5].map(d=>`<label class="at-dia-op"><input type="checkbox" name="dias" value="${d}" ${(r.dias||[]).includes(d)?'checked':''}><span>${AT_DSEM[d]}</span></label>`).join('');
@@ -6205,7 +6223,7 @@ const ACT = {
       const { data, error } = await sb.functions.invoke('meta-sync', { body: { parte:'contas' } }); if (error) throw error;
       const [{ data: mc }, { data: rm }] = await Promise.all([sb.from('meta_contas').select('*'), sb.from('resultados_meta').select('*')]);
       META_CONTAS = soEstufa(mc); RESULTADOS = {}; for (const r of (rm||[])) (RESULTADOS[r.campanha_id] = RESULTADOS[r.campanha_id] || []).push(r); aplicarCustosAuto();
-      try { const { data: ab } = await sb.from('config').select('valor').eq('chave','alertasBudget').maybeSingle(); ALERTAS_BUDGET = (ab && ab.valor) || {}; } catch(_){}
+      try { const { data: ab } = await sb.from('config').select('chave, valor').in('chave',['alertasBudget','alertasPausa']); const v = k => ((ab||[]).find(r=>r.chave===k)||{}).valor || {}; ALERTAS_BUDGET = v('alertasBudget'); ALERTAS_PAUSA = v('alertasPausa'); } catch(_){}
       const falhas = (data.contas||[]).filter(x=>!x.ok); render(); toast(falhas.length ? 'Algumas contas falharam: '+falhas.map(x=>x.conta+' ('+x.erro+')').join('; ') : 'Campanhas atualizadas.'); }
     catch (e) { let msg = e.message||String(e); try { const b = await e.context.json(); msg = b.erro || msg; } catch(_){} toast('Não foi possível atualizar: '+msg); el.disabled = false; } },
   stAbrir: el => { UI.stAberto = UI.stAberto||{}; UI.stAberto[el.dataset.k] = !UI.stAberto[el.dataset.k]; render(); },
