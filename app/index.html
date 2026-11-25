@@ -10,6 +10,7 @@
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
+<script src="i18n.js"></script>
 <style>
 :root{
   --pet-950:#111111;--pet-900:#161616;--pet-800:#262626;--pet-700:#333333;--pet-600:#4a4a4a;--pet-100:#e5e7eb;--pet-50:#f1f2f4;--ambar:#ef9f27;--ambar-h:#e08e10;--ambar-tx:#412402;
@@ -919,6 +920,9 @@ a.lk-men[data-lkt=canva]::before{background-image:url("data:image/svg+xml;utf8,%
 a.lk-men[data-lkt=figma]::before{background-image:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Crect%20x%3D%273%27%20y%3D%271%27%20width%3D%2714%27%20height%3D%2718%27%20rx%3D%272.5%27%20fill%3D%27%23a259ff%27/%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2710%27%20r%3D%272.2%27%20fill%3D%27white%27/%3E%3Crect%20x%3D%276.5%27%20y%3D%276%27%20width%3D%273%27%20height%3D%278%27%20rx%3D%271.5%27%20fill%3D%27white%27/%3E%3C/svg%3E")}
 a.lk-men[data-lkt=youtube]::before{background-image:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Crect%20x%3D%273%27%20y%3D%271%27%20width%3D%2714%27%20height%3D%2718%27%20rx%3D%272.5%27%20fill%3D%27%23ff0000%27/%3E%3Cpath%20d%3D%27M8.5%207.5v5l4.2-2.5z%27%20fill%3D%27white%27/%3E%3C/svg%3E")}
 a.lk-men[data-lkt=notion]::before{background-image:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Crect%20x%3D%273%27%20y%3D%271%27%20width%3D%2714%27%20height%3D%2718%27%20rx%3D%272.5%27%20fill%3D%27%23111111%27/%3E%3Cpath%20d%3D%27M7%206.5v7M7%206.5l6%207M13%206.5v7%27%20stroke%3D%27white%27%20stroke-width%3D%271.5%27%20fill%3D%27none%27/%3E%3C/svg%3E")}
+.lang-seg{display:inline-flex;background:#f1f2f4;border-radius:8px;padding:2px;margin-right:6px}.lang-seg button{border:0;background:none;font:inherit;font-size:.74rem;font-weight:600;color:#8f8d86;padding:3px 8px;border-radius:6px;cursor:pointer}.lang-seg button.on{background:#fff;color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.lang-flut{position:fixed;top:16px;right:16px;z-index:9999;display:none;background:rgba(255,255,255,.12)}.lang-flut button{color:#cfcfcf}.lang-flut button.on{background:#fff;color:#111}
+body:has(#login-raiz:not([style*="none"]) .tela-login) .lang-flut{display:inline-flex}
 </style>
 </head>
 <body>
@@ -929,7 +933,7 @@ a.lk-men[data-lkt=notion]::before{background-image:url("data:image/svg+xml;utf8,
   <div class="lat-rodape">Hoje: <span id="hoje-txt"></span></div>
 </aside>
 <div class="principal">
-  <header class="topo"><button class="icone-btn btn-menu" data-act="menu" title="Mostrar ou ocultar o menu"><i data-lucide="panel-left"></i></button><a href="#/notificacoes" class="icone-btn topo-notif" id="topo-notif" title="Notificações"><i data-lucide="inbox"></i><span class="topo-badge" id="topo-badge" hidden></span></a><div class="migalha" id="migalha"></div><div class="topo-dir nao-imprimir"><span id="sync"></span><span class="on-topo" id="online-topo"></span><span class="quem" id="quem"></span><button class="btn btn-s" data-act="sair"><i data-lucide="log-out"></i>Sair</button></div></header>
+  <header class="topo"><button class="icone-btn btn-menu" data-act="menu" title="Mostrar ou ocultar o menu"><i data-lucide="panel-left"></i></button><a href="#/notificacoes" class="icone-btn topo-notif" id="topo-notif" title="Notificações"><i data-lucide="inbox"></i><span class="topo-badge" id="topo-badge" hidden></span></a><div class="migalha" id="migalha"></div><div class="topo-dir nao-imprimir"><span id="sync"></span><span class="on-topo" id="online-topo"></span><span class="quem" id="quem"></span><span class="lang-seg" title="Idioma da interface / Interface language"><button type="button" data-lang="pt">PT</button><button type="button" data-lang="en">EN</button></span><button class="btn btn-s" data-act="sair"><i data-lucide="log-out"></i>Sair</button></div></header>
   <div class="aviso-demo" id="aviso-papel" hidden></div>
   <main class="conteudo" id="app"></main>
 </div>
@@ -7670,6 +7674,37 @@ let _rs; window.addEventListener('resize', () => { clearTimeout(_rs); _rs = setT
    16. INÍCIO
    ===================================================================== */
 iniciar();
+</script>
+<script>
+/* PT/EN: traduz só a estrutura da plataforma (menus, abas, botões, rótulos, status). O que a equipe digita
+   (briefings, nomes, legendas, comentários, editores) nunca é traduzido: só textos que batem inteiros com o dicionário. */
+(function(){
+  let LANG = 'pt'; try { LANG = localStorage.getItem('lang') || (/^pt/i.test(navigator.language||'pt') ? 'pt' : 'en'); } catch(e){}
+  window.LANG = LANG; document.documentElement.lang = LANG==='en' ? 'en' : 'pt-BR';
+  const D = window.I18N_D || {}, NUM = /\d+(?:[.,]\d+)?/g;
+  const PULA = 'script,style,textarea,input,[contenteditable="true"],.lpe-doc,.np-corpo,.lk-men,.od-ed,.notranslate,.np-tit,.soc-leg,.dc-t,.reg-o,.lang-seg,.cc h1,.pc4-t b,.ent-sc2-t b,.cli-nm b,.clx-nm b,.ent-q-cab h2,.od-nm b,.cli-rc b';
+  const um = t => { const k = t.replace(NUM, '#'); const v = D[k]; if (v == null) return null; if (!v.includes('#')) return v; const ns = t.match(NUM) || []; let i = 0; return v.replace(/#/g, () => ns[i++] ?? '#'); };
+  const NAV = {'Início':'Home'};   // mesma palavra com outro sentido no menu lateral
+  const traduz = (txt, el) => { const lim = txt.replace(/\s+/g,' ').trim(); if (!lim || !/[A-Za-zÀ-ú]/.test(lim)) return null;
+    if (el && NAV[lim] && el.closest && el.closest('.menu')) return txt.replace(lim, NAV[lim]);
+    let r = um(lim); if (r == null && lim.includes(' · ')) { const ps = lim.split(' · '), qs = ps.map(p => um(p) ?? p); if (qs.some((q,i)=>q!==ps[i])) r = qs.join(' · '); }
+    if (r == null) return null; const a = txt.match(/^\s*/)[0], b = txt.match(/\s*$/)[0]; return a + r + b; };
+  window.t_ = s => LANG==='en' ? (traduz(String(s)) ?? s) : s;
+  function arvore(raiz){ if (LANG!=='en' || !raiz) return;
+    if (raiz.nodeType===3) { const p = raiz.parentNode; if (p && p.closest && !p.closest(PULA)) { const r = traduz(raiz.nodeValue, p); if (r!=null && r!==raiz.nodeValue) raiz.nodeValue = r; } return; }
+    if (raiz.nodeType!==1 || raiz.closest(PULA)) return;
+    const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT, {acceptNode: n => n.parentNode.closest(PULA) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT}); let n;
+    while ((n = w.nextNode())) { const r = traduz(n.nodeValue, n.parentNode); if (r!=null && r!==n.nodeValue) n.nodeValue = r; }
+    const els = [raiz, ...raiz.querySelectorAll('[placeholder],[title],[data-ph],[aria-label]')];
+    for (const e of els) { if (e.nodeType!==1 || (e.closest(PULA) && !e.matches('input,textarea'))) continue; for (const at of ['placeholder','title','data-ph','aria-label']) { const v = e.getAttribute && e.getAttribute(at); if (!v) continue; const r = traduz(v); if (r!=null && r!==v) e.setAttribute(at, r); } } }
+  window.traduzirTela = arvore;
+  const iniciar = () => { const fl = document.createElement('span'); fl.className = 'lang-seg lang-flut'; fl.innerHTML = '<button type="button" data-lang="pt">PT</button><button type="button" data-lang="en">EN</button>'; document.body.appendChild(fl);
+    document.querySelectorAll('.lang-seg button').forEach(b => { b.classList.toggle('on', b.dataset.lang===LANG); b.onclick = () => { if (b.dataset.lang===LANG) return; try { localStorage.setItem('lang', b.dataset.lang); } catch(e){} location.reload(); }; });
+    if (LANG!=='en') return; arvore(document.body);
+    new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) arvore(n); }).observe(document.body, {childList:true, subtree:true});
+    const c0 = window.confirm, p0 = window.prompt; window.confirm = m => c0.call(window, t_(m)); window.prompt = (m, d) => p0.call(window, t_(m), d); };
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
+})();
 </script>
 </body>
 </html>
