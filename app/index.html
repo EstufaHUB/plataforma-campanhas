@@ -897,6 +897,8 @@ a.od-ln:hover{background:#fafbfb}.od-th{font-size:.72rem;text-transform:uppercas
 .od-acoes{padding:4px 18px 16px;display:flex;flex-direction:column;gap:6px}.od-ac{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f1f2f4}.od-ac-n{flex:1}.od-ac.ok .od-ac-n{text-decoration:line-through;color:#8f8d86}
 .od-ac-novo{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}.od-ac-novo input[name=nome]{flex:1;min-width:180px}
 @media (max-width:820px){.od-kpis{grid-template-columns:1fr 1fr 1fr}.od-kpis .od-barra{grid-column:1/-1}.od-2col{grid-template-columns:1fr}.od-ln{grid-template-columns:1fr auto}.od-ln>span:nth-child(n+3){display:none}.od-th{display:none}.od-s-cab{flex-wrap:wrap}}
+.od-det{background:#fff;border:1px solid var(--borda);border-radius:12px;margin-bottom:14px}.od-det summary{display:flex;align-items:center;gap:8px;padding:12px 16px;font-weight:600;cursor:pointer;list-style:none}.od-det summary::-webkit-details-marker{display:none}.od-det summary i{width:16px;height:16px}.od-det summary .btn{margin-left:auto}.od-det .od-texto{padding:0 16px 14px}.od-det .od-dir{margin:0 16px 14px}
+.od-2col .od-det{margin:0}.ent-sec-pg .od-2col{margin:0 0 16px}
 </style>
 </head>
 <body>
@@ -3522,13 +3524,13 @@ function tabelaAlcas(ed){ const box = ed.parentNode;
 function pgLpPagina(r){ const [cid, mis] = String(r[1]||'').split('~'), mi = +mis || 0, c = camp(cid), et = r[2], idi = r[3] || '';
   if (!c || !['conteudo','trad','peca'].includes(et)) return '<div class="vazio">Página não encontrada.</div>';
   const peca = et==='peca' ? (c.entregaveis||[]).find(x=>x.id===idi) : null; if (et==='peca' && !peca) return '<div class="vazio">Post não encontrado.</div>';
-  const pBase = peca ? pecaBase(c, peca) : null, sec = peca ? (peca.secao || peca.canal) : 'Landing page';
+  const odP = peca && peca.pedido ? odPed(c, peca.pedido) : null, pBase = peca ? pecaBase(c, peca) : null, sec = odP ? odP.nome : peca ? (peca.secao || peca.canal) : 'Landing page';
   if (peca && pecaBriefing(peca) && lpTextoPuro((peca.doc||{}).texto) && lpTextoPuro(peca.doc.texto)===lpTextoPuro(modeloPecaAntigo(peca))) peca.doc.texto = '';
   if (peca && !lpTextoPuro((peca.doc||{}).texto)) { const dd = peca.doc = peca.doc || {}; dd.texto = pBase && pBase.id!==peca.id && lpTextoPuro((pBase.doc||{}).texto) ? lpSemDisc(lpLimpa(pBase.doc.texto)) : modeloPeca(peca); }
   const p1Leg = peca ? pecaLegEspelha(c, peca) : null; if (p1Leg && peca.doc) peca.doc.texto = legTrocar(peca.doc.texto, ((p1Leg.doc||{}).texto) || modeloPeca(p1Leg), true);
   const {f} = lpDados(c, mi), d = lpAlvo(c, et, idi, mi), marca = peca ? (peca.marca||'') : (lpMarcas(c)[mi] || ''); if (!d) return '<div class="vazio">Idioma não encontrado.</div>';
-  const ed = ehEquipe(), trad = peca ? idiomaPeca(c, peca)!==(c.idiomaBase||'PT') : et==='trad', nomeIdi = IDIOMAS[peca ? idiomaPeca(c, peca) : trad ? idi : c.idiomaBase] || '', titulo = peca ? `${peca.nome} · ${nomeIdi}` : `Texto landing page · ${marca ? marca+' · ' : ''}${nomeIdi}`, st = d.status || '';
-  migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,`#/clientes/${c.clienteId}`],[c.nome,`#/campanha/${c.id}/entregaveis`],[sec,`#/campanha/${c.id}/entregaveis`],...(marca ? [[marca,`#/campanha/${c.id}/entregaveis`]] : []),[peca ? peca.nome+(ehKV(peca) ? '' : ' · '+nomeIdi) : nomeIdi]]);
+  const ed = ehEquipe(), trad = peca ? idiomaPeca(c, peca)!==(c.idiomaBase||'PT') : et==='trad', nomeIdi = IDIOMAS[peca ? idiomaPeca(c, peca) : trad ? idi : c.idiomaBase] || '', titulo = peca ? (odP ? peca.nome : `${peca.nome} · ${nomeIdi}`) : `Texto landing page · ${marca ? marca+' · ' : ''}${nomeIdi}`, st = d.status || '';
+  migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,`#/clientes/${c.clienteId}`],[c.nome,`#/campanha/${c.id}/entregaveis`],[sec,`#/campanha/${c.id}/entregaveis`],...(marca ? [[marca,`#/campanha/${c.id}/entregaveis`]] : []),[peca ? peca.nome+(ehKV(peca) || odP ? '' : ' · '+nomeIdi) : nomeIdi]]);
   const brf = pecaBriefing(peca);
   UI.lpTxt = {id:c.id, et, idi, mi}; posRender.push(()=>{ const e = document.getElementById('lpe-edit'); if (!e) return; if (ed) { editorBlocos(e); lpAutoSalvar(e); }
     if (brf) { socToggles(e, peca.id); socPh(e); socLegAjuda(e); [300, 1200].forEach(ms=>setTimeout(()=>{ if (e.isConnected) socLegAjuda(e); }, ms)); let tl; e.addEventListener('input', () => { socPh(e); clearTimeout(tl); tl = setTimeout(()=>socLegAjuda(e), 250); }); }
@@ -3539,9 +3541,9 @@ function pgLpPagina(r){ const [cid, mis] = String(r[1]||'').split('~'), mi = +mi
   const hist = (d.hist||[]).slice().reverse();
   const acoes = !ed ? '' : st==='Aguardando aprovação do cliente' ? `<button class="btn btn-s" data-act="lpTextoAjustes"><i data-lucide="message-square-warning"></i>Cliente pediu ajustes</button><button class="btn btn-s btn-p" data-act="lpTextoAprovar"><i data-lucide="check"></i>Cliente aprovou</button>`
     : st==='Aprovado' ? '' : `<button class="btn btn-s btn-p" data-act="lpTextoEnviar"><i data-lucide="send"></i>Enviar para aprovação</button>`;
-  return `<div class="np np-dg ${brf?'soc-np':''}"><div class="np-top"><a href="#/campanha/${c.id}/entregaveis" class="ent-voltar" onclick="UI.entSec=UI.entSec||{};UI.entSec['${c.id}']='${h(sec)}';UI.lpMarca=UI.lpMarca||{};UI.lpMarca['${c.id}']=${mi};${peca && marca ? `UI.pecaMarca=UI.pecaMarca||{};UI.pecaMarca['${c.id}|${h(sec)}']='${h(marca)}';` : ''}"><i data-lucide="arrow-left"></i>${h(sec)}${marca ? ' · '+h(marca) : ''}</a>
+  return `<div class="np np-dg ${brf?'soc-np':''}"><div class="np-top"><a href="#/campanha/${c.id}/entregaveis" class="ent-voltar" onclick="${odP ? `UI.odSec=UI.odSec||{};UI.odSec['${c.id}']='${odP.id}';` : ''}UI.entSec=UI.entSec||{};UI.entSec['${c.id}']='${h(sec)}';UI.lpMarca=UI.lpMarca||{};UI.lpMarca['${c.id}']=${mi};${peca && marca ? `UI.pecaMarca=UI.pecaMarca||{};UI.pecaMarca['${c.id}|${h(sec)}']='${h(marca)}';` : ''}"><i data-lucide="arrow-left"></i>${h(sec)}${marca ? ' · '+h(marca) : ''}</a>
       <div class="np-top-d"><span class="np-salvo" id="np-salvo"></span>${ed && !peca ? `<button class="btn btn-s" data-act="lpModelos" title="Aplicar um modelo de estrutura"><i data-lucide="layout-template"></i>Modelos</button>` : ''}<div class="dp-w"><button class="btn btn-s dp-bt ${UI.discPainel?'on':''}" data-act="discPainel" title="Comentários e sugestões"><i data-lucide="message-square-text"></i>${abertas.length?`<span class="dp-cnt">${abertas.length}</span>`:''}</button>${UI.discPainel ? discPainelHtml(d) : ''}</div>${ed?`<button class="btn btn-s ${d.publico?'np-pub':''}" data-act="lpCompartilhar"><i data-lucide="${d.publico?'globe':'share-2'}"></i>${d.publico?'Publicada na web':'Compartilhar'}</button>`:''}${acoes}</div></div>
-    <div class="np-grade"><article class="np-doc"><div class="np-ic"><i data-lucide="${peca ? (pecaVideo(peca)?'clapperboard':'image') : 'file-text'}"></i></div><h1 class="np-tit">${peca && ed ? `<textarea class="np-tit-in" rows="1" data-chg="pecaNome" data-ids="${pecaGrupo(c, peca).map(x=>x.id).join(',')}" title="Clique para renomear (vale para todos os países)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}if(event.key==='Escape'){this.value=this.defaultValue;this.blur()}">${h(peca.nome)}</textarea>${ehKV(peca) ? '' : `<span class="np-tit-idi">${h(nomeIdi)}</span>`}` : h(titulo)}</h1>
+    <div class="np-grade"><article class="np-doc"><div class="np-ic"><i data-lucide="${peca ? (pecaVideo(peca)?'clapperboard':'image') : 'file-text'}"></i></div><h1 class="np-tit">${peca && ed ? `<textarea class="np-tit-in" rows="1" data-chg="pecaNome" data-ids="${pecaGrupo(c, peca).map(x=>x.id).join(',')}" title="Clique para renomear (vale para todos os países)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}if(event.key==='Escape'){this.value=this.defaultValue;this.blur()}">${h(peca.nome)}</textarea>${ehKV(peca) || odP ? '' : `<span class="np-tit-idi">${h(nomeIdi)}</span>`}` : h(titulo)}</h1>
       ${peca ? pecaPropsHtml(c, peca, d, ed, mi, et, idi, st) : lpPropsHtml(c, d, ed, mi, et, idi, st, trad)}${ehKV(peca) ? `<div class="kv-pg">${previaKV(peca.link)}${kvBriefingBloco(c, ed)}</div>` : ''}
             ${lpComentPagina(d, ed)}
       ${trad && peca ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)}</summary><div class="lpe-doc">${lpSemDisc(lpLimpa(((pBase||{}).doc||{}).texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : trad ? `<details class="np-orig"><summary>Ver o original em ${h(IDIOMAS[c.idiomaBase]||c.idiomaBase)} (aprovado)</summary><div class="lpe-doc">${lpSemDisc(lpLimpa(f.conteudo.texto)) || '<span class="muted">Sem texto.</span>'}</div></details>` : ''}
@@ -3702,7 +3704,7 @@ function pecasFluxo(c, canal, da, fase, ed){
     ${ed ? `<button class="ent-novo pc-novo" data-act="pecaNova" data-id="${c.id}" data-canal="${h(canal)}" data-marca="${h(mk||'')}" data-fase="${h(fase||'')}" data-paises="${paisesMk.join(',')}"><i data-lucide="plus"></i>${meta?'Novo post':'Nova peça'}${mk?' · '+h(mk):''} <em>(cria em todos os países)</em></button>` : ''}`; }
 /* página de cada post: usa a mesma página da LP (et 'peca', idi = id da peça daquele idioma).
    O status do texto vem da etapa da peça (e volta para ela), então aprovações, contagens e notificações seguem iguais. */
-const pecaGrupo = (c, e) => (c.entregaveis||[]).filter(x=>x.nome===e.nome && (x.marca||'')===(e.marca||'') && (x.fase||'')===(e.fase||'') && (x.secao||x.canal)===(e.secao||e.canal));
+const pecaGrupo = (c, e) => (c.entregaveis||[]).filter(x=>x.nome===e.nome && (x.marca||'')===(e.marca||'') && (x.fase||'')===(e.fase||'') && (x.secao||x.canal)===(e.secao||e.canal) && (x.pedido||'')===(e.pedido||'') && (x.grupo||'')===(e.grupo||''));
 const pecaIdiomaGrupo = (c, e) => { const i = idiomaPeca(c, e); return pecaGrupo(c, e).filter(x=>idiomaPeca(c, x)===i); };
 const pecaBase = (c, e) => { const g = pecaGrupo(c, e), b = c.idiomaBase || 'PT'; return g.find(x=>idiomaPeca(c, x)===b) || g[0]; };
 const pillSel = (cor, attrs, optsHtml, cls) => `<span class="pc4-st c-${cor} st-pill ${cls||''}"><i></i><select ${attrs}>${optsHtml}</select></span>`;
@@ -3720,7 +3722,7 @@ function pecaDoc(c, pid){ const e = (c.entregaveis||[]).find(x=>x.id===pid); if 
 function pecaSincronizar(c, pid){ const e = (c.entregaveis||[]).find(x=>x.id===pid); if (!e || !e.doc) return; const d = e.doc, alvo = ETAPA_DE_ST[d.status];
   for (const x of pecaIdiomaGrupo(c, e)) { if (alvo && !(d.status==='Aprovado' && ORD_ET.indexOf(x.etapa) >= 3)) x.etapa = alvo; x.resp = d.resp || ''; } }
 /* briefing do asset (como no Notion): COPY + tabela ASSET TEXT (cena a cena no vídeo; elementos da arte no estático) */
-const pecaBriefing = e => !!e && !ehKV(e);   // página da peça com o Asset briefing em toggle
+const pecaBriefing = e => !!e && !ehKV(e) && !e.pedido;   // página da peça com o Asset briefing em toggle
 const pecaComLeg = e => !!e && (e.secao||e.canal)==='Meta Ads';   // só o Meta Ads tem legenda (e o espelho da Peça 1)
 const pecaFmtSoc = e => { const f = e.formato || ''; return /carrossel/i.test(f) ? 'Carrossel' : /1920/.test(f) ? (pecaVideo(e) || /^gif/i.test(f) ? 'Reels' : 'Stories') : pecaVideo(e) ? 'Reels' : 'Estático'; };
 /* Meta Ads: mesmo briefing do post de Social media (1 · Asset briefing e 2 · Legenda, como toggles) */
@@ -6442,16 +6444,24 @@ document.addEventListener('click', e => { const el = e.target.closest('[data-act
   if (el.tagName==='A' && el.getAttribute('href')==='javascript:void 0') e.preventDefault(); f(el, e); });
 /* =====================================================================
    ON DEMAND: pacote de horas, pedidos pontuais e time tracking
+   Cabeçalho e abas no padrão da campanha; cada pedido é uma seção de entregáveis
+   (cards como os do Meta Ads, que abrem a página da peça com propriedades e briefing).
    ===================================================================== */
 const OD_PED_ST = [['Não iniciado','cinza'],['Em andamento','azul'],['Em aprovação','amar'],['Em espera','cinza'],['Concluído','verde'],['Cancelado','verm']];
-const OD_ENT_ST = [['Não iniciado','cinza'],['Em espera','cinza'],['Aprovação do texto','amar'],['Em produção','roxo'],['Revisão interna','azul'],['Aprovação do cliente','lar'],['Ajuste','rosa'],['Concluído','verde'],['Cancelado','verm']];
-const OD_COR = Object.fromEntries([...OD_PED_ST, ...OD_ENT_ST]);
+const OD_COR = Object.fromEntries(OD_PED_ST);
+const OD_ET_DE = {'Não iniciado':'briefing','Em espera':'briefing','Aprovação do texto':'aprov_conteudo','Em produção':'producao','Revisão interna':'producao','Aprovação do cliente':'aprov_asset','Ajuste':'ajuste_asset','Concluído':'concluido','Cancelado':'concluido'};
 const odH = n => { const v = Math.round((+n||0)*100)/100; return String(v).replace('.',',')+'h'; };
 const odTxt = s => h(s||'').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
 const odPed = (c, pid) => (c.pedidos||[]).find(p=>p.id===pid);
+const odEnts = (c, pid) => (c.entregaveis||[]).filter(e=>e.pedido===pid);
 function odSaldo(c){ const hs = c.horas||[], ent = hs.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+(+x.h||0),0), uso = hs.filter(x=>x.tipo!=='entrada').reduce((s,x)=>s+(+x.h||0),0); return {ent, uso, rest: ent-uso, pct: ent ? Math.min(100, uso/ent*100) : 0}; }
 const odUsoPed = (c, pid) => (c.horas||[]).filter(x=>x.tipo!=='entrada' && x.pedido===pid).reduce((s,x)=>s+(+x.h||0),0);
-const odPill = (v, attrs) => attrs ? pillSel(OD_COR[v]||'cinza', `data-pop="od" ${attrs}`, opts((attrs.includes('odEntSt') ? OD_ENT_ST : OD_PED_ST).map(x=>[x[0],x[0]]), v)) : `<span class="pc4-st c-${OD_COR[v]||'cinza'}"><i></i>${h(v)}</span>`;
+const odPill = (v, attrs) => attrs ? pillSel(OD_COR[v]||'cinza', `data-pop="od" ${attrs}`, opts(OD_PED_ST.map(x=>[x[0],x[0]]), v)) : `<span class="pc4-st c-${OD_COR[v]||'cinza'}"><i></i>${h(v)}</span>`;
+/* entregáveis antigos (dentro do pedido) viram peças da campanha, com a página do Meta Ads */
+function odMigrar(c){ let mud = false; c.pedidos = c.pedidos || []; c.horas = c.horas || []; c.entregaveis = c.entregaveis || [];
+  for (const p of c.pedidos) { if (!p.ents) continue; for (const e of p.ents) c.entregaveis.push({id:e.id, nome:e.nome, secao:'On Demand', pedido:p.id, grupo:e.grupo||'', formato:e.formato||'', etapa:OD_ET_DE[e.status]||'briefing', link:e.link||'', canva:e.canva||'', prazo:e.prazo||null, idioma:c.idiomaBase||'PT', paises:[], versoes:[], aprovacoes:[], briefing:{}});
+    delete p.ents; mud = true; }
+  if (mud) setTimeout(salvar, 0); }
 
 function odForm(c, cliId){ const cli = c ? c.clienteId : (cliId||'');
   abrirModal(c ? 'Editar On Demand' : 'Novo On Demand', `<form id="f-od" class="form-g">
@@ -6470,73 +6480,98 @@ function odSalvar(id){ const v = ler($('#f-od')), nome = (v.nome||'').trim();
   S.campanhas.push(c); registrar('On Demand criado: '+nome); fecharModal(); location.hash = '#/campanha/'+c.id; render(); toast('On Demand criado.'); }
 
 function pgOnDemand(c, r){
-  c.pedidos = c.pedidos || []; c.horas = c.horas || [];
+  odMigrar(c);
   const cli = cliente(c.clienteId), ed = ehEquipe(), sd = odSaldo(c);
-  const ped = r[2]==='pedido' && odPed(c, r[3]);
-  migalha([['Clientes','#/clientes'],[cli.nome,'#/clientes/'+c.clienteId],[c.nome, ped ? '#/campanha/'+c.id : null], ...(ped?[[ped.nome]]:[])].filter(x=>x));
-  const baixo = sd.ent && sd.rest <= sd.ent*0.2, cor = sd.rest < 0 ? 'verm' : baixo ? 'amar' : 'verde';
-  const saldo = `<div class="od-saldo card"><div class="od-s-cab">${logoCliente(cli, 'cc-logo')}<div style="min-width:0;flex:1"><div class="cc-cli">${h(cli.nome)} · On Demand</div><h1>${h(c.nome)}</h1>${c.descricao?`<div class="small muted">${h(c.descricao)}</div>`:''}</div>
-      ${ed?`<div class="cc-dir nao-imprimir"><button class="btn" data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'}</button><button class="btn" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div>`:''}</div>
-    <div class="od-kpis"><div><span>Horas compradas</span><b>${odH(sd.ent)}</b></div><div><span>Horas usadas</span><b>${odH(sd.uso)}</b></div><div class="od-rest od-${cor}"><span>Saldo</span><b>${odH(sd.rest)}</b></div>
-      <div class="od-barra"><div class="od-bar"><i class="od-${cor}" style="width:${sd.pct}%"></i></div><span>${Math.round(sd.pct)}% do pacote usado</span></div></div>
-    ${sd.rest < 0 ? `<div class="alerta verm" style="margin:12px 0 0"><i data-lucide="octagon-alert"></i><div>O pacote estourou em <b>${odH(-sd.rest)}</b>. Adicione um novo pacote de horas.</div></div>` : baixo ? `<div class="alerta amar" style="margin:12px 0 0"><i data-lucide="hourglass"></i><div>Restam só <b>${odH(sd.rest)}</b> no pacote.</div></div>` : ''}</div>`;
-  if (ped) return saldo + odPedidoPg(c, ped, ed);
-  const aba = r[2]==='horas' ? 'horas' : 'pedidos';
-  const abas = [['pedidos','folder-kanban','Pedidos', c.pedidos.length],['horas','hourglass','Time tracking', c.horas.length]];
-  return saldo + `<nav class="abas nao-imprimir">${abas.map(([k,ic,t,n])=>`<a href="#/campanha/${c.id}${k==='pedidos'?'':'/'+k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t} <span class="od-n">${n}</span></a>`).join('')}</nav>` + (aba==='horas' ? odHorasTab(c, ed) : odPedidosTab(c, ed)); }
+  if (r[2]==='pedido' && r[3]) { UI.odSec = Object.assign(UI.odSec||{}, {[c.id]: r[3]}); location.replace('#/campanha/'+c.id+'/entregaveis'); }
+  const aba = ['entregaveis','acoes','horas'].includes(r[2]) ? r[2] : r[2]==='pedido' ? 'entregaveis' : 'visao';
+  migalha([['Clientes','#/clientes'],[cli.nome,'#/clientes/'+c.clienteId],[c.nome]]);
+  const cor = sd.rest < 0 ? 'verm' : sd.ent && sd.rest <= sd.ent*0.2 ? 'amar' : 'verde', corHex = {verde:'#2e9d55', amar:'#e0a100', verm:'#d0443a'}[cor];
+  const abertos = c.pedidos.filter(p=>!['Concluído','Cancelado'].includes(p.status)).length;
+  const abas = [['visao','info','Visão geral'],['entregaveis','package','Entregáveis'], ed && ['acoes','list-checks','Gestão de ações'],['horas','hourglass','Time tracking']].filter(Boolean);
+  const corpo = aba==='entregaveis' ? odEntregaveis(c, ed) : aba==='acoes' && ed ? odAcoesTab(c) : aba==='horas' ? odHorasTab(c, ed) : odVisao(c, ed);
+  return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)}</div><h1>${h(c.nome)}</h1>
+     <div class="cc-meta"><span class="cc-pill"><i style="background:${COR_ST_CAMP[c.status]||'#3b82c4'}"></i>On Demand</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="hourglass" style="color:${corHex}"></i>Saldo: <b style="color:${corHex}">${odH(sd.rest)}</b>&nbsp;de ${odH(sd.ent)}</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="folder-kanban"></i>${abertos} pedido${abertos===1?'':'s'} em aberto</span>${c.arquivada?' <span class="tag">Arquivado</span>':''}</div></div></div>
+   ${ed?`<div class="cc-dir nao-imprimir"><div class="menu-wrap"><button class="btn" data-act="menuCamp">Ações<i data-lucide="chevron-down"></i></button>${UI.menuCamp?`<div class="menu-pop"><button data-act="odHoraForm" data-id="${c.id}" data-tipo="entrada"><i data-lucide="package-plus"></i>Adicionar pacote de horas</button><button data-act="odPedForm" data-id="${c.id}"><i data-lucide="folder-plus"></i>Novo pedido</button><button data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'}</button></div>`:''}</div><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button></div>`:''}</div>
+   <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}" ${k==='entregaveis'?`onclick="UI.odSec=UI.odSec||{};UI.odSec['${c.id}']=null"`:''}><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${corpo}`; }
 
-function odPedidosTab(c, ed){
-  const ordem = p => ['Concluído','Cancelado'].includes(p.status) ? 1 : 0;
-  const L = [...c.pedidos].sort((a,b)=>ordem(a)-ordem(b) || (b.criadoEm||'').localeCompare(a.criadoEm||''));
+/* Visão geral: saldo do pacote e horas por pedido */
+function odVisao(c, ed){ const sd = odSaldo(c), baixo = sd.ent && sd.rest <= sd.ent*0.2, cor = sd.rest < 0 ? 'verm' : baixo ? 'amar' : 'verde';
   const semPed = (c.horas||[]).filter(x=>x.tipo!=='entrada' && !odPed(c, x.pedido)).reduce((s,x)=>s+(+x.h||0),0);
-  return `<div class="card od-tab"><div class="card-cab"><h3>Pedidos</h3>${ed?`<button class="btn btn-p btn-s" data-act="odPedForm" data-id="${c.id}"><i data-lucide="plus"></i>Novo pedido</button>`:''}</div>
-    <div class="od-ln od-th"><span>Pedido</span><span>Status</span><span>Entregáveis</span><span>Horas</span><span>Aberto em</span></div>
-    ${L.map(p=>{ const es = (p.ents||[]).filter(e=>e.status!=='Cancelado'), ok = es.filter(e=>e.status==='Concluído').length, uso = odUsoPed(c, p.id), est = +p.estimativa||0;
-      return `<a class="od-ln" href="#/campanha/${c.id}/pedido/${p.id}"><span class="od-nm"><b>${h(p.nome)}</b>${p.briefing?`<small>${h(p.briefing.replace(/\*\*/g,'').slice(0,110))}${p.briefing.length>110?'…':''}</small>`:''}</span><span>${odPill(p.status||'Não iniciado')}</span>
-        <span>${es.length ? `<span class="od-mini"><i style="width:${Math.round(ok/es.length*100)}%"></i></span>${ok}/${es.length}` : '<span class="muted">—</span>'}</span>
-        <span class="${est && uso>est ? 'od-txt-verm' : ''}"><b>${odH(uso)}</b>${est?` <span class="muted">de ${odH(est)}</span>`:''}</span><span class="muted">${p.criadoEm?fdm(p.criadoEm):'—'}</span></a>`; }).join('') || `<div class="vazio">Nenhum pedido ainda.${ed?' Use “Novo pedido” quando a cliente pedir algo.':''}</div>`}
-    ${semPed ? `<div class="small muted" style="padding:10px 18px">${odH(semPed)} usadas em demandas sem pedido (veja no Time tracking).</div>` : ''}</div>`; }
+  const L = [...c.pedidos].sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+  return (sd.rest < 0 ? `<div class="alerta verm"><i data-lucide="octagon-alert"></i><div>O pacote estourou em <b>${odH(-sd.rest)}</b>. Adicione um novo pacote de horas.</div></div>` : baixo ? `<div class="alerta amar"><i data-lucide="hourglass"></i><div>Restam só <b>${odH(sd.rest)}</b> no pacote.</div></div>` : '')
+  + `<div class="card od-saldo"><div class="card-cab"><h3>Pacote de horas</h3>${ed?`<button class="btn btn-s" data-act="odHoraForm" data-id="${c.id}" data-tipo="entrada"><i data-lucide="package-plus"></i>Adicionar pacote</button>`:''}</div>
+    <div class="od-kpis"><div><span>Horas compradas</span><b>${odH(sd.ent)}</b></div><div><span>Horas usadas</span><b>${odH(sd.uso)}</b></div><div class="od-rest od-${cor}"><span>Saldo</span><b>${odH(sd.rest)}</b></div>
+      <div class="od-barra"><div class="od-bar"><i class="od-${cor}" style="width:${sd.pct}%"></i></div><span>${Math.round(sd.pct)}% do pacote usado</span></div></div>${c.descricao?`<div class="small muted" style="padding:0 18px 16px">${h(c.descricao)}</div>`:''}</div>
+  <div class="card"><div class="card-cab"><h3>Horas por pedido</h3><a class="btn btn-s btn-g" href="#/campanha/${c.id}/horas"><i data-lucide="hourglass"></i>Ver o time tracking</a></div>
+    <div class="tabela-wrap"><table class="tab"><thead><tr><th>Pedido</th><th>Status</th><th>Entregáveis</th><th>Aberto em</th><th class="dir">Horas</th></tr></thead><tbody>
+    ${L.map(p=>{ const es = odEnts(c, p.id), ok = es.filter(e=>e.etapa==='concluido').length, uso = odUsoPed(c, p.id), est = +p.estimativa||0;
+      return `<tr class="clic" onclick="UI.odSec=UI.odSec||{};UI.odSec['${c.id}']='${p.id}';location.hash='#/campanha/${c.id}/entregaveis'"><td><b>${h(p.nome)}</b></td><td>${odPill(p.status||'Não iniciado')}</td><td>${es.length?`<span class="od-mini"><i style="width:${Math.round(ok/es.length*100)}%"></i></span>${ok}/${es.length}`:'—'}</td><td>${p.criadoEm?fd(p.criadoEm):'—'}</td><td class="dir num ${est && uso>est?'od-txt-verm':''}"><b>${odH(uso)}</b>${est?` <span class="muted">de ${odH(est)}</span>`:''}</td></tr>`; }).join('')}
+    ${semPed ? `<tr><td colspan="4" class="muted">Demandas sem pedido</td><td class="dir num"><b>${odH(semPed)}</b></td></tr>` : ''}
+    ${!L.length && !semPed ? '<tr><td colspan="5" class="vazio">Nenhum pedido ainda.</td></tr>' : ''}</tbody></table></div></div>`; }
+
+/* Entregáveis: cada pedido é uma seção (card), que abre a página da seção com os cards das peças por público */
+function odEntregaveis(c, ed){
+  const sel = (UI.odSec||{})[c.id], p = sel && odPed(c, sel);
+  const GRP = [['concluido',['concluido'],'concluída','#2e9d55'],['aprov',['aprov_conteudo','aprov_asset'],'em aprovação','#e0a100'],['ajuste',['ajuste_conteudo','ajuste_asset'],'em ajuste','#e8833a'],['prod',['producao'],'em produção','#3b82c4'],['ini',['briefing'],'não iniciada','#cfd5d9']];
+  const plT = (n, t) => n===1 ? t : t.replace(/^(concluída|não iniciada)$/, m=>m+'s');
+  const anel = pct => { const R = 19, C = 2*Math.PI*R; return `<svg class="ent-anel" viewBox="0 0 48 48"><circle cx="24" cy="24" r="${R}" class="tr"/><circle cx="24" cy="24" r="${R}" class="vl ${pct===100?'ok':''}" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/><text x="24" y="28">${pct}%</text></svg>`; };
+  const ordem = x => ['Concluído','Cancelado'].includes(x.status) ? 1 : 0;
+  const peds = [...c.pedidos].sort((a,b)=>ordem(a)-ordem(b) || (b.criadoEm||'').localeCompare(a.criadoEm||''));
+  const ir = id => `data-act="odSec" data-id="${c.id}" data-p="${id}"`;
+  if (p) { const da = odEnts(c, p.id), conc = da.filter(e=>e.etapa==='concluido').length, pct = da.length ? Math.round(conc/da.length*100) : 0, uso = odUsoPed(c, p.id), est = +p.estimativa||0;
+    const grupos = [...new Set(da.map(e=>e.grupo||''))]; if (!grupos.length) grupos.push(''); const cols = Math.max(5, grupos.length);
+    const bloco = (campo, tit, ic, vazio) => `<details class="od-det" ${p[campo] ? '' : 'open'}><summary><i data-lucide="${ic}"></i>${tit}${ed?`<button class="btn btn-s btn-g" data-act="odTxtForm" data-id="${c.id}" data-p="${p.id}" data-campo="${campo}" onclick="event.preventDefault()"><i data-lucide="pencil"></i>Editar</button>`:''}</summary><div class="od-texto ${campo==='direcao'?'od-dir':''}">${p[campo] ? odTxt(p[campo]) : `<span class="muted">${vazio}</span>`}</div></details>`;
+    return `<div class="ent-quadro"><div class="ent-topo2"><a href="javascript:void 0" class="ent-voltar" ${ir('')}><i data-lucide="arrow-left"></i>Todos os pedidos</a><div class="ent-topo2-d">${ed?`<button class="btn btn-s" data-act="odPedForm" data-id="${c.id}" data-p="${p.id}"><i data-lucide="pencil"></i>Editar pedido</button><button class="btn btn-s btn-g" data-act="odPedDel" data-id="${c.id}" data-p="${p.id}" title="Excluir pedido"><i data-lucide="trash-2"></i></button>`:''}</div></div>
+      <nav class="ent-tabs">${peds.map(x=>{ const ds = odEnts(c, x.id); return `<button class="${x===p?'on':''}" ${ir(x.id)}><i data-lucide="folder"></i>${h(x.nome)}<span>${ds.filter(e=>e.etapa==='concluido').length}/${ds.length}</span></button>`; }).join('')}</nav>
+      <div class="ent-q-cab"><span class="ent-q-ic"><i data-lucide="folder"></i></span><h2>${h(p.nome)}</h2>${odPill(p.status||'Não iniciado', ed ? `data-chg="odPedSt" data-id="${c.id}" data-p="${p.id}"` : '')}<span class="ent-q-res">${da.length} peça${da.length===1?'':'s'} · <span class="${est && uso>est?'od-txt-verm':''}"><b>${odH(uso)}</b> usadas${est?` de ${odH(est)} estimadas`:''}</span>${p.prazo?` · prazo ${fdm(p.prazo)}`:''}</span>${da.length ? `<span class="ent-q-prog">${conc} de ${da.length} concluída${da.length===1?'':'s'}<span class="ent-q-bar"><i style="width:${pct}%"></i></span></span>` : ''}</div>
+      <div class="ent-sec-pg">${secComentarios(c, 'od:'+p.id, ed)}<div class="od-2col">${bloco('briefing','Briefing do cliente','message-square-quote','Cole aqui o briefing que a cliente mandou.')}${bloco('direcao','Direção criativa da Estufa','sparkles','Conceito, tagline e direção visual da Estufa.')}</div>
+      <div class="pc3-cols" style="grid-template-columns:repeat(${cols}, minmax(210px,1fr))">${grupos.map(g=>{ const L = da.filter(e=>(e.grupo||'')===g).sort((a,b)=>a.nome.localeCompare(b.nome, 'pt', {numeric:true}));
+        return `<div class="pc3-col"><div class="ent-col-tit">${h(g || (grupos.length>1 ? 'Sem público' : 'Entregáveis'))}<span>${L.length}</span></div>${L.map(e=>pecaCardPais(c, e, ed)).join('') || '<div class="pc3-vz">Nenhuma peça.</div>'}${ed?`<button class="ent-novo" data-act="odEntForm" data-id="${c.id}" data-p="${p.id}" data-grupo="${h(g)}"><i data-lucide="plus"></i>Nova peça</button>`:''}</div>`; }).join('')}${'<div class="pc3-col pc3-fill"></div>'.repeat(Math.max(0, 5 - grupos.length))}</div>
+      ${ed ? `<button class="ent-novo pc-novo" data-act="odEntForm" data-id="${c.id}" data-p="${p.id}" data-grupo="" data-novo="1"><i data-lucide="plus"></i>Nova peça <em>(com outro público)</em></button>` : ''}</div></div>`; }
+  const card = x => { const da = odEnts(c, x.id), tot = da.length, conc = da.filter(e=>e.etapa==='concluido').length, pct = tot ? Math.round(conc/tot*100) : 0, uso = odUsoPed(c, x.id), est = +x.estimativa||0;
+    const segs = GRP.map(([, ets, t, cor])=>({t, cor, n: da.filter(e=>ets.includes(e.etapa)).length})).filter(g=>g.n), grs = [...new Set(da.map(e=>e.grupo).filter(Boolean))];
+    return `<a href="javascript:void 0" class="ent-sc2 ${!tot?'vazio':''}" ${ir(x.id)}>
+      <div class="ent-sc2-cab"><span class="ent-sc2-ic"><i data-lucide="folder"></i></span><div class="ent-sc2-t"><b>${h(x.nome)}</b><span>${tot ? `${tot} peça${tot===1?'':'s'}${grs.length?' · '+grs.map(h).join(', '):''}` : 'nenhuma peça'}</span></div>${tot ? anel(pct) : `<span class="ent-sc2-add"><i data-lucide="plus"></i></span>`}</div>
+      <div>${odPill(x.status||'Não iniciado')}</div>
+      ${tot ? `<div class="ent-sc2-bar">${segs.map(g=>`<i style="flex:${g.n};background:${g.cor}" title="${g.n} ${g.t}"></i>`).join('')}</div><div class="ent-sc2-leg">${segs.map(g=>`<span><i style="background:${g.cor}"></i>${g.n} ${plT(g.n, g.t)}</span>`).join('')}</div>` : `<div class="ent-sc2-vz">${ed ? 'Adicione a primeira peça deste pedido.' : 'Ainda sem peças.'}</div>`}
+      <div class="ent-sc2-rod"><span class="ent-sc2-pz ${est && uso>est?'od-txt-verm':''}"><i data-lucide="timer"></i>${odH(uso)}${est?' de '+odH(est):''}</span>${x.criadoEm?`<span class="ent-sc2-pz"><i data-lucide="calendar"></i>${fdm(x.criadoEm)}</span>`:''}</div></a>`; };
+  return `<div class="ent-topo2"><div class="ent-tt"><b>Pedidos</b><span>clique num pedido para ver o briefing e as peças</span></div><div class="ent-topo2-d">${ed?`<button class="btn btn-p btn-s" data-act="odPedForm" data-id="${c.id}"><i data-lucide="plus"></i>Novo pedido</button>`:''}</div></div>`
+    + (peds.length ? `<div class="ent-sc-grade">${peds.map(card).join('')}</div>` : `<div class="card card-p"><div class="vazio">Nenhum pedido ainda.${ed?' Use “Novo pedido” quando a cliente pedir algo.':''}</div></div>`); }
+
+/* Gestão de ações: checklist de cada pedido (só a equipe) */
+function odAcoesTab(c){ const peds = c.pedidos.filter(p=>!['Concluído','Cancelado'].includes(p.status) || (p.acoes||[]).some(a=>!a.feito));
+  return peds.map(p=>{ p.acoes = p.acoes || []; const ab = p.acoes.filter(a=>!a.feito).length;
+    return `<div class="card od-bl"><div class="card-cab"><h3><i data-lucide="folder"></i>${h(p.nome)} <span class="muted" style="font-weight:400">${ab} em aberto</span></h3>${odPill(p.status||'Não iniciado')}</div>
+    <div class="od-acoes">${p.acoes.map(a=>`<div class="od-ac ${a.feito?'ok':''}"><input type="checkbox" ${a.feito?'checked':''} data-chg="odAcaoCk" data-id="${c.id}" data-p="${p.id}" data-a="${a.id}"><span class="od-ac-n">${h(a.nome)}</span><span class="muted small">${h(a.pessoa||'')}${a.prazo?' · '+fdm(a.prazo):''}</span><button class="icone-btn" data-act="odAcaoDel" data-id="${c.id}" data-p="${p.id}" data-a="${a.id}" title="Excluir"><i data-lucide="x"></i></button></div>`).join('')}
+      <form class="od-ac-novo" onsubmit="event.preventDefault();ACT.odAcaoAdd(this)" data-id="${c.id}" data-p="${p.id}"><input name="nome" placeholder="Nova ação…" maxlength="160"><select name="pessoa">${opts(RESPONSAVEIS, quemSou(), 'Responsável')}</select><input type="date" name="prazo"><button class="btn btn-s"><i data-lucide="plus"></i>Adicionar</button></form></div></div>`; }).join('') || '<div class="card card-p"><div class="vazio">Nenhum pedido em aberto.</div></div>'; }
 
 function odHorasTab(c, ed){
   const L = [...c.horas].sort((a,b)=>(b.data||'').localeCompare(a.data||'')); let saldo = 0; const acum = {};
   [...c.horas].sort((a,b)=>(a.data||'').localeCompare(b.data||'') || (a.tipo==='entrada'?-1:1)).forEach(x=>{ saldo += x.tipo==='entrada' ? +x.h||0 : -(+x.h||0); acum[x.id] = saldo; });
-  return `<div class="card od-tab"><div class="card-cab"><h3>Time tracking</h3>${ed?`<div style="display:flex;gap:8px"><button class="btn btn-s" data-act="odHoraForm" data-id="${c.id}" data-tipo="entrada"><i data-lucide="plus-circle"></i>Adicionar pacote</button><button class="btn btn-p btn-s" data-act="odHoraForm" data-id="${c.id}"><i data-lucide="timer"></i>Lançar horas</button></div>`:''}</div>
+  const sd = odSaldo(c);
+  return `<div class="card"><div class="card-cab"><h3>Time tracking <span class="muted" style="font-weight:400">saldo ${odH(sd.rest)} de ${odH(sd.ent)}</span></h3>${ed?`<div style="display:flex;gap:8px"><button class="btn btn-s" data-act="odHoraForm" data-id="${c.id}" data-tipo="entrada"><i data-lucide="package-plus"></i>Adicionar pacote</button><button class="btn btn-p btn-s" data-act="odHoraForm" data-id="${c.id}"><i data-lucide="timer"></i>Lançar horas</button></div>`:''}</div>
     <div class="tabela-wrap"><table class="tab od-ht"><thead><tr><th>Data</th><th>Demanda</th><th>Pedido</th><th>Pessoa</th>${ed?'<th>Natureza</th>':''}<th class="dir">Horas</th><th class="dir">Saldo</th>${ed?'<th></th>':''}</tr></thead><tbody>
     ${L.map(x=>{ const p = odPed(c, x.pedido), ent = x.tipo==='entrada';
-      return `<tr class="${ent?'od-ent':''}"><td class="num">${fd(x.data)}</td><td>${ent?'<i data-lucide="package-plus"></i> ':''}${h(x.desc||'')}</td><td>${p?`<a href="#/campanha/${c.id}/pedido/${p.id}">${h(p.nome)}</a>`:'<span class="muted">—</span>'}</td><td>${h(x.pessoa||'—')}</td>${ed?`<td class="muted">${h(x.natureza||'—')}</td>`:''}
+      return `<tr class="${ent?'od-ent':''}"><td class="num">${fd(x.data)}</td><td>${ent?'<i data-lucide="package-plus"></i> ':''}${h(x.desc||'')}</td><td>${p?`<a href="#/campanha/${c.id}/entregaveis" onclick="UI.odSec=UI.odSec||{};UI.odSec['${c.id}']='${p.id}'">${h(p.nome)}</a>`:'<span class="muted">—</span>'}</td><td>${h(x.pessoa||'—')}</td>${ed?`<td class="muted">${h(x.natureza||'—')}</td>`:''}
         <td class="dir num ${ent?'od-txt-verde':''}"><b>${ent?'+':'−'}${odH(x.h)}</b></td><td class="dir num muted">${odH(acum[x.id])}</td>${ed?`<td style="white-space:nowrap"><button class="icone-btn" data-act="odHoraForm" data-id="${c.id}" data-h="${x.id}" title="Editar"><i data-lucide="pencil"></i></button><button class="icone-btn" data-act="odHoraDel" data-id="${c.id}" data-h="${x.id}" title="Excluir"><i data-lucide="trash-2"></i></button></td>`:''}</tr>`; }).join('') || `<tr><td colspan="8" class="vazio">Nenhum lançamento ainda.</td></tr>`}</tbody></table></div></div>`; }
 
-function odPedidoPg(c, p, ed){
-  p.ents = p.ents || []; p.acoes = p.acoes || [];
-  const uso = odUsoPed(c, p.id), est = +p.estimativa||0, hs = (c.horas||[]).filter(x=>x.pedido===p.id).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
-  const bloco = (campo, tit, ic, vazio) => `<div class="card od-bl"><div class="card-cab"><h3><i data-lucide="${ic}"></i>${tit}</h3>${ed?`<button class="btn btn-s btn-g" data-act="odTxtForm" data-id="${c.id}" data-p="${p.id}" data-campo="${campo}"><i data-lucide="pencil"></i>Editar</button>`:''}</div><div class="od-texto ${campo==='direcao'?'od-dir':''}">${p[campo] ? odTxt(p[campo]) : `<span class="muted">${vazio}</span>`}</div></div>`;
-  const grupos = [...new Set(p.ents.map(e=>e.grupo||''))];
-  const linhaEnt = e => `<tr><td><b>${h(e.nome)}</b>${e.formato?`<div class="small muted">${h(e.formato)}</div>`:''}</td><td>${odPill(e.status||'Não iniciado', ed ? `data-chg="odEntSt" data-id="${c.id}" data-p="${p.id}" data-e="${e.id}"` : '')}</td>
-    <td>${e.link?`<a class="od-lk" href="${h(e.link)}" target="_blank" rel="noopener"><i data-lucide="folder-open"></i>Arquivo</a>`:'<span class="muted">—</span>'}</td><td>${e.canva?`<a class="od-lk" href="${h(e.canva)}" target="_blank" rel="noopener"><i data-lucide="palette"></i>Canva</a>`:'<span class="muted">—</span>'}</td>
-    ${ed?`<td style="white-space:nowrap"><button class="icone-btn" data-act="odEntForm" data-id="${c.id}" data-p="${p.id}" data-e="${e.id}" title="Editar"><i data-lucide="pencil"></i></button><button class="icone-btn" data-act="odEntDel" data-id="${c.id}" data-p="${p.id}" data-e="${e.id}" title="Excluir"><i data-lucide="trash-2"></i></button></td>`:''}</tr>`;
-  const es = p.ents.filter(e=>e.status!=='Cancelado'), ok = es.filter(e=>e.status==='Concluído').length;
-  return `<div class="card od-pcab"><a class="ent-voltar" href="#/campanha/${c.id}"><i data-lucide="arrow-left"></i>Todos os pedidos</a>
-    <div class="od-pt"><h2>${h(p.nome)}</h2>${odPill(p.status||'Não iniciado', ed ? `data-chg="odPedSt" data-id="${c.id}" data-p="${p.id}"` : '')}
-      <span class="od-ph ${est && uso>est ? 'od-txt-verm' : ''}"><i data-lucide="timer"></i><b>${odH(uso)}</b> usadas${est?` de ${odH(est)} estimadas`:''}</span>${p.prazo?`<span class="od-ph"><i data-lucide="calendar"></i>prazo ${fdm(p.prazo)}</span>`:''}
-      ${ed?`<span style="margin-left:auto;display:flex;gap:6px"><button class="btn btn-s" data-act="odPedForm" data-id="${c.id}" data-p="${p.id}"><i data-lucide="pencil"></i>Editar</button><button class="btn btn-s btn-g" data-act="odPedDel" data-id="${c.id}" data-p="${p.id}" title="Excluir pedido"><i data-lucide="trash-2"></i></button></span>`:''}</div></div>
-  <div class="od-2col">${bloco('briefing','Briefing do cliente','message-square-quote','Cole aqui o briefing que a cliente mandou.')}${bloco('direcao','Direção criativa da Estufa','sparkles','Conceito, tagline e direção visual da Estufa.')}</div>
-  <div class="card od-bl"><div class="card-cab"><h3><i data-lucide="package"></i>Entregáveis <span class="muted" style="font-weight:400">${ok} de ${es.length} concluído${es.length===1?'':'s'}</span></h3>${ed?`<button class="btn btn-p btn-s" data-act="odEntForm" data-id="${c.id}" data-p="${p.id}"><i data-lucide="plus"></i>Novo entregável</button>`:''}</div>
-    ${p.ents.length ? `<div class="tabela-wrap"><table class="tab od-et"><thead><tr><th>Entregável</th><th>Status</th><th>Arquivo</th><th>Canva</th>${ed?'<th></th>':''}</tr></thead><tbody>${grupos.map(g=>(grupos.length>1||g ? `<tr class="a-fase"><td colspan="5">${h(g||'Sem grupo')}</td></tr>` : '') + p.ents.filter(e=>(e.grupo||'')===g).map(linhaEnt).join('')).join('')}</tbody></table></div>` : `<div class="vazio">Nenhum entregável ainda.</div>`}</div>
-  ${ed ? `<div class="card od-bl"><div class="card-cab"><h3><i data-lucide="list-checks"></i>Gestão de ações <span class="muted" style="font-weight:400">só a equipe vê</span></h3></div>
-    <div class="od-acoes">${p.acoes.map(a=>`<div class="od-ac ${a.feito?'ok':''}"><input type="checkbox" ${a.feito?'checked':''} data-chg="odAcaoCk" data-id="${c.id}" data-p="${p.id}" data-a="${a.id}"><span class="od-ac-n">${h(a.nome)}</span><span class="muted small">${h(a.pessoa||'')}${a.prazo?' · '+fdm(a.prazo):''}</span><button class="icone-btn" data-act="odAcaoDel" data-id="${c.id}" data-p="${p.id}" data-a="${a.id}" title="Excluir"><i data-lucide="x"></i></button></div>`).join('')}
-      <form class="od-ac-novo" onsubmit="event.preventDefault();ACT.odAcaoAdd(this)" data-id="${c.id}" data-p="${p.id}"><input name="nome" placeholder="Nova ação…" maxlength="160"><select name="pessoa">${opts(RESPONSAVEIS, quemSou(), 'Responsável')}</select><input type="date" name="prazo"><button class="btn btn-s"><i data-lucide="plus"></i>Adicionar</button></form></div></div>` : ''}
-  <div class="card od-bl"><div class="card-cab"><h3><i data-lucide="hourglass"></i>Horas do pedido <span class="muted" style="font-weight:400">${odH(uso)}</span></h3>${ed?`<button class="btn btn-p btn-s" data-act="odHoraForm" data-id="${c.id}" data-p="${p.id}"><i data-lucide="timer"></i>Lançar horas</button>`:''}</div>
-    ${hs.length ? `<div class="tabela-wrap"><table class="tab"><thead><tr><th>Data</th><th>Demanda</th><th>Pessoa</th><th class="dir">Horas</th></tr></thead><tbody>${hs.map(x=>`<tr><td class="num">${fd(x.data)}</td><td>${h(x.desc||'')}</td><td>${h(x.pessoa||'—')}</td><td class="dir num"><b>${odH(x.h)}</b></td></tr>`).join('')}</tbody></table></div>` : '<div class="vazio">Nenhuma hora lançada neste pedido.</div>'}</div>`; }
+/* propriedades extras na página da peça do On Demand */
+function odPecaProps(c, peca, ed){ const p = odPed(c, peca.pedido), gs = [...new Set(odEnts(c, peca.pedido).map(e=>e.grupo).filter(Boolean))];
+  return [['pedido','folder','Pedido', `<b><a href="#/campanha/${c.id}/entregaveis" onclick="UI.odSec=UI.odSec||{};UI.odSec['${c.id}']='${peca.pedido}'">${h(p ? p.nome : '—')}</a></b>`, false],
+    ['publico','users','Público', ed ? `<input class="np-sel" list="dl-odg-${peca.id}" value="${h(peca.grupo||'')}" placeholder="Vazio" data-chg="odPecaGrupo" data-id="${c.id}" data-e="${peca.id}"><datalist id="dl-odg-${peca.id}">${gs.map(g=>`<option value="${h(g)}">`).join('')}</datalist>` : `<b>${h(peca.grupo||'—')}</b>`, !peca.grupo],
+    ['canva','palette','Canva template', `<div class="np-asset">${lkCampo(peca.canva||'', `data-chg="odPecaCanva" data-id="${c.id}" data-e="${peca.id}"`, 'Cole o link do template no Canva', ed)}</div>`, !peca.canva]]; }
 
-function odChg(k, el, v){ const c = camp(el.dataset.id), p = c && odPed(c, el.dataset.p); if (!p) return;
+function odChg(k, el, v){ const c = camp(el.dataset.id); if (!c) return;
+  if (k==='odPecaGrupo' || k==='odPecaCanva') { const e = (c.entregaveis||[]).find(x=>x.id===el.dataset.e); if (!e) return; if (k==='odPecaGrupo') e.grupo = (v||'').trim(); else e.canva = (v||'').trim(); registrar(`${k==='odPecaGrupo'?'Público':'Canva'} da peça “${e.nome}” atualizado em “${c.nome}”`); return render(); }
+  const p = odPed(c, el.dataset.p); if (!p) return;
   if (k==='odPedSt') { p.status = v; registrar(`Pedido “${p.nome}” (${c.nome}): ${v}`); }
-  else if (k==='odEntSt') { const e = (p.ents||[]).find(x=>x.id===el.dataset.e); if (!e) return; e.status = v; registrar(`Entregável “${e.nome}” do pedido “${p.nome}”: ${v}`); }
   else if (k==='odAcaoCk') { const a = (p.acoes||[]).find(x=>x.id===el.dataset.a); if (!a) return; a.feito = !!v; }
   render(); }
 
 Object.assign(ACT, {
   odSalvar: el => odSalvar(el.dataset.id),
-  odPedForm: el => { const c = camp(el.dataset.id), p = el.dataset.p ? odPed(c, el.dataset.p) : null;
+  odSec: el => { UI.odSec = UI.odSec || {}; UI.odSec[el.dataset.id] = el.dataset.p || null; render(); scrollTo(0, 0); },
+  odPedForm: el => { UI.menuCamp = false; const c = camp(el.dataset.id), p = el.dataset.p ? odPed(c, el.dataset.p) : null;
     abrirModal(p ? 'Editar pedido' : 'Novo pedido', `<form id="f-odp" class="form-g">
       <label class="campo tudo">Nome do pedido *<input name="nome" maxlength="160" value="${h(p?p.nome:'')}" placeholder="Ex.: PTx Christmas Assets"></label>
       <label class="campo">Aberto em<input type="date" name="criadoEm" value="${p?p.criadoEm||'':HOJE}"></label><label class="campo">Prazo<input type="date" name="prazo" value="${p?p.prazo||'':''}"></label>
@@ -6545,32 +6580,27 @@ Object.assign(ACT, {
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="odPedSalvar" data-id="${c.id}" data-p="${p?p.id:''}">${p?'Salvar':'<i data-lucide="plus"></i>Criar pedido'}</button>`); },
   odPedSalvar: el => { const c = camp(el.dataset.id), v = ler($('#f-odp')), nome = (v.nome||'').trim(); if (!nome) return toast('Informe o nome do pedido.');
     let p = el.dataset.p && odPed(c, el.dataset.p); const dados = {nome, criadoEm:v.criadoEm||HOJE, prazo:v.prazo||null, estimativa: v.estimativa==='' ? null : +v.estimativa, status:v.status};
-    if (p) Object.assign(p, dados); else { p = Object.assign({id:novoId('p'), briefing:v.briefing||'', direcao:'', ents:[], acoes:[]}, dados); c.pedidos.push(p); }
-    registrar(`Pedido ${el.dataset.p?'editado':'criado'} em “${c.nome}”: ${nome}`); fecharModal(); location.hash = '#/campanha/'+c.id+'/pedido/'+p.id; render(); },
-  odPedDel: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p); if (!p) return; const n = (c.horas||[]).filter(x=>x.pedido===p.id).length;
-    if (!confirm(`Excluir o pedido “${p.nome}”?${n?` As ${n} linha(s) de horas dele continuam no Time tracking, sem pedido.`:''}`)) return;
-    c.pedidos = c.pedidos.filter(x=>x!==p); registrar(`Pedido excluído de “${c.nome}”: ${p.nome}`); location.hash = '#/campanha/'+c.id; render(); },
+    if (p) Object.assign(p, dados); else { p = Object.assign({id:novoId('p'), briefing:v.briefing||'', direcao:'', acoes:[]}, dados); c.pedidos.push(p); }
+    registrar(`Pedido ${el.dataset.p?'editado':'criado'} em “${c.nome}”: ${nome}`); fecharModal(); UI.odSec = Object.assign(UI.odSec||{}, {[c.id]: p.id}); location.hash = '#/campanha/'+c.id+'/entregaveis'; render(); },
+  odPedDel: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p); if (!p) return; const n = (c.horas||[]).filter(x=>x.pedido===p.id).length, ne = odEnts(c, p.id).length;
+    if (!confirm(`Excluir o pedido “${p.nome}”?${ne?` As ${ne} peça(s) dele também são excluídas.`:''}${n?` As ${n} linha(s) de horas continuam no Time tracking, sem pedido.`:''}`)) return;
+    c.pedidos = c.pedidos.filter(x=>x!==p); c.entregaveis = (c.entregaveis||[]).filter(e=>e.pedido!==p.id); UI.odSec[c.id] = null; registrar(`Pedido excluído de “${c.nome}”: ${p.nome}`); render(); },
   odTxtForm: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p), campo = el.dataset.campo;
     abrirModal(campo==='briefing' ? 'Briefing do cliente' : 'Direção criativa da Estufa', `<form id="f-odt"><textarea name="t" rows="16" style="width:100%;font:inherit">${h(p[campo]||'')}</textarea><p class="small muted">Use **texto** para negrito. Links viram clicáveis.</p></form>`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="odTxtSalvar" data-id="${c.id}" data-p="${p.id}" data-campo="${campo}">Salvar</button>`, true); },
   odTxtSalvar: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p); p[el.dataset.campo] = ler($('#f-odt')).t || ''; registrar(`${el.dataset.campo==='briefing'?'Briefing':'Direção criativa'} do pedido “${p.nome}” atualizado`); fecharModal(); render(); },
-  odEntForm: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p), e = (p.ents||[]).find(x=>x.id===el.dataset.e);
-    const gs = [...new Set(p.ents.map(x=>x.grupo).filter(Boolean))];
-    abrirModal(e ? 'Editar entregável' : 'Novo entregável', `<form id="f-ode" class="form-g">
-      <label class="campo tudo">Nome *<input name="nome" maxlength="160" value="${h(e?e.nome:'')}" placeholder="Ex.: WhatsApp format (9:16)"></label>
-      <label class="campo">Grupo / público<input name="grupo" list="dl-odg" value="${h(e?e.grupo||'':'')}" placeholder="Ex.: PTx > Dealers"><datalist id="dl-odg">${gs.map(g=>`<option value="${h(g)}">`).join('')}</datalist></label>
-      <label class="campo">Formato<input name="formato" value="${h(e?e.formato||'':'')}" placeholder="Ex.: 1080×1920"></label>
-      <label class="campo">Status<select name="status">${opts(OD_ENT_ST.map(x=>[x[0],x[0]]), e?e.status:'Não iniciado')}</select></label><label class="campo">Prazo<input type="date" name="prazo" value="${e&&e.prazo||''}"></label>
-      <label class="campo tudo">Link do arquivo<input type="url" name="link" value="${h(e?e.link||'':'')}" placeholder="Google Drive, Dropbox…"></label>
-      <label class="campo tudo">Link do Canva<input type="url" name="canva" value="${h(e?e.canva||'':'')}"></label></form>`,
-      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="odEntSalvar" data-id="${c.id}" data-p="${p.id}" data-e="${e?e.id:''}">Salvar</button>`); },
-  odEntSalvar: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p), v = ler($('#f-ode')), nome = (v.nome||'').trim(); if (!nome) return toast('Informe o nome do entregável.');
-    let e = p.ents.find(x=>x.id===el.dataset.e); if (!e) { e = {id:novoId('e')}; p.ents.push(e); }
-    Object.assign(e, {nome, grupo:(v.grupo||'').trim(), formato:v.formato||'', status:v.status, prazo:v.prazo||null, link:(v.link||'').trim(), canva:(v.canva||'').trim()});
-    registrar(`Entregável salvo no pedido “${p.nome}”: ${nome}`); fecharModal(); render(); },
-  odEntDel: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p), e = p.ents.find(x=>x.id===el.dataset.e); if (!e || !confirm(`Excluir o entregável “${e.nome}”?`)) return;
-    p.ents = p.ents.filter(x=>x!==e); registrar(`Entregável excluído do pedido “${p.nome}”: ${e.nome}`); render(); },
-  odHoraForm: el => { const c = camp(el.dataset.id), x = (c.horas||[]).find(y=>y.id===el.dataset.h), ent = x ? x.tipo==='entrada' : el.dataset.tipo==='entrada';
+  odEntForm: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p), gs = [...new Set(odEnts(c, p.id).map(x=>x.grupo).filter(Boolean))];
+    abrirModal('Nova peça · '+p.nome, `<form id="f-ode" class="form-g">
+      <label class="campo tudo">Nome *<input name="nome" maxlength="160" placeholder="Ex.: WhatsApp format (9:16)"></label>
+      <label class="campo">Público<input name="grupo" list="dl-odg" value="${el.dataset.novo ? '' : h(el.dataset.grupo||'')}" placeholder="Ex.: PTx > Dealers"><datalist id="dl-odg">${gs.map(g=>`<option value="${h(g)}">`).join('')}</datalist></label>
+      <label class="campo">Formato<input name="formato" placeholder="Ex.: 1080×1920"></label></form>
+      <p class="small muted" style="margin-bottom:0">O briefing da peça é escrito na página dela, que abre ao clicar no card.</p>`,
+      `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="odEntSalvar" data-id="${c.id}" data-p="${p.id}"><i data-lucide="plus"></i>Criar peça</button>`); },
+  odEntSalvar: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p), v = ler($('#f-ode')), nome = (v.nome||'').trim(); if (!nome) return toast('Informe o nome da peça.');
+    const grupo = (v.grupo||'').trim(); if (odEnts(c, p.id).some(e=>e.nome===nome && (e.grupo||'')===grupo)) return toast('Já existe uma peça com esse nome nesse público.');
+    c.entregaveis = c.entregaveis || []; c.entregaveis.push({id:novoId('e'), nome, secao:'On Demand', pedido:p.id, grupo, formato:v.formato||'', etapa:'briefing', link:'', canva:'', prazo:null, idioma:c.idiomaBase||'PT', paises:[], versoes:[], aprovacoes:[], briefing:{}});
+    registrar(`Peça criada no pedido “${p.nome}”: ${nome}`); fecharModal(); render(); },
+  odHoraForm: el => { UI.menuCamp = false; const c = camp(el.dataset.id), x = (c.horas||[]).find(y=>y.id===el.dataset.h), ent = x ? x.tipo==='entrada' : el.dataset.tipo==='entrada';
     abrirModal(ent ? (x?'Editar pacote de horas':'Adicionar pacote de horas') : (x?'Editar lançamento':'Lançar horas'), `<form id="f-odh" class="form-g">
       <label class="campo">Data<input type="date" name="data" value="${x?x.data:HOJE}"></label><label class="campo">Horas *<input type="number" name="h" min="0" step="0.25" value="${x?x.h:''}" placeholder="Ex.: 2,5"></label>
       ${ent ? '' : `<label class="campo tudo">Pedido<select name="pedido">${opts((c.pedidos||[]).map(p=>[p.id,p.nome]), x ? x.pedido||'' : el.dataset.p||'', 'Sem pedido')}</select></label>`}
@@ -7187,7 +7217,8 @@ function pecaPropsHtml(c, peca, d, ed, mi, et, idi, st){ const kv = ehKV(peca), 
     ['okConteudo','check-square','Conteúdo aprovado', `<label class="np-chk"><input type="checkbox" data-chg="lpAprovado" ${A} ${st==='Aprovado'?'checked':''} ${ed?'':'disabled'}><em>${st==='Aprovado' ? 'Aprovado pelo cliente' : ''}</em></label>`, st!=='Aprovado'],
     ['okAsset','check-square','Asset aprovado', `<label class="np-chk"><input type="checkbox" data-chg="pecaAssetOk" data-ids="${gI}" ${ok?'checked':''} ${ed && lib?'':'disabled'}><em>${ok ? 'Aprovado pelo cliente' : lib ? '' : '<span class="muted">libera com o conteúdo aprovado</span>'}</em></label>`, !ok],
     d.publico ? ['publico','globe','Link público', `<b><a href="${lpLinkPublico(d.publico)}" target="_blank" rel="noopener">${lpLinkPublico(d.publico).replace(/^https?:\/\//,'').slice(0,60)}…</a></b>`, false] : null,
-    ['campanha','megaphone','Campanha', `<b>${h(c.nome)} · ${h(cliente(c.clienteId).nome)}</b>`, false]].filter(Boolean);
+    ...(peca.pedido ? odPecaProps(c, peca, ed) : []),
+    ['campanha','megaphone', c.tipo==='ondemand' ? 'Projeto' : 'Campanha', `<b>${h(c.nome)} · ${h(cliente(c.clienteId).nome)}</b>`, false]].filter(Boolean);
   return propsBloco(L0, (kv ? 'kv:' : 'peca:')+c.id, kv ? {campanha:'oculta', formato:'oculta'} : {campanha:'oculta', prazo:'oculta'}, ed); }
 /* bloco de propriedades (como no Notion): ordem por arrastar e visibilidade por propriedade, guardadas no projeto/campanha */
 function propsBloco(L0, dono, padrao, ed){ const D = propDono(dono); if (!D) return ''; const V = Object.assign({}, padrao, D.o[D.vk]||{}), ordem = D.o[D.ok] || [];
