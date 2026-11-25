@@ -170,7 +170,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:.86rem}
 .bud-seta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--tx2)}.bud-seta svg{width:20px;height:20px}.bud-seta small{font-size:.72rem;font-weight:700;white-space:nowrap;color:#8a5d00}
 .bud-ok{color:#1f7a47!important;font-weight:600}.bud-alerta{color:#8a5d00!important;font-weight:600}.bud-alerta.verm{color:#a32d2d!important}
 .bud-plan{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:8px;color:var(--tx2)}.bud-plan a{color:var(--tx);font-weight:600}
-.apr-men{margin-top:22px}.apr-resp summary{list-style:none;cursor:pointer}.apr-resp summary::-webkit-details-marker{display:none}.apr-resp .apr-resp-ch{width:15px;height:15px;color:#a3a19b;transition:transform .15s}.apr-resp[open] .apr-resp-ch{transform:rotate(180deg)}.apr-resp .apr-men-c{margin-top:8px}.apr-men-c{padding:4px 16px;border-radius:12px}.apr-men-c .apr-m{padding:12px 2px}.apr-men-c .apr-m:last-child{border-bottom:0}a.apr-m:hover .apr-m-t b{text-decoration:underline}.apr-m>.apr-pz{flex:0 0 auto}.apr-men .apr-g-t em{font-style:normal;font-size:12px;background:var(--azul-c,#e8f0f7);color:#285e8a;border-radius:10px;padding:1px 8px;margin-left:6px}.apr-m{text-decoration:none;color:inherit;align-items:flex-start}.apr-m-t{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.apr-m-t small{color:var(--muted,#7a8589)}
+.apr-men{margin-top:22px}.apr-h.apr-m>.apr-m-t{flex:1;min-width:0;white-space:normal}.apr-h.apr-m>.apr-pz,.apr-h.apr-hl>.apr-pz{flex:0 0 auto;margin-left:auto;overflow:visible;white-space:nowrap;color:var(--tx3);font-size:.78rem}.apr-h.apr-hl>.apr-hl-n{flex:1;min-width:0}.apr-resp summary{list-style:none;cursor:pointer}.apr-resp summary::-webkit-details-marker{display:none}.apr-resp .apr-resp-ch{width:15px;height:15px;color:#a3a19b;transition:transform .15s}.apr-resp[open] .apr-resp-ch{transform:rotate(180deg)}.apr-resp .apr-men-c{margin-top:8px}.apr-men-c{padding:4px 16px;border-radius:12px}.apr-men-c .apr-m{padding:12px 2px}.apr-men-c .apr-m:last-child{border-bottom:0}a.apr-m:hover .apr-m-t b{text-decoration:underline}.apr-m>.apr-pz{flex:0 0 auto}.apr-men .apr-g-t em{font-style:normal;font-size:12px;background:var(--azul-c,#e8f0f7);color:#285e8a;border-radius:10px;padding:1px 8px;margin-left:6px}.apr-m{text-decoration:none;color:inherit;align-items:flex-start}.apr-m-t{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.apr-m-t small{color:var(--muted,#7a8589)}
 .ncm{display:flex;flex-direction:column;gap:2px}
 .ncm-h{font-size:.8rem;font-weight:600;color:var(--tx3);margin:0 0 4px}.ncm-h span{font-size:.7rem;background:var(--cinza-f,#f1f2f4);border-radius:20px;padding:1px 7px;margin-left:4px;color:var(--tx2)}
 .ncm-i{position:relative;display:flex;gap:10px;padding:8px 6px;margin:0 -6px;border-radius:8px}.ncm-i:hover{background:#f7f7f5}
@@ -2046,7 +2046,7 @@ function render(){
   fecharMenuBarra();
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida && n.cat==='mim').length;   // o contador do sino conta só o que é para você
-  const itens = ehCliente() ? [['aprovacoes','badge-check','Aprovações', aprovPendencias().length],['campanhas','megaphone','Campanhas']] : [['dashboard','layout-dashboard','Início'],['meu','user-round','Minha página'],['clientes','building-2','Clientes']];   // Gestão de ações e Cronograma anual ficam dentro de cada cliente; o Calendário editorial saiu do menu
+  const itens = ehCliente() ? [['aprovacoes','badge-check','Aprovações', aprovPendencias().length],['historico','history','Histórico'],['campanhas','megaphone','Campanhas']] : [['dashboard','layout-dashboard','Início'],['meu','user-round','Minha página'],['clientes','building-2','Clientes']];   // Gestão de ações e Cronograma anual ficam dentro de cada cliente; o Calendário editorial saiu do menu
   const sec = ehCliente() ? (['campanhas','campanha','lp'].includes(r[0]) ? 'campanhas' : 'aprovacoes') : ['campanha','social','grupo','acoes','anual'].includes(r[0]) ? 'clientes' : r[0];
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
@@ -2055,7 +2055,7 @@ function render(){
   const favHtml = favs.length ? `<div class="menu-grupo">Favoritos</div>` + favs.map(f=>`<a href="${h(f.h)}" class="fav-it ${f.h===rtAt?'ativo':''}" title="${h(f.s ? f.s+' · '+f.t : f.t)}"><i data-lucide="star"></i><span>${h(f.t)}</span><button class="fav-x" title="Remover dos favoritos" onclick="favTirar(event, ${h(JSON.stringify(f.h))})"><i data-lucide="x"></i></button></a>`).join('') : '';
   if (ehCliente()) $('#menu').innerHTML = itens.map(itemMenu).join(''); else $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + favHtml + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
   $('#hoje-txt').textContent = fd(HOJE); { for (const id of ['#lat-badge','#topo-badge']) { const b = $(id); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
-  const pg = ehCliente() ? ({campanhas:pgCliCampanhas, campanha:pgCampanha, lp:pgLpPagina, social:r=>r[2]==='post' ? pgSocial(r) : pgAprovacoes()}[r[0]] || pgAprovacoes) : {meu:pgMeu,perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,grupo:pgGrupo,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,social:pgSocial,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
+  const pg = ehCliente() ? ({historico:pgCliHistorico, campanhas:pgCliCampanhas, campanha:pgCampanha, lp:pgLpPagina, social:r=>r[2]==='post' ? pgSocial(r) : pgAprovacoes()}[r[0]] || pgAprovacoes) : {meu:pgMeu,perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,grupo:pgGrupo,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,social:pgSocial,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
   try { $('#app').innerHTML = ehCliente() || podeRota(r) ? pg(r) : (migalha([['Sem acesso']]), '<div class="card vazio" style="margin-top:20px"><i data-lucide="lock"></i><div style="margin-top:8px">Você não tem acesso a esta área. Fale com um administrador.</div></div>'); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
@@ -6922,6 +6922,23 @@ function pgCliCampanhas(){ migalha([['Campanhas']]);
       return `<div class="apr-g-t ccl-g"><span class="pc4-st c-${cor}"><i></i>${rot}</span><em>${L.length}</em></div><div class="card cli-tab"><div class="cli-ln cli-hd ccl-ln"><span></span><span>Campanha</span><span>Lançamento</span><span>Progresso</span><span></span></div>${L.map(linha).join('')}</div>`; }).join('')
       : `<div class="card apr-vz"><i data-lucide="megaphone"></i><b>Nenhuma campanha ativa</b><span>Quando uma campanha começar, ela aparece aqui.</span></div>`}`; }
 const APROV_ROT = {conteudo:'Aprovação do conteúdo', asset:'Aprovação do asset', layout:'Aprovação do layout'};
+/* menções ao cliente nos comentários: as que ainda esperam resposta e as já respondidas (Responder no mesmo fio) */
+function cliMencoes(){
+  let mens = []; try { mens = notificacoes().filter(n=>n.ic==='at-sign').sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0, 40); } catch(e){}
+  // respondida: o cliente escreveu depois, no mesmo fio (Responder) da menção
+  const me = quemSou(), listas = comTodasListas();
+  const respondida = n => { if (!n.ts) return false; const L = listas.find(L=>L.some(x=>x.t===n.ts)); if (!L) return false; const m = L.find(x=>x.t===n.ts), raiz = m.resp || m.t;
+    return L.some(y=>y.quem===me && y.t > m.t && (y.resp===raiz || y.resp===m.t)); };
+  const pend = mens.filter(n=>!respondida(n)), resp = mens.filter(respondida);
+  const podeAbrir = l => /^#\/(campanha|lp|social\/[^/]+\/post)\//.test(l||'');
+  const linhaMen = n => `<${podeAbrir(n.link)?`a href="${h(n.link)}" ${n.sec && n.cid ? `onclick="UI.entSec=UI.entSec||{};UI.entSec['${h(n.cid)}']=${h(JSON.stringify(n.sec))};UI.secComAberto=true"` : ''}`:'div'} class="apr-h apr-m"><span class="apr-m-t"><b class="notranslate">${h(n.t)}</b><small class="notranslate">${h(n.d||'')}</small></span>${n.ts?`<span class="apr-pz">${fdm(new Date(n.ts).toISOString().slice(0,10))}</span>`:''}</${podeAbrir(n.link)?'a':'div'}>`;
+  return {pend, resp, linhaMen}; }
+/* aba Histórico do cliente: menções respondidas e as últimas respostas de aprovação */
+function pgCliHistorico(){ migalha([['Histórico']]); const {resp, linhaMen} = cliMencoes(), env = APROV.slice(0, 40);
+  const data = a => new Date(a.criado_em).toLocaleString(LANG==='en'?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  return `<div class="cab"><div><h1>Histórico</h1><p>Menções que você já respondeu e as suas últimas aprovações.</p></div></div>
+    <div class="apr-hist apr-men" style="margin-top:6px"><div class="apr-g-t"><i data-lucide="check-check"></i>Menções respondidas <em>${resp.length}</em></div>${resp.length ? `<div class="card apr-men-c">${resp.map(linhaMen).join('')}</div>` : `<div class="card apr-men-c"><div class="apr-h muted small" style="border:0">Quando você responder uma menção, ela aparece aqui.</div></div>`}</div>
+    <div class="apr-hist apr-men"><div class="apr-g-t"><i data-lucide="history"></i>Suas últimas respostas <em>${env.length}</em></div>${env.length ? `<div class="card apr-men-c">${env.map(a=>`<div class="apr-h apr-hl"><span class="pc4-st c-${a.decisao==='aprovado'?'verde':'verm'}"><i></i>${a.decisao==='aprovado'?'Aprovado':'Ajustes pedidos'}</span><span class="apr-hl-n notranslate">${h(aprNome(a))}</span><span class="apr-pz">${data(a)}${a.aplicado_em?'':' · '+(LANG==='en'?'sent to the team':'enviado à equipe')}</span></div>`).join('')}</div>` : `<div class="card apr-men-c"><div class="apr-h muted small" style="border:0">Suas aprovações e pedidos de ajuste aparecem aqui.</div></div>`}</div>`; }
 function pgAprovacoes(){
   migalha([['Aprovações']]);
   const L = aprovPendencias(), aberto = UI.aprAberto || null, porProj = new Map();
@@ -6931,23 +6948,13 @@ function pgAprovacoes(){
   const item = x => `<a class="apr-it" href="${h(aprLink(x))}"><div class="apr-cab">
         <div class="apr-tit"><b class="notranslate">${h(x.titulo)}</b><small><span class="notranslate">${h(x.onde)}</span>${x.sub?` · <span class="notranslate">${h(x.sub)}</span>`:''}</small></div>
         <span class="pc4-st c-amar"><i></i>${APROV_ROT[x.etapa]}</span>${x.quando?`<span class="apr-pz">${fdm(x.quando)}</span>`:''}<i data-lucide="chevron-right" class="apr-chev"></i></div></a>`;
-  const env = APROV.slice(0, 15);
   // menções ao cliente nos comentários (o texto aparece aqui; abre a página quando ela é uma que o cliente vê)
-  let mens = []; try { mens = notificacoes().filter(n=>n.ic==='at-sign').sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0, 40); } catch(e){}
-  // respondida: o cliente escreveu depois, no mesmo fio (Responder) da menção
-  const me = quemSou(), listas = comTodasListas();
-  const respondida = n => { if (!n.ts) return false; const L = listas.find(L=>L.some(x=>x.t===n.ts)); if (!L) return false; const m = L.find(x=>x.t===n.ts), raiz = m.resp || m.t;
-    return L.some(y=>y.quem===me && y.t > m.t && (y.resp===raiz || y.resp===m.t)); };
-  const pend = mens.filter(n=>!respondida(n)), resp = mens.filter(respondida);
-  const podeAbrir = l => /^#\/(campanha|lp|social\/[^/]+\/post)\//.test(l||'');
-  const linhaMen = n => `<${podeAbrir(n.link)?`a href="${h(n.link)}" ${n.sec && n.cid ? `onclick="UI.entSec=UI.entSec||{};UI.entSec['${h(n.cid)}']=${h(JSON.stringify(n.sec))};UI.secComAberto=true"` : ''}`:'div'} class="apr-h apr-m"><span class="apr-m-t"><b class="notranslate">${h(n.t)}</b><small class="notranslate">${h(n.d||'')}</small></span>${n.ts?`<span class="apr-pz">${fdm(new Date(n.ts).toISOString().slice(0,10))}</span>`:''}</${podeAbrir(n.link)?'a':'div'}>`;
-  const blocoMen = (pend.length ? `<div class="apr-hist apr-men"><div class="apr-g-t"><i data-lucide="at-sign"></i>Menções a você <em>${pend.length}</em></div><div class="card apr-men-c">${pend.map(linhaMen).join('')}</div></div>` : '')
-    + (resp.length ? `<details class="apr-hist apr-men apr-resp" ${UI.aprRespAberto?'open':''} ontoggle="UI.aprRespAberto=this.open"><summary class="apr-g-t"><i data-lucide="check-check"></i>Respondidas <em>${resp.length}</em><i data-lucide="chevron-down" class="apr-resp-ch"></i></summary><div class="card apr-men-c">${resp.map(linhaMen).join('')}</div></details>` : '');
+  const {pend, linhaMen} = cliMencoes();
+  const blocoMen = pend.length ? `<div class="apr-hist apr-men"><div class="apr-g-t"><i data-lucide="at-sign"></i>Menções a você <em>${pend.length}</em></div><div class="card apr-men-c">${pend.map(linhaMen).join('')}</div></div>` : '';
   return `<div class="cab"><div><h1>Aprovações</h1><p>${L.length ? `${L.length} ${L.length===1?'item aguarda':'itens aguardam'} a sua aprovação.` : 'Nada aguardando a sua aprovação agora.'}</p></div></div>
     ${L.length ? [...porProj.values()].map(xs=>`<div class="apr-grupo"><div class="apr-g-t"><i data-lucide="${xs[0].tipo==='post'?'smartphone':xs[0].c.tipo==='ondemand'?'hourglass':'megaphone'}"></i><span class="notranslate">${h(xs[0].c.nome)}</span><em>${xs.length}</em></div>${xs.map(item).join('')}</div>`).join('')
       : `<div class="card apr-vz"><i data-lucide="check-circle-2"></i><b>Tudo em dia</b><span>Quando a equipe enviar algo para você aprovar, aparece aqui.</span></div>`}
-    ${blocoMen}
-    ${env.length ? `<div class="apr-hist"><div class="apr-g-t"><i data-lucide="history"></i>Suas últimas respostas</div>${env.map(a=>`<div class="apr-h"><span class="pc4-st c-${a.decisao==='aprovado'?'verde':'verm'}"><i></i>${a.decisao==='aprovado'?'Aprovado':'Ajustes pedidos'}</span><span class="notranslate">${h(aprNome(a))}</span><span class="muted small">${new Date(a.criado_em).toLocaleString(LANG==='en'?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}${a.aplicado_em?'':' · '+(LANG==='en'?'sent to the team':'enviado à equipe')}</span></div>`).join('')}</div>` : ''}`; }
+    ${blocoMen}`; }
 Object.assign(ACT, {
   cliComentar: async el => { const ta = el.closest('.ncm-in').querySelector('textarea'), txt = (ta.value||'').trim(); if (!txt || !sb) return; const alvo = JSON.parse(el.dataset.alvo), cid = el.dataset.cid, t = Date.now(), resp = comRespDe(ta).resp || null;
     el.disabled = true; const row = {cliente_id: PERFIL.cliente_id, campanha_id: cid, alvo, texto: txt, resp, t, autor_nome: quemSou()};
