@@ -848,6 +848,8 @@ body.at-arrastando .at-ev{pointer-events:none}
 .pub.pub-soc .pub-doc{max-width:1120px}.pub-soc-g{display:grid;grid-template-columns:350px minmax(0,1fr);gap:48px;align-items:start}.pub-soc-ph{position:sticky;top:20px}.pub-soc-feed{grid-template-columns:minmax(0,1fr) 350px}
 @media (max-width:900px){.pub-soc-g,.pub-soc-feed{grid-template-columns:1fr}.pub-soc-ph{position:static;display:flex;justify-content:center}}
 .cli-fl{flex-wrap:wrap;justify-content:flex-end}.cli-busca{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--borda);border-radius:8px;padding:0 10px;width:240px}.cli-busca svg{width:16px;height:16px;color:var(--tx3);flex:none}.cli-busca input{border:0;outline:0;background:none;padding:8px 0;font:inherit;width:100%}.cli-arq{display:flex;align-items:center;gap:6px;cursor:pointer}
+.fav-bt{border:0;background:none;padding:2px;margin-left:8px;cursor:pointer;color:var(--tx3);display:inline-flex;vertical-align:middle;border-radius:5px}.fav-bt:hover{color:#d99a00;background:#f4f5f6}.fav-bt svg{width:15px;height:15px}.fav-bt.on{color:#e0a100}.fav-bt.on svg{fill:#f2b705}
+.fav-it span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fav-it>svg{color:#e0a100}.fav-x{border:0;background:none;padding:0;margin-left:auto;color:inherit;opacity:0;cursor:pointer;display:flex}.fav-x svg{width:13px;height:13px}.fav-it:hover .fav-x{opacity:.7}.fav-x:hover{opacity:1!important}
 .cli-k-dir{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}.cli-st .pc4-st{font-size:.74rem}.cli-addsub{border:1px solid var(--borda);background:#fff;border-radius:7px;padding:3px 8px;font:inherit;font-size:.76rem;color:var(--tx2);display:inline-flex;align-items:center;gap:4px;cursor:pointer;opacity:0;transition:opacity .15s}.cli-k:hover .cli-addsub,.cli-addsub:focus{opacity:1}.cli-addsub:hover{color:var(--tx);border-color:#c9cdd2}.cli-addsub svg{width:13px;height:13px}
 .cli-pref{display:flex;align-items:center;border:1px solid var(--borda);border-radius:8px;overflow:hidden;background:#fff}.cli-pref em{font-style:normal;padding:0 10px;color:var(--tx2);background:#f4f5f6;align-self:stretch;display:flex;align-items:center;border-right:1px solid var(--borda);white-space:nowrap}.cli-pref input{border:0!important;flex:1;min-width:0}
 .cli-logo-ed{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;font-weight:400}.cli-logo-ed .btn{cursor:pointer}
@@ -1852,7 +1854,9 @@ function render(){
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
   const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações']].filter(([k])=>pode(k));
-  $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
+  const favs = favLista(), rtAt = favRota();
+  const favHtml = favs.length ? `<div class="menu-grupo">Favoritos</div>` + favs.map(f=>`<a href="${h(f.h)}" class="fav-it ${f.h===rtAt?'ativo':''}" title="${h(f.s ? f.s+' · '+f.t : f.t)}"><i data-lucide="star"></i><span>${h(f.t)}</span><button class="fav-x" title="Remover dos favoritos" onclick="favTirar(event, ${h(JSON.stringify(f.h))})"><i data-lucide="x"></i></button></a>`).join('') : '';
+  $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + favHtml + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
   $('#hoje-txt').textContent = fd(HOJE); { for (const id of ['#lat-badge','#topo-badge']) { const b = $(id); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
   const pg = {perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,grupo:pgGrupo,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,social:pgSocial,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
@@ -1884,7 +1888,21 @@ document.addEventListener('keydown', e => { if (!(e.ctrlKey || e.metaKey) || e.a
   if ($('#modal-raiz').innerHTML || $('#login-raiz').innerHTML) return;
   e.preventDefault(); desfazer(k==='y' || e.shiftKey); });
 let posRender = [];
-const migalha = partes => { $('#migalha').innerHTML = partes.map((p,i)=> i<partes.length-1 ? `<a href="${p[1]}">${h(p[0])}</a> / ` : `<b>${h(p[0])}</b>`).join(''); };
+const migalha = partes => { MIGALHA = partes; $('#migalha').innerHTML = partes.map((p,i)=> i<partes.length-1 ? `<a href="${p[1]}">${h(p[0])}</a> / ` : `<b>${h(p[0])}</b>`).join('') + favBotao(); };
+/* favoritos: cada usuário marca páginas com a estrela; ficam no menu lateral só para ele (perfis.favoritos) */
+let MIGALHA = [];
+const favRota = () => { const x = (location.hash || '#/dashboard').split('?')[0]; return x === '#/' || x === '#' ? '#/dashboard' : x; };
+const favLista = () => (PERFIL && Array.isArray(PERFIL.favoritos)) ? PERFIL.favoritos : [];
+function favBotao(){ if (!PERFIL) return ''; const on = favLista().some(f=>f.h===favRota());
+  return `<button class="fav-bt ${on?'on':''}" onclick="favAlternar()" title="${on?'Remover dos favoritos':'Adicionar aos favoritos'}"><i data-lucide="star"></i></button>`; }
+async function favGravar(L){ const antes = favLista(); PERFIL.favoritos = L; render();
+  if (!sb) return; const r = await sb.from('perfis').update({favoritos:L}).eq('id', PERFIL.id).select('id');
+  if (r.error || !r.data.length) { PERFIL.favoritos = antes; render(); toast('Não foi possível salvar o favorito.'); } }
+function favAlternar(){ const rt = favRota(), L = favLista();
+  if (L.some(f=>f.h===rt)) return favGravar(L.filter(f=>f.h!==rt));
+  const ult = MIGALHA[MIGALHA.length-1], ant = MIGALHA.length > 1 ? MIGALHA[MIGALHA.length-2] : null;
+  favGravar([...L, {h:rt, t:(ult && ult[0]) || document.title, s:(ant && ant[0]) || ''}]); toast('Adicionado aos favoritos.'); }
+function favTirar(e, rt){ e.preventDefault(); e.stopPropagation(); favGravar(favLista().filter(f=>f.h!==rt)); }
 
 /* =====================================================================
    8. DASHBOARD
