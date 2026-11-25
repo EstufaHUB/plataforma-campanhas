@@ -2053,7 +2053,7 @@ function cardCli(c, link){ const {cs, ab} = campsCli(c.id), url = link || '#/cli
 function pgGrupo(r){ const key = decodeURIComponent(r[1]||''), cs = grupoDe(key), aba = r[2] || 'inicio'; if (!cs.length) return '<div class="vazio">Cliente não encontrado.</div>';
   const um = cs.length===1, nome = um ? cs[0].nome : grupoCliNome(cs[0]), base = '#/grupo/'+encodeURIComponent(key), ids = cs.map(c=>c.id);
   const nAtr = acoesGlobais().filter(x=>ids.includes(x.c.clienteId) && statusExib(x.t)==='Atrasada').length;
-  const abas = [['inicio', um ? 'Campanhas' : 'Subclientes', um ? 'megaphone' : 'layers'], pode('acoes') && ['acoes','Gestão de ações','clipboard-check', nAtr], pode('calendarios') && ['anual','Cronograma anual','calendar-range']].filter(Boolean);
+  const abas = [['inicio', um ? 'Projetos' : 'Subclientes', um ? 'folder-kanban' : 'layers'], pode('acoes') && ['acoes','Gestão de ações','clipboard-check', nAtr], pode('calendarios') && ['anual','Cronograma anual','calendar-range']].filter(Boolean);
   const nav = `<nav class="abas nao-imprimir gr-abas">${abas.map(([k,t,ic,n])=>`<a href="${base}${k==='inicio'?'':'/'+k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`).join('')}</nav>`;
   let corpo; UI.escopo = ids;
   try { corpo = aba==='acoes' ? pgAcoes() : aba==='anual' ? pgAnual() : um ? pgCliente(cs[0].id, true) : `<div class="grade g3" style="margin-top:14px">${cs.filter(c=>UI.cliArq || !c.arquivado).map(c=>cardCli(c)).join('')}<button class="cli-novosub" onclick="cliSubForm('${cs[0].id}')"><i data-lucide="plus"></i>Adicionar subcliente</button></div>`; } finally { UI.escopo = null; }
@@ -2101,7 +2101,7 @@ function pgCliente(id, noGrupo){
   const rec = L.filter(c=>c.recorrente), pon = L.filter(c=>!c.recorrente);
   const totais = `<div class="grade g4 cli-tot"><div class="card kpi"><div class="r"><i data-lucide="megaphone"></i>Mídia</div><div class="v num" style="font-size:1.05rem;line-height:1.35">${txtMoe(somaMoe(L))}</div></div><div class="card kpi"><div class="r"><i data-lucide="receipt"></i>Fee</div><div class="v num" style="font-size:1.25rem">${somaFee(L) ? moedaCurta(somaFee(L),'BRL') : '—'}</div></div><div class="card kpi"><div class="r"><i data-lucide="target"></i>Pontuais</div><div class="v num">${pon.length}</div></div><div class="card kpi"><div class="r"><i data-lucide="repeat"></i>Recorrentes</div><div class="v num">${rec.length}</div></div></div>`;
   const filtros = `<div class="card cli-filtros"><div class="filtros">
-    <input placeholder="Buscar campanha" value="${h(f.busca)}" data-chg="fc.busca" style="width:180px">
+    <input placeholder="Buscar projeto" value="${h(f.busca)}" data-chg="fc.busca" style="width:180px">
     <select data-chg="fc.ano">${opts(['2026','2027'],f.ano,'Todos os anos')}</select>
     <select data-chg="fc.regiao">${opts(Object.entries(REGIOES),f.regiao,'Todas as regiões')}</select>
     <select data-chg="fc.pais">${opts(Object.entries(PAISES).map(([k,p])=>[k,p.n]),f.pais,'Todos os países')}</select>
@@ -2157,7 +2157,7 @@ function pgCliente(id, noGrupo){
         for (const c of pon) { const k = qDe(c); if (!qs.includes(k)) qs.push(k); }
         corpo += qs.map(k=>{ const cs = pon.filter(c=>qDe(c)===k), [ano, q] = k.split('-Q'), fimQ = q ? ano+'-'+String(q*3).padStart(2,'0')+'-31' : '', fe = fechado(k, !!fimQ && fimQ < HOJE && cs.every(c=>c.status==='Concluída'));
           return `<div class="cli-qh" data-act="cliQ" data-k="${h(id+'|'+k)}" data-v="${fe?'0':'1'}"><i data-lucide="${fe?'chevron-right':'chevron-down'}" class="cli-chev"></i>${q ? `<b>Q${q} ${ano}</b><span>${MQ[q-1]} · ${cs.length} campanha${cs.length===1?'':'s'} · mídia ${txtMoe(somaMoe(cs))}</span>` : '<b>Sem data</b>'}</div>${fe ? '' : `<div class="card cli-tab">${cabCols}${cs.map(linhaC).join('')}</div>`}`; }).join(''); } }
-    if (!L.length && !socs.length) corpo = '<div class="card vazio">Nenhuma campanha com esses filtros.</div>';
+    if (!L.length && !socs.length) corpo = '<div class="card vazio">Nenhum projeto com esses filtros.</div>';
   }
   return cab + (noGrupo ? '<!--gr-abas-->' : '') + filtros + corpo;
 }
