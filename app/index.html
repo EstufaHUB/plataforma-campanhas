@@ -854,7 +854,16 @@ body.at-arrastando .at-ev{pointer-events:none}
 .meu-l{display:flex;flex-direction:column}.meu-it{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f1f2;text-decoration:none;color:inherit}.meu-l>.meu-it:last-child{border-bottom:0}a.meu-it:hover{background:#f7f8f9}.meu-it-t{flex:1;min-width:0;display:flex;flex-direction:column}.meu-it-t b{font-size:.88rem;font-weight:600}.meu-it-t small{font-size:.75rem;color:var(--tx2)}.meu-dt{white-space:nowrap}.meu-menc{display:inline-flex;align-items:center;gap:2px;color:#1f63b5}.meu-menc svg{width:11px;height:11px}
 .meu-ck{width:18px;height:18px;border-radius:5px;border:1.6px solid #b9bec4;background:#fff;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}.meu-ck svg{width:12px;height:12px;color:#fff}.meu-tar.feito .meu-ck{background:#2e9d55;border-color:#2e9d55}.meu-tar.feito .meu-it-t b{text-decoration:line-through;color:var(--tx3);font-weight:500}.meu-del{opacity:0}.meu-tar:hover .meu-del{opacity:.7}
 .meu-nova{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--borda)}.meu-nova [name=nome]{flex:1;min-width:0}.meu-nova [name=data]{width:150px}.meu-feitas summary{padding:10px 16px;cursor:pointer;font-size:.82rem;color:var(--tx2);border-top:1px solid var(--borda)}
-.cli-k-dir{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}.cli-st .pc4-st{font-size:.74rem}.cli-addsub{border:1px solid var(--borda);background:#fff;border-radius:7px;padding:3px 8px;font:inherit;font-size:.76rem;color:var(--tx2);display:inline-flex;align-items:center;gap:4px;cursor:pointer;opacity:0;transition:opacity .15s}.cli-k:hover .cli-addsub,.cli-addsub:focus{opacity:1}.cli-addsub:hover{color:var(--tx);border-color:#c9cdd2}.cli-addsub svg{width:13px;height:13px}
+.cli-cab{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}.cli-cab h1{margin:0 auto 0 0}
+.cli-abas{display:flex;gap:20px;border-bottom:1px solid var(--borda);margin-bottom:14px}.cli-abas button{border:0;background:none;padding:8px 0;font:inherit;font-size:.88rem;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px}.cli-abas button.on{color:var(--tx);font-weight:600;border-bottom-color:var(--tx)}.cli-abas em{font-style:normal;font-size:.72rem;background:#eceef0;color:var(--tx2);border-radius:9px;padding:0 7px;font-weight:500}.cli-abas button.on em{background:var(--tx);color:#fff}
+.cli-tab{padding:0;overflow:hidden;margin-top:0}.cli-ln{display:grid;grid-template-columns:minmax(0,2.4fr) 110px 110px minmax(0,1fr) 20px;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid #f0f1f2;cursor:pointer;font-size:.88rem}.cli-ln:hover{background:#f7f8f9}.cli-th{cursor:default;font-size:.74rem;color:var(--tx3);padding:9px 16px;border-bottom:1px solid var(--borda)}.cli-th:hover{background:none}.cli-tab>.cli-k:last-of-type>.cli-ln:last-child{border-bottom:0}
+.cli-nm{display:flex;align-items:center;gap:10px;min-width:0}.cli-nm b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cli-nm small{color:var(--tx3);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cli-sl{width:30px;height:30px;border-radius:8px;font-size:.72rem;font-weight:500;flex:none}
+.cli-tab .cli-k{padding:0;display:block;border:0;border-radius:0}.cli-tab .cli-sl{width:30px;height:30px;border-radius:8px;font-size:.72rem}.cli-n{color:var(--tx2)}.cli-n b{color:var(--tx);font-weight:600}.cli-n b.on{color:#1f63b5}.cli-z{color:var(--tx3)}.cli-seta{width:16px;height:16px;color:var(--tx3)}
+.cli-tg{border:0;background:none;padding:2px;margin-left:-6px;cursor:pointer;color:var(--tx3);display:flex;border-radius:5px}.cli-tg:hover{background:#eceef0;color:var(--tx)}.cli-tg svg{width:15px;height:15px;transition:transform .15s}.cli-k.aberto .cli-tg svg{transform:rotate(90deg)}
+.cli-ln>span:nth-child(2),.cli-ln .cli-stp{display:flex;align-items:center}.cli-ln .pc4-st{margin:0!important}.cli-subln{background:#fafbfb;font-size:.84rem}.cli-subln .cli-nm{padding-left:58px}.cli-subln .cli-nm b{font-weight:500}.cli-addln{color:var(--tx2)}.cli-addln .cli-nm{gap:6px}.cli-addln svg{width:14px;height:14px}.cli-addln:hover{color:var(--tx)}
+.cli-addsub{margin-left:4px}.cli-ln:hover .cli-addsub{opacity:1}
+@media (max-width:760px){.cli-ln{grid-template-columns:minmax(0,1fr) 96px 70px 16px}.cli-ln>:nth-child(4){display:none}.cli-subln .cli-nm{padding-left:24px}}
+.cli-k-dir{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}.cli-stp .pc4-st{font-size:.74rem}.cli-addsub{border:1px solid var(--borda);background:#fff;border-radius:7px;padding:3px 8px;font:inherit;font-size:.76rem;color:var(--tx2);display:inline-flex;align-items:center;gap:4px;cursor:pointer;opacity:0;transition:opacity .15s}.cli-k:hover .cli-addsub,.cli-addsub:focus{opacity:1}.cli-addsub:hover{color:var(--tx);border-color:#c9cdd2}.cli-addsub svg{width:13px;height:13px}
 .cli-pref{display:flex;align-items:center;border:1px solid var(--borda);border-radius:8px;overflow:hidden;background:#fff}.cli-pref em{font-style:normal;padding:0 10px;color:var(--tx2);background:#f4f5f6;align-self:stretch;display:flex;align-items:center;border-right:1px solid var(--borda);white-space:nowrap}.cli-pref input{border:0!important;flex:1;min-width:0}
 .cli-logo-ed{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;font-weight:400}.cli-logo-ed .btn{cursor:pointer}
 .cli-kpis .card,.cli-grade .card{margin-top:0}.cli-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,220px));gap:14px;margin-bottom:16px}.cli-kpis .card{padding:14px 16px;display:flex;flex-direction:column;gap:4px}.cli-kpis span{font-size:.84rem;color:var(--tx2)}.cli-kpis b{font-size:1.5rem;font-weight:600;color:var(--tx)}
@@ -1975,20 +1984,34 @@ function logoCliente(cli, cls){ const n = (cli && cli.nome) || '';
 function pgClientes(r){
   if (r[1]) return pgCliente(r[1]);
   migalha([['Clientes']]);
-  const mostrarArq = UI.cliArq;
-  const L = S.clientes.filter(c=>mostrarArq || !c.arquivado);
-  const grupos = gruposClientes(L);
-  const ativo = g => g.some(c=>c.status!=='inativo' && !c.arquivado);
-  const camp = g => { const t = g.map(c=>campsCli(c.id)); return {ab:t.reduce((n,x)=>n+x.ab.length,0), cs:t.reduce((n,x)=>n+x.cs.length,0)}; };
-  grupos.sort((x,y)=>grupoCliNome(x[0]).localeCompare(grupoCliNome(y[0]), 'pt-BR', {sensitivity:'base'}));
-  const st = UI.cliSt || 'todos', nAt = grupos.filter(ativo).length, tot = camp(L);
-  const vis = grupos.filter(g=>st==='todos' || (st==='ativos') === ativo(g));
-  const bt = (v,t) => `<button class="${st===v?'ativo':''}" onclick="UI.cliSt='${v}';render()">${t}</button>`;
+  const st = UI.cliSt || 'todos';
+  const ativo = g => g.some(c=>c.status!=='inativo');
+  const porNome = (x,y)=>grupoCliNome(x[0]).localeCompare(grupoCliNome(y[0]), 'pt-BR', {sensitivity:'base'});
+  const vivos = gruposClientes(S.clientes.filter(c=>!c.arquivado)).sort(porNome), arq = gruposClientes(S.clientes.filter(c=>c.arquivado)).sort(porNome);
+  const nAt = vivos.filter(ativo).length, cont = {todos:vivos.length, ativos:nAt, inativos:vivos.length-nAt, arq:arq.length};
+  const vis = st==='arq' ? arq : vivos.filter(g=>st==='todos' || (st==='ativos') === ativo(g));
+  const aba = (v,t) => `<button class="${st===v?'on':''}" onclick="UI.cliSt='${v}';render()">${t}<em>${cont[v]}</em></button>`;
   if (UI.cliBusca) setTimeout(()=>cliBuscar(UI.cliBusca));
-  return `<div class="cab"><div><h1>Clientes</h1><p>Escolha um cliente para ver as campanhas.</p></div><div class="filtros cli-fl"><label class="cli-busca"><i data-lucide="search"></i><input type="search" placeholder="Buscar cliente…" value="${h(UI.cliBusca||'')}" oninput="cliBuscar(this.value)"></label><div class="seg">${bt('todos','Todos')}${bt('ativos','Ativos')}${bt('inativos','Inativos')}</div><label class="small cli-arq"><input type="checkbox" ${mostrarArq?'checked':''} data-chg="cliArq"> Mostrar arquivados</label><button class="btn btn-p" data-act="formCliente"><i data-lucide="plus"></i>Novo cliente</button></div></div>
-  <div class="cli-kpis"><div class="card"><span>Clientes ativos</span><b>${nAt}</b></div><div class="card"><span>Campanhas em andamento</span><b>${tot.ab}</b></div><div class="card"><span>Total de campanhas</span><b>${tot.cs}</b></div></div>
-  <div class="cli-grade">${vis.map(g=>g.length > 1 ? cardGrupo(g) : cardCli(g[0], '#/grupo/'+encodeURIComponent(grupoKey(g[0])))).join('') || `<div class="vazio">${st==='ativos'?'Nenhum cliente ativo.':st==='inativos'?'Nenhum cliente inativo.':'Nenhum cliente.'}</div>`}<div class="vazio cli-nada" style="display:none">Nenhum cliente encontrado.</div></div>`;
+  return `<div class="cli-cab"><h1>Clientes</h1><label class="cli-busca"><i data-lucide="search"></i><input type="search" placeholder="Buscar cliente…" value="${h(UI.cliBusca||'')}" oninput="cliBuscar(this.value)"></label><button class="btn btn-p" data-act="formCliente"><i data-lucide="plus"></i>Novo cliente</button></div>
+  <div class="cli-abas">${aba('todos','Todos')}${aba('ativos','Ativos')}${aba('inativos','Inativos')}${aba('arq','Arquivados')}</div>
+  <div class="card cli-tab"><div class="cli-ln cli-th"><span>Cliente</span><span>Status</span><span>Campanhas</span><span>Próximo lançamento</span><span></span></div>
+  ${vis.map(cliLinhas).join('') || `<div class="vazio">${st==='ativos'?'Nenhum cliente ativo.':st==='inativos'?'Nenhum cliente inativo.':st==='arq'?'Nenhum cliente arquivado.':'Nenhum cliente.'}</div>`}<div class="vazio cli-nada" style="display:none">Nenhum cliente encontrado.</div></div>`;
 }
+/* lançamento futuro mais próximo entre as campanhas em andamento */
+const cliProx = cs => { const ds = cs.filter(x=>x.status!=='Concluída').map(x=>x.lancamento).filter(d=>d && d>=HOJE).sort(); return ds[0] || ''; };
+const cliCamp = (ab, cs) => cs ? `<span class="cli-n"><b class="${ab?'on':''}">${ab}</b> / ${cs}</span>` : '<span class="cli-z">–</span>';
+const cliDt = d => d ? `<span class="num">${fd(d)}</span>` : '<span class="cli-z">–</span>';
+function cliLinhas(g){ const key = grupoKey(g[0]), url = '#/grupo/'+encodeURIComponent(key), tot = g.map(c=>campsCli(c.id));
+  const ab = tot.reduce((n,x)=>n+x.ab.length,0), cs = tot.reduce((n,x)=>n+x.cs.length,0), prox = cliProx(tot.flatMap(x=>x.cs)), seta = '<i data-lucide="chevron-right" class="cli-seta"></i>';
+  const busca = h(socNorm(g.map(c=>c.nome+' '+(c.segmento||'')).join(' ')));
+  if (g.length === 1) { const c = g[0];
+    return `<div class="cli-k" data-busca="${busca}"><div class="cli-ln" onclick="location.hash='${url}'"><span class="cli-nm">${cliSelo(c, c.nome)}<b>${h(c.nome)}</b>${c.segmento?`<small>${h(c.segmento)}</small>`:''}${c.arquivado?'':cliSubBt(c.id)}</span><span>${cliStPill([c.id], c.status!=='inativo')}</span>${cliCamp(ab, cs)}${cliDt(prox)}${seta}</div></div>`; }
+  const base = grupoCliNome(g[0]), aberto = (UI.cliAbre||{})[key];
+  const sub = (c, i) => { const re = new RegExp('^'+base.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*','i'), nm = c.nome.replace(re,'') || c.nome;
+    return `<div class="cli-ln cli-subln" onclick="location.hash='#/clientes/${c.id}'"><span class="cli-nm"><b>${h(nm)}</b>${c.segmento && c.segmento!==nm?`<small>${h(c.segmento)}</small>`:''}</span><span>${cliStPill([c.id], c.status!=='inativo')}</span>${cliCamp(tot[i].ab.length, tot[i].cs.length)}${cliDt(cliProx(tot[i].cs))}${seta}</div>`; };
+  return `<div class="cli-k ${aberto?'aberto':''}" data-busca="${busca}"><div class="cli-ln" onclick="location.hash='${url}'"><span class="cli-nm"><button class="cli-tg" title="${aberto?'Ocultar':'Ver'} subclientes" onclick="event.stopPropagation();UI.cliAbre=Object.assign(UI.cliAbre||{},{'${key}':!${!!aberto}});render()"><i data-lucide="chevron-right"></i></button>${cliSelo(g.find(c=>c.logo)||g[0], base)}<b>${h(base)}</b><small>${g.length} subclientes</small></span><span>${cliStPill(g.map(c=>c.id), ativo(g))}</span>${cliCamp(ab, cs)}${cliDt(prox)}${seta}</div>
+    ${aberto ? g.map(sub).join('') + (g[0].arquivado ? '' : `<div class="cli-ln cli-subln cli-addln" onclick="cliSubForm('${g[0].id}')"><span class="cli-nm"><i data-lucide="plus"></i>Adicionar subcliente</span></div>`) : ''}</div>`;
+  function ativo(g){ return g.some(c=>c.status!=='inativo'); } }
 /* busca sem redesenhar a página (o campo não perde o foco) */
 /* logo do cliente: reduzido para 160 px e guardado como imagem no próprio cadastro */
 function cliLogoLer(inp){ const f = inp.files && inp.files[0]; if (!f) return; if (!/^image\//.test(f.type)) return toast('Escolha uma imagem.');
@@ -2015,7 +2038,7 @@ function cliSelo(c, nome){ if (c.logo || /^ptx\b/i.test(nome)) return logoClient
 function cliLanc(cs){ const hoje = new Date().toISOString().slice(0,10), ds = cs.map(x=>x.lancamento).filter(Boolean).sort();
   const prox = ds.find(d=>d>=hoje); return prox ? `Próximo lançamento: <b>${fd(prox)}</b>` : ds.length ? `Último lançamento: <b>${fd(ds[ds.length-1])}</b>` : 'Nenhuma campanha ainda'; }
 /* status manual do cliente (no grupo, muda todos os subclientes) */
-function cliStPill(ids, on){ return `<span class="cli-st" onclick="event.stopPropagation()">${pillSel(on?'verde':'cinza', `data-pop="cli" data-chg="cliStatus" data-ids="${ids.join(',')}" title="Status do cliente"`, opts([['ativo','Ativo'],['inativo','Inativo']], on?'ativo':'inativo'))}</span>`; }
+function cliStPill(ids, on){ return `<span class="cli-stp" onclick="event.stopPropagation()">${pillSel(on?'verde':'cinza', `data-pop="cli" data-chg="cliStatus" data-ids="${ids.join(',')}" title="Status do cliente"`, opts([['ativo','Ativo'],['inativo','Inativo']], on?'ativo':'inativo'))}</span>`; }
 const cliSubBt = id => `<button class="cli-addsub" title="Adicionar subcliente" onclick="event.stopPropagation();cliSubForm('${id}')"><i data-lucide="plus"></i>Subcliente</button>`;
 function cliSubForm(id){ const c = cliente(id), base = c.grupo || (grupoDe(grupoKey(c)).length > 1 ? grupoCliNome(c) : c.nome);
   abrirModal('Novo subcliente de '+h(base), `<form id="f-sub" class="form-g"><label class="campo tudo">Nome *<span class="cli-pref"><em>${h(base)}</em><input name="nome" required placeholder="Brasil" autofocus></span></label><label class="campo">Segmento ou região<input name="segmento" placeholder="América Latina"></label><label class="campo">Status<select name="status">${opts([['ativo','Ativo'],['inativo','Inativo']],'ativo')}</select></label></form>`,
@@ -2029,13 +2052,6 @@ function cardCli(c, link){ const {cs, ab} = campsCli(c.id), url = link || '#/cli
   return `<div class="card cli-k" data-busca="${h(socNorm(c.nome+' '+(c.segmento||'')))}" onclick="location.hash='${url}'"><div class="cli-k-cab">${cliSelo(c, c.nome)}<div class="cli-k-t"><h3>${h(c.nome)}</h3>${c.segmento?`<small>${h(c.segmento)}</small>`:''}</div>${c.arquivado?'<span class="tag">Arquivado</span>':''}<div class="cli-k-dir">${cliStPill([c.id], c.status!=='inativo')}${cliSubBt(c.id)}</div></div>
     ${cliNums(ab.length, cs.length)}
     <div class="cli-k-rod"><span>${cliLanc(cs)}</span><a href="${url}" onclick="event.stopPropagation()">Ver campanhas<i data-lucide="arrow-right"></i></a></div></div>`; }
-function cardGrupo(g){ const tot = g.map(c=>campsCli(c.id)), ab = tot.reduce((n,x)=>n+x.ab.length,0), cs = tot.reduce((n,x)=>n+x.cs.length,0);
-  const base = grupoCliNome(g[0]), key = grupoKey(g[0]), url = '#/grupo/'+encodeURIComponent(key), aberto = (UI.cliAbre||{})[key];
-  const abre = `onclick="event.stopPropagation();UI.cliAbre=Object.assign(UI.cliAbre||{},{'${key}':!${!!aberto}});render()"`;
-  return `<div class="card cli-k ${aberto?'aberto':''}" data-busca="${h(socNorm(g.map(c=>c.nome+' '+(c.segmento||'')).join(' ')))}" onclick="location.hash='${url}'"><div class="cli-k-cab">${cliSelo(g.find(c=>c.logo)||g[0], base)}<div class="cli-k-t"><h3>${h(base)}</h3><button class="cli-sub" ${abre}>${g.length} subclientes<i data-lucide="chevron-down"></i></button></div><div class="cli-k-dir">${cliStPill(g.map(c=>c.id), g.some(c=>c.status!=='inativo'))}${cliSubBt(g[0].id)}</div></div>
-    ${cliNums(ab, cs)}
-    ${aberto ? `<div class="cli-gr-l">${g.map((c,i)=>`<a class="cli-gr-it" href="#/clientes/${c.id}" onclick="event.stopPropagation()"><div><b>${h(c.nome)}</b>${c.segmento ? `<small>${h(c.segmento)}</small>` : ''}</div><span class="cli-gr-n">${tot[i].ab.length} em andamento · ${tot[i].cs.length} no total</span>${c.status==='inativo'?'<span class="tag">Inativo</span>':''}${c.arquivado?'<span class="tag">Arquivado</span>':''}<i data-lucide="chevron-right"></i></a>`).join('')}</div>` : ''}
-    <div class="cli-k-rod"><button class="cli-sub" ${abre}>${aberto?'Ocultar':'Ver'} subclientes<i data-lucide="chevron-down"></i></button><a href="${url}" onclick="event.stopPropagation()">Ver campanhas<i data-lucide="arrow-right"></i></a></div></div>`; }
 function pgGrupo(r){ const key = decodeURIComponent(r[1]||''), cs = grupoDe(key), aba = r[2] || 'inicio'; if (!cs.length) return '<div class="vazio">Cliente não encontrado.</div>';
   const um = cs.length===1, nome = um ? cs[0].nome : grupoCliNome(cs[0]), base = '#/grupo/'+encodeURIComponent(key), ids = cs.map(c=>c.id);
   const nAtr = acoesGlobais().filter(x=>ids.includes(x.c.clienteId) && statusExib(x.t)==='Atrasada').length;
