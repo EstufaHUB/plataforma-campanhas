@@ -6478,7 +6478,7 @@ function odAutoConcluir(c){ if (!c || c.tipo!=='ondemand') return; let mud = fal
     if (tudo && p.status!=='Concluído') { p.status = 'Concluído'; p.autoConc = true; mud = true; registrar(`Pedido “${p.nome}” concluído: todas as peças foram concluídas`); toast(`Pedido “${p.nome}” concluído.`); }
     else if (!tudo && p.status==='Concluído' && p.autoConc) { p.status = 'Em andamento'; p.autoConc = false; mud = true; registrar(`Pedido “${p.nome}” reaberto: uma peça saiu de Concluído`); } }
   return mud; }
-try { UI.odFech = JSON.parse(localStorage.getItem('od-fech')||'{}'); } catch(e){}
+try { UI.odFech = JSON.parse(localStorage.getItem('od-fech2')||'{}'); } catch(e){}
 function odMigrar(c){ let mud = false; c.pedidos = c.pedidos || []; c.horas = c.horas || []; c.entregaveis = c.entregaveis || [];
   for (const p of c.pedidos) { if (!p.ents) continue; for (const e of p.ents) c.entregaveis.push({id:e.id, nome:e.nome, secao:'On Demand', pedido:p.id, grupo:e.grupo||'', formato:e.formato||'', etapa:OD_ET_DE[e.status]||'briefing', link:e.link||'', canva:e.canva||'', prazo:e.prazo||null, idioma:c.idiomaBase||'PT', paises:[], versoes:[], aprovacoes:[], briefing:{}});
     delete p.ents; mud = true; }
@@ -6542,7 +6542,7 @@ function odEntregaveis(c, ed){
   const ir = id => `data-act="odSec" data-id="${c.id}" data-p="${id}"`;
   if (p) { const da = odEnts(c, p.id), conc = da.filter(e=>e.etapa==='concluido').length, pct = da.length ? Math.round(conc/da.length*100) : 0, uso = odUsoPed(c, p.id), est = +p.estimativa||0;
     const grupos = [...new Set(da.map(e=>e.grupo||''))]; if (!grupos.length) grupos.push(''); const cols = Math.max(5, grupos.length);
-    const bloco = (campo, tit, ic, vazio) => `<div class="od-pg ${campo==='direcao'?'od-pg-dir':''} ${(UI.odFech||{})[p.id+campo]?'fech':''}"><div class="od-pg-t" data-act="odPgTog" data-k="${p.id+campo}" title="Recolher ou abrir"><i data-lucide="chevron-down" class="od-tog"></i><i data-lucide="${ic}"></i>${tit}${ed?'<span class="np-salvo od-salvo"></span>':''}</div>
+    const bloco = (campo, tit, ic, vazio) => `<div class="od-pg ${campo==='direcao'?'od-pg-dir':''} ${(UI.odFech||{})[p.id+campo]===false?'':'fech'}"><div class="od-pg-t" data-act="odPgTog" data-k="${p.id+campo}" title="Recolher ou abrir"><i data-lucide="chevron-down" class="od-tog"></i><i data-lucide="${ic}"></i>${tit}${ed?'<span class="np-salvo od-salvo"></span>':''}</div>
       ${ed ? `<div class="lpe-doc np-corpo lpe-edit od-ed" contenteditable="true" data-id="${c.id}" data-p="${p.id}" data-campo="${campo}" data-ph="${h(vazio)} Digite / para inserir blocos.">${odHtml(p[campo])}</div>` : `<div class="lpe-doc np-corpo">${p[campo] ? odHtml(p[campo]) : `<span class="muted">Ainda não preenchido.</span>`}</div>`}</div>`;
     if (ed) posRender.push(odEditores);
     return `<div class="ent-quadro"><div class="ent-topo2"><a href="javascript:void 0" class="ent-voltar" ${ir('')}><i data-lucide="arrow-left"></i>Todos os pedidos</a><div class="ent-topo2-d">${ed?`<button class="btn btn-s" data-act="odPedForm" data-id="${c.id}" data-p="${p.id}"><i data-lucide="pencil"></i>Editar pedido</button><button class="btn btn-s btn-g" data-act="odPedDel" data-id="${c.id}" data-p="${p.id}" title="Excluir pedido"><i data-lucide="trash-2"></i></button>`:''}</div></div>
@@ -6593,7 +6593,7 @@ function odChg(k, el, v){ const c = camp(el.dataset.id); if (!c) return;
 
 Object.assign(ACT, {
   odSalvar: el => odSalvar(el.dataset.id),
-  odPgTog: el => { UI.odFech = UI.odFech || {}; const k = el.dataset.k; UI.odFech[k] = !UI.odFech[k]; el.closest('.od-pg').classList.toggle('fech', UI.odFech[k]); try { localStorage.setItem('od-fech', JSON.stringify(UI.odFech)); } catch(e){} },
+  odPgTog: el => { UI.odFech = UI.odFech || {}; const k = el.dataset.k, box = el.closest('.od-pg'), fechar = !box.classList.contains('fech'); UI.odFech[k] = fechar; box.classList.toggle('fech', fechar); try { localStorage.setItem('od-fech2', JSON.stringify(UI.odFech)); } catch(e){} },
   odSec: el => { UI.odSec = UI.odSec || {}; UI.odSec[el.dataset.id] = el.dataset.p || null; render(); scrollTo(0, 0); },
   odPedForm: el => { UI.menuCamp = false; const c = camp(el.dataset.id), p = el.dataset.p ? odPed(c, el.dataset.p) : null;
     abrirModal(p ? 'Editar pedido' : 'Novo pedido', `<form id="f-odp" class="form-g">
