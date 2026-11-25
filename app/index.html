@@ -2043,7 +2043,7 @@ function pgClientes(r){
   ${vis.map(cliLinhas).join('') || `<div class="vazio">${st==='ativos'?'Nenhum cliente ativo.':st==='inativos'?'Nenhum cliente inativo.':st==='arq'?'Nenhum cliente arquivado.':'Nenhum cliente.'}</div>`}<div class="vazio cli-nada" style="display:none">Nenhum cliente encontrado.</div></div>`;
 }
 /* lançamento futuro mais próximo entre as campanhas em andamento */
-const cliProx = cs => { const ds = cs.filter(x=>x.status!=='Concluída').map(x=>x.lancamento).filter(d=>d && d>=HOJE).sort(); return ds[0] || ''; };
+const cliProx = cs => { const ds = cs.filter(x=>x.status!=='Concluída' && x.tipo!=='ondemand').map(x=>x.lancamento).filter(d=>d && d>=HOJE).sort(); return ds[0] || ''; };
 const cliCamp = (ab, cs) => cs ? `<span class="clx-n"><b class="${ab?'on':''}">${ab}</b> / ${cs}</span>` : '<span class="clx-z">–</span>';
 const cliDt = d => d ? `<span class="num">${fd(d)}</span>` : '<span class="clx-z">–</span>';
 function cliLinhas(g){ const key = grupoKey(g[0]), url = '#/grupo/'+encodeURIComponent(key), tot = g.map(c=>campsCli(c.id));
@@ -2134,7 +2134,7 @@ function pgCliente(id, noGrupo){
   if (f.sortV) { const sg = f.sortV==='desc' ? -1 : 1; L.sort((a,b)=> sg * ((a.lancamento||'').localeCompare(b.lancamento||'') || (a.fimVeiculacao||'').localeCompare(b.fimVeiculacao||''))); }   // ordenado pelo cabeçalho Veiculação
   else L.sort((a,b)=> (ORD_ST[a.status]??9) - (ORD_ST[b.status]??9) || (f.ordem==='desc'?-1:1) * (a.lancamento<b.lancamento?-1:1));   // no ar primeiro
   // resumo por status (clicar filtra a lista)
-  const todasCl = S.campanhas.filter(c=>c.clienteId===id && !c.arquivada);
+  const todasCl = S.campanhas.filter(c=>c.clienteId===id && !c.arquivada && c.tipo!=='ondemand');
   const resumo = [['Em veiculação','radio','em veiculação'],['Em andamento','loader','em produção'],['Não iniciada','circle-dashed','não iniciadas'],['Finalizada – relatório pendente','file-clock','relatório pendente'],['Concluída','check-circle-2','concluídas']]
     .map(([st,ic,rot])=>({st,ic,rot,n:todasCl.filter(c=>c.status===st).length})).filter((x,i)=>i<2 || x.n);
   const corSt = {'Em veiculação':'#2e9d55','Em andamento':'#2f80b8','Não iniciada':'#9aa9ae','Finalizada – relatório pendente':'#e0a100','Concluída':'#1f5f6e'};
@@ -2153,7 +2153,7 @@ function pgCliente(id, noGrupo){
   const somaMoe = cs => cs.reduce((o,c)=>{ for (const [m,v] of Object.entries(c.orcamentoPorMoeda||(c.orcamento?{[c.moeda||'BRL']:c.orcamento}:{}))) o[m] = (o[m]||0) + (+v||0); return o; }, {});
   const txtMoe = o => { const e = Object.entries(o).filter(([,v])=>v>0); return e.length ? e.map(([m,v])=>moedaCurta(v,m)).join(' + ') : '—'; };
   const somaFee = cs => cs.reduce((t,c)=>t+(+c.fee||0),0);
-  const rec = L.filter(c=>c.recorrente), pon = L.filter(c=>!c.recorrente);
+  const ods = L.filter(c=>c.tipo==='ondemand'), rec = L.filter(c=>c.recorrente && c.tipo!=='ondemand'), pon = L.filter(c=>!c.recorrente && c.tipo!=='ondemand');
   const totais = `<div class="grade g4 cli-tot"><div class="card kpi"><div class="r"><i data-lucide="megaphone"></i>Mídia</div><div class="v num" style="font-size:1.05rem;line-height:1.35">${txtMoe(somaMoe(L))}</div></div><div class="card kpi"><div class="r"><i data-lucide="receipt"></i>Fee</div><div class="v num" style="font-size:1.25rem">${somaFee(L) ? moedaCurta(somaFee(L),'BRL') : '—'}</div></div><div class="card kpi"><div class="r"><i data-lucide="target"></i>Pontuais</div><div class="v num">${pon.length}</div></div><div class="card kpi"><div class="r"><i data-lucide="repeat"></i>Recorrentes</div><div class="v num">${rec.length}</div></div></div>`;
   const filtros = `<div class="card cli-filtros"><div class="filtros">
     <input placeholder="Buscar projeto" value="${h(f.busca)}" data-chg="fc.busca" style="width:180px">
@@ -2205,6 +2205,11 @@ function pgCliente(id, noGrupo){
       return `<div class="cli-ln" onclick="location.hash='#/social/${p.id}'"><span class="cli-mk" style="background:linear-gradient(#feda75,#fa7e1e 30%,#d62976 60%,#962fbf 85%,#4f5bd5)"></span>
         <span class="cli-nm"><b>${h(p.nome)}</b><small>Social media · ${(p.perfis||[]).map(x=>h(x.nome)).join(', ')}</small></span>
         <span class="num">mês a mês</span><span class="num dir small">${prox ? fdm(prox.data) : '<span class="muted">—</span>'}</span><span><span class="cli-pz azul" title="${pub} publicado${pub===1?'':'s'} no mês">${pm.length} post${pm.length===1?'':'s'} em ${MESES[+mesH.slice(5,7)-1].slice(0,3)}</span></span><span></span></div>`; };
+    const linhaOD = c => { const sd = odSaldo(c), ab = (c.pedidos||[]).filter(p=>!['Concluído','Cancelado'].includes(p.status)).length, cor = sd.rest < 0 ? 'verm' : sd.ent && sd.rest <= sd.ent*0.2 ? 'amar' : 'verde';
+      return `<div class="cli-ln" onclick="if(!event.target.closest('.cli-lixo'))location.hash='#/campanha/${c.id}'"><span class="cli-mk" style="background:#3b82c4"></span>
+        <span class="cli-nm"><b>${h(c.nome)}</b>${c.arquivada?' <span class="tag">Arquivada</span>':''}<small>Pacote de horas · ${ab} pedido${ab===1?'':'s'} em aberto</small></span>
+        <span class="num">saldo <b style="color:${({verde:'#23703c',amar:'#9a6a00',verm:'#a33a35'})[cor]}">${odH(sd.rest)}</b> de ${odH(sd.ent)}</span><span></span><span><span class="cli-pz ${c.arquivada?'':'verde'}">${c.arquivada?'Arquivado':'Ativo'}</span></span>${lixo(c)}</div>`; };
+    if (ods.length) corpo += `<div class="cli-st"><i data-lucide="hourglass" class="cli-ic"></i>On Demand<span>${ods.length}</span></div><div class="card cli-tab"><div class="cli-ln cli-hd"><span></span><span>Projeto</span><span>Horas</span><span></span><span>Situação</span><span></span></div>${ods.map(linhaOD).join('')}</div>`;
     if (rec.length || socs.length) corpo += `<div class="cli-st" data-act="cliQ" data-k="${h(id+'|rec')}" data-v="${fechado('rec',false)?'0':'1'}"><i data-lucide="${fechado('rec',false)?'chevron-right':'chevron-down'}" class="cli-chev"></i><i data-lucide="repeat" class="cli-ic"></i>Recorrentes<span>${[rec.length ? `${rec.length} campanha${rec.length===1?'':'s'} · mídia ${txtMoe(somaMoe(rec))}` : '', socs.length ? `${socs.length} social media` : ''].filter(Boolean).join(' · ')}</span></div>${fechado('rec',false) ? '' : `<div class="card cli-tab">${cabCols}${rec.map(linhaC).join('')}${socs.map(linhaS).join('')}</div>`}`;
     if (pon.length) { corpo += `<div class="cli-st" data-act="cliQ" data-k="${h(id+'|pon')}" data-v="${fechado('pon',false)?'0':'1'}"><i data-lucide="${fechado('pon',false)?'chevron-right':'chevron-down'}" class="cli-chev"></i><i data-lucide="target" class="cli-ic"></i>Pontuais<span>${pon.length}</span></div>`;
       if (!fechado('pon',false) && f.agrup==='lista') corpo += `<div class="card cli-tab">${cabCols}${pon.map(linhaC).join('')}</div>`;
