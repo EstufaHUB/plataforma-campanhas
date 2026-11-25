@@ -2628,6 +2628,8 @@ function gantt(c, ts){
 
 /* ---------- Gestão de ações ---------- */
 function respTarefa(c, t){ return t.pessoa || '—'; }
+// responsáveis + logins de cliente daquele cliente (em social media o cliente também pode ser o responsável do post)
+const optsRespCli = (cid, atual) => { const cl = clientesMenc().filter(p=>p.cliente_id===cid).map(nomeResp), L = optsResp(atual); return [...L, ...cl.filter(n=>!L.includes(n))].map(n=>cl.includes(n) ? [n, n+' (cliente)'] : n); };
 const optsResp = atual => atual && !RESPONSAVEIS.includes(atual) ? [...RESPONSAVEIS, atual] : RESPONSAVEIS;
 /* farol: verde = concluída / em andamento no prazo · amarelo = aguardando ou em revisão · vermelho = atrasada ou bloqueada · cinza = não iniciada ou cancelada */
 function farolDe(t){ const st = statusExib(t);
@@ -6863,7 +6865,9 @@ function aprovPendencias(){ const L = [];
       const alvo = {mi:x.mi, et:x.et, idi:x.idi};
       if (x.d.status==='Aguardando aprovação do cliente') L.push({k:aprovChave('lp', c.id, alvo, 'conteudo'), tipo:'lp', c, alvo, etapa:'conteudo', titulo: x.trad ? 'Tradução da landing page' : 'Texto da landing page', onde:nome, sub:'', texto:x.d.texto||'', links:[]});
       if (lpLayoutSt(x.f, x.d)==='Aguardando aprovação do cliente') L.push({k:aprovChave('lp', c.id, alvo, 'layout'), tipo:'lp', c, alvo, etapa:'layout', titulo:'Layout da landing page', onde:nome, sub:'', texto:'', links:[lpLayoutLink(x.f, x.d)].filter(Boolean)}); } }
+  const eu = ehCliente() ? quemSou() : null;
   for (const p of (S.social||[]).filter(x=>!x.arquivada)) for (const post of (p.posts||[])) { if (!['aprov_conteudo','aprov_asset'].includes(post.etapa)) continue;
+    if (eu && (((post.doc||{}).resp) || post.resp) !== eu) continue;   // cliente: só os posts em que ele é o responsável
     const etapa = post.etapa==='aprov_conteudo' ? 'conteudo' : 'asset', perf = (p.perfis||[]).find(x=>x.id===post.perfil);
     L.push({k:aprovChave('post', p.id, post.id, etapa), tipo:'post', c:p, alvo:post.id, etapa, titulo: post.nome || 'Post', onde: p.nome, sub: [perf && perf.nome, post.formato, post.data && fd(post.data)].filter(Boolean).join(' · '), texto:((post.doc||{}).texto)||'', links: post.links||[], quando: post.data}); }
   const feitas = new Set(APROV.filter(a=>!a.aplicado_em).map(a=>aprovChave(a.tipo, a.campanha_id, a.alvo, a.etapa)));
@@ -7533,7 +7537,7 @@ function pgSocialPost(p, id){ const post = socPostDe(p, id), cl = cliente(p.clie
           ['publicacao','calendar','Publicação', `<div class="soc-dt"><input type="date" class="np-sel" value="${h(post.data||'')}" data-chg="socCampo" ${D} data-k="data" ${dis}><input type="time" class="np-sel" value="${h(post.hora||'')}" data-chg="socCampo" ${D} data-k="hora" ${dis}></div>`, !post.data],
           ['perfil','at-sign','Perfil', `<div class="np-resp"><span class="soc-dots"><i style="background:${h(pf.cor)}"></i></span>${ed ? `<select class="np-sel" data-chg="socCampo" ${D} data-k="perfil">${opts((p.perfis||[]).map(x=>[x.id, x.nome]), post.perfil)}</select>` : `<b>${h(pf.nome)}</b>`}</div>`, false],
           ['formato','ratio','Formato', ed ? pillSel(SOC_FMT_COR[post.formato]||'cinza', `data-chg="socCampo" ${D} data-k="formato" data-pop="formato"`, opts(SOC_FORMATOS.map(x=>x[0]), post.formato)) : `<span class="pc4-st c-${SOC_FMT_COR[post.formato]||'cinza'}"><i></i>${h(post.formato||'—')}</span>`, !post.formato],
-          ['resp','user','Responsável', `<div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="socCampo" ${D} data-k="resp">${opts(optsResp(d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>`, !d.resp],
+          ['resp','user','Responsável', `<div class="np-resp">${d.resp ? avatar(d.resp, 'av av-s') : ''}${ed ? `<select class="np-sel" data-chg="socCampo" ${D} data-k="resp">${opts(optsRespCli(p.clienteId, d.resp), d.resp||'', 'Vazio')}</select>` : `<b>${h(d.resp||'—')}</b>`}</div>`, !d.resp],
           ['campanha','megaphone','Campanha', campV, !at],
           ['editoria','tag','Editoria', socEdLinha(p, post, ed), !(post.edts||[]).length, 'ed-lin'],
           ['collab','users','Collab', (()=>{ const L = socCbDe(p, post);
