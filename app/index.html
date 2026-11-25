@@ -2121,7 +2121,7 @@ function pgCliente(id, noGrupo){
   const dir = (f.sortV || (f.ordem==='desc' ? 'desc' : 'asc'))==='desc' ? -1 : 1, porData = (a,b)=> dir * ((a.lancamento||'').localeCompare(b.lancamento||'') || (a.fimVeiculacao||'').localeCompare(b.fimVeiculacao||''));
   rec.sort(porData); pon.sort(porData);
   const paisesUnicos = new Set(L.map(c=>c.paises.map(p=>p.cod).sort().join(','))).size<=1;
-  const canaisTxt = c => (c.canais||[]).map(nomeCanal).join(', ') || 'sem mídia';
+  const canaisTxt = c => c.tipo==='projeto' ? 'Projeto · '+(c.entregaveis||[]).length+' peça(s)' : (c.canais||[]).map(nomeCanal).join(', ') || 'sem mídia';
   const lixo = c => ehAdmin() ? `<button class="icone-btn cli-lixo" data-act="excluirCamp" data-id="${c.id}" title="Excluir campanha"><i data-lucide="trash-2"></i></button>` : '';
   const abrir = c => `location.hash='#/campanha/${c.id}/visao'`;   // pela página do cliente, sempre abre na Visão geral
   // situação: farol quando está no ar; "planejar já" quando o planejamento já devia ter começado; senão o status
@@ -2173,16 +2173,50 @@ function pgCliente(id, noGrupo){
 }
 
 /* botão "Novo projeto": escolhe o tipo (campanha hoje; social media, evento e projeto offline em seguida) */
-const TIPOS_PROJETO = [['campanha','megaphone','Campanha','Mídia paga, LP, KV e peças por país', true],['social','smartphone','Social media','Conteúdo orgânico recorrente, mês a mês', true],['evento','tent','Evento','Feira, dia de campo, lançamento presencial', false],['offline','package','Projeto offline','Impressos, brindes, PDV, vídeos institucionais', false]];
+const TIPOS_PROJETO = [['campanha','megaphone','Campanha','Mídia paga, LP, KV e peças por país', true],['social','smartphone','Social media','Conteúdo orgânico recorrente, mês a mês', true],['projeto','folder','Projeto','Só entregáveis e gestão de ações', true],['evento','tent','Evento','Feira, dia de campo, lançamento presencial', false],['offline','package','Projeto offline','Impressos, brindes, PDV, vídeos institucionais', false]];
 function btnNovoProjeto(cli){ const k = 'np:'+(cli||'');
   return `<div class="menu-wrap"><button class="btn btn-p" data-act="menuNovoProj" data-k="${k}"><i data-lucide="plus"></i>Novo projeto<i data-lucide="chevron-down"></i></button>${UI.menuNovo===k ? `<div class="menu-pop np-pop">${TIPOS_PROJETO.map(([t,ic,nome,desc,ok])=>ok
     ? `<button data-act="novoProjeto" data-tipo="${t}" data-cliente="${cli||''}"><i data-lucide="${ic}"></i><span><b>${nome}</b><em>${desc}</em></span></button>`
     : `<button disabled title="Em breve"><i data-lucide="${ic}"></i><span><b>${nome} <small>em breve</small></b><em>${desc}</em></span></button>`).join('')}</div>` : ''}</div>`; }
+/* projeto simples: mesma estrutura da campanha, mas só com Entregáveis e Gestão de ações */
+function projForm(c, cliId){ const cli = c ? c.clienteId : (cliId||'');
+  abrirModal(c ? 'Editar projeto' : 'Novo projeto', `<form id="f-proj" class="form-g">
+    <label class="campo tudo">Nome do projeto *<input name="nome" required maxlength="160" value="${h(c?c.nome:'')}" placeholder="Ex.: Kit de boas-vindas dealers"></label>
+    <label class="campo">Cliente *<select name="clienteId">${opts(S.clientes.filter(x=>!x.arquivado || x.id===cli).map(x=>[x.id,x.nome]).sort((a,b)=>a[1].localeCompare(b[1])), cli, 'Selecione')}</select></label>
+    <label class="campo">Entrega final<input type="date" name="lancamento" value="${c?c.lancamento||'':''}"></label>
+    <label class="campo tudo">Descrição<textarea name="descricao">${h(c?c.descricao||'':'')}</textarea></label></form>`,
+    `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="projSalvar" data-id="${c?c.id:''}">${c?'Salvar':'<i data-lucide="plus"></i>Criar projeto'}</button>`); }
+function projSalvar(id){ const v = ler($('#f-proj')), nome = (v.nome||'').trim();
+  if (!nome) return toast('Informe o nome do projeto.'); if (!v.clienteId) return toast('Escolha o cliente.');
+  let c = id && camp(id);
+  if (c) { Object.assign(c, {nome, clienteId:v.clienteId, lancamento:v.lancamento||c.lancamento, fimVeiculacao:v.lancamento||c.fimVeiculacao, descricao:v.descricao||''}); registrar('Projeto editado: '+nome); fecharModal(); render(); return; }
+  const lanc = v.lancamento || addDias(HOJE, 30);
+  c = novaCampanha({tipo:'projeto', nome, clienteId:v.clienteId, lancamento:lanc, fimVeiculacao:lanc, descricao:v.descricao||'', paises:[], idiomaBase:'PT', entregaveisTipos:[], status:'Em andamento'});
+  c.modelo = []; c.entAutoFeito = true; aplicarCronograma(c, calcularCronograma(c), 'Projeto criado');
+  S.campanhas.push(c); registrar('Projeto criado: '+nome); fecharModal(); location.hash = '#/campanha/'+c.id+'/entregaveis'; render(); toast('Projeto criado.'); }
+function pgProjeto(c, r){
+  const aba = r[2]==='acoes' ? 'acoes' : 'entregaveis', cli = cliente(c.clienteId);
+  migalha([['Clientes','#/clientes'],[cli.nome,'#/clientes/'+c.clienteId],[c.nome]]);
+  const abas = [['entregaveis','package','Entregáveis'],['acoes','list-checks','Gestão de ações']];
+  const ts = c.crono.tarefas.filter(t=>t.status!=='Cancelada'), feitas = ts.filter(t=>t.status==='Concluída').length;
+  return `<div class="cc card"><div class="cc-esq">${logoCliente(cli, 'cc-logo')}<div style="min-width:0"><div class="cc-cli">${h(cli.nome)} · Projeto</div><h1>${h(c.nome)}</h1>
+     <div class="cc-meta"><span class="cc-pill"><i style="background:${COR_ST_CAMP[c.status]||'#9aa9ae'}"></i>${h(c.status)}</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="calendar-check"></i>Entrega final: ${fdm(c.lancamento)}</span><span class="cc-sep"></span><span class="cc-ini"><i data-lucide="list-checks"></i>${feitas} de ${ts.length} ações concluídas</span>${c.arquivada?' <span class="tag">Arquivado</span>':''}</div>${c.descricao?`<div class="small muted" style="margin-top:6px">${h(c.descricao)}</div>`:''}</div></div>
+   <div class="cc-dir nao-imprimir">${ehEquipe()?`<button class="btn" data-act="arquivarCamp" data-id="${c.id}"><i data-lucide="archive"></i>${c.arquivada?'Desarquivar':'Arquivar'}</button><button class="btn btn-p" data-act="editarCampanha" data-id="${c.id}"><i data-lucide="pencil"></i>Editar</button>`:''}</div></div>
+   <nav class="abas nao-imprimir">${abas.map(([k,ic,t])=>`<a href="#/campanha/${c.id}/${k}" class="${k===aba?'ativo':''}"><i data-lucide="${ic}"></i>${t}</a>`).join('')}</nav>${aba==='acoes' ? abaAcoes(c) : abaEntregaveis(c)}`; }
+/* entregáveis do projeto: peças agrupadas pela seção que a equipe escreve */
+function projEntregaveis(c){ const ed = ehEquipe(), L = c.entregaveis||[];
+  const secs = [...new Set(L.map(e=>e.secao||'Peças'))];
+  const novo = s => ed ? `<button class="ent-novo" data-act="formEnt" data-id="${c.id}" ${s?`data-secao="${h(s)}"`:''}><i data-lucide="plus"></i>Nova peça</button>` : '';
+  const topo = `<div class="ent-topo2"><div class="ent-tt"><b>Entregáveis</b><span>${L.length ? `${L.filter(e=>e.etapa==='concluido').length} de ${L.length} concluída${L.length===1?'':'s'}` : 'nenhuma peça ainda'}</span></div><div class="ent-topo2-d">${ed?`<button class="btn btn-p btn-s" data-act="formEnt" data-id="${c.id}"><i data-lucide="plus"></i>Nova peça</button>`:''}</div></div>`;
+  if (!L.length) return topo + `<div class="card card-p"><div class="vazio">Adicione as peças do projeto. Dê um nome de seção (ex.: Impressos, Vídeos) para agrupar.</div></div>`;
+  return topo + secs.map(s=>{ const da = L.filter(e=>(e.secao||'Peças')===s), conc = da.filter(e=>e.etapa==='concluido').length;
+    return `<div class="ent-faixa"><i data-lucide="package"></i>${h(s)}<span>${conc} de ${da.length} concluída${da.length===1?'':'s'}</span><div class="ent-prog"><i style="width:${Math.round(conc/da.length*100)}%"></i></div></div><div class="ent-grade">${da.map(e=>cartaoEnt(c,e)).join('')}${novo(s==='Peças'?'':s)}</div>`; }).join(''); }
 /* =====================================================================
    10. PÁGINA DA CAMPANHA
    ===================================================================== */
 function pgCampanha(r){
   const c = camp(r[1]); if (!c) return '<div class="vazio">Campanha não encontrada.</div>';
+  if (c.tipo==='projeto') return pgProjeto(c, r);
   const aba = !r[2] || r[2]==='mercados' ? 'visao' : r[2];
   migalha([['Clientes','#/clientes'],[cliente(c.clienteId).nome,'#/clientes/'+c.clienteId],[c.nome]]);
   const abas = [['visao','info','Visão geral'],['cronograma','gantt-chart','Cronograma'],['acoes','list-checks','Gestão de ações'],['budget','wallet','Budgets e KPIs'],['entregaveis','package','Entregáveis'],['saude','activity','Saúde da campanha']];
@@ -2575,10 +2609,10 @@ function abaAcoes(c){
   const validas = todas.filter(t=>t.status!=='Cancelada'), pc = validas.length ? Math.round(validas.filter(t=>t.status==='Concluída').length/validas.length*100) : 0;
   const atr = t => statusExib(t)==='Atrasada';
   const ed = ehEquipe(), nomeT = t => h(t.nome);
-  return seletorEtapa(c) + `<div class="alerta azul"><i data-lucide="info"></i><div>As ações são as <b>mesmas etapas do cronograma</b>. Mudar status, responsável, datas ou nome aqui muda o cronograma, e vice-versa. Para criar uma ação nova, use “Incluir item”.</div></div>
+  return seletorEtapa(c) + (c.tipo==='projeto' ? '' : `<div class="alerta azul"><i data-lucide="info"></i><div>As ações são as <b>mesmas etapas do cronograma</b>. Mudar status, responsável, datas ou nome aqui muda o cronograma, e vice-versa. Para criar uma ação nova, use “Incluir item”.</div></div>`) + `
   <div class="card"><div class="card-cab"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="seg"><button class="${f.visao==='lista'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="lista"><i data-lucide="list"></i>Lista</button><button class="${f.visao==='kanban'?'ativo':''}" data-act="ui" data-k="fac.visao" data-v="kanban"><i data-lucide="kanban"></i>Kanban</button></div>
    <div style="min-width:160px"><div class="small muted">${pc}% concluído · ${todas.filter(atr).length} atrasada(s)</div><div class="barra" style="margin-top:4px"><i style="width:${pc}%"></i></div></div></div>
-   <div class="filtros">${multiSel('fac.status', [...ST_ACAO,'Atrasada'].map(v=>[v,v]), f.status, 'Todos os status', 'status')}${multiSel('fac.pessoa', [...RESPONSAVEIS,'—'].map(v=>[v, v==='—'?'Sem responsável':v]), f.pessoa, 'Todos os responsáveis', 'responsáveis')}${multiSel('fac.area', AREAS.map(v=>[v,v]), f.area, 'Todas as áreas', 'áreas')}${multiSel('fac.pais', [['global','Itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].f+' '+PAISES[p.cod].n])], f.pais, 'Todos os países', 'países')}${(f.status.length||f.pessoa.length||f.area.length||f.pais.length)?`<button class="btn btn-s btn-g" data-act="limparFiltrosAcoes"><i data-lucide="x"></i>Limpar filtros</button>`:''}${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>Incluir item</button>`:''}</div></div>
+   <div class="filtros">${multiSel('fac.status', [...ST_ACAO,'Atrasada'].map(v=>[v,v]), f.status, 'Todos os status', 'status')}${multiSel('fac.pessoa', [...RESPONSAVEIS,'—'].map(v=>[v, v==='—'?'Sem responsável':v]), f.pessoa, 'Todos os responsáveis', 'responsáveis')}${multiSel('fac.area', AREAS.map(v=>[v,v]), f.area, 'Todas as áreas', 'áreas')}${multiSel('fac.pais', [['global','Itens globais'],...c.paises.map(p=>[p.cod,PAISES[p.cod].f+' '+PAISES[p.cod].n])], f.pais, 'Todos os países', 'países')}${(f.status.length||f.pessoa.length||f.area.length||f.pais.length)?`<button class="btn btn-s btn-g" data-act="limparFiltrosAcoes"><i data-lucide="x"></i>Limpar filtros</button>`:''}${ed?`<button class="btn btn-p" data-act="incluirItem" data-id="${c.id}"><i data-lucide="plus"></i>${c.tipo==='projeto'?'Nova ação':'Incluir item'}</button>`:''}</div></div>
   ${f.visao==='lista' ? listaAcoes(c, L, ed) : ''}
   ${f.visao!=='lista' ? `<div class="card-p"><div class="kanban">${ST_ACAO.map(st=>{ const cs = L.filter(t=>t.status===st); return `<div class="kcol" data-drop="acao" data-s="${st}" data-id="${c.id}"><h4><span>${st}</span><span>${cs.length}</span></h4>${cs.map(t=>`<div class="kcard ${atr(t)?'atr':''}" ${ed?`draggable="true" data-drag="${t.id}"`:''} data-act="formAcao" data-id="${c.id}" data-a="${t.id}"><div style="font-weight:500">${nomeT(t)}</div><div class="small muted" style="margin-top:4px">${h(respTarefa(c,t))}${t.pais?' · '+t.pais:''} · ${fdc(t.EF)}</div></div>`).join('')}</div>`; }).join('')}</div><div class="small muted">${ed?'Arraste os cartões entre as colunas para mudar o status.':''}</div></div>` : ''}
   </div>`;
@@ -3863,6 +3897,7 @@ function abaEntregaveis(c){
   const f = UI.fen || (UI.fen = {sub:'pecas',visao:'tabela',canal:'',pais:'',etapa:'',marca:''});
   const temOrg = temOrganico(c), sep = marcaSeparada(c);
   const sub = '';   // Conteúdos por país e Calendário editorial saíram: Entregáveis mostra só as peças
+  if (c.tipo==='projeto') return projEntregaveis(c);
   if ((c.notionVinculos||[]).length) return sub + entregaveisNotion(c);
   if (ehEquipe() && !c.entAutoFeito) { sincronizarEntregaveis(c); c.entAutoFeito = true; setTimeout(salvar, 0); }   // 1ª vez: cria as peças-padrão da ficha
   return sub + entregaveisSecoes(c);   // a visão em tabela saiu (só seções)
@@ -5732,7 +5767,8 @@ const ACT = {
   arquivarCliente: el => { const c = cliente(el.dataset.id); c.arquivado = !c.arquivado; registrar((c.arquivado?'Cliente arquivado: ':'Cliente desarquivado: ')+c.nome); render(); },
   /* campanha */
   novaCampanha: el => abrirFormCampanha(null, el.dataset.cliente),
-  editarCampanha: el => abrirFormCampanha(camp(el.dataset.id)),
+  projSalvar: el => projSalvar(el.dataset.id),
+  editarCampanha: el => { const c = camp(el.dataset.id); if (c && c.tipo==='projeto') projForm(c); else abrirFormCampanha(c); },
   modoCanal: () => {},
   abrirPaisesForm: el => { UI.paisesForm = UI.paisesForm===el.dataset.c ? null : el.dataset.c; reabrirFormCamp(lerFormCampanha()); },
   addPaisCamp: () => {},
@@ -5790,6 +5826,7 @@ const ACT = {
     const mud = r.tarefas.filter(t=>!ant[t.id] || ant[t.id].ES!==t.ES || ant[t.id].EF!==t.EF).length;
     const rem = c.crono.tarefas.filter(t=>!r.tarefas.some(x=>x.id===t.id));
     UI.pend = {d, r, motivo};
+    if (c.tipo==='projeto') { fecharModal(); return ACT.aplicarRecalc(); }
     abrirModal('Comparar cronograma atual × novo', `<p class="muted" style="margin-top:0">${h(motivo)}. <b>${mud}</b> etapa(s) mudam de data (destacadas). ${rem.length?`<b>${rem.length}</b> etapa(s) deixam de existir (etapa fora do modelo, país removido ou idioma alterado): ${rem.slice(0,4).map(t=>h(t.nome)+(t.pais?' ('+t.pais+')':'')).join(', ')}${rem.length>4?'…':''}. `:''}Nada é aplicado sem sua confirmação; a versão atual fica guardada no histórico.</p>${resumoCalc(r, d.lancamento)}${tabelaPrevia(r.tarefas, c.crono.tarefas)}`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="aplicarRecalc" ${mud||rem.length||d.lancamento!==c.lancamento?'':'disabled'}><i data-lucide="check"></i>Aplicar nova versão</button>`, true); },
   aplicarRecalc: () => { const {d, r, motivo} = UI.pend, c = camp(d.id);
@@ -5800,7 +5837,7 @@ const ACT = {
     for (const p of novosPaises) if (!c.traducoes[p.cod]) c.traducoes[p.cod] = {texto:'',status:p.idioma===c.idiomaBase?'N/A':(c.master.status==='Aprovado'?'Aguardando tradução':'Aguardando aprovação do master'),resp:'u4',validador:p.respLocal||VALID_PAIS[p.cod]||'',prazo:null,versaoMaster:0,coment:[],hist:[],aprovadoEm:null};
     for (const p of c.paises) if (!p.respLocal) p.respLocal = VALID_PAIS[p.cod]||'';
     delete c._c; delete c._r;
-    aplicarCronograma(c, r, motivo); registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: ${motivo}`); fecharModal(); render(); toast('Nova versão do cronograma aplicada.'); },
+    aplicarCronograma(c, r, motivo); registrar(`Cronograma de “${c.nome}” → versão ${c.crono.versao}: ${motivo}`); fecharModal(); render(); toast(c.tipo==='projeto' ? 'Ação incluída.' : 'Nova versão do cronograma aplicada.'); },
   excluirEtapa: el => { const c = camp(el.dataset.id), id = el.dataset.t, grupo = !!el.dataset.grupo;
     const alvo = grupo ? c.crono.tarefas.filter(t=>t.tid===id) : c.crono.tarefas.filter(t=>t.id===id);
     if (!alvo.length) return; if (alvo.some(t=>t.marco)) return toast('A etapa de lançamento não pode ser excluída.');
@@ -5831,25 +5868,25 @@ const ACT = {
       for (const k of Object.keys(c.renomeadas)) if (k.startsWith(t0.tid+'@')) delete c.renomeadas[k]; }
     for (const t of c.crono.tarefas) if (porPais ? t.id===t0.id : t.tid===t0.tid) t.nome = nome;
     registrar(`Etapa renomeada em “${c.nome}”: “${antigo}” → “${nome}”${porPais?' ('+t0.pais+')':''}`); fecharModal(); render(); toast('Nome da etapa salvo.'); },
-  incluirItem: el => { const c = camp(el.dataset.id);
+  incluirItem: el => { const c = camp(el.dataset.id), pj = c.tipo==='projeto';
     const etapas = c.modelo.filter(m=>!faseada(c) || m.etapa===etapaSel(c)).map(m=>[m.id, (FASES[m.fase]||'')+' · '+nomeTarefa(m, c.idiomaBase)+(m.escopo==='pais'?' (por país)':'')]);
-    abrirModal('Incluir item no cronograma', `<form id="f-item" class="form-g">
+    abrirModal(pj ? 'Nova ação' : 'Incluir item no cronograma', `<form id="f-item" class="form-g">
       <label class="campo tudo">Nome *<input name="nome" required maxlength="160" placeholder="Ex.: Reunião de alinhamento com o México"></label>
-      <label class="campo">Etapa<select name="fase">${opts(ORDEM_FASES.map(k=>[k,FASES[k]]),'1')}</select></label>
+      ${pj ? '<input type="hidden" name="fase" value="1">' : `<label class="campo">Etapa<select name="fase">${opts(ORDEM_FASES.map(k=>[k,FASES[k]]),'1')}</select></label>`}
       <label class="campo">Área responsável<select name="area">${opts(AREAS,'Atendimento')}</select></label>
       <label class="campo">Responsável<select name="pessoa">${opts(RESPONSAVEIS,'','Selecione')}</select></label>
       <label class="campo">Prioridade<select name="prioridade">${opts(['Alta','Média','Baixa'],'Média')}</select></label>
-      <label class="campo">Vale para<select name="escopo" onchange="document.getElementById('it-paises').hidden=this.value!=='pais'"><option value="global">Uma etapa só (global)</option><option value="pais">Cada país separadamente</option></select></label>
+      ${pj ? '<input type="hidden" name="escopo" value="global">' : ''}<label class="campo" ${pj?'style="display:none"':''}>Vale para<select name="escopo" onchange="document.getElementById('it-paises').hidden=this.value!=='pais'"><option value="global">Uma etapa só (global)</option><option value="pais">Cada país separadamente</option></select></label>
       <div class="campo" id="it-paises" hidden>Países<div class="chips">${c.paises.map(p=>`<label class="chip on"><input type="checkbox" name="pais_${p.cod}" checked style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${PAISES[p.cod].f} ${p.cod}</label>`).join('')}</div></div>
-      <label class="campo tudo">Como definir as datas<select name="modo" onchange="document.getElementById('it-dep').hidden=this.value!=='dep';document.getElementById('it-datas').hidden=this.value!=='datas'"><option value="dep">Encaixar depois de uma etapa (calculado em dias úteis)</option><option value="datas">Datas fixas</option></select></label>
-      <div class="tudo form-g" id="it-dep" style="padding:0">
+      <label class="campo tudo" ${pj?'style="display:none"':''}>Como definir as datas<select name="modo" onchange="document.getElementById('it-dep').hidden=this.value!=='dep';document.getElementById('it-datas').hidden=this.value!=='datas'"><option value="dep">Encaixar depois de uma etapa (calculado em dias úteis)</option><option value="datas" ${pj?'selected':''}>Datas fixas</option></select></label>
+      <div class="tudo form-g" id="it-dep" style="padding:0${pj?';display:none':''}">
         <label class="campo">Começa depois de<select name="depois">${opts(etapas,'','Sem dependência')}</select></label>
         <label class="campo">Ligação<select name="tipo"><option value="FS">Quando a anterior terminar</option><option value="SS">Junto com a anterior</option></select></label>
         <label class="campo">Duração (dias úteis)<input type="number" name="dur" min="1" max="200" value="1"></label>
         <label class="campo">Precisa terminar antes de (opcional)<select name="antes">${opts(etapas,'','Nenhuma')}</select></label></div>
-      <div class="tudo form-g" id="it-datas" hidden style="padding:0"><label class="campo">Início<input type="date" name="ini" value="${HOJE}"></label><label class="campo">Fim<input type="date" name="fim" value="${HOJE}"></label></div>
+      <div class="tudo form-g" id="it-datas" ${pj?'':'hidden'} style="padding:0"><label class="campo">Início<input type="date" name="ini" value="${HOJE}"></label><label class="campo">Fim<input type="date" name="fim" value="${HOJE}"></label></div>
       <label class="campo tudo">Descrição<textarea name="descricao"></textarea></label></form>
-      <p class="small muted" style="margin-bottom:0">O item entra no cronograma e na Gestão de ações desta campanha. O modelo padrão e as outras campanhas não mudam.</p>`,
+      ${pj ? '' : '<p class="small muted" style="margin-bottom:0">O item entra no cronograma e na Gestão de ações desta campanha. O modelo padrão e as outras campanhas não mudam.</p>'}`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="incluirItemOk" data-id="${c.id}"><i data-lucide="plus"></i>Incluir</button>`, true); },
   incluirItemOk: el => { const c = camp(el.dataset.id), f = $('#f-item'), v = ler(f), nome = (v.nome||'').trim();
     if (!nome) return toast('Informe o nome do item.');
@@ -5962,7 +5999,7 @@ const ACT = {
     salvar(); render(); toast(menc.length ? `Comentário enviado. ${menc.join(', ')} ${menc.length===1?'foi notificado(a)':'foram notificados(as)'}.` : 'Comentário enviado.'); },
   lpComentPgDel: el => { const {d} = discAlvo(), i = +el.dataset.i; if (!d || !d.coment || !d.coment[i] || d.coment[i].quem!==quemSou() || !confirm('Excluir este comentário?')) return; lpGuardarEdicao(); d.coment.splice(i, 1); salvar(); render(); },
   menuNovoProj: el => { UI.menuNovo = UI.menuNovo===el.dataset.k ? null : el.dataset.k; render(); },
-  novoProjeto: el => { UI.menuNovo = null; if (el.dataset.tipo==='campanha') { const b = document.createElement('button'); b.dataset.act = 'novaCampanha'; if (el.dataset.cliente) b.dataset.cliente = el.dataset.cliente; ACT.novaCampanha(b); } else if (el.dataset.tipo==='social') socFormAbrir(null, el.dataset.cliente); else render(); },
+  novoProjeto: el => { UI.menuNovo = null; if (el.dataset.tipo==='campanha') { const b = document.createElement('button'); b.dataset.act = 'novaCampanha'; if (el.dataset.cliente) b.dataset.cliente = el.dataset.cliente; ACT.novaCampanha(b); } else if (el.dataset.tipo==='social') socFormAbrir(null, el.dataset.cliente); else if (el.dataset.tipo==='projeto') projForm(null, el.dataset.cliente); else render(); },
   pecaMarca: el => { UI.pecaMarca = UI.pecaMarca || {}; UI.pecaMarca[el.dataset.k] = +el.dataset.v || 0; render(); },
   pecaIdi: el => { UI.pecaIdi = UI.pecaIdi || {}; UI.pecaIdi[el.dataset.e] = el.dataset.v; render(); },
   pecaNova: el => { const c = camp(el.dataset.id); if (!c) return; const {canal, marca, fase} = el.dataset, paises = (el.dataset.paises||'').split(',').filter(Boolean);
@@ -6225,9 +6262,9 @@ const ACT = {
   delKpi: el => { const c = camp(el.dataset.id); c.kpis = c.kpis.filter(x=>x.id!==el.dataset.k); registrar('KPI excluído em '+c.nome); fecharModal(); render(); },
   /* entregáveis */
   formEnt: el => { const c = camp(el.dataset.id), e = c.entregaveis.find(x=>x.id===el.dataset.e) || {paises: el.dataset.pais?[el.dataset.pais]:[], briefing:{}, canal: el.dataset.canal||'', marca: el.dataset.marca||undefined, secao: el.dataset.secao||undefined, fase: el.dataset.fase||undefined};
-    abrirModal(e.id?'Editar entregável':'Novo entregável — briefing', `<form id="f-ent" class="form-g"><input type="hidden" name="secao" value="${h(e.secao||'')}"><input type="hidden" name="fase" value="${h(e.fase||'')}"><label class="campo">Nome da peça *<input name="nome" value="${h(e.nome||'')}"></label><label class="campo">Canal<select name="canal">${opts(c.canais,e.canal,'— sem canal —')}</select></label>
+    abrirModal(e.id?'Editar entregável':'Novo entregável — briefing', `<form id="f-ent" class="form-g">${c.tipo==='projeto' ? `<label class="campo">Seção<input name="secao" list="dl-secoes" value="${h(e.secao||'')}" placeholder="Ex.: Impressos, Vídeos"><datalist id="dl-secoes">${[...new Set((c.entregaveis||[]).map(x=>x.secao).filter(Boolean))].map(x=>`<option value="${h(x)}">`).join('')}</datalist></label>` : `<input type="hidden" name="secao" value="${h(e.secao||'')}">`}<input type="hidden" name="fase" value="${h(e.fase||'')}"><label class="campo">Nome da peça *<input name="nome" value="${h(e.nome||'')}"></label>${c.tipo==='projeto' ? '' : `<label class="campo">Canal<select name="canal">${opts(c.canais,e.canal,'— sem canal —')}</select></label>`}
       ${marcaSeparada(c) ? `<div class="campo tudo">Marca da peça<div class="chips">${(e.id?MARCAS_SEP:[...MARCAS_SEP,'Ambas (cria uma peça para cada marca)']).map(k=>`<label class="chip ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'on':''}"><input type="radio" name="marcaPeca" value="${k}" ${(e.marca||(!e.id?'Ambas (cria uma peça para cada marca)':''))===k?'checked':''} style="display:none" onchange="this.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.contains(this)))">${k}</label>`).join('')}</div></div>` : ''}
-      <div class="campo tudo">Países (marque vários se o arquivo for o mesmo para todos)<div class="chips">${c.paises.map(p=>`<label class="chip ${e.paises.includes(p.cod)?'on':''}"><input type="checkbox" name="pais" value="${p.cod}" ${e.paises.includes(p.cod)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${pais(p.cod)}</label>`).join('')}</div></div>
+      ${c.tipo==='projeto' ? '' : `<div class="campo tudo">Países (marque vários se o arquivo for o mesmo para todos)<div class="chips">${c.paises.map(p=>`<label class="chip ${e.paises.includes(p.cod)?'on':''}"><input type="checkbox" name="pais" value="${p.cod}" ${e.paises.includes(p.cod)?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${pais(p.cod)}</label>`).join('')}</div></div>`}
       <label class="campo">Idioma<select name="idioma">${opts([...Object.entries(IDIOMAS),['Sem fala','Sem texto / sem fala']],e.idioma)}</select></label><label class="campo">Formato<input name="formato" value="${h(e.formato||'')}" placeholder="Ex.: 1080×1350"></label>
       <label class="campo">Objetivo<input name="objetivo" value="${h(e.objetivo||'')}"></label><label class="campo">Prazo<input type="date" name="prazo" value="${e.prazo||''}"></label>
       <label class="campo">Responsável pelo conteúdo<select name="respConteudo">${optsUsu(e.respConteudo,'Conteúdo')}</select></label><label class="campo">Responsável pelo design<select name="respDesign">${optsUsu(e.respDesign,'Design')}</select></label>
@@ -6236,7 +6273,7 @@ const ACT = {
       <label class="campo tudo">Copy<textarea name="b_copy">${h(e.briefing.copy||'')}</textarea></label><label class="campo">Referências visuais<input name="b_referencias" value="${h(e.briefing.referencias||'')}"></label><label class="campo">Observações<input name="b_obs" value="${h(e.briefing.obs||'')}"></label></form>`,
       `<button class="btn" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvarEnt" data-id="${c.id}" data-e="${e.id||''}">Salvar</button>`, true); },
   salvarEnt: el => { const c = camp(el.dataset.id), fm = $('#f-ent'), v = ler(fm); if (!v.nome.trim()) return toast('Informe o nome da peça.');
-    const paises = [...fm.querySelectorAll('input[name=pais]:checked')].map(x=>x.value); if (!paises.length) return toast('Escolha pelo menos um país.');
+    const paises = [...fm.querySelectorAll('input[name=pais]:checked')].map(x=>x.value); if (!paises.length && c.tipo!=='projeto') return toast('Escolha pelo menos um país.');
     const mp = v.marcaPeca; delete v.marcaPeca; if (!v.secao) delete v.secao; if (!v.fase) delete v.fase;
     const br = {}; for (const k in v) if (k.startsWith('b_')) { br[k.slice(2)] = v[k]; delete v[k]; } delete v.pais;
     let e = c.entregaveis.find(x=>x.id===el.dataset.e);
