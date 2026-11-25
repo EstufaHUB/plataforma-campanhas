@@ -6460,9 +6460,16 @@ function odSaldo(c){ const hs = c.horas||[], ent = hs.filter(x=>x.tipo==='entrad
 const odUsoPed = (c, pid) => (c.horas||[]).filter(x=>x.tipo!=='entrada' && x.pedido===pid).reduce((s,x)=>s+(+x.h||0),0);
 const odPill = (v, attrs) => attrs ? pillSel(OD_COR[v]||'cinza', `data-pop="od" ${attrs}`, opts(OD_PED_ST.map(x=>[x[0],x[0]]), v)) : `<span class="pc4-st c-${OD_COR[v]||'cinza'}"><i></i>${h(v)}</span>`;
 /* entregáveis antigos (dentro do pedido) viram peças da campanha, com a página do Meta Ads */
+/* pedido com todas as peças concluídas vira Concluído; se uma peça reabre, o pedido volta para Em andamento */
+function odAutoConcluir(c){ if (!c || c.tipo!=='ondemand') return; let mud = false;
+  for (const p of c.pedidos||[]) { const es = odEnts(c, p.id); if (!es.length || p.status==='Cancelado') continue; const tudo = es.every(e=>e.etapa==='concluido');
+    if (tudo && p.status!=='Concluído') { p.status = 'Concluído'; p.autoConc = true; mud = true; registrar(`Pedido “${p.nome}” concluído: todas as peças foram concluídas`); toast(`Pedido “${p.nome}” concluído.`); }
+    else if (!tudo && p.status==='Concluído' && p.autoConc) { p.status = 'Em andamento'; p.autoConc = false; mud = true; registrar(`Pedido “${p.nome}” reaberto: uma peça saiu de Concluído`); } }
+  return mud; }
 function odMigrar(c){ let mud = false; c.pedidos = c.pedidos || []; c.horas = c.horas || []; c.entregaveis = c.entregaveis || [];
   for (const p of c.pedidos) { if (!p.ents) continue; for (const e of p.ents) c.entregaveis.push({id:e.id, nome:e.nome, secao:'On Demand', pedido:p.id, grupo:e.grupo||'', formato:e.formato||'', etapa:OD_ET_DE[e.status]||'briefing', link:e.link||'', canva:e.canva||'', prazo:e.prazo||null, idioma:c.idiomaBase||'PT', paises:[], versoes:[], aprovacoes:[], briefing:{}});
     delete p.ents; mud = true; }
+  if (odAutoConcluir(c)) mud = true;
   if (mud) setTimeout(salvar, 0); }
 
 function odForm(c, cliId){ const cli = c ? c.clienteId : (cliId||'');
@@ -6566,7 +6573,7 @@ function odPecaProps(c, peca, ed){ const p = odPed(c, peca.pedido), gs = [...new
 function odChg(k, el, v){ const c = camp(el.dataset.id); if (!c) return;
   if (k==='odPecaGrupo' || k==='odPecaCanva') { const e = (c.entregaveis||[]).find(x=>x.id===el.dataset.e); if (!e) return; if (k==='odPecaGrupo') e.grupo = (v||'').trim(); else e.canva = (v||'').trim(); registrar(`${k==='odPecaGrupo'?'Público':'Canva'} da peça “${e.nome}” atualizado em “${c.nome}”`); return render(); }
   const p = odPed(c, el.dataset.p); if (!p) return;
-  if (k==='odPedSt') { p.status = v; registrar(`Pedido “${p.nome}” (${c.nome}): ${v}`); }
+  if (k==='odPedSt') { p.status = v; p.autoConc = false; registrar(`Pedido “${p.nome}” (${c.nome}): ${v}`); }
   else if (k==='odAcaoCk') { const a = (p.acoes||[]).find(x=>x.id===el.dataset.a); if (!a) return; a.feito = !!v; }
   render(); }
 
@@ -6653,12 +6660,12 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
     es.forEach(e=>{ const ant = e.etapa; e.etapa = v; if (v==='producao' && ORD_ET.indexOf(ant) < 3) (e.aprovacoes = e.aprovacoes || []).push({tipo:'Conteúdo', resultado:'Aprovado', coment:'', data:HOJE, quem:quemSou()});
       if (v==='concluido' && ant!=='concluido') (e.aprovacoes = e.aprovacoes || []).push({tipo:'Asset', resultado:'Aprovado', coment:'', data:HOJE, quem:quemSou()});
       if (/^ajuste_/.test(v) && ant!==v) (e.aprovacoes = e.aprovacoes || []).push({tipo: v==='ajuste_asset' ? 'Asset' : 'Conteúdo', resultado:'Ajustes solicitados', coment:'', data:HOJE, quem:quemSou()}); });
-    registrar(`Post “${es[0].nome}” de “${c.nome}”: ${t.toLowerCase()}`); salvar(); render(); return; }
+    registrar(`Post “${es[0].nome}” de “${c.nome}”: ${t.toLowerCase()}`); odAutoConcluir(c); salvar(); render(); return; }
   if (k==='pecaResp') { const ids = (el.dataset.ids||'').split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return; const es = c.entregaveis.filter(e=>ids.includes(e.id));
     es.forEach(e=>{ e.doc = e.doc || {}; e.doc.resp = v; e.resp = v; }); registrar(`Responsável do post “${es[0].nome}” de “${c.nome}”: ${v||'—'}`); salvar(); render(); return; }
   if (k==='pecaAssetOk') { const ids = (el.dataset.ids||'').split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return; const es = c.entregaveis.filter(e=>ids.includes(e.id));
     es.forEach(e=>{ if (ORD_ET.indexOf(e.etapa) < 3) return; e.etapa = el.checked ? 'concluido' : 'aprov_asset'; if (el.checked) (e.aprovacoes = e.aprovacoes || []).push({tipo:'Asset', resultado:'Aprovado', coment:'', data:HOJE, quem:quemSou()}); });
-    registrar(`Post “${es[0].nome}” de “${c.nome}”: asset ${el.checked ? 'aprovado' : 'voltou para aprovação'}`); salvar(); render(); toast(el.checked ? 'Asset aprovado.' : 'Aprovação do asset desmarcada.'); return; }
+    registrar(`Post “${es[0].nome}” de “${c.nome}”: asset ${el.checked ? 'aprovado' : 'voltou para aprovação'}`); odAutoConcluir(c); salvar(); render(); toast(el.checked ? 'Asset aprovado.' : 'Aprovação do asset desmarcada.'); return; }
   if (k==='pecaLegEsp') return pecaLegModo(el.dataset.id, el.dataset.e, v);
   if (/^peca(Txt|Nome|Fmt|Resp|Arq|St)$/.test(k)) { const ids = (el.dataset.ids||'').split(','), c = S.campanhas.find(x=>(x.entregaveis||[]).some(e=>e.id===ids[0])); if (!c) return;
     const es = c.entregaveis.filter(e=>ids.includes(e.id)), v = (el.value||'').trim();
