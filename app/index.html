@@ -923,6 +923,17 @@ a.lk-men[data-lkt=notion]::before{background-image:url("data:image/svg+xml;utf8,
 .lang-seg{display:inline-flex;background:#f1f2f4;border-radius:8px;padding:2px;margin-right:6px}.lang-seg button{border:0;background:none;font:inherit;font-size:.74rem;font-weight:600;color:#8f8d86;padding:3px 8px;border-radius:6px;cursor:pointer}.lang-seg button.on{background:#fff;color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .lang-flut{position:fixed;top:16px;right:16px;z-index:9999;display:none;background:rgba(255,255,255,.12)}.lang-flut button{color:#cfcfcf}.lang-flut button.on{background:#fff;color:#111}
 body:has(#login-raiz:not([style*="none"]) .tela-login) .lang-flut{display:inline-flex}
+.apr-grupo{margin-top:18px}.apr-g-t{display:flex;align-items:center;gap:8px;font-weight:700;margin:0 0 8px 2px}.apr-g-t i{width:16px;height:16px;color:#8f8d86}.apr-g-t em{font-style:normal;font-weight:500;font-size:.75rem;background:#eef0f2;border-radius:9px;padding:0 7px;color:#5f5e58}
+.apr-it{background:#fff;border:1px solid var(--borda);border-radius:12px;margin-bottom:8px;overflow:hidden}.apr-it.ab{box-shadow:0 4px 16px rgba(15,15,15,.06)}
+.apr-cab{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer}.apr-cab:hover{background:#fafbfb}.apr-chev{width:16px;height:16px;color:#a3a19b;flex:none}
+.apr-tit{flex:1;min-width:0;display:flex;flex-direction:column}.apr-tit small{color:#8f8d86;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.apr-pz{font-size:.78rem;color:#6b6a65}
+.apr-corpo{padding:4px 18px 16px 44px;display:flex;flex-direction:column;gap:12px}.apr-txt{max-height:460px;overflow:auto;border:1px solid #eef0f2;border-radius:10px;padding:14px 18px;background:#fcfcfb}
+.apr-lks{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.apr-lks>span{font-size:.78rem;color:#8f8d86;margin-right:2px}.apr-prev{max-width:420px}
+.apr-bts{display:flex;gap:8px;justify-content:flex-end}.apr-ok{background:#2e9d55;border-color:#2e9d55;color:#fff}.apr-ok:hover{background:#26874a}.apr-no{color:#a33a35}
+.apr-aj{display:flex;flex-direction:column;gap:8px}.apr-aj textarea{width:100%;font:inherit;border:1px solid var(--borda);border-radius:10px;padding:10px 12px}
+.apr-vz{display:flex;flex-direction:column;align-items:center;gap:6px;padding:40px 20px;text-align:center;color:#6b6a65;margin-top:18px}.apr-vz i{width:30px;height:30px;color:#2e9d55}.apr-vz b{color:var(--tx);font-size:1.05rem}
+.apr-hist{margin-top:28px}.apr-h{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid #f1f2f4;font-size:.86rem}.apr-h>span:nth-child(2){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:700px){.apr-corpo{padding-left:16px}.apr-pz{display:none}}
 </style>
 </head>
 <body>
@@ -1509,7 +1520,7 @@ const SNAP = {cli:{}, camp:{}, cfg:{}};
 const CFG_CHAVES = ['agencia','usuarios','feriados','modelo','modeloHist','baseRegiao','metasStatus','registrosStatus','ocultasStatus','alertasEmail','atividades','acompanhamento'];
 const ehEquipe = () => PERFIL && (PERFIL.papel==='equipe' || PERFIL.papel==='admin');
 const ehAdmin = () => PERFIL && PERFIL.papel==='admin';
-const PAPEIS = {pendente:'Aguardando liberação', equipe:'Equipe da agência', admin:'Administrador', cliente:'Cliente (somente leitura)'};
+const PAPEIS = {pendente:'Aguardando liberação', equipe:'Equipe da agência', admin:'Administrador', cliente:'Cliente (aprovações)'};
 function estadoInicial(){
   seq = 1000;
   return {migr:2, metasStatus:{}, registrosStatus:{}, ocultasStatus:{}, alertasEmail:{para:[], ativo:true}, agencia:{pais:'BR',estado:'',cidade:''}, usuarios:[], feriados:feriadosIniciais(),
@@ -1561,6 +1572,7 @@ async function carregar(){
   if (vincRecup.length && ehEquipe()) { vincRecup.forEach(id=>{ SNAP.camp[id] = ''; }); salvar(); }   // grava os vínculos recuperados
   aplicarCustosAuto();
   importarPlano().catch(e=>console.error('importação do plano', e));
+  if (ehCliente()) await aprovCarregar(); else if (ehEquipe()) { aprovAplicar().catch(e=>console.error('aprovações do cliente', e)); clearInterval(window._aprT); window._aprT = setInterval(()=>aprovAplicar().catch(()=>{}), 120000); }
 }
 let sincronizando = false, sincPendente = false;
 function statusSync(t, erro){ const el = $('#sync'); if (!el) return; el.textContent = t; el.classList.toggle('erro', !!erro); }
@@ -1627,7 +1639,7 @@ async function entrarNoApp(){
   if (p.papel==='pendente') return telaPendente();
   $('#login-raiz').innerHTML = '';
   quemTopo();
-  const av = $('#aviso-papel'); if (p.papel==='cliente') { av.hidden = false; av.innerHTML = '<i data-lucide="eye"></i><span>Acesso de cliente: você vê as campanhas do seu cliente, sem editar.</span>'; } else av.hidden = true;
+  const av = $('#aviso-papel'); if (p.papel==='cliente') { av.hidden = false; av.innerHTML = '<i data-lucide="badge-check"></i><span>Acesso de cliente: aqui ficam os itens que aguardam a sua aprovação.</span>'; } else av.hidden = true;
   $('#app').innerHTML = '<div class="vazio">Carregando dados…</div>';
   try { await carregar(); } catch(e) { console.error(e); $('#app').innerHTML = `<div class="alerta verm">Não foi possível carregar os dados: ${h(e.message||String(e))}</div>`; return; }
   atualizarResponsaveis(); render(); sincronizar(); statusSync('Salvo'); iniciarPresenca();
@@ -1911,18 +1923,18 @@ function render(){
   fecharMenuBarra();
   const r = rota(); document.body.classList.remove('menu-aberto');
   const nN = notificacoes().filter(n=>!n.lida && n.cat==='mim').length;   // o contador do sino conta só o que é para você
-  const itens = [['dashboard','layout-dashboard','Início'],['meu','user-round','Minha página'],['clientes','building-2','Clientes']];   // Gestão de ações e Cronograma anual ficam dentro de cada cliente; o Calendário editorial saiu do menu
+  const itens = ehCliente() ? [['aprovacoes','badge-check','Aprovações', aprovPendencias().length]] : [['dashboard','layout-dashboard','Início'],['meu','user-round','Minha página'],['clientes','building-2','Clientes']];   // Gestão de ações e Cronograma anual ficam dentro de cada cliente; o Calendário editorial saiu do menu
   const sec = ['campanha','social','grupo','acoes','anual'].includes(r[0]) ? 'clientes' : r[0];
   const itemMenu = ([k,ic,t,n])=>`<a href="#/${k}" class="${sec===k?'ativo':''}"><i data-lucide="${ic}"></i>${t}${n?`<span class="cont">${n}</span>`:''}</a>`;
   const nInv = ehEquipe() ? INVOICES.filter(x=>statusInv(x)==='Atrasada').length : 0;
   const adm = [['invoices','receipt','Invoices',nInv],['acessos','shield-check','Acessos e permissões'],['config','settings','Configurações']].filter(([k])=>pode(k));
   const favs = favLista(), rtAt = favRota();
   const favHtml = favs.length ? `<div class="menu-grupo">Favoritos</div>` + favs.map(f=>`<a href="${h(f.h)}" class="fav-it ${f.h===rtAt?'ativo':''}" title="${h(f.s ? f.s+' · '+f.t : f.t)}"><i data-lucide="star"></i><span>${h(f.t)}</span><button class="fav-x" title="Remover dos favoritos" onclick="favTirar(event, ${h(JSON.stringify(f.h))})"><i data-lucide="x"></i></button></a>`).join('') : '';
-  $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + favHtml + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
+  if (ehCliente()) $('#menu').innerHTML = itens.map(itemMenu).join(''); else $('#menu').innerHTML = itens.filter(([k])=>!AREA_ROTA[k] || pode(AREA_ROTA[k])).map(itemMenu).join('') + favHtml + (pode('status') ? `<div class="menu-grupo">Digital</div>` + [['status','list-checks','Campanhas'],['atividades','calendar-check','Atividades',ehEquipe()&&S.metasStatus?atContMenu():0],['acompanhamento','table-2','Acompanhamento']].map(itemMenu).join('') : '') + (adm.length ? `<div class="menu-grupo">Administrativo</div>` + adm.map(itemMenu).join('') : '');
   $('#hoje-txt').textContent = fd(HOJE); { for (const id of ['#lat-badge','#topo-badge']) { const b = $(id); if (b) { b.hidden = !nN; b.textContent = nN > 99 ? '99+' : nN; } } const ln = $('#lat-notif'); if (ln) ln.classList.toggle('ativo', r[0]==='notificacoes'); }
-  const pg = {meu:pgMeu,perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,grupo:pgGrupo,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,social:pgSocial,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
+  const pg = ehCliente() ? pgAprovacoes : {meu:pgMeu,perfil:pgPerfil,dashboard:pgDashboard,acoes:pgAcoes,invoices:pgInvoices,acessos:pgAcessos,clientes:pgClientes,grupo:pgGrupo,campanha:pgCampanha,status:pgStatus,lp:pgLpPagina,social:pgSocial,atividades:pgAtividades,acompanhamento:pgAcompanhamento,anual:pgAnual,editorial:pgEditorial,notificacoes:pgNotificacoes,config:pgConfig}[r[0]] || pgDashboard;
   const gs = $('.gantt'), rol = gs ? [gs.scrollLeft, gs.scrollTop] : null;
-  try { $('#app').innerHTML = podeRota(r) ? pg(r) : (migalha([['Sem acesso']]), '<div class="card vazio" style="margin-top:20px"><i data-lucide="lock"></i><div style="margin-top:8px">Você não tem acesso a esta área. Fale com um administrador.</div></div>'); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
+  try { $('#app').innerHTML = ehCliente() || podeRota(r) ? pg(r) : (migalha([['Sem acesso']]), '<div class="card vazio" style="margin-top:20px"><i data-lucide="lock"></i><div style="margin-top:8px">Você não tem acesso a esta área. Fale com um administrador.</div></div>'); } catch(e){ console.error(e); $('#app').innerHTML = `<div class="alerta verm">Erro ao montar a tela: ${h(e.message)}</div>`; }
   if (rol) { const g2 = $('.gantt'); if (g2) { g2.scrollLeft = rol[0]; g2.scrollTop = rol[1]; } }
   icones(); posRender.forEach(f=>f()); posRender = [];
   capturarDesfazer();
@@ -6692,6 +6704,86 @@ Object.assign(ACT, {
     p.acoes = p.acoes || []; p.acoes.push({id:novoId('a'), nome, pessoa:f.pessoa.value||'', prazo:f.prazo.value||null, feito:false}); render(); },
   odAcaoDel: el => { const c = camp(el.dataset.id), p = odPed(c, el.dataset.p); p.acoes = (p.acoes||[]).filter(a=>a.id!==el.dataset.a); render(); },
 });
+/* =====================================================================
+   APROVAÇÕES DO CLIENTE: o cliente entra e só vê esta página, com o que precisa aprovar.
+   A decisão fica em `aprovacoes_cliente`; a plataforma da equipe aplica na campanha e marca como aplicada.
+   ===================================================================== */
+const ehCliente = () => !!PERFIL && PERFIL.papel==='cliente';
+let APROV = [];   // decisões do cliente (as dele) ou pendentes de aplicar (equipe)
+async function aprovCarregar(){ if (!sb) return; const q = ehCliente() ? sb.from('aprovacoes_cliente').select('*').order('criado_em', {ascending:false}).limit(200) : sb.from('aprovacoes_cliente').select('*').is('aplicado_em', null).order('criado_em');
+  const r = await q; if (!r.error) APROV = r.data || []; }
+const aprovChave = (tipo, cid, alvo, etapa) => [tipo, cid, typeof alvo==='string' ? alvo : JSON.stringify(alvo), etapa].join('|');
+/* tudo que está esperando o cliente */
+function aprovPendencias(){ const L = [];
+  for (const c of S.campanhas.filter(x=>!x.arquivada)) {
+    const vistos = new Set();
+    for (const e of (c.entregaveis||[])) { if (!['aprov_conteudo','aprov_asset'].includes(e.etapa) || vistos.has(e.id)) continue;
+      const g = pecaIdiomaGrupo(c, e).filter(x=>x.etapa===e.etapa); g.forEach(x=>vistos.add(x.id)); const d = pecaDoc(c, e.id) || {}, ped = e.pedido && odPed(c, e.pedido);
+      const etapa = e.etapa==='aprov_conteudo' ? 'conteudo' : 'asset', alvo = g.map(x=>x.id).sort().join(',');
+      L.push({k:aprovChave('peca', c.id, alvo, etapa), tipo:'peca', c, alvo, etapa, titulo:e.nome, onde: ped ? ped.nome : (e.secao||e.canal||''), sub: e.pedido ? (e.grupo||'') : [...new Set(g.flatMap(x=>x.paises||[]))].map(p=>PAISES[p]?PAISES[p].f+' '+PAISES[p].n:p).join(' · '), texto: d.texto||'', links: [e.link, e.canva].filter(Boolean), quando: e.prazo}); }
+    for (const x of lpDocs(c)) { const nome = 'Landing page' + (x.marca ? ' · '+x.marca : '') + ' · ' + (IDIOMAS[x.cod]||x.cod||'');
+      const alvo = {mi:x.mi, et:x.et, idi:x.idi};
+      if (x.d.status==='Aguardando aprovação do cliente') L.push({k:aprovChave('lp', c.id, alvo, 'conteudo'), tipo:'lp', c, alvo, etapa:'conteudo', titulo: x.trad ? 'Tradução da landing page' : 'Texto da landing page', onde:nome, sub:'', texto:x.d.texto||'', links:[]});
+      if (lpLayoutSt(x.f, x.d)==='Aguardando aprovação do cliente') L.push({k:aprovChave('lp', c.id, alvo, 'layout'), tipo:'lp', c, alvo, etapa:'layout', titulo:'Layout da landing page', onde:nome, sub:'', texto:'', links:[lpLayoutLink(x.f, x.d)].filter(Boolean)}); } }
+  for (const p of (S.social||[]).filter(x=>!x.arquivada)) for (const post of (p.posts||[])) { if (!['aprov_conteudo','aprov_asset'].includes(post.etapa)) continue;
+    const etapa = post.etapa==='aprov_conteudo' ? 'conteudo' : 'asset', perf = (p.perfis||[]).find(x=>x.id===post.perfil);
+    L.push({k:aprovChave('post', p.id, post.id, etapa), tipo:'post', c:p, alvo:post.id, etapa, titulo: post.nome || 'Post', onde: p.nome, sub: [perf && perf.nome, post.formato, post.data && fd(post.data)].filter(Boolean).join(' · '), texto:((post.doc||{}).texto)||'', links: post.links||[], quando: post.data}); }
+  const feitas = new Set(APROV.filter(a=>!a.aplicado_em).map(a=>aprovChave(a.tipo, a.campanha_id, a.alvo, a.etapa)));
+  return L.filter(x=>!feitas.has(x.k)).sort((a,b)=>(a.quando||'9').localeCompare(b.quando||'9')); }
+function aprNome(a){ const c = a.tipo==='post' ? (S.social||[]).find(x=>x.id===a.campanha_id) : camp(a.campanha_id); if (!c) return '';
+  if (a.tipo==='post') { const p = socPostDe(c, a.alvo); return (p ? p.nome || 'Post' : 'Post') + ' · ' + c.nome; }
+  if (a.tipo==='peca') { const e = (c.entregaveis||[]).find(x=>String(a.alvo).split(',').includes(x.id)); return (e ? e.nome : '') + ' · ' + c.nome; }
+  return (a.etapa==='layout' ? 'Layout da landing page' : 'Texto da landing page') + ' · ' + c.nome; }
+const APROV_ROT = {conteudo:'Aprovação do conteúdo', asset:'Aprovação do asset', layout:'Aprovação do layout'};
+function pgAprovacoes(){
+  migalha([['Aprovações']]);
+  const L = aprovPendencias(), aberto = UI.aprAberto || null, porProj = new Map();
+  for (const x of L) { if (!porProj.has(x.c.id)) porProj.set(x.c.id, []); porProj.get(x.c.id).push(x); }
+  const linkCh = u => chipLink(u, linkCurto(u));
+  const item = x => { const ab = aberto===x.k, aj = UI.aprAjuste===x.k;
+    return `<div class="apr-it ${ab?'ab':''}"><div class="apr-cab" data-act="aprAbrir" data-k="${h(x.k)}"><i data-lucide="${ab?'chevron-down':'chevron-right'}" class="apr-chev"></i>
+        <div class="apr-tit"><b class="notranslate">${h(x.titulo)}</b><small><span class="notranslate">${h(x.onde)}</span>${x.sub?` · <span class="notranslate">${h(x.sub)}</span>`:''}</small></div>
+        <span class="pc4-st c-amar"><i></i>${APROV_ROT[x.etapa]}</span>${x.quando?`<span class="apr-pz">${fdm(x.quando)}</span>`:''}</div>
+      ${ab ? `<div class="apr-corpo">${x.texto ? `<div class="lpe-doc np-corpo apr-txt">${lpSemDisc(lpLimpa(x.texto))}</div>` : ''}
+        ${x.links.length ? `<div class="apr-lks"><span>${x.etapa==='conteudo' ? 'Arquivos' : 'Asset para aprovar'}</span>${x.links.map(linkCh).join('')}</div>` : (!x.texto ? '<div class="small muted">Sem texto ou arquivo anexado ainda. Se precisar, peça ajustes explicando o que falta.</div>' : '')}
+        ${x.links[0] && previaKV(x.links[0]).includes('<img') ? `<div class="apr-prev">${previaKV(x.links[0])}</div>` : ''}
+        ${aj ? `<div class="apr-aj"><textarea id="apr-msg" rows="3" placeholder="O que precisa ajustar?"></textarea><div class="apr-bts"><button class="btn" data-act="aprAjuste" data-k="">Cancelar</button><button class="btn btn-p" data-act="aprDecidir" data-k="${h(x.k)}" data-d="ajustes"><i data-lucide="send"></i>Enviar pedido de ajustes</button></div></div>`
+          : `<div class="apr-bts"><button class="btn apr-no" data-act="aprAjuste" data-k="${h(x.k)}"><i data-lucide="message-square-warning"></i>Pedir ajustes</button><button class="btn apr-ok" data-act="aprDecidir" data-k="${h(x.k)}" data-d="aprovado"><i data-lucide="check"></i>Aprovar</button></div>`}</div>` : ''}</div>`; };
+  const env = APROV.slice(0, 15);
+  return `<div class="cab"><div><h1>Aprovações</h1><p>${L.length ? `${L.length} ${L.length===1?'item aguarda':'itens aguardam'} a sua aprovação.` : 'Nada aguardando a sua aprovação agora.'}</p></div></div>
+    ${L.length ? [...porProj.values()].map(xs=>`<div class="apr-grupo"><div class="apr-g-t"><i data-lucide="${xs[0].tipo==='post'?'smartphone':xs[0].c.tipo==='ondemand'?'hourglass':'megaphone'}"></i><span class="notranslate">${h(xs[0].c.nome)}</span><em>${xs.length}</em></div>${xs.map(item).join('')}</div>`).join('')
+      : `<div class="card apr-vz"><i data-lucide="check-circle-2"></i><b>Tudo em dia</b><span>Quando a equipe enviar algo para você aprovar, aparece aqui.</span></div>`}
+    ${env.length ? `<div class="apr-hist"><div class="apr-g-t"><i data-lucide="history"></i>Suas últimas respostas</div>${env.map(a=>`<div class="apr-h"><span class="pc4-st c-${a.decisao==='aprovado'?'verde':'verm'}"><i></i>${a.decisao==='aprovado'?'Aprovado':'Ajustes pedidos'}</span><span class="notranslate">${h(aprNome(a))}</span><span class="muted small">${new Date(a.criado_em).toLocaleString(LANG==='en'?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}${a.aplicado_em?'':' · '+(LANG==='en'?'sent to the team':'enviado à equipe')}</span></div>`).join('')}</div>` : ''}`; }
+Object.assign(ACT, {
+  aprAbrir: el => { UI.aprAberto = UI.aprAberto===el.dataset.k ? null : el.dataset.k; UI.aprAjuste = null; render(); },
+  aprAjuste: el => { UI.aprAjuste = el.dataset.k || null; render(); const t = $('#apr-msg'); if (t) t.focus(); },
+  aprDecidir: async el => { const x = aprovPendencias().find(y=>y.k===el.dataset.k); if (!x) return; const dec = el.dataset.d, msg = (($('#apr-msg')||{}).value||'').trim();
+    if (dec==='ajustes' && !msg) return toast(LANG==='en' ? 'Tell us what needs to change.' : 'Conte o que precisa ajustar.');
+    el.disabled = true; const row = {cliente_id: PERFIL.cliente_id, campanha_id: x.c.id, tipo: x.tipo, alvo: typeof x.alvo==='string' ? x.alvo : x.alvo, etapa: x.etapa, decisao: dec, comentario: msg || null, autor_nome: PERFIL.nome || PERFIL.email};
+    const r = await sb.from('aprovacoes_cliente').insert(row).select().single(); if (r.error) { el.disabled = false; return toast((LANG==='en'?'Could not send: ':'Não foi possível enviar: ')+r.error.message); }
+    APROV.unshift(r.data); UI.aprAberto = null; UI.aprAjuste = null; render();
+    toast(dec==='aprovado' ? (LANG==='en' ? 'Approved. The team was notified.' : 'Aprovado. A equipe foi avisada.') : (LANG==='en' ? 'Change request sent to the team.' : 'Pedido de ajustes enviado à equipe.')); },
+});
+/* equipe: aplica as decisões do cliente nas campanhas (uma vez só, mesmo com várias pessoas logadas) */
+async function aprovAplicar(){ if (!sb || !ehEquipe()) return; await aprovCarregar(); let n = 0;
+  for (const a of APROV) { const r = await sb.from('aprovacoes_cliente').update({aplicado_em: new Date().toISOString()}).eq('id', a.id).is('aplicado_em', null).select(); if (r.error || !(r.data||[]).length) continue;
+    if (aprovAplicarUm(a)) n++; }
+  APROV = []; if (n) { salvar(); render(); toast(n===1 ? 'O cliente respondeu uma aprovação.' : `O cliente respondeu ${n} aprovações.`); } }
+function aprovAplicarUm(a){ const ok = a.decisao==='aprovado', quem = (a.autor_nome||'Cliente')+' (cliente)', agora = Date.now(), txt = ok ? 'Aprovado pelo cliente.' : 'Cliente pediu ajustes: '+(a.comentario||'');
+  const comentar = (d, resp) => { if (!d) return; (d.coment = d.coment || []).push({quem, t:agora, o:(resp && !ok ? '@'+resp+' ' : '')+txt}); };
+  if (a.tipo==='post') { const p = (S.social||[]).find(x=>x.id===a.campanha_id), post = p && socPostDe(p, a.alvo); if (!post) return false; const de = a.etapa==='conteudo' ? 'aprov_conteudo' : 'aprov_asset'; if (post.etapa!==de) return false;
+    post.etapa = a.etapa==='conteudo' ? (ok ? 'aguard_design' : 'ajuste_conteudo') : (ok ? 'aprovado' : 'ajuste_asset'); comentar(socDoc(p, post.id), post.resp);
+    registrar(`Cliente ${ok?'aprovou':'pediu ajustes em'} ${a.etapa==='conteudo'?'o conteúdo':'o asset'} do post “${post.nome||''}” (${p.nome})`); return true; }
+  const c = camp(a.campanha_id); if (!c) return false;
+  if (a.tipo==='peca') { const ids = String(a.alvo).split(','), es = (c.entregaveis||[]).filter(e=>ids.includes(e.id)), de = a.etapa==='conteudo' ? 'aprov_conteudo' : 'aprov_asset'; const vale = es.filter(e=>e.etapa===de); if (!vale.length) return false;
+    vale.forEach(e=>{ e.etapa = a.etapa==='conteudo' ? (ok ? 'producao' : 'ajuste_conteudo') : (ok ? 'concluido' : 'ajuste_asset'); (e.aprovacoes = e.aprovacoes || []).push({tipo: a.etapa==='conteudo' ? 'Conteúdo' : 'Asset', resultado: ok ? 'Aprovado' : 'Ajustes solicitados', coment:a.comentario||'', data:HOJE, quem}); });
+    const d = pecaDoc(c, vale[0].id); comentar(d, d && d.resp); if (d && a.etapa==='conteudo') d.status = ok ? 'Aprovado' : 'Ajustes';
+    odAutoConcluir(c); registrar(`Cliente ${ok?'aprovou':'pediu ajustes em'} ${a.etapa==='conteudo'?'o conteúdo':'o asset'} de “${vale[0].nome}” (${c.nome})`); return true; }
+  if (a.tipo==='lp') { const al = typeof a.alvo==='string' ? JSON.parse(a.alvo) : a.alvo, {f} = lpDados(c, al.mi), d = al.et==='trad' ? f.trad[al.idi] : f.conteudo; if (!d) return false;
+    if (a.etapa==='conteudo') { if (d.status!=='Aguardando aprovação do cliente') return false; d.status = ok ? 'Aprovado' : 'Ajustes'; (d.hist = d.hist || []).push({t:agora, quem, o: ok ? 'Aprovado pelo cliente' : 'Cliente pediu ajustes', coment:a.comentario||''}); }
+    else { if (lpLayoutSt(f, d)!=='Aguardando aprovação do cliente') return false; if (d.layoutSt) d.layoutSt = ok ? 'Aprovado' : 'Ajustes'; else f.layout.status = ok ? 'Aprovado' : 'Ajustes'; }
+    comentar(d, d.resp); registrar(`Cliente ${ok?'aprovou':'pediu ajustes em'} ${a.etapa==='layout'?'o layout':'o texto'} da landing page (${c.nome})`); return true; }
+  return false; }
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (!el) return; const k = el.dataset.chg, v = el.type==='checkbox' ? el.checked : el.value;
   if (/^od[A-Z]/.test(k)) return odChg(k, el, v);
   if (/^soc[A-Z]/.test(k)) return socChg(k, el, v);
