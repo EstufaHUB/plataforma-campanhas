@@ -905,6 +905,9 @@ a.od-ln:hover{background:#fafbfb}.od-th{font-size:.72rem;text-transform:uppercas
 .od-ed{min-height:90px;outline:none}.od-ed.od-vz::before{content:attr(data-ph);color:#a3a19b;position:absolute;pointer-events:none;margin-top:2px}
 .od-pg-t{cursor:pointer;user-select:none;margin:-4px -8px 6px;padding:4px 8px;border-radius:6px}.od-pg-t:hover{background:#f6f7f8}.od-tog{transition:transform .15s;color:#a3a19b}
 .od-pg.fech .od-tog{transform:rotate(-90deg)}.od-pg.fech>.lpe-doc{display:none}.od-pg.fech{padding-bottom:10px}.od-pg.fech .od-pg-t{margin-bottom:-4px}
+.lk-pop{position:fixed;z-index:9500;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--borda);border-radius:8px;box-shadow:0 6px 20px rgba(15,15,15,.12);padding:5px 6px 5px 10px;font-size:.8rem;max-width:460px}
+.lk-pop>i{width:14px;height:14px;color:#8f8d86;flex:none}.lk-pop span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx2)}.lk-pop button{display:inline-flex;align-items:center;gap:4px;border:0;background:none;font:inherit;cursor:pointer;padding:3px 7px;border-radius:6px;color:var(--tx);flex:none}.lk-pop button:hover{background:#f1f2f4}.lk-pop button i{width:14px;height:14px}
+[contenteditable="true"] a[href]{cursor:pointer}
 </style>
 </head>
 <body>
@@ -3383,6 +3386,18 @@ function historicoEd(ed){ const H = [], LIM = 200; let pos = -1, tm;
     if (k==='z') { e.preventDefault(); ir(e.shiftKey ? 1 : -1); } else if (k==='y') { e.preventDefault(); ir(1); }
     else if (k==='b' || k==='i' || k==='u') snap(); });
   ed.addEventListener('beforeinput', e => { if (e.inputType==='historyUndo' || e.inputType==='historyRedo') { e.preventDefault(); ir(e.inputType==='historyUndo' ? -1 : 1); } }); }
+/* links dentro de textos editáveis (como no Notion): ao clicar, mostra o endereço com "Abrir"; ⌘/Ctrl+clique abre direto */
+function linkPopFechar(){ const x = document.querySelector('.lk-pop'); if (x) x.remove(); }
+document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('[contenteditable="true"] a[href]'); if (!a) { if (!(e.target.closest && e.target.closest('.lk-pop'))) linkPopFechar(); return; }
+  const url = a.getAttribute('href'); if (!/^(https?:|mailto:)/i.test(url)) return;
+  if (e.metaKey || e.ctrlKey) { e.preventDefault(); window.open(url, '_blank', 'noopener'); return; }
+  linkPopFechar(); const r = a.getBoundingClientRect(), pop = document.createElement('div'); pop.className = 'lk-pop';
+  pop.innerHTML = `<i data-lucide="globe"></i><span title="${h(url)}">${h(url.replace(/^https?:\/\//,''))}</span><button type="button" data-o><i data-lucide="external-link"></i>Abrir</button><button type="button" data-c title="Copiar o link"><i data-lucide="copy"></i></button>`;
+  document.body.appendChild(pop); pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px'; pop.style.top = (r.bottom + 6) + 'px';
+  pop.querySelector('[data-o]').onclick = () => { window.open(url, '_blank', 'noopener'); linkPopFechar(); };
+  pop.querySelector('[data-c]').onclick = () => navigator.clipboard.writeText(url).then(()=>{ toast('Link copiado.'); linkPopFechar(); });
+  if (window.lucide) lucide.createIcons(); });
+addEventListener('scroll', linkPopFechar, true); document.addEventListener('keydown', linkPopFechar);
 /* barra de formatação ao selecionar texto (como no Notion): cor, negrito, itálico, sublinhado, tachado, código, link e limpar */
 const CORES_TX = [['','Padrão'],['#787774','Cinza'],['#9f6b53','Marrom'],['#d9730d','Laranja'],['#cb912f','Amarelo'],['#448361','Verde'],['#337ea9','Azul'],['#9065b0','Roxo'],['#c14c8a','Rosa'],['#d44c47','Vermelho']];
 const CORES_FD = [['','Padrão'],['#f1f1ef','Cinza'],['#f4eeee','Marrom'],['#fbecdd','Laranja'],['#fbf3db','Amarelo'],['#edf3ec','Verde'],['#e7f3f8','Azul'],['#f6f3f9','Roxo'],['#faf1f5','Rosa'],['#fdebec','Vermelho']];
