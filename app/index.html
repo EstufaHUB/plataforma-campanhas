@@ -847,11 +847,13 @@ body.at-arrastando .at-ev{pointer-events:none}
 /* página pública do post / do feed */
 .pub.pub-soc .pub-doc{max-width:1120px}.pub-soc-g{display:grid;grid-template-columns:350px minmax(0,1fr);gap:48px;align-items:start}.pub-soc-ph{position:sticky;top:20px}.pub-soc-feed{grid-template-columns:minmax(0,1fr) 350px}
 @media (max-width:900px){.pub-soc-g,.pub-soc-feed{grid-template-columns:1fr}.pub-soc-ph{position:static;display:flex;justify-content:center}}
-.cli-cab{display:flex;align-items:center;gap:14px;margin-bottom:18px}.cli-cab h1{margin:0;margin-right:auto}.cli-arq{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--tx3);cursor:pointer}.cli-arq input{margin:0}
-.cli-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));grid-auto-rows:68px;grid-auto-flow:dense;gap:12px}
-.cli-cd{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--borda);border-radius:12px;padding:0 14px;text-decoration:none;color:inherit;cursor:pointer;transition:border-color .15s}.cli-cd:hover{border-color:#c9cdd2}.cli-cd>svg,.cli-gr2-cab>svg{width:16px;height:16px;color:var(--tx3);margin-left:auto;flex:none}
-.grade .cli-cd{height:68px}.cli-lg{width:36px;height:36px;border-radius:9px;font-size:.72rem}.cli-cd-t{display:flex;flex-direction:column;min-width:0}.cli-cd-t b{font-size:.92rem;font-weight:600}.cli-cd-t small{font-size:.76rem;color:var(--tx2)}.cli-cd-t small.nada{color:var(--tx3)}
-.cli-gr2{flex-direction:column;align-items:stretch;gap:6px;padding:14px}.cli-gr2-cab{display:flex;align-items:center;gap:12px}.cli-gr2-l{display:flex;flex-direction:column}.cli-gr2-l a{display:flex;align-items:center;gap:8px;padding:8px 6px;border-top:1px solid #f0f1f2;text-decoration:none;color:inherit;font-size:.84rem;border-radius:6px}.cli-gr2-l a:hover{background:#f6f7f8}.cli-gr2-l small{color:var(--tx3);font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cli-gr2-l em{margin-left:auto;font-style:normal;font-size:.74rem;background:#f1f2f4;color:var(--tx2);border-radius:10px;padding:0 8px;flex:none}.cli-gr2-l em.nada{background:none;color:var(--tx3)}
+.cli-fl{flex-wrap:wrap;justify-content:flex-end}.cli-busca{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--borda);border-radius:8px;padding:0 10px;width:240px}.cli-busca svg{width:16px;height:16px;color:var(--tx3);flex:none}.cli-busca input{border:0;outline:0;background:none;padding:8px 0;font:inherit;width:100%}.cli-arq{display:flex;align-items:center;gap:6px;cursor:pointer}
+.cli-kpis .card,.cli-grade .card{margin-top:0}.cli-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,220px));gap:14px;margin-bottom:16px}.cli-kpis .card{padding:14px 16px;display:flex;flex-direction:column;gap:4px}.cli-kpis span{font-size:.84rem;color:var(--tx2)}.cli-kpis b{font-size:1.5rem;font-weight:600;color:var(--tx)}
+.cli-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}@media (max-width:1100px){.cli-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:700px){.cli-grade,.cli-kpis{grid-template-columns:1fr}}
+.cli-k{padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:14px;transition:border-color .15s}.cli-k:hover{border-color:#c9cdd2}.cli-k-cab{display:flex;align-items:center;gap:12px}.cli-sl{width:44px;height:44px;border-radius:10px;font-size:1rem;font-weight:500}.cli-k-t{min-width:0;display:flex;flex-direction:column;align-items:flex-start}.cli-k-t h3{margin:0;font-size:1rem}.cli-k-t small{font-size:.76rem;color:var(--tx3)}
+.cli-nums{display:flex;gap:28px}.cli-nums div{display:flex;flex-direction:column}.cli-nums b{font-size:1.3rem;font-weight:500;color:var(--tx)}.cli-nums b.on{color:#1f63b5}.cli-nums span{font-size:.78rem;color:var(--tx2)}.cli-nums.zero b{color:var(--tx3)}
+.cli-k-rod{display:flex;align-items:center;gap:10px;border-top:1px solid var(--borda);padding-top:12px;font-size:.82rem;color:var(--tx2)}.cli-k-rod b{color:var(--tx);font-weight:500}.cli-k-rod a{margin-left:auto;display:inline-flex;align-items:center;gap:5px;color:var(--tx);text-decoration:none;font-weight:500;white-space:nowrap}.cli-k-rod a:hover{color:#1f63b5}.cli-k-rod a svg{width:15px;height:15px}
+.cli-sub{border:0;background:none;padding:0;font:inherit;font-size:.8rem;color:var(--tx2);display:inline-flex;align-items:center;gap:4px;cursor:pointer}.cli-k-rod .cli-sub{font-size:.82rem;color:var(--tx);font-weight:500}.cli-sub svg{width:14px;height:14px;transition:transform .15s}.cli-k.aberto .cli-sub svg{transform:rotate(180deg)}.cli-k .cli-gr-l{margin-top:-4px}
 .cli-gr-l{margin-top:14px;border-top:1px solid var(--borda);display:flex;flex-direction:column}.cli-gr-it{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid #f0f1f2;text-decoration:none;color:inherit;border-radius:6px}.cli-gr-it:last-child{border-bottom:0}.cli-gr-it:hover{background:#f6f7f8}.cli-gr-it>div{flex:1;min-width:0;display:flex;flex-direction:column}.cli-gr-it b{font-size:.88rem;font-weight:600}.cli-gr-it small{font-size:.72rem;color:var(--tx3)}.cli-gr-n{font-size:.74rem;color:var(--tx2);white-space:nowrap}.cli-gr-it svg{width:15px;height:15px;color:var(--tx3)}
 .gr-abas{margin-top:14px}.gr-abas .cont{margin-left:6px;background:var(--verm,#d64545);color:#fff;border-radius:9px;font-size:.68rem;padding:0 6px}
 </style>
@@ -1950,24 +1952,47 @@ function pgClientes(r){
   const mostrarArq = UI.cliArq;
   const L = S.clientes.filter(c=>mostrarArq || !c.arquivado);
   const grupos = gruposClientes(L);
-  const ativos = g => g.reduce((n,c)=>n+campsCli(c.id).ab.length,0);
-  grupos.sort((x,y)=>ativos(y)-ativos(x) || grupoCliNome(x[0]).localeCompare(grupoCliNome(y[0])));
-  return `<div class="cli-cab"><h1>Clientes</h1><label class="cli-arq"><input type="checkbox" ${mostrarArq?'checked':''} data-chg="cliArq"> Arquivados</label><button class="btn" data-act="formCliente"><i data-lucide="plus"></i>Novo cliente</button></div>
-  <div class="cli-grade">${grupos.map(g=>g.length > 1 ? cardGrupo(g) : cardCli(g[0], '#/grupo/'+encodeURIComponent(grupoKey(g[0])))).join('') || '<div class="vazio">Nenhum cliente.</div>'}</div>`;
+  const camp = g => { const t = g.map(c=>campsCli(c.id)); return {ab:t.reduce((n,x)=>n+x.ab.length,0), cs:t.reduce((n,x)=>n+x.cs.length,0)}; };
+  grupos.sort((x,y)=>grupoCliNome(x[0]).localeCompare(grupoCliNome(y[0]), 'pt-BR', {sensitivity:'base'}));
+  const st = UI.cliSt || 'todos', nAt = grupos.filter(g=>camp(g).ab).length, tot = camp(L);
+  const vis = grupos.filter(g=>st==='todos' || (st==='ativos') === !!camp(g).ab);
+  const bt = (v,t) => `<button class="${st===v?'ativo':''}" onclick="UI.cliSt='${v}';render()">${t}</button>`;
+  if (UI.cliBusca) setTimeout(()=>cliBuscar(UI.cliBusca));
+  return `<div class="cab"><div><h1>Clientes</h1><p>Escolha um cliente para ver as campanhas.</p></div><div class="filtros cli-fl"><label class="cli-busca"><i data-lucide="search"></i><input type="search" placeholder="Buscar cliente…" value="${h(UI.cliBusca||'')}" oninput="cliBuscar(this.value)"></label><div class="seg">${bt('todos','Todos')}${bt('ativos','Ativos')}${bt('inativos','Inativos')}</div><label class="small cli-arq"><input type="checkbox" ${mostrarArq?'checked':''} data-chg="cliArq"> Mostrar arquivados</label><button class="btn btn-p" data-act="formCliente"><i data-lucide="plus"></i>Novo cliente</button></div></div>
+  <div class="cli-kpis"><div class="card"><span>Clientes ativos</span><b>${nAt}</b></div><div class="card"><span>Campanhas em andamento</span><b>${tot.ab}</b></div><div class="card"><span>Total de campanhas</span><b>${tot.cs}</b></div></div>
+  <div class="cli-grade">${vis.map(g=>g.length > 1 ? cardGrupo(g) : cardCli(g[0], '#/grupo/'+encodeURIComponent(grupoKey(g[0])))).join('') || `<div class="vazio">${st==='ativos'?'Nenhum cliente com campanha em andamento.':st==='inativos'?'Nenhum cliente inativo.':'Nenhum cliente.'}</div>`}<div class="vazio cli-nada" style="display:none">Nenhum cliente encontrado.</div></div>`;
 }
+/* busca sem redesenhar a página (o campo não perde o foco) */
+function cliBuscar(v){ UI.cliBusca = v; const q = socNorm(v.trim()); let n = 0;
+  document.querySelectorAll('.cli-k').forEach(el=>{ const ok = !q || el.dataset.busca.includes(q); el.style.display = ok ? '' : 'none'; if (ok) n++; });
+  const nada = $('.cli-nada'); if (nada) nada.style.display = n || !document.querySelector('.cli-k') ? 'none' : ''; }
 /* clientes com o mesmo primeiro nome (PTx EMEA, PTx LATAM, PTx OEM) ficam num card só */
 const grupoCliNome = c => (c.nome||'').trim().split(/\s+/)[0] || '';
 const grupoKey = c => grupoCliNome(c).toLowerCase();
 const grupoDe = key => S.clientes.filter(c=>grupoKey(c)===key);
 function gruposClientes(L){ const m = new Map(); for (const c of L) { const k = grupoCliNome(c).toLowerCase(); if (!m.has(k)) m.set(k, []); m.get(k).push(c); } return [...m.values()]; }
 const campsCli = id => { const cs = S.campanhas.filter(x=>x.clienteId===id && !x.arquivada); return {cs, ab: cs.filter(x=>x.status!=='Concluída')}; };
-const cliAtivasTxt = n => n ? `${n} campanha${n>1?'s':''} ativa${n>1?'s':''}` : 'Sem campanhas ativas';
-function cardCli(c, link){ const {ab} = campsCli(c.id);
-  return `<a class="cli-cd" href="${link || '#/clientes/'+c.id}">${logoCliente(c,'cli-logo cli-lg')}<div class="cli-cd-t"><b>${h(c.nome)}</b><small class="${ab.length?'':'nada'}">${cliAtivasTxt(ab.length)}</small></div>${c.arquivado?'<span class="tag">Arquivado</span>':''}<i data-lucide="chevron-right"></i></a>`; }
-function cardGrupo(g){ const tot = g.map(c=>campsCli(c.id)), ab = tot.reduce((n,x)=>n+x.ab.length,0), base = grupoCliNome(g[0]);
-  return `<div class="cli-cd cli-gr2" style="grid-row:span ${Math.max(2, Math.ceil((g.length*38+78)/80))}" onclick="location.hash='#/grupo/${encodeURIComponent(grupoKey(g[0]))}'"><div class="cli-gr2-cab">${logoCliente(g[0],'cli-logo cli-lg')}<div class="cli-cd-t"><b>${h(base)}</b><small class="${ab?'':'nada'}">${cliAtivasTxt(ab)}</small></div><i data-lucide="chevron-right"></i></div>
-     <div class="cli-gr2-l">${g.map((c,i)=>{ const n = tot[i].ab.length, nome = c.nome.replace(new RegExp('^'+base+'\\s*','i'),'') || c.nome;
-       return `<a href="#/clientes/${c.id}" onclick="event.stopPropagation()"><span>${h(nome)}</span>${c.segmento && c.segmento!==nome ? `<small>${h(c.segmento)}</small>` : ''}${c.arquivado?'<span class="tag">Arquivado</span>':''}<em class="${n?'':'nada'}">${n||'–'}</em></a>`; }).join('')}</div></div>`; }
+/* selo com as iniciais em uma cor fixa por cliente (PTx usa o logo) */
+const CLI_CORES = [['#dbeafe','#1e4f8a'],['#d5f2e3','#1f6b45'],['#e6defc','#4b3a99'],['#d3f0ee','#17615c'],['#f4dcef','#7d2c6b'],['#fde7cf','#8a4b0f'],['#e3e8ee','#3b4a5a']];
+function cliSelo(c, nome){ if (/^ptx\b/i.test(nome)) return logoCliente(c, 'cli-logo cli-sl');
+  const p = nome.trim().split(/\s+/), ini = (p.length > 1 ? p[0][0]+p[1][0] : nome.slice(0,2)).toUpperCase();
+  let n = 0; for (const ch of nome) n = (n*31 + ch.charCodeAt(0)) % 997; const [bg, fg] = CLI_CORES[n % CLI_CORES.length];
+  return `<div class="cli-logo cli-sl" style="background:${bg};color:${fg}">${h(ini)}</div>`; }
+/* data de lançamento mais próxima (ou a última, se nenhuma for futura) */
+function cliLanc(cs){ const hoje = new Date().toISOString().slice(0,10), ds = cs.map(x=>x.lancamento).filter(Boolean).sort();
+  const prox = ds.find(d=>d>=hoje); return prox ? `Próximo lançamento: <b>${fd(prox)}</b>` : ds.length ? `Último lançamento: <b>${fd(ds[ds.length-1])}</b>` : 'Nenhuma campanha ainda'; }
+const cliNums = (ab, cs) => `<div class="cli-nums ${ab?'':'zero'}"><div><b class="${ab?'on':''}">${ab}</b><span>em andamento</span></div><div><b>${cs}</b><span>no total</span></div></div>`;
+function cardCli(c, link){ const {cs, ab} = campsCli(c.id), url = link || '#/clientes/'+c.id;
+  return `<div class="card cli-k" data-busca="${h(socNorm(c.nome+' '+(c.segmento||'')))}" onclick="location.hash='${url}'"><div class="cli-k-cab">${cliSelo(c, c.nome)}<div class="cli-k-t"><h3>${h(c.nome)}</h3>${c.segmento?`<small>${h(c.segmento)}</small>`:''}</div>${c.arquivado?'<span class="tag">Arquivado</span>':''}</div>
+    ${cliNums(ab.length, cs.length)}
+    <div class="cli-k-rod"><span>${cliLanc(cs)}</span><a href="${url}" onclick="event.stopPropagation()">Ver campanhas<i data-lucide="arrow-right"></i></a></div></div>`; }
+function cardGrupo(g){ const tot = g.map(c=>campsCli(c.id)), ab = tot.reduce((n,x)=>n+x.ab.length,0), cs = tot.reduce((n,x)=>n+x.cs.length,0);
+  const base = grupoCliNome(g[0]), key = grupoKey(g[0]), url = '#/grupo/'+encodeURIComponent(key), aberto = (UI.cliAbre||{})[key];
+  const abre = `onclick="event.stopPropagation();UI.cliAbre=Object.assign(UI.cliAbre||{},{'${key}':!${!!aberto}});render()"`;
+  return `<div class="card cli-k ${aberto?'aberto':''}" data-busca="${h(socNorm(g.map(c=>c.nome+' '+(c.segmento||'')).join(' ')))}" onclick="location.hash='${url}'"><div class="cli-k-cab">${cliSelo(g[0], base)}<div class="cli-k-t"><h3>${h(base)}</h3><button class="cli-sub" ${abre}>${g.length} subclientes<i data-lucide="chevron-down"></i></button></div></div>
+    ${cliNums(ab, cs)}
+    ${aberto ? `<div class="cli-gr-l">${g.map((c,i)=>`<a class="cli-gr-it" href="#/clientes/${c.id}" onclick="event.stopPropagation()"><div><b>${h(c.nome)}</b>${c.segmento ? `<small>${h(c.segmento)}</small>` : ''}</div><span class="cli-gr-n">${tot[i].ab.length} em andamento · ${tot[i].cs.length} no total</span>${c.arquivado?'<span class="tag">Arquivado</span>':''}<i data-lucide="chevron-right"></i></a>`).join('')}</div>` : ''}
+    <div class="cli-k-rod"><button class="cli-sub" ${abre}>${aberto?'Ocultar':'Ver'} subclientes<i data-lucide="chevron-down"></i></button><a href="${url}" onclick="event.stopPropagation()">Ver campanhas<i data-lucide="arrow-right"></i></a></div></div>`; }
 function pgGrupo(r){ const key = decodeURIComponent(r[1]||''), cs = grupoDe(key), aba = r[2] || 'inicio'; if (!cs.length) return '<div class="vazio">Cliente não encontrado.</div>';
   const um = cs.length===1, nome = um ? cs[0].nome : grupoCliNome(cs[0]), base = '#/grupo/'+encodeURIComponent(key), ids = cs.map(c=>c.id);
   const nAtr = acoesGlobais().filter(x=>ids.includes(x.c.clienteId) && statusExib(x.t)==='Atrasada').length;
