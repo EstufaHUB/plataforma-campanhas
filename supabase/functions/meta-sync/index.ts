@@ -250,7 +250,7 @@ async function alertasPausa(admin: ReturnType<typeof createClient>) {
   for (const p of Object.values(pausadas)) { const a = ant[p.id];
     const nova = a ? !!a.reativadaEm : (primeira ? recente(p.pausadaEm) : true);
     if (nova) novas.push(p);
-    prox[p.id] = nova ? { ...p, avisadaEm: agora.toISOString(), pend: true } : { ...a, ...p, pausadaEm: a!.pausadaEm || p.pausadaEm, reativadaEm: null }; }
+    prox[p.id] = nova ? { ...p, avisadaEm: agora.toISOString(), pend: true } : { pend: false, ...(a || {}), ...p, pausadaEm: (a?.pausadaEm as string) || p.pausadaEm, reativadaEm: null }; }
   // as que voltaram a rodar (ou saíram do retrato): guarda por 60 dias, para a pendência de justificativa continuar
   for (const [id, a] of Object.entries(ant)) { if (prox[id]) continue;
     const reat = (a.reativadaEm as string) || agora.toISOString();
