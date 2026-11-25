@@ -900,6 +900,9 @@ a.od-ln:hover{background:#fafbfb}.od-th{font-size:.72rem;text-transform:uppercas
 .od-det{background:#fff;border:1px solid var(--borda);border-radius:12px;margin-bottom:14px}.od-det summary{display:flex;align-items:center;gap:8px;padding:12px 16px;font-weight:600;cursor:pointer;list-style:none}.od-det summary::-webkit-details-marker{display:none}.od-det summary i{width:16px;height:16px}.od-det summary .btn{margin-left:auto}.od-det .od-texto{padding:0 16px 14px}.od-det .od-dir{margin:0 16px 14px}
 .od-2col .od-det{margin:0}.ent-sec-pg .od-2col{margin:0 0 16px}
 .pc4-resp-ed{position:relative;cursor:pointer;border-radius:12px;padding:1px 4px 1px 2px;margin-left:-2px}.pc4-resp-ed:hover{background:#f1f2f4}.pc4-resp-ed i{width:14px;height:14px}.pc4-resp-ed select{border:0;background:transparent;font:inherit;color:inherit;padding:0 2px;cursor:pointer;max-width:150px;appearance:none;-webkit-appearance:none}.pc4-resp-ed select:focus{outline:none}.pc4 .st-pill{align-self:flex-start}
+.od-pg{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:14px 22px 18px;margin-bottom:14px;position:relative}.od-pg-dir{border-left:3px solid #ef9f27}
+.od-pg-t{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--tx2);font-size:.85rem;margin-bottom:6px}.od-pg-t i{width:16px;height:16px}.od-pg-t .od-salvo{margin-left:auto;font-weight:400}
+.od-ed{min-height:90px;outline:none}.od-ed.od-vz::before{content:attr(data-ph);color:#a3a19b;position:absolute;pointer-events:none;margin-top:2px}
 </style>
 </head>
 <body>
@@ -6454,6 +6457,13 @@ const OD_COR = Object.fromEntries(OD_PED_ST);
 const OD_ET_DE = {'Não iniciado':'briefing','Em espera':'briefing','Aprovação do texto':'aprov_conteudo','Em produção':'producao','Revisão interna':'producao','Aprovação do cliente':'aprov_asset','Ajuste':'ajuste_asset','Concluído':'concluido','Cancelado':'concluido'};
 const odH = n => { const v = Math.round((+n||0)*100)/100; return String(v).replace('.',',')+'h'; };
 const odTxt = s => h(s||'').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
+/* texto antigo (com **negrito**) vira HTML; o novo já é HTML do editor de blocos */
+const odHtml = v => { v = v || ''; if (/<(p|div|h\d|ul|ol|table|b|br|span|details)\b/i.test(v)) return lpLimpa(v);
+  return v.split(/\n{2,}/).map(par=>'<p>'+odTxt(par).replace(/^(<br>)+|(<br>)+$/g,'')+'</p>').join('') || ''; };
+function odEditores(){ document.querySelectorAll('.od-ed').forEach(e=>{ if (e._od) return; e._od = true; editorBlocos(e); let t;
+  const ph = () => e.classList.toggle('od-vz', !lpTextoPuro(e.innerHTML) && !e.querySelector('table,img,hr')); ph();
+  e.addEventListener('input', () => { ph(); const sv = e.parentNode.querySelector('.od-salvo'); if (sv) sv.textContent = 'Salvando…'; clearTimeout(t);
+    t = setTimeout(() => { const c = camp(e.dataset.id), p = c && odPed(c, e.dataset.p); if (!p || !e.isConnected) return; p[e.dataset.campo] = lpLimpa(e.innerHTML); salvar(); if (sv) sv.textContent = 'Salvo'; }, 800); }); }); }
 const odPed = (c, pid) => (c.pedidos||[]).find(p=>p.id===pid);
 const odEnts = (c, pid) => (c.entregaveis||[]).filter(e=>e.pedido===pid);
 function odSaldo(c){ const hs = c.horas||[], ent = hs.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+(+x.h||0),0), uso = hs.filter(x=>x.tipo!=='entrada').reduce((s,x)=>s+(+x.h||0),0); return {ent, uso, rest: ent-uso, pct: ent ? Math.min(100, uso/ent*100) : 0}; }
@@ -6529,10 +6539,12 @@ function odEntregaveis(c, ed){
   const ir = id => `data-act="odSec" data-id="${c.id}" data-p="${id}"`;
   if (p) { const da = odEnts(c, p.id), conc = da.filter(e=>e.etapa==='concluido').length, pct = da.length ? Math.round(conc/da.length*100) : 0, uso = odUsoPed(c, p.id), est = +p.estimativa||0;
     const grupos = [...new Set(da.map(e=>e.grupo||''))]; if (!grupos.length) grupos.push(''); const cols = Math.max(5, grupos.length);
-    const bloco = (campo, tit, ic, vazio) => `<details class="od-det" ${p[campo] ? '' : 'open'}><summary><i data-lucide="${ic}"></i>${tit}${ed?`<button class="btn btn-s btn-g" data-act="odTxtForm" data-id="${c.id}" data-p="${p.id}" data-campo="${campo}" onclick="event.preventDefault()"><i data-lucide="pencil"></i>Editar</button>`:''}</summary><div class="od-texto ${campo==='direcao'?'od-dir':''}">${p[campo] ? odTxt(p[campo]) : `<span class="muted">${vazio}</span>`}</div></details>`;
+    const bloco = (campo, tit, ic, vazio) => `<div class="od-pg ${campo==='direcao'?'od-pg-dir':''}"><div class="od-pg-t"><i data-lucide="${ic}"></i>${tit}${ed?'<span class="np-salvo od-salvo"></span>':''}</div>
+      ${ed ? `<div class="lpe-doc np-corpo lpe-edit od-ed" contenteditable="true" data-id="${c.id}" data-p="${p.id}" data-campo="${campo}" data-ph="${h(vazio)} Digite / para inserir blocos.">${odHtml(p[campo])}</div>` : `<div class="lpe-doc np-corpo">${p[campo] ? odHtml(p[campo]) : `<span class="muted">Ainda não preenchido.</span>`}</div>`}</div>`;
+    if (ed) posRender.push(odEditores);
     return `<div class="ent-quadro"><div class="ent-topo2"><a href="javascript:void 0" class="ent-voltar" ${ir('')}><i data-lucide="arrow-left"></i>Todos os pedidos</a><div class="ent-topo2-d">${ed?`<button class="btn btn-s" data-act="odPedForm" data-id="${c.id}" data-p="${p.id}"><i data-lucide="pencil"></i>Editar pedido</button><button class="btn btn-s btn-g" data-act="odPedDel" data-id="${c.id}" data-p="${p.id}" title="Excluir pedido"><i data-lucide="trash-2"></i></button>`:''}</div></div>
       <div class="ent-q-cab"><span class="ent-q-ic"><i data-lucide="folder"></i></span><h2>${h(p.nome)}</h2>${odPill(p.status||'Não iniciado', ed ? `data-chg="odPedSt" data-id="${c.id}" data-p="${p.id}"` : '')}<span class="ent-q-res">${da.length} peça${da.length===1?'':'s'} · <span class="${est && uso>est?'od-txt-verm':''}"><b>${odH(uso)}</b> usadas${est?` de ${odH(est)} estimadas`:''}</span>${p.prazo?` · prazo ${fdm(p.prazo)}`:''}</span>${da.length ? `<span class="ent-q-prog">${conc} de ${da.length} concluída${da.length===1?'':'s'}<span class="ent-q-bar"><i style="width:${pct}%"></i></span></span>` : ''}</div>
-      <div class="ent-sec-pg">${secComentarios(c, 'od:'+p.id, ed)}<div class="od-2col">${bloco('briefing','Briefing do cliente','message-square-quote','Cole aqui o briefing que a cliente mandou.')}${bloco('direcao','Direção criativa da Estufa','sparkles','Conceito, tagline e direção visual da Estufa.')}</div>
+      <div class="ent-sec-pg">${secComentarios(c, 'od:'+p.id, ed)}${bloco('briefing','Briefing do cliente','message-square-quote','Cole aqui o briefing que a cliente mandou.')}${bloco('direcao','Direção criativa da Estufa','sparkles','Conceito, tagline e direção visual da Estufa.')}
       <div class="pc3-cols" style="grid-template-columns:repeat(${cols}, minmax(210px,1fr))">${grupos.map(g=>{ const L = da.filter(e=>(e.grupo||'')===g).sort((a,b)=>a.nome.localeCompare(b.nome, 'pt', {numeric:true}));
         return `<div class="pc3-col"><div class="ent-col-tit">${h(g || (grupos.length>1 ? 'Sem público' : 'Entregáveis'))}<span>${L.length}</span></div>${L.map(e=>pecaCardPais(c, e, ed)).join('') || '<div class="pc3-vz">Nenhuma peça.</div>'}${ed?`<button class="ent-novo" data-act="odEntForm" data-id="${c.id}" data-p="${p.id}" data-grupo="${h(g)}"><i data-lucide="plus"></i>Nova peça</button>`:''}</div>`; }).join('')}${'<div class="pc3-col pc3-fill"></div>'.repeat(Math.max(0, 5 - grupos.length))}</div>
       ${ed ? `<button class="ent-novo pc-novo" data-act="odEntForm" data-id="${c.id}" data-p="${p.id}" data-grupo="" data-novo="1"><i data-lucide="plus"></i>Nova peça <em>(com outro público)</em></button>` : ''}</div></div>`; }
