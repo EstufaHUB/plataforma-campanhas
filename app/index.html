@@ -1102,6 +1102,30 @@ function sugMencao(el){ let box = el.parentNode.querySelector('.menc-sug'); cons
 const nomesMenc = () => [...new Set([...RESPONSAVEIS, ...clientesMenc().map(nomeResp)])];
 const comMencoes = txt => { let o = h(txt); for (const n of nomesMenc()) o = o.split('@'+h(n)).join(`<b class="menc">@${h(n)}</b>`); return o; };
 
+
+/* ---------- comentários do cliente: o cliente não grava nas campanhas; registra em comentarios_cliente e a plataforma
+   da equipe coloca o comentário no lugar certo (uma vez só). Na tela do cliente, os ainda não aplicados entram só na memória. ---------- */
+let COM_CLI = [];
+// a lista de comentários do alvo: {k:'doc', et, idi, mi} (página do post/peça/LP e etapas da LP) | {k:'sec', sec} | {k:'kv', e}
+function comAlvoArr(c, a){ if (!c || !a) return null;
+  if (a.k==='sec') { c.secComent = c.secComent || {}; return (c.secComent[a.sec] = c.secComent[a.sec] || []); }
+  if (a.k==='kv') { const e = (c.entregaveis||[]).find(x=>x.id===a.e); return e ? (e.coment = e.coment || []) : null; }
+  const d = lpAlvo(c, a.et, a.idi||'', +a.mi||0); return d ? (d.coment = d.coment || []) : null; }
+const comCliObj = r => ({q: new Date(+r.t).toISOString().slice(0,10), t: +r.t, quem: r.autor_nome || 'Cliente', o: r.texto, ...(r.resp ? {resp: +r.resp} : {})});
+function comCliInjetar(){ for (const r of COM_CLI) { if (r.aplicado_em) continue; const L = comAlvoArr(camp(r.campanha_id), r.alvo); if (L && !L.some(x=>x.t===+r.t && x.quem===(r.autor_nome||'Cliente'))) L.push(comCliObj(r)); } }
+async function comCliCarregar(){ if (!sb || !ehCliente()) return;
+  const [r, eq] = await Promise.all([sb.from('comentarios_cliente').select('*').order('criado_em').limit(500), sb.rpc('equipe_nomes')]);
+  if (!r.error) { COM_CLI = r.data || []; comCliInjetar(); }
+  // nomes da equipe para o @ e os avatares (o cliente não lê a tabela perfis)
+  if (!eq.error && (eq.data||[]).length) { PERFIS = [...PERFIS.filter(p=>p.papel==='cliente' || p.id===(PERFIL||{}).id), ...eq.data.map((x,i)=>({id:'eq'+i, papel:'equipe', nome:x.nome, foto:x.foto}))]; RESPONSAVEIS = [...new Set(eq.data.map(x=>x.nome).filter(Boolean))].sort((a,b)=>a.localeCompare(b)); } }
+async function comCliAplicar(){ if (!sb || !ehEquipe()) return; const r = await sb.from('comentarios_cliente').select('*').is('aplicado_em', null).order('criado_em'); if (r.error) return; let n = 0;
+  for (const x of (r.data||[])) { const c = camp(x.campanha_id); if (!c || c.clienteId !== x.cliente_id) continue; const L = comAlvoArr(c, x.alvo); if (!L) continue;
+    const u = await sb.from('comentarios_cliente').update({aplicado_em: new Date().toISOString()}).eq('id', x.id).is('aplicado_em', null).select(); if (u.error || !(u.data||[]).length) continue;
+    if (!L.some(y=>y.t===+x.t && y.quem===(x.autor_nome||'Cliente'))) { L.push(comCliObj(x)); n++; } }
+  if (n) { salvar(); render(); toast(n===1 ? 'O cliente comentou.' : `O cliente fez ${n} comentários.`); } }
+// botão de enviar: equipe usa a ação de sempre; cliente registra em comentarios_cliente
+const comEnv = (attrs, cid, alvo) => ehCliente() ? `data-act="cliComentar" data-cid="${h(cid)}" data-alvo="${h(JSON.stringify(alvo))}"` : attrs;
+const podeComentar = ed => ed || ehCliente();
 /* ---------- comentários no estilo do Notion (Discussions): avatar, nome, quando, menção em cinza, barra ao passar o mouse,
    campo com @ e enviar redondo; Enter envia, Shift+Enter quebra a linha; ↑ ↓ Enter Tab Esc na lista de pessoas ---------- */
 const comQuando = t => { if (!t) return ''; const d = new Date(t), s = (Date.now()-t)/1000, hm = d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -1667,7 +1691,7 @@ async function carregar(){
   if (vincRecup.length && ehEquipe()) { vincRecup.forEach(id=>{ SNAP.camp[id] = ''; }); salvar(); }   // grava os vínculos recuperados
   aplicarCustosAuto();
   importarPlano().catch(e=>console.error('importação do plano', e));
-  if (ehCliente()) await aprovCarregar(); else if (ehEquipe()) { aprovAplicar().catch(e=>console.error('aprovações do cliente', e)); clearInterval(window._aprT); window._aprT = setInterval(()=>aprovAplicar().catch(()=>{}), 120000); }
+  if (ehCliente()) { await aprovCarregar(); await comCliCarregar(); } else if (ehEquipe()) { aprovAplicar().catch(e=>console.error('aprovações do cliente', e)); clearInterval(window._aprT); window._aprT = setInterval(()=>aprovAplicar().catch(()=>{}), 120000); }
 }
 let sincronizando = false, sincPendente = false;
 function statusSync(t, erro){ const el = $('#sync'); if (!el) return; el.textContent = t; el.classList.toggle('erro', !!erro); }
@@ -3342,8 +3366,8 @@ function kvCards(c, da, ed){ const lista = da.length ? da : [null];
 /* comentários do KV, com @menção (a pessoa mencionada recebe notificação) */
 function kvComentarios(c, e, ed){ const cs = (e && e.coment) || [], me = quemSou(), id = e ? e.id : '';
   return `<div class="kvm ncm"><div class="ncm-h">Comentários${cs.length?` <span>${cs.length}</span>`:''}</div>
-    ${comOrdem(cs.map((x,i)=>({x,i})), o=>o.x).map(({it:{x,i},sub})=>comItem(x, ed && x.quem===me ? `data-act="kvComentDel" data-id="${c.id}" data-e="${id}" data-i="${i}"` : '', '', ed, sub)).join('')}
-    ${ed ? comNovo(`kvm-txt-${c.id}-${id}`, `data-act="kvComentar" data-id="${c.id}" data-e="${id}"`) : ''}</div>`; }
+    ${comOrdem(cs.map((x,i)=>({x,i})), o=>o.x).map(({it:{x,i},sub})=>comItem(x, ed && x.quem===me ? `data-act="kvComentDel" data-id="${c.id}" data-e="${id}" data-i="${i}"` : '', '', podeComentar(ed) && (ed || e), sub)).join('')}
+    ${ed || (ehCliente() && e) ? comNovo(`kvm-txt-${c.id}-${id}`, comEnv(`data-act="kvComentar" data-id="${c.id}" data-e="${id}"`, c.id, {k:'kv', e:id})) : ''}</div>`; }
 /* ---------- Landing page: conteúdo base → aprovação → (traduções ‖ layout PT) → aprovação do layout → programação (tudo junto) ---------- */
 const LP_ST = {
   conteudo:['Em produção','Aguardando aprovação do cliente','Ajustes','Aprovado'],
@@ -3958,18 +3982,18 @@ function progMarcaPais(c, da){ const ms = [...new Set(da.map(e=>e.marca||''))].s
       return `<div class="ent-pmp-l"><span>${PAISES[p] ? PAISES[p].f+' '+h(PAISES[p].n) : h(p)}</span><i><em style="width:${pct}%" class="${pct===100?'ok':''}"></em></i><small>${ok}/${Lp.length}</small></div>`; }).join('')}</div>`; }).join('')}</div>`; }
 /* comentários de uma seção de entregáveis (Meta Ads, KV, Landing page…): ficam em c.secComent[seção], com @menção e notificação */
 function secComentarios(c, sec, ed){ const cs = ((c.secComent||{})[sec]) || [], me = quemSou(), ult = cs[cs.length-1];
-  const lista = comOrdem(cs.map((x,i)=>({x,i})), o=>o.x).map(({it:{x,i},sub})=>comItem(x, ed && x.quem===me ? `data-act="secComentDel" data-id="${c.id}" data-v="${h(sec)}" data-i="${i}"` : '', '', ed, sub)).join('');
+  const lista = comOrdem(cs.map((x,i)=>({x,i})), o=>o.x).map(({it:{x,i},sub})=>comItem(x, ed && x.quem===me ? `data-act="secComentDel" data-id="${c.id}" data-v="${h(sec)}" data-i="${i}"` : '', '', podeComentar(ed), sub)).join('');
   return `<div class="sec-com2 ncm"><div class="sec-com2-lin"><span class="sec-com2-t"><i data-lucide="message-square"></i>Comentários da seção</span><span class="sec-com2-n">${cs.length} comentário${cs.length===1?'':'s'}</span></div>
     ${cs.length ? `<details class="sec-com2-l" ${UI.secComAberto ? 'open' : ''} ontoggle="UI.secComAberto=this.open"><summary>Ver ${cs.length===1 ? 'o comentário' : `os ${cs.length} comentários`} · último de <b>${h(ult.quem||'—')}</b>: ${h(String(ult.o||'').slice(0,80))}${String(ult.o||'').length>80?'…':''}</summary><div class="ncm-lista">${lista}</div></details>` : ''}
-    ${ed ? comNovo('secc-txt', `data-act="secComent" data-id="${c.id}" data-v="${h(sec)}"`) : ''}</div>`; }
+    ${podeComentar(ed) ? comNovo('secc-txt', comEnv(`data-act="secComent" data-id="${c.id}" data-v="${h(sec)}"`, c.id, {k:'sec', sec})) : ''}</div>`; }
 /* comentários da página (sem trecho marcado), logo abaixo das propriedades, como no Notion */
 function lpComentPagina(d, ed){ const cs = d.coment || [], me = quemSou();
   // comentários feitos na tela cheia (no design) entram na mesma lista, com o número do pino e o segundo/card; o clique abre a tela cheia no ponto
   const dzOrd = [...(d.comentDesign||[])].sort((a,b)=>(a.card??-1)-(b.card??-1) || (a.seg??-1)-(b.seg??-1) || a.t-b.t);
   const todos = [...cs.map((x,i)=>({x, i})), ...dzOrd.map((x,n)=>({x, n, dz:true}))].sort((a,b)=>(a.x.t||0)-(b.x.t||0));
   return `<div class="npc ncm"><div class="ncm-h">Comentários${todos.length?` <span>${todos.length}</span>`:''}</div>
-    ${comOrdem(todos, o=>o.x).map(({it:{x,i,n,dz},sub})=>comItem(x, ed && x.quem===me ? (dz ? `onclick="dzExcluirPg('${x.id}')"` : `data-act="lpComentPgDel" data-i="${i}"`) : '', dz ? `<button type="button" class="npc-dz" onclick="dzAbrir('${x.id}')" title="Abrir em tela cheia neste ponto"><i class="dz-n">${n+1}</i>Em tela cheia${dzAncora(x) ? ' · '+h(dzAncora(x)) : ''}<i data-lucide="maximize-2"></i></button>` : '', ed, sub)).join('')}
-    ${ed ? comNovo('npc-txt', 'data-act="lpComentPg"') : ''}</div>`; }
+    ${comOrdem(todos, o=>o.x).map(({it:{x,i,n,dz},sub})=>comItem(x, ed && x.quem===me ? (dz ? `onclick="dzExcluirPg('${x.id}')"` : `data-act="lpComentPgDel" data-i="${i}"`) : '', dz ? `<button type="button" class="npc-dz" onclick="dzAbrir('${x.id}')" title="Abrir em tela cheia neste ponto"><i class="dz-n">${n+1}</i>Em tela cheia${dzAncora(x) ? ' · '+h(dzAncora(x)) : ''}<i data-lucide="maximize-2"></i></button>` : '', podeComentar(ed), sub)).join('')}
+    ${podeComentar(ed) ? comNovo('npc-txt', comEnv('data-act="lpComentPg"', (UI.lpTxt||{}).id, {k:'doc', et:(UI.lpTxt||{}).et, idi:(UI.lpTxt||{}).idi||'', mi:+(UI.lpTxt||{}).mi||0})) : ''}</div>`; }
 /* antes de re-renderizar a página, guarda o que está no editor (o salvar automático espera 900 ms) */
 function lpGuardarEdicao(){ const e = document.getElementById('lpe-edit'), {id, et, idi, mi} = UI.lpTxt || {}, c = camp(id); if (!e || !c || !e.isContentEditable) return; const d = lpAlvo(c, et, idi, mi); if (!d) return;
   const t = lpLimpa(e.innerHTML); if (t !== (d.texto||'')) { d.texto = t; d.editadoEm = Date.now(); d.editadoPor = quemSou(); lpAtualizarPublico(c, d, et, idi); } }
@@ -4005,8 +4029,8 @@ function lpTextoGravar(novoStatus, registro, coment){ const {id, et, idi, mi} = 
   registrar(`Landing page de “${c.nome}” · ${nome}: ${registro || 'texto atualizado'}`); salvar(); fecharModal(); render(); toast(registro ? registro+'.' : 'Rascunho salvo.'); }
 function lpComentarios(c, ed, mi, et, idi){ const {f} = lpDados(c, mi), alvo = et==='trad' ? f.trad[idi] : f[et], cs = (alvo && alvo.coment) || [], me = quemSou(), k = `${mi}-${et}-${idi||''}`, D = `data-id="${c.id}" data-mi="${mi}" data-et="${et}" data-idi="${idi||''}"`;
   return `<div class="kvm ncm"><div class="ncm-h">Comentários${cs.length?` <span>${cs.length}</span>`:''}</div>
-    ${comOrdem(cs.map((x,i)=>({x,i})), o=>o.x).map(({it:{x,i},sub})=>comItem(x, ed && x.quem===me ? `data-act="lpComentDel" ${D} data-i="${i}"` : '', '', ed, sub)).join('')}
-    ${ed ? comNovo(`lpm-txt-${k}`, `data-act="lpComentar" ${D}`) : ''}</div>`; }
+    ${comOrdem(cs.map((x,i)=>({x,i})), o=>o.x).map(({it:{x,i},sub})=>comItem(x, ed && x.quem===me ? `data-act="lpComentDel" ${D} data-i="${i}"` : '', '', podeComentar(ed), sub)).join('')}
+    ${podeComentar(ed) ? comNovo(`lpm-txt-${k}`, comEnv(`data-act="lpComentar" ${D}`, c.id, {k:'doc', et, idi:idi||'', mi:+mi||0})) : ''}</div>`; }
 /* direcionamento do KV (opcional): norteia a criação do key visual */
 const KV_CAMPOS = [
   ['headline','Chamada principal (headline ou selling line)','Frase de maior destaque que resume o conceito, a oferta ou o tema central da campanha.','Estrutura textual'],
@@ -6888,6 +6912,11 @@ function pgAprovacoes(){
     ${blocoMen}
     ${env.length ? `<div class="apr-hist"><div class="apr-g-t"><i data-lucide="history"></i>Suas últimas respostas</div>${env.map(a=>`<div class="apr-h"><span class="pc4-st c-${a.decisao==='aprovado'?'verde':'verm'}"><i></i>${a.decisao==='aprovado'?'Aprovado':'Ajustes pedidos'}</span><span class="notranslate">${h(aprNome(a))}</span><span class="muted small">${new Date(a.criado_em).toLocaleString(LANG==='en'?'en-GB':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}${a.aplicado_em?'':' · '+(LANG==='en'?'sent to the team':'enviado à equipe')}</span></div>`).join('')}</div>` : ''}`; }
 Object.assign(ACT, {
+  cliComentar: async el => { const ta = el.closest('.ncm-in').querySelector('textarea'), txt = (ta.value||'').trim(); if (!txt || !sb) return; const alvo = JSON.parse(el.dataset.alvo), cid = el.dataset.cid, t = Date.now(), resp = comRespDe(ta).resp || null;
+    el.disabled = true; const row = {cliente_id: PERFIL.cliente_id, campanha_id: cid, alvo, texto: txt, resp, t, autor_nome: quemSou()};
+    const r = await sb.from('comentarios_cliente').insert(row).select().single(); el.disabled = false;
+    if (r.error) return toast((LANG==='en' ? 'Could not send: ' : 'Não foi possível enviar: ') + r.error.message);
+    COM_CLI.push(r.data); const L = comAlvoArr(camp(cid), alvo); if (L) L.push(comCliObj(r.data)); ta.value = ''; render(); toast(LANG==='en' ? 'Comment sent to the team.' : 'Comentário enviado para a equipe.'); },
   aprAbrir: el => { UI.aprAberto = UI.aprAberto===el.dataset.k ? null : el.dataset.k; UI.aprAjuste = null; render(); },
   aprAjuste: el => { UI.aprAjuste = el.dataset.k || null; render(); const t = $('#apr-msg'); if (t) t.focus(); },
   aprDecidir: async el => { const x = aprovPendencias().find(y=>y.k===el.dataset.k); if (!x) return; const dec = el.dataset.d, msg = (($('#apr-msg')||{}).value||'').trim();
@@ -6898,7 +6927,7 @@ Object.assign(ACT, {
     toast(dec==='aprovado' ? (LANG==='en' ? 'Approved. The team was notified.' : 'Aprovado. A equipe foi avisada.') : (LANG==='en' ? 'Change request sent to the team.' : 'Pedido de ajustes enviado à equipe.')); },
 });
 /* equipe: aplica as decisões do cliente nas campanhas (uma vez só, mesmo com várias pessoas logadas) */
-async function aprovAplicar(){ if (!sb || !ehEquipe()) return; await aprovCarregar(); let n = 0;
+async function aprovAplicar(){ if (!sb || !ehEquipe()) return; await comCliAplicar().catch(e=>console.error('comentários do cliente', e)); await aprovCarregar(); let n = 0;
   for (const a of APROV) { const r = await sb.from('aprovacoes_cliente').update({aplicado_em: new Date().toISOString()}).eq('id', a.id).is('aplicado_em', null).select(); if (r.error || !(r.data||[]).length) continue;
     if (aprovAplicarUm(a)) n++; }
   APROV = []; if (n) { salvar(); render(); toast(n===1 ? 'O cliente respondeu uma aprovação.' : `O cliente respondeu ${n} aprovações.`); } }
